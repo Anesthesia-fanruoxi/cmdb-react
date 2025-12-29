@@ -1,0 +1,111 @@
+/**
+ * 系统信息独立页面样式
+ */
+
+.system-info-page {
+  padding: 24px;
+  height: 100vh;
+  box-sizing: border-box;
+  background: var(--bg-color, #fff);
+}
+
+.system-info-page .system-info-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.system-info-page .logo-icon {
+  font-size: 48px;
+}
+
+.system-info-page .logo-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-color, #1f2937);
+}
+
+.system-info-page .system-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.system-info-page .info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--bg-secondary, #f9fafb);
+  border-radius: 8px;
+}
+
+.system-info-page .info-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--text-secondary, #6b7280);
+}
+
+.system-info-page .info-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-color, #1f2937);
+}
+
+.system-info-page .info-value.realtime {
+  font-family: 'Monaco', 'Menlo', monospace;
+  color: #10b981;
+}
+
+.system-info-page .resource-section {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+}
+
+.system-info-page .resource-section h4 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-color, #1f2937);
+}
+
+.system-info-page .system-info-footer {
+  margin-top: 24px;
+  text-align: center;
+}
+
+.system-info-page .system-info-footer p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-tertiary, #9ca3af);
+}
+
+/* 暗色模式 */
+:root.dark .system-info-page {
+  background: #1f2937;
+}
+
+:root.dark .system-info-page .logo-text {
+  color: #f3f4f6;
+}
+
+:root.dark .system-info-page .info-item {
+  background: #374151;
+}
+
+:root.dark .system-info-page .info-value {
+  color: #f3f4f6;
+}
+
+:root.dark .system-info-page .resource-section {
+  border-color: #374151;
+}
+
+:root.dark .system-info-page .resource-section h4 {
+  color: #f3f4f6;
+}

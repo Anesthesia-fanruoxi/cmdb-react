@@ -21,12 +21,11 @@ export interface ExportItem {
   recipient_email: string;
   status: number;
   status_text: string;
-  applicant_id: number;
-  applicant_name: string;
-  approver_id: number;
-  approver_name: string;
-  executor_id: number;
-  executor_name: string;
+  submitter_id: number;
+  submitter_name: string;
+  apply_id: number;
+  apply_name: string;
+  current_operator: string;
   created_at: string;
   updated_at: string;
 }
@@ -34,6 +33,16 @@ export interface ExportItem {
 export interface ExportDetail extends ExportItem {
   file_url?: string;
   error_message?: string;
+  submitter_remark?: string;
+  reviewer_id?: number;
+  reviewer_name?: string;
+  reviewer_status?: number;
+  executor_id?: number;
+  executor_name?: string;
+  executor_status?: number;
+  submitter_status?: number;
+  apply_status?: number;
+  rule_check_result?: string;
 }
 
 export interface CreateExportData {
@@ -57,8 +66,8 @@ export function getSqlExportProjects() {
 }
 
 // 获取SQL导出申请列表
-export function getExportList(params?: { status?: number; project?: string }) {
-  return apiClient.get<{ list: ExportItem[]; total: number }>('/sql/export/list', params);
+export function getExportList(params?: { status?: number; project?: string; page?: number }) {
+  return apiClient.get<{ export: ExportItem[]; total_count: number; page: number; page_size: number }>('/sql/export/list', params);
 }
 
 // 提交SQL导出申请

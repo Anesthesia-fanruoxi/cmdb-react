@@ -2,9 +2,16 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
+// 获取构建时间
+const buildTime = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  // 定义全局常量
+  define: {
+    __BUILD_TIME__: JSON.stringify(buildTime),
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

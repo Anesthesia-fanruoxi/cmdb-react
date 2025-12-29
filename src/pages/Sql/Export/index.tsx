@@ -4,10 +4,11 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { 
-  getExportList, getSqlExportProjects, submitExport, updateExport, getExportDetail,
-  EXPORT_STATUS_MAP, type ExportItem, type ExportProject, type ExportDetail
+  getExportList, getSqlExportProjects, submitExport,
+  EXPORT_STATUS_MAP, type ExportItem, type ExportProject
 } from '../../../services/sql/export';
 import { getDatabases } from '../../../services/sql/search';
+import ExportDetailDrawer from './ExportDetail';
 import './style.css';
 
 const SqlExport = () => {
@@ -18,7 +19,7 @@ const SqlExport = () => {
   // 抽屉状态
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [detailVisible, setDetailVisible] = useState(false);
-  const [currentDetail, setCurrentDetail] = useState<ExportDetail | null>(null);
+  const [currentId, setCurrentId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   
   // 表单数据
@@ -37,7 +38,7 @@ const SqlExport = () => {
     try {
       const res = await getExportList();
       if (res.code === 200) {
-        setExportList(res.data?.list || []);
+        setExportList(res.data?.export || []);
       }
     } catch (error) {
       console.error('获取导出列表失败:', error);
@@ -51,7 +52,9 @@ const SqlExport = () => {
     try {
       const res = await getSqlExportProjects();
       if (res.code === 200) {
-        setProjects(res.data || []);
+        // 兼容 items 或直接数组
+        const items = (res.data as { items?: ExportProject[] })?.items || res.data || [];
+        setProjects(Array.isArray(items) ? items : []);
       }
     } catch (error) {
       console.error('获取项目列表失败:', error);
@@ -89,27 +92,9 @@ const SqlExport = () => {
   };
 
   // 查看详情
-  const handleViewDetail = async (item: ExportItem) => {
-    try {
-      const res = await getExportDetail(item.id);
-      if (res.code === 200) {
-        setCurrentDetail(res.data || null);
-        setDetailVisible(true);
-      }
-    } catch (error) {
-      console.error('获取详情失败:', error);
-    }
-  };
-
-  // 撤销申请
-  const handleCancel = async (item: ExportItem) => {
-    if (!confirm('确定要撤销该申请吗？')) return;
-    try {
-      await updateExport({ id: item.id, process_type: 0 });
-      fetchExportList();
-    } catch (error) {
-      console.error('撤销申请失败:', error);
-    }
+  const handleViewDetail = (item: ExportItem) => {
+    setCurrentId(item.id);
+    setDetailVisible(true);
   };
 
   // 提交表单
@@ -154,38 +139,33 @@ const SqlExport = () => {
           <table className="data-table">
             <thead>
               <tr>
-                <th>项目</th>
-                <th>数据库</th>
-                <th>导出原因</th>
-                <th>接收邮箱</th>
-                <th>申请人</th>
-                <th>状态</th>
+                <th>所属项目</th>
+                <th>提交人</th>
+                <th>审批人</th>
                 <th>创建时间</th>
+                <th>当前操作人</th>
+                <th>状态</th>
                 <th style={{ width: 120 }}>操作</th>
               </tr>
             </thead>
             <tbody>
               {exportList.length === 0 ? (
-                <tr><td colSpan={8} className="empty-cell">暂无数据</td></tr>
+                <tr><td colSpan={7} className="empty-cell">暂无数据</td></tr>
               ) : (
                 exportList.map(item => {
                   const statusInfo = getStatusInfo(item.status);
                   return (
                     <tr key={item.id}>
                       <td>{item.project_name}</td>
-                      <td>{item.database_name}</td>
-                      <td className="reason-cell">{item.export_reason}</td>
-                      <td className="email-cell">{item.recipient_email}</td>
-                      <td>{item.applicant_name}</td>
+                      <td>{item.submitter_name}</td>
+                      <td>{item.apply_name || '-'}</td>
+                      <td>{item.created_at?.replace('T', ' ').substring(0, 19)}</td>
+                      <td className={item.current_operator ? 'highlight-cell' : ''}>{item.current_operator || '-'}</td>
                       <td>
                         <span className={`tag tag-${statusInfo.type}`}>{statusInfo.text}</span>
                       </td>
-                      <td>{item.created_at?.replace('T', ' ').substring(0, 19)}</td>
                       <td className="action-cell">
                         <button className="btn btn-link" onClick={() => handleViewDetail(item)}>详情</button>
-                        {(item.status === 0 || item.status === 1) && (
-                          <button className="btn btn-link btn-danger" onClick={() => handleCancel(item)}>撤销</button>
-                        )}
                       </td>
                     </tr>
                   );
@@ -260,41 +240,13 @@ const SqlExport = () => {
         </div>
       )}
 
-      {/* 详情弹窗 */}
-      {detailVisible && currentDetail && (
-        <div className="modal-overlay" onClick={() => setDetailVisible(false)}>
-          <div className="modal-content modal-lg" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h4>导出详情</h4>
-              <button className="close-btn" onClick={() => setDetailVisible(false)}>×</button>
-            </div>
-            <div className="detail-body">
-              <div className="detail-grid">
-                <div><span>项目:</span> {currentDetail.project_name}</div>
-                <div><span>数据库:</span> {currentDetail.database_name}</div>
-                <div><span>申请人:</span> {currentDetail.applicant_name}</div>
-                <div><span>状态:</span> <span className={`tag tag-${getStatusInfo(currentDetail.status).type}`}>{getStatusInfo(currentDetail.status).text}</span></div>
-                <div><span>接收邮箱:</span> {currentDetail.recipient_email}</div>
-                <div><span>审批人:</span> {currentDetail.approver_name || '-'}</div>
-              </div>
-              <div className="detail-section">
-                <h5>导出原因</h5>
-                <p>{currentDetail.export_reason}</p>
-              </div>
-              <div className="detail-section">
-                <h5>SQL内容</h5>
-                <pre>{currentDetail.sql_content}</pre>
-              </div>
-              {currentDetail.error_message && (
-                <div className="detail-section">
-                  <h5>错误信息</h5>
-                  <p className="error-text">{currentDetail.error_message}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 详情抽屉 */}
+      <ExportDetailDrawer
+        visible={detailVisible}
+        exportId={currentId}
+        onClose={() => setDetailVisible(false)}
+        onRefresh={fetchExportList}
+      />
     </div>
   );
 };

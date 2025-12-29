@@ -4,6 +4,7 @@
  */
 
 import { WebviewWindow, getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
+import { emit, listen, type UnlistenFn } from '@tauri-apps/api/event';
 
 interface DetachWindowOptions {
   /** 窗口唯一标识 */
@@ -155,10 +156,43 @@ export function getAllDetachedWindows(): Map<string, WebviewWindow> {
 export async function closeCurrentWindow(): Promise<void> {
   try {
     const currentWindow = getCurrentWebviewWindow();
-    await currentWindow.close();
+    // 先尝试 destroy，再尝试 close
+    try {
+      await currentWindow.destroy();
+    } catch {
+      await currentWindow.close();
+    }
   } catch (error) {
     console.error('关闭窗口失败:', error);
     // 降级使用 window.close()
     window.close();
   }
+}
+
+/** 放回主窗口事件类型 */
+export interface ReattachTabEvent {
+  type: 'sql' | 'elfk';
+  tabData: Record<string, unknown>;
+}
+
+/**
+ * 发送标签页放回主窗口事件
+ */
+export async function emitReattachTab(data: ReattachTabEvent): Promise<void> {
+  try {
+    await emit('reattach-tab', data);
+    console.log('[Window] 发送放回事件:', data.type);
+  } catch (error) {
+    console.error('发送放回事件失败:', error);
+  }
+}
+
+/**
+ * 监听标签页放回事件
+ */
+export function onReattachTab(callback: (data: ReattachTabEvent) => void): Promise<UnlistenFn> {
+  return listen<ReattachTabEvent>('reattach-tab', (event) => {
+    console.log('[Window] 收到放回事件:', event.payload);
+    callback(event.payload);
+  });
 }

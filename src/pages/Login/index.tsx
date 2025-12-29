@@ -12,7 +12,7 @@ import './style.css';
 type LoginType = 'password' | 'totp';
 
 const Login = () => {
-  const { login, autoLogin } = useAuthStore();
+  const { login, autoLogin, bindDevice } = useAuthStore();
   
   const [loginType, setLoginType] = useState<LoginType>('totp');
   const [username, setUsername] = useState('');
@@ -22,6 +22,10 @@ const Login = () => {
   const [error, setError] = useState('');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [canAutoLogin, setCanAutoLogin] = useState(false);
+  
+  // 重新绑定相关状态
+  const [showRebindPrompt, setShowRebindPrompt] = useState(false);
+  const [rebindError, setRebindError] = useState('');
   
   const codeInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -183,7 +187,55 @@ const Login = () => {
         setLoading(false);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : '自动登录失败');
+      const errorMsg = err instanceof Error ? err.message : '自动登录失败';
+      // 版本过低时不显示重新绑定，直接切换到手动登录
+      if (errorMsg.includes('版本') || errorMsg.includes('version')) {
+        setError(errorMsg + '，请使用其他方式登录');
+        setCanAutoLogin(false);
+      } else {
+        setRebindError(errorMsg);
+        setShowRebindPrompt(true);
+        setCanAutoLogin(false);
+      }
+      setLoading(false);
+    }
+  };
+
+  // 重新绑定：先登录再绑定设备
+  const handleRebindLogin = async (totpCode: string) => {
+    if (!username.trim() || totpCode.length !== 6) return;
+    
+    setLoading(true);
+    setError('');
+    
+    try {
+      // 1. 先用 TOTP 登录
+      const result = await login({
+        user_name: username,
+        totp_code: totpCode,
+        login_type: 'totp',
+      });
+      
+      localStorage.setItem('lastLoginUsername', username);
+      
+      if (result?.isDefaultPass) {
+        window.location.href = '/force-two-factor';
+        return;
+      }
+      
+      // 2. 登录成功后自动绑定设备
+      try {
+        await bindDevice(totpCode);
+        console.log('[Login] 设备重新绑定成功');
+      } catch (bindErr) {
+        console.warn('[Login] 设备绑定失败，但登录已成功:', bindErr);
+      }
+      
+      onLoginSuccess();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '登录失败');
+      setTotpInputs(['', '', '', '', '', '']);
+      setTimeout(() => codeInputRefs.current[0]?.focus(), 100);
       setLoading(false);
     }
   };
@@ -192,6 +244,8 @@ const Login = () => {
     e.preventDefault();
     if (canAutoLogin) {
       handleAutoLogin();
+    } else if (showRebindPrompt) {
+      handleRebindLogin(totpInputs.join(''));
     } else {
       handleLogin(totpInputs.join(''));
     }
@@ -249,6 +303,51 @@ const Login = () => {
                   <span>检测到已绑定设备，点击下方按钮自动登录</span>
                 </div>
               </div>
+            ) : showRebindPrompt ? (
+              /* 重新绑定：显示错误原因和 TOTP 输入 */
+              <div className="rebind-section">
+                <div className="rebind-hint">
+                  <span>⚠️</span>
+                  <span>{rebindError}，请输入验证码重新绑定</span>
+                </div>
+                <div className="totp-form">
+                  <div className="verification-code-container">
+                    {totpInputs.map((val, idx) => (
+                      <input
+                        key={idx}
+                        ref={el => { codeInputRefs.current[idx] = el; }}
+                        className="verification-code-input"
+                        type="tel"
+                        maxLength={1}
+                        value={val}
+                        onChange={e => {
+                          handleCodeInput(idx, e.target.value);
+                          // 输入完成后自动触发重新绑定登录
+                          const newInputs = [...totpInputs];
+                          newInputs[idx] = e.target.value.slice(-1);
+                          if (newInputs.every(v => v) && newInputs.join('').length === 6) {
+                            handleRebindLogin(newInputs.join(''));
+                          }
+                        }}
+                        onKeyDown={e => handleKeyDown(e, idx)}
+                        onPaste={e => {
+                          handlePaste(e);
+                          const pasteData = e.clipboardData.getData('text');
+                          const digits = pasteData.replace(/\D/g, '').slice(0, 6);
+                          if (digits.length === 6) {
+                            setTimeout(() => handleRebindLogin(digits), 100);
+                          }
+                        }}
+                        autoComplete="off"
+                      />
+                    ))}
+                  </div>
+                  <div className="totp-hint">
+                    <span>⏱️</span>
+                    <span>输入验证码后将自动登录并重新绑定设备</span>
+                  </div>
+                </div>
+              </div>
             ) : (
               /* 无设备凭证：显示密码/双因子登录 */
               <div className="form-content">
@@ -297,11 +396,11 @@ const Login = () => {
 
             {/* 登录按钮 */}
             <button type="submit" className="login-button" disabled={loading}>
-              {loading ? '登录中...' : (canAutoLogin ? '🔐 自动登录' : '登录')}
+              {loading ? '登录中...' : (canAutoLogin ? '🔐 自动登录' : (showRebindPrompt ? '🔄 重新绑定登录' : '登录'))}
             </button>
 
-            {/* 切换登录方式（仅无设备凭证时显示） */}
-            {!canAutoLogin && (
+            {/* 切换登录方式（仅无设备凭证且非重新绑定时显示） */}
+            {!canAutoLogin && !showRebindPrompt && (
               <div className="login-type-switch">
                 <button type="button" className="switch-button" onClick={switchLoginType}>
                   {loginType === 'totp' ? '🔒 使用密码登录' : '🔑 使用双因子登录'}
@@ -316,6 +415,23 @@ const Login = () => {
                   type="button" 
                   className="switch-button" 
                   onClick={() => setCanAutoLogin(false)}
+                >
+                  使用其他方式登录
+                </button>
+              </div>
+            )}
+            
+            {/* 重新绑定时，提供取消选项 */}
+            {showRebindPrompt && (
+              <div className="login-type-switch">
+                <button 
+                  type="button" 
+                  className="switch-button" 
+                  onClick={() => {
+                    setShowRebindPrompt(false);
+                    setRebindError('');
+                    setTotpInputs(['', '', '', '', '', '']);
+                  }}
                 >
                   使用其他方式登录
                 </button>

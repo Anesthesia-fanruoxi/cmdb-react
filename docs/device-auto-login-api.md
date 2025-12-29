@@ -98,7 +98,7 @@
 | created_at | datetime | 绑定时间 |
 | status | tinyint | 状态：1-正常，0-禁用 |
 
-**唯一索引**: `(user_name, machine_id)`
+**唯一索引**: `(user_name)` - 一个用户只能绑定一个设备
 
 ### 挑战码缓存（Redis）
 
@@ -126,18 +126,18 @@ Authorization: Bearer {用户登录token}
 **请求体**:
 ```json
 {
-  "user_name": "admin",
   "machine_id": "a1b2c3d4e5f6...",
-  "totp_code": "123456"
+  "totp_code": "123456",
+  "version": "v0.0.1"
 }
 ```
 
 **参数说明**:
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| user_name | string | 是 | 用户名 |
 | machine_id | string | 是 | 设备硬件指纹（SHA256哈希值，64位十六进制） |
 | totp_code | string | 是 | 6位TOTP验证码 |
+| version | string | 是 | 客户端版本号 |
 
 **成功响应**:
 ```json
@@ -158,45 +158,109 @@ Authorization: Bearer {用户登录token}
 }
 ```
 
-```json
-{
-  "code": 400,
-  "message": "该设备已绑定其他用户"
-}
-```
-
 **后端处理逻辑**:
 ```python
-def bind_device(token, user_name, machine_id, totp_code):
+def bind_device(token, machine_id, totp_code):
     # 1. 验证 token，获取当前用户
     current_user = verify_token(token)
-    if current_user.user_name != user_name:
-        return error("用户名不匹配")
     
     # 2. 验证 TOTP
     if not verify_totp(current_user.totp_secret, totp_code):
         return error("TOTP验证码错误")
     
-    # 3. 检查设备是否已绑定其他用户
-    existing = db.query(
-        "SELECT * FROM sys_user_device WHERE machine_id = ? AND user_name != ?",
-        machine_id, user_name
-    )
-    if existing:
-        return error("该设备已绑定其他用户")
-    
-    # 4. 生成设备密钥（64位随机字符串）
+    # 3. 生成设备密钥（64位随机字符串）
     device_secret = secrets.token_hex(32)  # 64位十六进制
     
-    # 5. 保存或更新绑定记录
+    # 4. 保存或更新绑定记录（用户只能绑定一个设备，重新绑定会覆盖）
     db.execute("""
         INSERT INTO sys_user_device (user_id, user_name, machine_id, device_secret, created_at)
         VALUES (?, ?, ?, ?, NOW())
-        ON DUPLICATE KEY UPDATE device_secret = ?, created_at = NOW()
-    """, current_user.id, user_name, machine_id, device_secret, device_secret)
+        ON DUPLICATE KEY UPDATE machine_id = ?, device_secret = ?, created_at = NOW()
+    """, current_user.id, current_user.user_name, machine_id, device_secret, machine_id, device_secret)
     
-    # 6. 返回设备密钥
+    # 5. 返回设备密钥
     return success({"device_secret": device_secret})
+```
+
+---
+
+### 4. 解绑设备
+
+**接口**: `POST /system/user/device/unbind`
+
+**说明**: 用户解绑当前设备，需要双因子验证确保是本人操作。
+
+**请求头**:
+```
+Authorization: Bearer {用户登录token}
+```
+
+**请求体**:
+```json
+{
+  "totp_code": "123456"
+}
+```
+
+**参数说明**:
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| totp_code | string | 是 | 6位TOTP验证码 |
+
+**成功响应**:
+```json
+{
+  "code": 200,
+  "message": "解绑成功",
+  "data": null
+}
+```
+
+**失败响应**:
+```json
+{
+  "code": 400,
+  "message": "TOTP验证码错误"
+}
+```
+
+```json
+{
+  "code": 400,
+  "message": "该设备未绑定"
+}
+```
+
+**后端处理逻辑**:
+```python
+def unbind_device(token, totp_code):
+    # 1. 验证 token，获取当前用户
+    current_user = verify_token(token)
+    
+    # 2. 验证 TOTP
+    if not verify_totp(current_user.totp_secret, totp_code):
+        return error("TOTP验证码错误")
+    
+    # 3. 获取请求中的 machine_id（从客户端获取当前设备指纹）
+    # 注意：实际实现中 machine_id 应该从请求体或客户端传递
+    machine_id = get_machine_id_from_request()
+    
+    # 4. 检查设备是否已绑定
+    device = db.query(
+        "SELECT * FROM sys_user_device WHERE user_name = ? AND machine_id = ?",
+        current_user.user_name, machine_id
+    )
+    if not device:
+        return error("该设备未绑定")
+    
+    # 5. 删除绑定记录
+    db.execute(
+        "DELETE FROM sys_user_device WHERE user_name = ? AND machine_id = ?",
+        current_user.user_name, machine_id
+    )
+    
+    # 6. 返回成功
+    return success(None, "解绑成功")
 ```
 
 ---
@@ -452,8 +516,9 @@ def device_login(user_name, machine_id, challenge, timestamp, signature):
 - 绑定设备时需要TOTP验证码
 - 确保是用户本人操作
 
-### 5. 设备唯一性
-- 一个设备只能绑定一个用户
+### 5. 设备绑定规则
+- 一个用户只能绑定一个设备（重新绑定会覆盖旧设备）
+- 一个设备可以被多个用户绑定
 - 基于硬件指纹识别设备
 
 ---

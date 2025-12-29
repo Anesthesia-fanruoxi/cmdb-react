@@ -4,11 +4,13 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
+import ProjectSelect from './ProjectSelect';
 import SearchForm from './SearchForm';
 import FieldList from './FieldList';
 import LogsPanel from './LogsPanel';
 import AnalysisModal from './AnalysisModal';
 import { usePageStateStore } from '../../../../stores/pageStateStore';
+import { emitReattachTab, closeCurrentWindow } from '../../../../utils/window';
 import type { TabData } from '../index';
 import type { LogHit } from '../../../../services/elfk/search';
 import type { ViewDetail } from '../../../../services/elfk/view';
@@ -65,9 +67,10 @@ const ElfkSearchDetached = ({ initialTab }: Props) => {
     
     // 窗口关闭前保存
     const currentWindow = getCurrentWebviewWindow();
-    const unlisten = currentWindow.onCloseRequested(async () => {
+    const unlisten = currentWindow.onCloseRequested(() => {
       console.log('[ElfkDetached] 窗口关闭，保存状态');
       saveDetachedState();
+      // 同步执行，不阻止关闭
     });
 
     return () => {
@@ -119,46 +122,73 @@ const ElfkSearchDetached = ({ initialTab }: Props) => {
     updateTab({ logs: [], total: 0, keyword: '', lastParams: {} });
   };
 
+  // 项目选择确认
+  const handleProjectConfirm = (info: TabData['projectInfo']) => {
+    if (!info) return;
+    updateTab({ 
+      initialized: true, 
+      projectInfo: info, 
+      name: `${info.projectName} - ${info.categoryName}` 
+    });
+  };
+
+  // 放回主窗口
+  const handleReattach = async () => {
+    const tabData = {
+      id: tab.id, name: tab.name, initialized: tab.initialized,
+      projectInfo: tab.projectInfo, currentView: tab.currentView, keyword: tab.keyword,
+    };
+    await emitReattachTab({ type: 'elfk', tabData });
+    closeCurrentWindow();
+  };
+
   return (
     <div className="elfk-search-page detached">
       <div className="detached-header">
         <h3>{tab.name}</h3>
+        <button className="reattach-btn" onClick={handleReattach} title="放回主窗口">
+          ↩ 放回
+        </button>
       </div>
       <div className="tab-content">
-        <div className="search-layout">
-          <SearchForm
-            projectInfo={tab.projectInfo}
-            currentView={tab.currentView}
-            loading={tab.loading}
-            onViewChange={handleViewChange}
-            onSearch={handleSearch}
-            onReset={handleReset}
-          />
-          <div className="main-layout">
-            <div className="sidebar">
-              <FieldList 
-                currentView={tab.currentView} 
-                selectedFields={tab.selectedFields || []}
-                onFieldsChange={(fields) => updateTab({ selectedFields: fields })}
-              />
-            </div>
-            <div className="content-area">
-              <LogsPanel
-                loading={tab.loading}
-                logs={tab.logs}
-                total={tab.total}
-                keyword={tab.keyword}
-                currentView={tab.currentView}
-                selectedFields={tab.selectedFields || []}
-                searchParams={tab.lastParams}
-                onSortChange={handleSortChange}
-                onPageData={handlePageData}
-                onLoadingChange={(loading) => updateTab({ loading })}
-                onAnalysis={() => setAnalysisVisible(true)}
-              />
+        {!tab.initialized ? (
+          <ProjectSelect onConfirm={handleProjectConfirm} />
+        ) : (
+          <div className="search-layout">
+            <SearchForm
+              projectInfo={tab.projectInfo}
+              currentView={tab.currentView}
+              loading={tab.loading}
+              onViewChange={handleViewChange}
+              onSearch={handleSearch}
+              onReset={handleReset}
+            />
+            <div className="main-layout">
+              <div className="sidebar">
+                <FieldList 
+                  currentView={tab.currentView} 
+                  selectedFields={tab.selectedFields || []}
+                  onFieldsChange={(fields) => updateTab({ selectedFields: fields })}
+                />
+              </div>
+              <div className="content-area">
+                <LogsPanel
+                  loading={tab.loading}
+                  logs={tab.logs}
+                  total={tab.total}
+                  keyword={tab.keyword}
+                  currentView={tab.currentView}
+                  selectedFields={tab.selectedFields || []}
+                  searchParams={tab.lastParams}
+                  onSortChange={handleSortChange}
+                  onPageData={handlePageData}
+                  onLoadingChange={(loading) => updateTab({ loading })}
+                  onAnalysis={() => setAnalysisVisible(true)}
+                />
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
       <AnalysisModal
         visible={analysisVisible}

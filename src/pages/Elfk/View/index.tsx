@@ -42,11 +42,12 @@ const ElfkView = () => {
     try {
       const res = await getElfkViewProjects();
       if (res.code === 200 && res.data) {
-        const items = res.data.items || [];
-        setProjectOptions(items.map(item => ({
-          key: item.project,
-          value: item.project_name
-        })));
+        // 兼容 items 或直接数组
+        const items = (res.data as any).items || res.data || [];
+        setProjectOptions(Array.isArray(items) ? items.map((item: any) => ({
+          key: item.project || item.key,
+          value: item.project_name || item.value
+        })) : []);
       }
     } catch (err) {
       console.error('获取项目列表失败:', err);

@@ -11,7 +11,7 @@ import {
   type Project
 } from '../../../../services/sql/search';
 import { usePageStateStore } from '../../../../stores/pageStateStore';
-import { openComponentWindow } from '../../../../utils/window';
+import { openComponentWindow, emitReattachTab, closeCurrentWindow } from '../../../../utils/window';
 import TableTree from './TableTree';
 import SqlWorkspace from './SqlWorkspace';
 import { handleQueryData } from '../utils/handleQueryData';
@@ -58,9 +58,10 @@ const SqlWorkspaceDetached = ({ initialTab }: Props) => {
     const timer = setInterval(saveDetachedState, 10000);
     
     const currentWindow = getCurrentWebviewWindow();
-    const unlisten = currentWindow.onCloseRequested(async () => {
+    const unlisten = currentWindow.onCloseRequested(() => {
       console.log('[SqlDetached] 窗口关闭，保存状态');
       saveDetachedState();
+      // 同步执行，不阻止关闭
     });
 
     return () => {
@@ -187,9 +188,24 @@ const SqlWorkspaceDetached = ({ initialTab }: Props) => {
     });
   };
 
+  // 放回主窗口
+  const handleReattach = async () => {
+    const tabData = {
+      id: tab.id, name: tab.name, project: tab.project, dbName: tab.dbName,
+      sqlQuery: tab.sqlQuery, dbList: tab.dbList, tableList: tab.tableList,
+    };
+    await emitReattachTab({ type: 'sql', tabData });
+    closeCurrentWindow();
+  };
+
   return (
     <div className="sql-search detached-workspace">
-      <div className="detached-header"><span className="detached-title">{tab.name}</span></div>
+      <div className="detached-header">
+        <span className="detached-title">{tab.name}</span>
+        <button className="reattach-btn" onClick={handleReattach} title="放回主窗口">
+          ↩ 放回
+        </button>
+      </div>
       <div className="main-content">
         <div className="sidebar">
           <TableTree projects={projects} projectLoading={projectLoading} currentProject={tab.project}

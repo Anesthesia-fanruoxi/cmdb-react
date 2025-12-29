@@ -32,6 +32,7 @@
 .detached-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 8px 16px;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
@@ -42,4 +43,21 @@
   font-size: 14px;
   font-weight: 500;
   color: var(--text-color);
+}
+
+.reattach-btn {
+  padding: 4px 12px;
+  font-size: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-color);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.reattach-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background: var(--bg-hover);
 }

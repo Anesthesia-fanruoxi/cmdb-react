@@ -10,7 +10,7 @@ import FieldList from './components/FieldList';
 import LogsPanel from './components/LogsPanel';
 import AnalysisModal from './components/AnalysisModal';
 import { usePageStateStore } from '../../../stores/pageStateStore';
-import { openComponentWindow } from '../../../utils/window';
+import { openComponentWindow, onReattachTab } from '../../../utils/window';
 import type { LogHit } from '../../../services/elfk/search';
 import type { ViewDetail } from '../../../services/elfk/view';
 import { searchLogs } from '../../../services/elfk/search';
@@ -116,6 +116,29 @@ const ElfkSearch = () => {
     return () => clearTimeout(timer);
   }, [tabs, activeTabId, setPageState, _hasHydrated]);
 
+  // 监听放回事件
+  useEffect(() => {
+    const unlisten = onReattachTab((data) => {
+      if (data.type !== 'elfk') return;
+      
+      const tabData = data.tabData as Partial<TabData>;
+      const newTab: TabData = {
+        ...createDefaultTab(tabData.id || `tab-${Date.now()}`, tabData.name || '日志搜索'),
+        ...tabData,
+        loading: false,
+        logs: [],
+        total: 0,
+        lastParams: {},
+      };
+      
+      setTabs(prev => [...prev, newTab]);
+      setActiveTabId(newTab.id);
+      console.log('[ELFK] 放回标签页:', newTab.name);
+    });
+
+    return () => { unlisten.then(fn => fn()); };
+  }, []);
+
   const updateTab = useCallback((tabId: string, updates: Partial<TabData>) => {
     setTabs(prev => prev.map(tab => tab.id === tabId ? { ...tab, ...updates } : tab));
   }, []);
@@ -160,9 +183,16 @@ const ElfkSearch = () => {
     
     if (tabs.length <= 1) {
       tabCounter.current += 1;
-      setTabs([createDefaultTab(`tab-${Date.now()}`, `搜索 ${tabCounter.current}`)]);
+      const newTab = createDefaultTab(`tab-${Date.now()}`, `搜索 ${tabCounter.current}`);
+      setTabs([newTab]);
+      setActiveTabId(newTab.id);
     } else {
-      handleCloseTab(tab.id);
+      // 从当前标签列表中移除，并切换到其他标签
+      const remainingTabs = tabs.filter(t => t.id !== tab.id);
+      setTabs(remainingTabs);
+      if (activeTabId === tab.id && remainingTabs.length > 0) {
+        setActiveTabId(remainingTabs[0].id);
+      }
     }
   };
 

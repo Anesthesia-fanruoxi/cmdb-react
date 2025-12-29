@@ -75,6 +75,11 @@ const DetachedWindow = () => {
           setComponent(() => mod.default);
           break;
         }
+        case 'system-info': {
+          const mod = await import('../SystemInfo');
+          setComponent(() => mod.default);
+          break;
+        }
         default:
           console.warn('未知的窗口类型:', type);
       }

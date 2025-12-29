@@ -9,6 +9,7 @@ import {
   isTauriEnv, 
   autoLogin as rustAutoLogin, 
   bindDevice as rustBindDevice,
+  unbindDevice as rustUnbindDevice,
   getHardwareFingerprint 
 } from '../services/machine';
 import {
@@ -44,6 +45,7 @@ interface AuthState {
   login: (data: LoginRequest) => Promise<{ isDefaultPass?: boolean }>;
   autoLogin: (userName: string) => Promise<boolean>;
   bindDevice: (totpCode: string) => Promise<void>;
+  unbindDevice: (totpCode: string) => Promise<void>;
   setUser: (user: UserInfo) => Promise<void>;
   setPermissions: (permissions: string[]) => void;
   hasPermission: (permission: string) => boolean;
@@ -94,8 +96,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   autoLogin: async (userName: string) => {
     if (!isTauriEnv()) return false;
 
+    const version = import.meta.env.VITE_APP_VERSION || 'v0.0.1';
+    
     try {
-      const result = await rustAutoLogin(API_BASE, userName);
+      const result = await rustAutoLogin(API_BASE, userName, version);
       
       if (result.success && result.token) {
         // 等待所有存储操作完成
@@ -111,8 +115,14 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         });
         return true;
       }
+      
+      // 自动登录失败，抛出错误信息
+      if (result.error) {
+        throw new Error(result.error);
+      }
     } catch (error) {
       console.error('自动登录失败:', error);
+      throw error;
     }
     return false;
   },
@@ -128,7 +138,22 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       throw new Error('请先登录');
     }
 
-    await rustBindDevice(API_BASE, token, userName, totpCode);
+    const version = import.meta.env.VITE_APP_VERSION || 'v0.0.1';
+    await rustBindDevice(API_BASE, token, userName, totpCode, version);
+  },
+
+  // 解绑设备（需要双因子验证）
+  unbindDevice: async (totpCode: string) => {
+    if (!isTauriEnv()) {
+      throw new Error('仅支持桌面客户端');
+    }
+
+    const { token, userName } = get();
+    if (!token || !userName) {
+      throw new Error('请先登录');
+    }
+
+    await rustUnbindDevice(API_BASE, token, userName, totpCode);
   },
 
   // 设置用户信息

@@ -88,6 +88,9 @@
 }
 
 .elfk-search-page.detached .detached-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 12px 16px;
   background: var(--bg-color, #fff);
   border-bottom: 1px solid var(--border-color, #e8e8e8);
@@ -98,6 +101,23 @@
   font-size: 16px;
   font-weight: 500;
   color: var(--text-color, #333);
+}
+
+.elfk-search-page.detached .reattach-btn {
+  padding: 4px 12px;
+  font-size: 12px;
+  border: 1px solid var(--border-color, #e8e8e8);
+  border-radius: 4px;
+  background: var(--bg-secondary, #f5f5f5);
+  color: var(--text-secondary, #999);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.elfk-search-page.detached .reattach-btn:hover {
+  border-color: var(--primary-color, #1890ff);
+  color: var(--primary-color, #1890ff);
+  background: var(--bg-hover, #e8e8e8);
 }
 
 .elfk-search-page.detached .tab-content {

@@ -101,11 +101,10 @@ export function executePageQuery(data: {
   return apiClient.post<QueryResult | { results: QueryResult[] }>('/sql/search/page', data, { timeout: 600000 });
 }
 
-// 导出查询结果
+// 导出查询结果（异步导出，后端发送邮件）
 export function exportQueryResult(data: { query_id: string; db_name: string }) {
-  return apiClient.post<Blob>('/sql/search/export', data, { 
-    timeout: 60000,
-    responseType: 'blob'
+  return apiClient.post<{ code: number; message: string }>('/sql/search/export', data, { 
+    timeout: 60000
   });
 }
 

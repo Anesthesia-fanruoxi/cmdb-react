@@ -11,12 +11,14 @@ import { useAppStore } from '../../stores/appStore';
 import { useMessageStore } from '../../stores/messageStore';
 import type { MenuItem } from '../../types/menu';
 import Icon from '../Icon';
-import { Package, Sun, Moon, Bell, LogOut, User, ListTodo, RefreshCw, Trash2 } from 'lucide-react';
+import { Package, LogOut, User, ListTodo, RefreshCw, Trash2, Info } from 'lucide-react';
 import { confirm } from '../ConfirmModal';
 import { showStatus, updateStatus } from '../StatusModal';
 import MessageCenter from '../MessageCenter';
 import ProfileDrawer from '../ProfileDrawer';
 import TaskCenter from '../TaskCenter';
+import { openComponentWindow } from '../../utils/window';
+import { isTauriEnv } from '../../services/machine';
 import './Sidebar.css';
 
 interface SidebarProps {
@@ -148,7 +150,7 @@ const Sidebar = ({ collapsed = false }: SidebarProps) => {
           <div className="footer-collapsed">
             {unreadCount > 0 ? (
               <button className="footer-icon-btn bell-shake" onClick={() => setMessageCenterVisible(true)}>
-                <Bell size={20} />
+                🔔
               </button>
             ) : (
               <div className="footer-avatar" onClick={() => setDropdownVisible(!dropdownVisible)}>
@@ -167,6 +169,12 @@ const Sidebar = ({ collapsed = false }: SidebarProps) => {
                 <div className="footer-dropdown">
                   <div className="dropdown-item" onClick={() => { setDropdownVisible(false); setProfileVisible(true); }}><User size={16} /><span>个人信息</span></div>
                   <div className="dropdown-item" onClick={() => { setDropdownVisible(false); setTaskCenterVisible(true); }}><ListTodo size={16} /><span>任务中心</span></div>
+                  {isTauriEnv() && (
+                    <div className="dropdown-item" onClick={() => { 
+                      setDropdownVisible(false); 
+                      openComponentWindow({ type: 'system-info', label: 'system-info', title: '系统信息', width: 400, height: 500 });
+                    }}><Info size={16} /><span>系统信息</span></div>
+                  )}
                   <div className="dropdown-divider" />
                   <div className="dropdown-item" onClick={handleRefreshPermissions}><RefreshCw size={16} /><span>刷新权限</span></div>
                   <div className="dropdown-item" onClick={handleClearData}><Trash2 size={16} /><span>清除缓存</span></div>
@@ -175,11 +183,11 @@ const Sidebar = ({ collapsed = false }: SidebarProps) => {
                 </div>
               )}
             </div>
-            <button className="footer-icon-btn" onClick={toggleTheme} title={theme === 'light' ? '暗色模式' : '亮色模式'}>
-              {theme === 'dark' ? <Sun size={24} color="#fff" /> : <Moon size={24} color="#fff" />}
+            <button className="footer-icon-btn theme-btn" onClick={toggleTheme} title={theme === 'light' ? '暗色模式' : '亮色模式'}>
+              {theme === 'dark' ? '☀️' : '🌙'}
             </button>
             <button className={`footer-icon-btn bell-btn ${unreadCount > 0 ? 'bell-shake' : ''}`} onClick={() => setMessageCenterVisible(true)}>
-              <Bell size={24} color="#ffc53d" />
+              🔔
               {unreadCount > 0 && <span className="badge">{unreadCount > 99 ? '99+' : unreadCount}</span>}
             </button>
           </div>

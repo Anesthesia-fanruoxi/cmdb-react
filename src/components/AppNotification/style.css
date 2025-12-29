@@ -1,0 +1,111 @@
+/* 应用内通知样式 - 显示在右上角 */
+
+.app-notification-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.app-notification {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 320px;
+  max-width: 400px;
+  padding: 16px;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  transform: translateX(0);
+  opacity: 1;
+  transition: all 0.3s ease;
+  pointer-events: auto;
+}
+
+.app-notification.hide {
+  transform: translateX(120%);
+  opacity: 0;
+}
+
+.app-notification-icon {
+  flex-shrink: 0;
+  display: flex;
+  margin-top: 2px;
+}
+
+.app-notification-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.app-notification-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 4px;
+}
+
+.app-notification-body {
+  font-size: 13px;
+  color: #666;
+  word-break: break-word;
+  line-height: 1.5;
+}
+
+.app-notification-close {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.app-notification-close:hover {
+  color: #666;
+  background: #f0f0f0;
+}
+
+/* 类型样式 */
+.app-notification-success { border-left: 4px solid #52c41a; }
+.app-notification-success .app-notification-icon { color: #52c41a; }
+
+.app-notification-error { border-left: 4px solid #ff4d4f; }
+.app-notification-error .app-notification-icon { color: #ff4d4f; }
+
+.app-notification-warning { border-left: 4px solid #faad14; }
+.app-notification-warning .app-notification-icon { color: #faad14; }
+
+.app-notification-info { border-left: 4px solid #1890ff; }
+.app-notification-info .app-notification-icon { color: #1890ff; }
+
+/* 暗色主题 */
+[data-theme="dark"] .app-notification {
+  background: #2a2a2a;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .app-notification-title {
+  color: #fff;
+}
+
+[data-theme="dark"] .app-notification-body {
+  color: #aaa;
+}
+
+[data-theme="dark"] .app-notification-close {
+  color: #888;
+}
+
+[data-theme="dark"] .app-notification-close:hover {
+  color: #ccc;
+  background: #3a3a3a;
+}

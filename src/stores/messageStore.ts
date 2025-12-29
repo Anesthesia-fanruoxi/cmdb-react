@@ -1,9 +1,10 @@
 /**
  * 消息中心 Store
- * 本地存储，支持已读/未读状态
+ * 本地存储，支持已读/未读状态，系统通知和托盘闪烁
  */
 
 import { create } from 'zustand';
+import { showNotification, startTrayFlash, stopTrayFlash } from '../services/tray';
 
 export type MessageType = 'success' | 'error' | 'warning' | 'info';
 
@@ -70,7 +71,17 @@ export const useMessageStore = create<MessageState>((set) => ({
     set(state => {
       const messages = [newMsg, ...state.messages].slice(0, 100); // 最多保留100条
       saveToStorage(messages);
-      return { messages, unreadCount: messages.filter(m => !m.read).length };
+      const unreadCount = messages.filter(m => !m.read).length;
+      
+      // 发送应用内通知
+      showNotification(msg.title, msg.content, msg.type);
+      
+      // 有未读消息时启动托盘闪烁
+      if (unreadCount > 0) {
+        startTrayFlash();
+      }
+      
+      return { messages, unreadCount };
     });
   },
 
@@ -78,7 +89,14 @@ export const useMessageStore = create<MessageState>((set) => ({
     set(state => {
       const messages = state.messages.map(m => m.id === id ? { ...m, read: true } : m);
       saveToStorage(messages);
-      return { messages, unreadCount: messages.filter(m => !m.read).length };
+      const unreadCount = messages.filter(m => !m.read).length;
+      
+      // 没有未读消息时停止托盘闪烁
+      if (unreadCount === 0) {
+        stopTrayFlash();
+      }
+      
+      return { messages, unreadCount };
     });
   },
 
@@ -86,6 +104,10 @@ export const useMessageStore = create<MessageState>((set) => ({
     set(state => {
       const messages = state.messages.map(m => ({ ...m, read: true }));
       saveToStorage(messages);
+      
+      // 停止托盘闪烁
+      stopTrayFlash();
+      
       return { messages, unreadCount: 0 };
     });
   },
@@ -94,17 +116,32 @@ export const useMessageStore = create<MessageState>((set) => ({
     set(state => {
       const messages = state.messages.filter(m => m.id !== id);
       saveToStorage(messages);
-      return { messages, unreadCount: messages.filter(m => !m.read).length };
+      const unreadCount = messages.filter(m => !m.read).length;
+      
+      // 没有未读消息时停止托盘闪烁
+      if (unreadCount === 0) {
+        stopTrayFlash();
+      }
+      
+      return { messages, unreadCount };
     });
   },
 
   clearAll: () => {
     saveToStorage([]);
+    stopTrayFlash();
     set({ messages: [], unreadCount: 0 });
   },
 
   rehydrate: () => {
     const messages = loadFromStorage();
-    set({ messages, unreadCount: messages.filter(m => !m.read).length });
+    const unreadCount = messages.filter(m => !m.read).length;
+    
+    // 恢复时如果有未读消息，启动托盘闪烁
+    if (unreadCount > 0) {
+      startTrayFlash();
+    }
+    
+    set({ messages, unreadCount });
   },
 }));

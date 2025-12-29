@@ -104,17 +104,21 @@ const ProfileDrawer = ({ visible, onClose }: ProfileDrawerProps) => {
     onClose();
   };
 
-  // 解绑设备
+  // 解绑设备（直接清除本地凭证，调用后端接口）
   const handleUnbindDevice = async () => {
     if (!userName) return;
     
     try {
-      await clearDeviceCredentials(userName);
+      // 调用后端解绑接口
+      await useAuthStore.getState().unbindDevice('');
       setDeviceBound(false);
       toast.success('设备已解绑');
     } catch (err) {
-      toast.error('解绑失败');
-      console.error('解绑设备失败:', err);
+      // 如果后端接口失败，仍然清除本地凭证
+      await clearDeviceCredentials(userName);
+      setDeviceBound(false);
+      toast.success('设备已解绑');
+      console.error('解绑设备:', err);
     }
   };
 

@@ -8,8 +8,8 @@ import {
   executePageQuery, exportQueryResult, getHistoryList, 
   type Project, type HistoryItem 
 } from '../../../services/sql/search';
-import { openComponentWindow } from '../../../utils/window';
-import { usePageStateStore } from '../../../stores';
+import { openComponentWindow, onReattachTab } from '../../../utils/window';
+import { usePageStateStore, useMessageStore } from '../../../stores';
 import TableTree from './components/TableTree';
 import SqlWorkspace from './components/SqlWorkspace';
 import DraggableTabs from './components/DraggableTabs';
@@ -105,6 +105,7 @@ const SqlSearch = () => {
 
   // 页面状态管理
   const { setPageState, getPageState, _hasHydrated } = usePageStateStore();
+  const addMessage = useMessageStore(state => state.addMessage);
   const hasRestored = useRef(false);
   const [isRestoring, setIsRestoring] = useState(true);
 
@@ -172,6 +173,36 @@ const SqlSearch = () => {
 
     return () => clearTimeout(timer);
   }, [tabs, activeTabId, tabCounter, setPageState, _hasHydrated]);
+
+  // 监听放回事件
+  useEffect(() => {
+    const unlisten = onReattachTab((data) => {
+      if (data.type !== 'sql') return;
+      
+      const tabData = data.tabData as Partial<Tab>;
+      const newTab: Tab = {
+        ...createTab(tabData.id || `tab-${Date.now()}`),
+        ...tabData,
+        queryLoading: false,
+        treeLoading: false,
+        exportLoading: false,
+        results: [],
+        columns: [],
+        total: 0,
+        took: 0,
+        queryId: '',
+        allResults: [],
+        currentResultIndex: 0,
+        messages: [],
+      };
+      
+      setTabs(prev => [...prev, newTab]);
+      setActiveTabId(newTab.id);
+      console.log('[SQL] 放回标签页:', newTab.name);
+    });
+
+    return () => { unlisten.then(fn => fn()); };
+  }, []);
 
   // 获取项目列表
   useEffect(() => {
@@ -408,7 +439,7 @@ const SqlSearch = () => {
     });
   };
 
-  // 后端导出
+  // 后端导出（异步导出，后端发送邮件）
   const handleExport = async () => {
     const tab = currentTab;
     if (!tab.queryId) {
@@ -426,21 +457,28 @@ const SqlSearch = () => {
         db_name: tab.dbName
       });
       
-      // 处理文件下载
-      if (res instanceof Blob) {
-        const url = URL.createObjectURL(res);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `query_result_${new Date().toISOString().slice(0, 10)}.xlsx`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+      if (res.code === 200) {
+        // 导出请求成功，后端会异步处理并发送邮件
+        addMessage({
+          type: 'success',
+          title: 'SQL导出请求已提交',
+          content: res.message || '导出任务已提交，请稍后查收邮件',
+        });
+      } else {
+        updateTab(activeTabId, {
+          messages: [{ type: 'error', content: res.message || '导出失败' }]
+        });
       }
     } catch (error) {
       console.error('导出失败:', error);
       updateTab(activeTabId, {
         messages: [{ type: 'error', content: '导出失败，请稍后重试' }]
+      });
+      
+      addMessage({
+        type: 'error',
+        title: 'SQL导出失败',
+        content: '导出失败，请稍后重试',
       });
     } finally {
       updateTab(activeTabId, { exportLoading: false });
@@ -525,11 +563,17 @@ const SqlSearch = () => {
     if (tabs.length <= 1) {
       const newId = String(tabCounter + 1);
       setTabCounter(tabCounter + 1);
-      setTabs([createTab(newId)]);
+      const newTab = createTab(newId);
+      setTabs([newTab]);
       setActiveTabId(newId);
     } else {
-      // 从当前标签列表中移除
-      removeTab(tab.id);
+      // 从当前标签列表中移除，并切换到其他标签
+      const remainingTabs = tabs.filter(t => t.id !== tab.id);
+      setTabs(remainingTabs);
+      // 如果移除的是当前激活的标签，切换到第一个
+      if (activeTabId === tab.id && remainingTabs.length > 0) {
+        setActiveTabId(remainingTabs[0].id);
+      }
     }
   };
 

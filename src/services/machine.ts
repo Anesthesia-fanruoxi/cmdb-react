@@ -32,9 +32,10 @@ export async function getHardwareFingerprint(): Promise<string> {
  * 自动登录（Rust 端完成所有逻辑）
  * @param apiBase API 基础地址
  * @param userName 用户名
+ * @param version 应用版本号
  */
-export async function autoLogin(apiBase: string, userName: string): Promise<AutoLoginResult> {
-  return invoke<AutoLoginResult>('auto_login', { apiBase, userName })
+export async function autoLogin(apiBase: string, userName: string, version: string): Promise<AutoLoginResult> {
+  return invoke<AutoLoginResult>('auto_login', { apiBase, userName, version })
 }
 
 /**
@@ -43,14 +44,32 @@ export async function autoLogin(apiBase: string, userName: string): Promise<Auto
  * @param token 当前登录 token
  * @param userName 用户名
  * @param totpCode 双因子验证码
+ * @param version 应用版本号
  */
 export async function bindDevice(
   apiBase: string,
   token: string,
   userName: string,
+  totpCode: string,
+  version: string
+): Promise<void> {
+  return invoke('bind_device', { apiBase, token, userName, totpCode, version })
+}
+
+/**
+ * 解绑设备（需要双因子验证）
+ * @param apiBase API 基础地址
+ * @param token 当前登录 token
+ * @param userName 用户名
+ * @param totpCode 双因子验证码
+ */
+export async function unbindDevice(
+  apiBase: string,
+  token: string,
+  userName: string,
   totpCode: string
 ): Promise<void> {
-  return invoke('bind_device', { apiBase, token, userName, totpCode })
+  return invoke('unbind_device', { apiBase, token, userName, totpCode })
 }
 
 /**
@@ -67,4 +86,19 @@ export async function clearDeviceCredentials(userName?: string): Promise<void> {
  */
 export async function hasDeviceCredentials(userName?: string): Promise<boolean> {
   return invoke<boolean>('has_device_credentials', { userName })
+}
+
+/** 系统信息 */
+export interface SystemInfo {
+  os_name: string
+  os_version: string
+  process_memory: number
+  storage_size: number
+}
+
+/**
+ * 获取系统信息
+ */
+export async function getSystemInfo(): Promise<SystemInfo> {
+  return invoke<SystemInfo>('get_system_info')
 }

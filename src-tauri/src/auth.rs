@@ -252,6 +252,7 @@ pub async fn bind_device(
     token: &str,
     user_name: &str,
     totp_code: &str,
+    version: &str,
 ) -> Result<(), String> {
     let machine_id = get_hardware_fingerprint()?;
     let url = format!("{}/system/user/device/bind", api_base);
@@ -260,9 +261,9 @@ pub async fn bind_device(
     let resp = client.post(&url)
         .header("Authorization", format!("Bearer {}", token))
         .json(&serde_json::json!({
-            "user_name": user_name,
             "machine_id": machine_id,
-            "totp_code": totp_code
+            "totp_code": totp_code,
+            "version": version
         }))
         .send()
         .await
@@ -277,6 +278,7 @@ pub async fn bind_device(
     
     let data = result.data.ok_or("响应数据为空")?;
     
+    // user_name 从前端传入，用于本地存储凭证
     let credentials = DeviceCredentials {
         user_name: user_name.to_string(),
         machine_id,
@@ -284,6 +286,46 @@ pub async fn bind_device(
     };
     
     save_credentials(app_handle, &credentials)?;
+    Ok(())
+}
+
+/// 解绑响应
+#[derive(Deserialize)]
+pub struct UnbindResponse {
+    pub code: i32,
+    pub message: Option<String>,
+}
+
+/// 解绑设备（需要双因子验证）
+pub async fn unbind_device(
+    app_handle: &tauri::AppHandle,
+    api_base: &str,
+    token: &str,
+    user_name: &str,
+    totp_code: &str,
+) -> Result<(), String> {
+    let url = format!("{}/system/user/device/unbind", api_base);
+    
+    let client = reqwest::Client::new();
+    let resp = client.post(&url)
+        .header("Authorization", format!("Bearer {}", token))
+        .json(&serde_json::json!({
+            "totp_code": totp_code
+        }))
+        .send()
+        .await
+        .map_err(|e| format!("请求失败: {}", e))?;
+    
+    let result: UnbindResponse = resp.json().await
+        .map_err(|e| format!("解析响应失败: {}", e))?;
+    
+    if result.code != 200 {
+        return Err(result.message.unwrap_or("解绑失败".to_string()));
+    }
+    
+    // 删除本地凭证
+    remove_credentials_for_user(app_handle, user_name)?;
+    println!("[Auth] 设备解绑成功，已清除本地凭证");
     Ok(())
 }
 
@@ -321,6 +363,7 @@ pub async fn auto_login(
     app_handle: &tauri::AppHandle,
     api_base: &str,
     user_name: &str,
+    version: &str,
 ) -> AutoLoginResult {
     // 1. 读取指定用户的本地凭证
     let credentials = match load_credentials_by_user(app_handle, user_name) {
@@ -364,13 +407,19 @@ pub async fn auto_login(
         &credentials.machine_id
     ).await {
         Ok(c) => c,
-        Err(e) => return AutoLoginResult {
-            success: false,
-            token: None,
-            user_id: None,
-            user_name: None,
-            error: Some(e),
-        },
+        Err(e) => {
+            // 只有凭据过期或设备未绑定才清除本地凭证
+            if e.contains("过期") || e.contains("expired") || e.contains("未绑定") || e.contains("not bound") {
+                let _ = remove_credentials_for_user(app_handle, user_name);
+            }
+            return AutoLoginResult {
+                success: false,
+                token: None,
+                user_id: None,
+                user_name: None,
+                error: Some(e),
+            };
+        }
     };
     
     // 4. 生成签名
@@ -395,7 +444,8 @@ pub async fn auto_login(
             "machine_id": credentials.machine_id,
             "challenge": challenge_data.challenge,
             "timestamp": timestamp,
-            "signature": signature
+            "signature": signature,
+            "version": version
         }))
         .send()
         .await 
@@ -422,7 +472,12 @@ pub async fn auto_login(
     };
     
     if result.code != 200 {
-        let _ = remove_credentials(app_handle);
+        // 只有凭据过期才清除本地凭证（版本过低等情况不删除）
+        if let Some(ref msg) = result.message {
+            if msg.contains("过期") || msg.contains("expired") {
+                let _ = remove_credentials_for_user(app_handle, user_name);
+            }
+        }
         return AutoLoginResult {
             success: false,
             token: None,

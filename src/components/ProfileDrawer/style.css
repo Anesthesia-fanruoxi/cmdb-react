@@ -10,6 +10,12 @@
   bottom: 0;
   background: rgba(0, 0, 0, 0.3);
   z-index: 999;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .profile-drawer {
@@ -24,7 +30,7 @@
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  animation: slideIn 0.2s ease-out;
+  animation: slideIn 0.25s ease-out;
 }
 
 @keyframes slideIn {
