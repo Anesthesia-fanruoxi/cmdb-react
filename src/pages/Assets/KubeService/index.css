@@ -1,0 +1,145 @@
+/* K8s 服务管理页面样式 */
+.kube-service-page {
+  height: 100%;
+  padding: 20px;
+}
+
+.page-card {
+  height: 100%;
+  background: var(--bg-color, #fff);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color, #e8e8e8);
+}
+
+.card-header .title { font-size: 18px; font-weight: 600; }
+
+.card-body {
+  flex: 1;
+  overflow: auto;
+  padding: 20px;
+}
+
+.filter-section {
+  margin-bottom: 20px;
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.filter-label {
+  font-weight: 500;
+  color: var(--text-secondary, #666);
+  white-space: nowrap;
+}
+
+.radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.radio-item {
+  padding: 6px 14px;
+  border: 1px solid var(--border-color, #d9d9d9);
+  border-radius: 4px;
+  background: var(--bg-color, #fff);
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.radio-item:hover {
+  border-color: var(--primary-color, #1890ff);
+  color: var(--primary-color, #1890ff);
+}
+
+.radio-item.active {
+  background: var(--primary-color, #1890ff);
+  border-color: var(--primary-color, #1890ff);
+  color: #fff;
+}
+
+.search-input {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--border-color, #d9d9d9);
+  border-radius: 4px;
+  font-size: 13px;
+  width: 200px;
+}
+
+.table-container {
+  border: 1px solid var(--border-color, #e8e8e8);
+  border-radius: 4px;
+  overflow: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.data-table th, .data-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-color, #e8e8e8);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.data-table th {
+  background: var(--bg-secondary, #fafafa);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+}
+
+.port-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.port-tag.warning { background: #fff7e6; color: #fa8c16; border: 1px solid #ffd591; }
+.port-tag.success { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+
+.port-tag:hover { opacity: 0.8; }
+
+.port-row { margin-bottom: 5px; }
+.port-row:last-child { margin-bottom: 0; }
+
+.access-link {
+  color: var(--primary-color, #1890ff);
+  text-decoration: none;
+}
+
+.access-link:hover { text-decoration: underline; }
+
+.copyable {
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.copyable:hover { color: var(--primary-color, #1890ff); }
+
+.loading-cell, .empty-cell {
+  text-align: center;
+  padding: 40px !important;
+  color: var(--text-secondary, #999);
+}

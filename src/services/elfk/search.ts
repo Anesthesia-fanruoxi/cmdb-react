@@ -67,19 +67,33 @@ export interface SearchResult {
 
 /** 上下文参数 */
 export interface ContextParams {
+  log_type?: string;
   project: string;
-  index: string;
-  doc_id: string;
-  time_field: string;
-  timestamp: string;
-  size?: number;
+  // ELFK 类型
+  doc_id?: string;
+  index?: string;
+  before?: number;
+  after?: number;
+  sort_field?: string;
+  _source?: boolean;
+  // SLS 类型
+  logstore?: string;
+  pack_id?: string;
+  pack_meta?: string;
+  back_lines?: number;
+  forward_lines?: number;
+  index_pattern?: string;
 }
 
 /** 上下文结果 */
 export interface ContextResult {
   before: LogHit[];
-  current: LogHit;
+  center: LogHit;
   after: LogHit[];
+  total?: number;
+  before_total?: number;
+  after_total?: number;
+  took?: number;
 }
 
 /** 字段分析参数 */

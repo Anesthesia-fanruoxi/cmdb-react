@@ -18,6 +18,7 @@ interface Props {
   projectInfo: ProjectInfo | null;
   currentView: ViewDetail | null;
   loading: boolean;
+  initialKeyword?: string;
   onViewChange: (view: ViewDetail) => void;
   onSearch: (params: Record<string, unknown>) => void;
   onReset: () => void;
@@ -61,14 +62,21 @@ const saveHistory = (keyword: string) => {
   localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, MAX_HISTORY)));
 };
 
-const SearchForm = ({ projectInfo, currentView, loading, onViewChange, onSearch, onReset }: Props) => {
+const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, onViewChange, onSearch, onReset }: Props) => {
   const [allViews, setAllViews] = useState<ViewListItem[]>([]);
   const [viewLoading, setViewLoading] = useState(false);
   const [timeRange, setTimeRange] = useState(getTodayRange);
-  const [localKeyword, setLocalKeyword] = useState('');
+  const [localKeyword, setLocalKeyword] = useState(initialKeyword || '');
   const [historyVisible, setHistoryVisible] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const historyRef = useRef<HTMLDivElement>(null);
+
+  // 同步外部传入的 keyword
+  useEffect(() => {
+    if (initialKeyword !== undefined) {
+      setLocalKeyword(initialKeyword);
+    }
+  }, [initialKeyword]);
 
   // 根据分类过滤视图
   const views = projectInfo?.category

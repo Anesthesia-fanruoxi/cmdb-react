@@ -223,8 +223,21 @@ const ElfkSearch = () => {
     await handleSearch({ ...activeTab.lastParams, sort_order: sortOrder });
   };
 
-  const handlePageData = (data: { logs: LogHit[]; page: number; pages: number }) => {
-    if (activeTab) updateTab(activeTab.id, { logs: data.logs, lastParams: { ...activeTab.lastParams, page: data.page, pages: data.pages } });
+  const handlePageData = (data: { logs: LogHit[]; page: number; pages: number; append?: boolean }) => {
+    if (!activeTab) return;
+    if (data.append) {
+      // 滚动加载：追加数据
+      updateTab(activeTab.id, { 
+        logs: [...activeTab.logs, ...data.logs], 
+        lastParams: { ...activeTab.lastParams, page: data.page, pages: data.pages } 
+      });
+    } else {
+      // 翻页：替换数据
+      updateTab(activeTab.id, { 
+        logs: data.logs, 
+        lastParams: { ...activeTab.lastParams, page: data.page, pages: data.pages } 
+      });
+    }
   };
 
   return (
@@ -250,6 +263,7 @@ const ElfkSearch = () => {
               projectInfo={activeTab.projectInfo}
               currentView={activeTab.currentView}
               loading={activeTab.loading}
+              initialKeyword={activeTab.keyword}
               onViewChange={handleViewChange}
               onSearch={handleSearch}
               onReset={() => activeTab && updateTab(activeTab.id, { logs: [], total: 0, keyword: '', lastParams: {} })}

@@ -1,13 +1,15 @@
 /**
  * 日志列表面板 - JSON 格式展示
+ * 支持滚动自动加载和分页
  */
 
-import { useState } from 'react';
-import { ArrowUp, ArrowDown, BarChart3, Download } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { ArrowUp, ArrowDown, BarChart3, Download, Loader2, FileText } from 'lucide-react';
 import { useAuthStore } from '../../../../stores/authStore';
 import { useMessageStore } from '../../../../stores/messageStore';
 import { searchLogsPage } from '../../../../services/elfk/search';
 import ExportDialog from './ExportDialog';
+import ContextDrawer from './ContextDrawer';
 import toast from '../../../../components/Toast';
 import type { LogHit } from '../../../../services/elfk/search';
 import type { ViewDetail } from '../../../../services/elfk/view';
@@ -21,12 +23,11 @@ interface LogsPanelProps {
   selectedFields: string[];
   searchParams?: Record<string, unknown>;
   onSortChange?: (sortOrder: string) => void;
-  onPageData?: (data: { logs: LogHit[]; page: number; pages: number }) => void;
+  onPageData?: (data: { logs: LogHit[]; page: number; pages: number; append?: boolean }) => void;
   onLoadingChange?: (loading: boolean) => void;
   onAnalysis?: () => void;
 }
 
-// 字段类型颜色
 const typeColors: Record<string, string> = {
   string: '#3a8ee6', number: '#529b2e', boolean: '#b88230',
   date: '#c45656', array: '#737579', object: '#8b5da7',
@@ -37,6 +38,14 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
   const [currentPage, setCurrentPage] = useState(1);
   const [pageLoading, setPageLoading] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
+  const [jumpPage, setJumpPage] = useState('');
+  const [contextLog, setContextLog] = useState<LogHit | null>(null);
+  
+  // 滚动加载相关状态
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasReachedBottom, setHasReachedBottom] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const scrollTimerRef = useRef<number | null>(null);
 
   const hasPermission = useAuthStore(s => s.hasPermission);
   const addMessage = useMessageStore(s => s.addMessage);
@@ -44,8 +53,18 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
   const timeField = currentView?.time_field || '@timestamp';
   const totalPages = searchParams?.pages as number || 1;
   const queryId = searchParams?.query_id as string || '';
+  const hasMore = currentPage < totalPages;
 
-  // 格式化时间
+  // 监听 searchParams 变化，重置分页状态
+  useEffect(() => {
+    if (searchParams?.page) {
+      setCurrentPage(searchParams.page as number);
+      if (searchParams.page === 1) {
+        setHasReachedBottom(false);
+      }
+    }
+  }, [searchParams?.query_id, searchParams?.page]);
+
   const formatTime = (value: unknown) => {
     if (!value) return '-';
     try {
@@ -59,7 +78,6 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
     } catch { return String(value); }
   };
 
-  // 高亮关键词
   const highlightText = (text: string) => {
     if (!keyword || !text) return text;
     const keywords = keyword.split(/\s+(?:and|or|not)\s+/i).filter(Boolean);
@@ -90,18 +108,23 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
     return log._source ? { ...log._source, _id: log._id, _index: log._index } : { ...log } as Record<string, unknown>;
   };
 
-  // 切换排序
   const handleSortToggle = () => {
     const newOrder = sortOrder === 'asc' ? 'desc' : 'asc';
     setSortOrder(newOrder);
     onSortChange?.(newOrder);
   };
 
-  // 分页
-  const handlePageChange = async (page: number) => {
-    if (!queryId || page < 1 || page > totalPages || pageLoading) return;
-    setPageLoading(true);
+  // 获取分页数据
+  const fetchPageData = useCallback(async (page: number, append: boolean) => {
+    if (!queryId || pageLoading || isLoadingMore) return;
+    
+    if (append) {
+      setIsLoadingMore(true);
+    } else {
+      setPageLoading(true);
+    }
     onLoadingChange?.(true);
+
     try {
       const res = await searchLogsPage({ 
         query_id: queryId, 
@@ -112,16 +135,86 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
         start_time: searchParams?.start_time as string || '',
         end_time: searchParams?.end_time as string || '',
       } as any);
+
       if (res.code === 200 && res.data) {
         setCurrentPage(page);
-        onPageData?.({ logs: res.data.hits || [], page, pages: res.data.pages || 1 });
+        onPageData?.({ 
+          logs: res.data.hits || [], 
+          page, 
+          pages: res.data.pages || 1,
+          append 
+        });
+        
+        if (append) {
+          setHasReachedBottom(false);
+        } else if (contentRef.current) {
+          contentRef.current.scrollTop = 0;
+        }
       }
     } catch (err) {
       console.error('分页查询失败:', err);
     } finally {
       setPageLoading(false);
+      setIsLoadingMore(false);
       onLoadingChange?.(false);
     }
+  }, [queryId, searchParams, pageLoading, isLoadingMore, onPageData, onLoadingChange]);
+
+  // 点击分页按钮（清空替换）
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    fetchPageData(page, false);
+  };
+
+  // 滚动加载更多（追加）
+  const loadMoreData = useCallback(() => {
+    if (isLoadingMore || !hasMore) return;
+    const nextPage = currentPage + 1;
+    if (nextPage <= totalPages) {
+      fetchPageData(nextPage, true);
+    }
+  }, [currentPage, totalPages, hasMore, isLoadingMore, fetchPageData]);
+
+  // 处理滚动事件
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLDivElement;
+    
+    if (scrollTimerRef.current) {
+      cancelAnimationFrame(scrollTimerRef.current);
+    }
+
+    scrollTimerRef.current = requestAnimationFrame(() => {
+      const { scrollTop, scrollHeight, clientHeight } = target;
+      const distanceToBottom = scrollHeight - scrollTop - clientHeight;
+      const threshold = 100;
+
+      if (distanceToBottom < threshold && !isLoadingMore && hasMore && queryId) {
+        if (!hasReachedBottom) {
+          // 第一次到达底部，标记
+          setHasReachedBottom(true);
+        } else {
+          // 第二次滚动，触发加载
+          setHasReachedBottom(false);
+          loadMoreData();
+        }
+      } else if (distanceToBottom > threshold + 50) {
+        // 离开底部区域，重置标记
+        if (hasReachedBottom) {
+          setHasReachedBottom(false);
+        }
+      }
+    });
+  }, [isLoadingMore, hasMore, queryId, hasReachedBottom, loadMoreData]);
+
+  // 跳页
+  const handleJumpPage = () => {
+    const page = parseInt(jumpPage);
+    if (isNaN(page) || page < 1 || page > totalPages) {
+      toast.warning(`请输入 1-${totalPages} 之间的页码`);
+      return;
+    }
+    setJumpPage('');
+    handlePageChange(page);
   };
 
   const handleExportSuccess = (filePath: string) => {
@@ -138,7 +231,6 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
 
   return (
     <div className="logs-panel">
-      {/* 头部 */}
       <div className="logs-header">
         <div className="header-left">
           <span className="title">查询结果</span>
@@ -159,9 +251,8 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
         </div>
       </div>
 
-      {/* 日志内容 */}
-      <div className="logs-content">
-        {isLoading ? (
+      <div className="logs-content" ref={contentRef} onScroll={handleScroll}>
+        {isLoading && logs.length === 0 ? (
           <div className="logs-loading">加载中...</div>
         ) : logs.length === 0 ? (
           <div className="logs-empty">暂无数据</div>
@@ -188,7 +279,6 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
                     {Object.entries(data)
                       .filter(([key]) => {
                         if (key === timeField || key.startsWith('_') || key === '__tag__:__path__') return false;
-                        // 如果有选中字段，只显示选中的
                         if (selectedFields.length > 0) return selectedFields.includes(key);
                         return true;
                       })
@@ -203,29 +293,85 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
                         );
                       })}
                   </div>
+                  <div className="log-actions">
+                    <button className="btn-context" onClick={() => setContextLog(log)}>
+                      <FileText size={12} /> 上下文
+                    </button>
+                  </div>
                 </div>
               );
             })}
+            
+            {/* 加载更多提示 */}
+            {isLoadingMore && (
+              <div className="loading-more">
+                <Loader2 size={16} className="spin" />
+                <span>加载中...</span>
+              </div>
+            )}
+            
+            {/* 没有更多数据 */}
+            {!hasMore && logs.length > 0 && (
+              <div className="no-more-data">没有更多数据了</div>
+            )}
           </div>
         )}
       </div>
 
-      {/* 分页 */}
       <div className="logs-pagination">
-        <span className="page-info">共 {total} 条，第 {currentPage}/{totalPages} 页</span>
+        <span className="page-info">共 {total} 条</span>
         <div className="page-btns">
-          <button disabled={currentPage <= 1 || isLoading} onClick={() => handlePageChange(currentPage - 1)}>上一页</button>
-          <button disabled={currentPage >= totalPages || isLoading} onClick={() => handlePageChange(currentPage + 1)}>下一页</button>
+          <button disabled={currentPage <= 1 || isLoading} onClick={() => handlePageChange(currentPage - 1)}>«</button>
+          {(() => {
+            const pages: (number | string)[] = [];
+            const maxShow = 7;
+            if (totalPages <= maxShow) {
+              for (let i = 1; i <= totalPages; i++) pages.push(i);
+            } else {
+              pages.push(1);
+              if (currentPage > 4) pages.push('...');
+              const start = Math.max(2, currentPage - 2);
+              const end = Math.min(totalPages - 1, currentPage + 2);
+              for (let i = start; i <= end; i++) pages.push(i);
+              if (currentPage < totalPages - 3) pages.push('...');
+              pages.push(totalPages);
+            }
+            return pages.map((p, i) => 
+              typeof p === 'number' ? (
+                <button key={i} className={p === currentPage ? 'active' : ''} onClick={() => handlePageChange(p)} disabled={isLoading}>{p}</button>
+              ) : (
+                <span key={i} className="page-ellipsis">...</span>
+              )
+            );
+          })()}
+          <button disabled={currentPage >= totalPages || isLoading} onClick={() => handlePageChange(currentPage + 1)}>»</button>
+          <div className="page-jump">
+            <input 
+              type="text" 
+              value={jumpPage} 
+              onChange={e => setJumpPage(e.target.value.replace(/\D/g, ''))}
+              onKeyDown={e => e.key === 'Enter' && handleJumpPage()}
+              placeholder={String(currentPage)}
+            />
+            <span>/ {totalPages}</span>
+          </div>
         </div>
       </div>
 
-      {/* 导出弹框 */}
       <ExportDialog
         visible={showExportDialog}
         currentView={currentView}
         searchParams={searchParams}
         onClose={() => setShowExportDialog(false)}
         onSuccess={handleExportSuccess}
+      />
+
+      <ContextDrawer
+        visible={!!contextLog}
+        log={contextLog}
+        currentView={currentView}
+        searchParams={searchParams || {}}
+        onClose={() => setContextLog(null)}
       />
     </div>
   );

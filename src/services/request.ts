@@ -257,6 +257,43 @@ export const apiClient = {
   delete<T>(url: string, config?: RequestConfig) {
     return request<T>('DELETE', url, undefined, config);
   },
+
+  /**
+   * 文件上传
+   */
+  async upload<T>(url: string, formData: FormData, config?: RequestConfig): Promise<ApiResponse<T>> {
+    const fullUrl = url.startsWith('http') ? url : `${BASE_URL}${url}`;
+    const token = getToken();
+
+    const headers: Record<string, string> = { ...config?.headers };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), config?.timeout || 300000);
+
+      const response = await fetch(fullUrl, {
+        method: 'POST',
+        headers,
+        body: formData,
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      const responseText = await response.text();
+      const responseData = protectBigInt(responseText);
+
+      if (!response.ok) {
+        const errorData = responseData as { code?: number; message?: string };
+        throw new RequestError(errorData?.code || response.status, errorData?.message || '上传失败');
+      }
+
+      return parseApiResponse<T>(responseData);
+    } catch (error) {
+      if (error instanceof RequestError) throw error;
+      throw new RequestError(-1, '上传失败', error instanceof Error ? error.message : String(error));
+    }
+  },
 };
 
 export default apiClient;
