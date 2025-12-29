@@ -1,0 +1,197 @@
+/**
+ * SQL查询页面 - 编辑器样式
+ */
+
+.sql-editor {
+  background: var(--bg-color);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
+  max-height: 400px;
+}
+
+.editor-toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.editor-wrapper {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.editor-highlight, .editor-textarea {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  padding: 12px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow: auto;
+}
+
+.editor-highlight {
+  color: var(--text-color);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.editor-textarea {
+  background: transparent;
+  color: transparent;
+  caret-color: var(--text-color);
+  border: none;
+  resize: none;
+  z-index: 2;
+}
+
+.editor-textarea:focus { outline: none; }
+
+/* 语法高亮 */
+.hl-keyword { color: #7c3aed; font-weight: 500; }
+.hl-string { color: #059669; }
+.hl-number { color: #d97706; }
+.hl-comment { color: #9ca3af; font-style: italic; }
+.hl-placeholder { color: var(--text-muted); }
+
+/* 工作区工具栏 */
+.workspace-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  flex-shrink: 0;
+}
+
+.toolbar-left { display: flex; align-items: center; gap: 8px; }
+
+.toolbar-shortcuts { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.shortcut-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 3px 8px;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  white-space: nowrap;
+}
+
+.shortcut-hint:hover {
+  border-color: var(--primary-color);
+  color: var(--text-secondary);
+}
+
+.auto-expand-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  margin-left: 8px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.auto-expand-toggle:hover { background: var(--bg-hover); }
+.auto-expand-toggle input { cursor: pointer; accent-color: var(--primary-color); }
+
+/* 编辑器容器 */
+.editor-container {
+  position: relative;
+  transition: height 0.2s ease;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.editor-container.focused { box-shadow: inset 0 0 0 2px var(--primary-color); }
+
+.editor-container .sql-editor {
+  height: 100%;
+  min-height: unset;
+  max-height: unset;
+  border-bottom: none;
+}
+
+.editor-container .editor-wrapper { height: 100%; }
+
+/* 拖动条 */
+.editor-resize-handle {
+  height: 10px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  cursor: ns-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.editor-resize-handle:hover,
+.editor-resize-handle.dragging { background: var(--bg-hover); }
+
+.resize-handle-bar {
+  width: 50px; height: 4px;
+  background: var(--border-color);
+  border-radius: 2px;
+  transition: all 0.15s;
+}
+
+.editor-resize-handle:hover .resize-handle-bar,
+.editor-resize-handle.dragging .resize-handle-bar {
+  background: var(--primary-color);
+  width: 60px;
+}
+
+/* 消息面板 */
+.messages-panel {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  flex-shrink: 0;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.message {
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.message:last-child { margin-bottom: 0; }
+
+.message-error {
+  background: rgba(255, 77, 79, 0.1);
+  color: #ff4d4f;
+  border: 1px solid rgba(255, 77, 79, 0.2);
+}
+
+.message-warning {
+  background: rgba(250, 173, 20, 0.1);
+  color: #faad14;
+  border: 1px solid rgba(250, 173, 20, 0.2);
+}
+
+.message-info {
+  background: rgba(102, 126, 234, 0.1);
+  color: var(--primary-color);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+}

@@ -1,0 +1,111 @@
+/* ELFK 日志搜索 - 项目选择面板 */
+
+.project-select-panel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary, #fff);
+  border-radius: 8px;
+  margin: 12px;
+  overflow-y: auto;
+}
+
+.loading-state {
+  color: var(--text-secondary, #666);
+  font-size: 14px;
+}
+
+.select-container {
+  width: 100%;
+  max-width: 900px;
+  padding: 32px;
+}
+
+.select-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.select-header h3 {
+  margin: 0 0 8px;
+  font-size: 20px;
+  color: var(--text-primary, #333);
+}
+
+.select-header p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-secondary, #666);
+}
+
+/* 项目分组 */
+.project-group {
+  margin-bottom: 24px;
+}
+
+.project-group.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.group-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-secondary, #666);
+  margin-bottom: 12px;
+}
+
+.group-icon { font-size: 16px; }
+
+.group-tip {
+  font-size: 12px;
+  color: var(--text-secondary, #999);
+  margin-left: 8px;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.empty-tip {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 20px;
+  color: var(--text-secondary, #999);
+  font-size: 13px;
+}
+
+.select-card {
+  padding: 16px 12px;
+  background: var(--bg-secondary, #fafafa);
+  border: 1px solid var(--border-color, #e8e8e8);
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.select-card:hover {
+  border-color: var(--primary-color, #1890ff);
+  background: var(--bg-hover, #f0f7ff);
+}
+
+.select-card.active {
+  border-color: var(--primary-color, #1890ff);
+  background: #e6f7ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.select-card.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.select-card .card-icon { font-size: 24px; margin-bottom: 8px; }
+.select-card .card-name { font-size: 13px; color: var(--text-primary, #333); margin-bottom: 2px; }
+.select-card .card-key { font-size: 11px; color: var(--text-secondary, #999); }

@@ -1,0 +1,126 @@
+/**
+ * 部门表单样式
+ */
+
+.dept-form-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-color);
+  color: var(--text-color);
+}
+
+.dept-form-container .form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.dept-form-container .form-header h4 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.dept-form-container .close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-muted);
+  line-height: 1;
+  padding: 0;
+}
+
+.dept-form-container .close-btn:hover {
+  color: var(--text-color);
+}
+
+.dept-form-container .form-body {
+  flex: 1;
+  padding: 20px;
+  overflow: auto;
+}
+
+.dept-form-container .form-item {
+  margin-bottom: 16px;
+}
+
+.dept-form-container .form-item label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.dept-form-container .form-item .required {
+  color: var(--danger-color);
+}
+
+.dept-form-container .form-item input,
+.dept-form-container .form-item select,
+.dept-form-container .form-item textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color-dark);
+  border-radius: 6px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.dept-form-container .form-item input:focus,
+.dept-form-container .form-item select:focus,
+.dept-form-container .form-item textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.dept-form-container .form-item textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.dept-form-container .form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.dept-form-container .btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dept-form-container .btn-primary {
+  background: var(--primary-color);
+  color: #fff;
+}
+
+.dept-form-container .btn-primary:hover {
+  background: var(--primary-hover);
+}
+
+.dept-form-container .btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.dept-form-container .btn-default {
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+}
+
+.dept-form-container .btn-default:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}

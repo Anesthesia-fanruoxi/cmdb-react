@@ -1,0 +1,74 @@
+/**
+ * SQL查询页面 - ACE 编辑器样式
+ */
+
+.ace-editor {
+  width: 100%;
+  height: 100%;
+  font-family: 'Consolas', 'Monaco', 'Menlo', monospace;
+}
+
+.sql-editor .ace-editor { border-radius: 0; }
+
+/* ACE 自动补全弹窗 */
+.ace_autocomplete {
+  width: 400px !important;
+  background: var(--bg-color) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  font-family: 'Consolas', 'Monaco', monospace !important;
+  font-size: 13px !important;
+}
+
+.ace_autocomplete .ace_line { padding: 4px 8px !important; }
+
+.ace_autocomplete .ace_line-hover,
+.ace_autocomplete .ace_selected {
+  background: var(--primary-color) !important;
+  color: #fff !important;
+}
+
+.ace_autocomplete .ace_completion-highlight {
+  color: var(--primary-color) !important;
+  font-weight: 600 !important;
+}
+
+.ace_autocomplete .ace_selected .ace_completion-highlight { color: #fff !important; }
+
+.ace_autocomplete_item { display: flex; align-items: center; padding: 4px 8px; gap: 8px; }
+
+.ace_autocomplete_type {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  padding: 2px 6px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.ace_autocomplete .ace_selected .ace_autocomplete_type {
+  background: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* 文档提示框 */
+.ace_doc-tooltip {
+  background: var(--bg-color) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  padding: 8px 12px !important;
+  max-width: 300px !important;
+  font-size: 12px !important;
+}
+
+.doc-content { line-height: 1.5; }
+.doc-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.doc-field-name { font-weight: 600; color: var(--text-color); }
+.doc-type { font-size: 11px; background: var(--bg-secondary); padding: 2px 6px; border-radius: 3px; color: #059669; }
+.doc-table { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+.doc-label { color: var(--text-muted); }
+.doc-value { color: var(--primary-color); }
+.doc-comment { color: var(--text-secondary); font-size: 12px; }
+.doc-badge { margin-top: 6px; font-size: 11px; color: #ff4d4f; }

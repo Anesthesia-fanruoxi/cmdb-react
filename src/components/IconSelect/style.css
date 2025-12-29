@@ -1,0 +1,251 @@
+/**
+ * 图标选择器样式
+ */
+
+.icon-select {
+  position: relative;
+  width: 100%;
+}
+
+.icon-select-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color-dark);
+  border-radius: 6px;
+  background: var(--bg-color);
+  cursor: pointer;
+  min-height: 38px;
+}
+
+.icon-select-trigger:hover {
+  border-color: var(--primary-color);
+}
+
+.icon-select-trigger .icon-name {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.icon-select-trigger .placeholder {
+  flex: 1;
+  color: var(--text-muted);
+}
+
+.icon-select-trigger .arrow {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* 弹窗遮罩 */
+.icon-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+}
+
+/* 弹窗主体 */
+.icon-modal {
+  background: var(--bg-color);
+  border-radius: 12px;
+  width: 720px;
+  max-width: 90vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-md);
+}
+
+.icon-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.icon-modal-header h4 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--text-color);
+}
+
+.icon-modal-header .close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-muted);
+  line-height: 1;
+  padding: 0;
+}
+
+.icon-modal-header .close-btn:hover {
+  color: var(--text-color);
+}
+
+/* 搜索框 */
+.icon-modal-search {
+  position: relative;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.icon-modal-search .search-icon {
+  position: absolute;
+  left: 32px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+}
+
+.icon-modal-search input {
+  width: 100%;
+  padding: 10px 36px;
+  border: 1px solid var(--border-color-dark);
+  border-radius: 8px;
+  font-size: 14px;
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  box-sizing: border-box;
+}
+
+.icon-modal-search input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  background: var(--bg-color);
+}
+
+.icon-modal-search .clear-btn {
+  position: absolute;
+  right: 32px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+}
+
+.icon-modal-search .clear-btn:hover {
+  color: var(--text-color);
+}
+
+/* 弹窗内容 */
+.icon-modal-body {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 分类标签 */
+.category-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-color);
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+.category-tab {
+  padding: 6px 12px;
+  border: none;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.category-tab:hover {
+  background: var(--bg-hover);
+  color: var(--text-color);
+}
+
+.category-tab.active {
+  background: var(--primary-color);
+  color: #fff;
+}
+
+/* 图标列表 */
+.icon-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+
+.icon-category {
+  margin-bottom: 20px;
+}
+
+.icon-category:last-child {
+  margin-bottom: 0;
+}
+
+.category-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 8px;
+}
+
+.icon-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text-color);
+  transition: all 0.2s;
+}
+
+.icon-item:hover {
+  background: var(--bg-hover);
+  color: var(--primary-color);
+}
+
+.icon-item.selected {
+  background: var(--primary-color);
+  color: #fff;
+}
+
+.icon-item .icon-label {
+  font-size: 11px;
+  color: inherit;
+  opacity: 0.7;
+  text-align: center;
+  word-break: break-all;
+  line-height: 1.2;
+}
+
+.no-result {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-muted);
+}

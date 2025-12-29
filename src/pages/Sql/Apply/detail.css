@@ -1,0 +1,50 @@
+/**
+ * 详情页样式
+ */
+
+/* 详情内容 */
+.detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detail-card {
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.detail-card .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  font-weight: 500;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 16px;
+}
+
+.info-item { display: flex; font-size: 14px; }
+.info-item.full-width { grid-column: 1 / -1; }
+.info-item .label { color: var(--text-secondary); margin-right: 8px; white-space: nowrap; }
+.info-item .value { color: var(--text-color); }
+
+.sql-content {
+  margin: 0;
+  padding: 16px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 13px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 300px;
+  overflow: auto;
+  background: var(--bg-secondary);
+}

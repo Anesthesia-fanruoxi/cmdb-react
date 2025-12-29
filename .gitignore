@@ -1,0 +1,9 @@
+/dist
+/cmdb-ui
+/node_modules
+.idea
+.kiro
+.env
+.vscode
+/src-tauri
+*.md

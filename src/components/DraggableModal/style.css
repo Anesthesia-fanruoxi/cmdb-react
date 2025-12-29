@@ -1,0 +1,74 @@
+/**
+ * 可拖拽弹窗样式
+ */
+
+.draggable-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+.draggable-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  background: var(--bg-color);
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg, 0 8px 24px rgba(0, 0, 0, 0.2));
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.2s;
+}
+
+.draggable-modal.dragging {
+  cursor: grabbing;
+  user-select: none;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+}
+
+.draggable-modal.near-edge {
+  box-shadow: 0 0 0 3px var(--primary-color), 0 12px 32px rgba(0, 0, 0, 0.3);
+}
+
+.draggable-modal .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  cursor: grab;
+}
+
+.draggable-modal.dragging .modal-header {
+  cursor: grabbing;
+}
+
+.draggable-modal .modal-header h4 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--text-color);
+}
+
+.draggable-modal .close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-muted);
+  line-height: 1;
+  padding: 0;
+}
+
+.draggable-modal .close-btn:hover {
+  color: var(--text-color);
+}
+
+.draggable-modal .modal-body {
+  flex: 1;
+  overflow: auto;
+}

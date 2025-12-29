@@ -1,0 +1,170 @@
+/**
+ * 表单样式
+ */
+
+/* 创建表单布局 */
+.create-form {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.create-form .form-layout {
+  display: flex;
+  gap: 24px;
+  flex: 1;
+  min-height: 0;
+}
+
+.create-form .form-left { width: 360px; flex-shrink: 0; }
+.create-form .form-right { flex: 1; display: flex; flex-direction: column; }
+
+.create-form .sql-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: var(--text-color);
+}
+
+.create-form .sql-header .hint { font-size: 12px; color: var(--text-muted); }
+
+.create-form .sql-editor {
+  flex: 1;
+  min-height: 300px;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 13px;
+  resize: none;
+  background: var(--bg-color);
+  color: var(--text-color);
+}
+
+/* 表单项 - 行内布局 */
+.form-item { margin-bottom: 20px; }
+.form-item-inline { display: flex; align-items: flex-start; }
+
+.form-item-inline > label {
+  width: 80px;
+  flex-shrink: 0;
+  font-size: 14px;
+  color: var(--text-color);
+  line-height: 40px;
+  text-align: right;
+  padding-right: 12px;
+}
+
+.form-item-inline > label .required { color: var(--danger-color); margin-right: 4px; }
+
+.form-item-inline > select,
+.form-item-inline > input[type="text"],
+.form-item-inline > input[type="datetime-local"] {
+  flex: 1;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  box-sizing: border-box;
+}
+
+.form-item-inline > textarea {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  font-family: inherit;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 100px;
+}
+
+.form-item-inline > select:focus,
+.form-item-inline > textarea:focus,
+.form-item-inline > input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.form-item-inline > select:disabled,
+.form-item-inline > input:disabled {
+  background: var(--bg-secondary);
+  cursor: not-allowed;
+}
+
+.form-item-inline .switch-row { flex: 1; height: 40px; }
+
+.form-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+/* Switch 开关样式 */
+.switch-row { display: flex; align-items: center; gap: 12px; }
+.switch-text { font-size: 14px; color: var(--text-muted); transition: color 0.2s; }
+.switch-text.active { color: var(--primary-color); font-weight: 500; }
+
+.switch { position: relative; display: inline-block; width: 44px; height: 22px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+
+.switch .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #ccc;
+  transition: 0.3s;
+  border-radius: 22px;
+}
+
+.switch .slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+.switch input:checked + .slider { background-color: var(--primary-color); }
+.switch input:checked + .slider:before { transform: translateX(22px); }
+
+/* Ace 编辑器容器 */
+.sql-editor-wrapper {
+  flex: 1;
+  position: relative;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  overflow: hidden;
+  transition: border-color 0.3s;
+  min-height: 300px;
+}
+
+.sql-editor-wrapper.drag-over { border-color: var(--primary-color); border-style: dashed; }
+.sql-editor-wrapper .ace-editor-container { width: 100%; height: 100%; min-height: 300px; }
+
+.sql-editor-wrapper .drag-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(102, 126, 234, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  pointer-events: none;
+  font-size: 14px;
+  color: var(--primary-color);
+}

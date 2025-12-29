@@ -1,0 +1,355 @@
+/**
+ * 侧边栏样式
+ */
+
+.app-sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 220px;
+  height: 100vh;
+  background: #001529;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease;
+  overflow: hidden;
+  z-index: 100;
+}
+
+.app-sidebar.collapsed {
+  width: 64px;
+}
+
+/* Logo 区域 */
+.sidebar-logo {
+  height: 60px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  background: #002140;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.sidebar-logo:hover {
+  background: #003154;
+}
+
+.logo-icon {
+  font-size: 24px;
+  min-width: 32px;
+  text-align: center;
+}
+
+.logo-text {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  margin-left: 12px;
+  white-space: nowrap;
+}
+
+/* 导航区域 */
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 菜单列表 */
+.menu-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px 0;
+}
+
+.menu-item-wrapper {
+  margin: 0;
+  padding: 0;
+}
+
+/* 菜单项 */
+.menu-item {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: left;
+}
+
+.menu-item:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.menu-item.active {
+  color: #fff;
+  background: #1890ff;
+}
+
+.menu-item.active:hover {
+  background: #40a9ff;
+}
+
+/* 菜单图标 */
+.menu-icon {
+  font-size: 16px;
+  min-width: 24px;
+  margin-right: 10px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.menu-item:hover .menu-icon,
+.menu-item.active .menu-icon {
+  color: #fff;
+}
+
+.app-sidebar.collapsed .menu-icon {
+  margin-right: 0;
+}
+
+/* 菜单文字 */
+.menu-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 展开箭头 */
+.menu-arrow {
+  font-size: 10px;
+  transition: transform 0.3s;
+  margin-left: 8px;
+}
+
+.menu-arrow.expanded {
+  transform: rotate(90deg);
+}
+
+/* 子菜单 */
+.sub-menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.sub-menu .menu-item {
+  padding-left: 48px;
+  font-size: 13px;
+}
+
+.sub-menu .menu-item.active {
+  background: transparent;
+  color: #1890ff;
+}
+
+.sub-menu .menu-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #1890ff;
+}
+
+/* 折叠状态 */
+.app-sidebar.collapsed .menu-label,
+.app-sidebar.collapsed .menu-arrow,
+.app-sidebar.collapsed .logo-text {
+  display: none;
+}
+
+.app-sidebar.collapsed .menu-item {
+  justify-content: center;
+  padding: 12px 0;
+}
+
+.app-sidebar.collapsed .sub-menu {
+  display: none;
+}
+
+
+/* 底部用户区域 */
+.sidebar-footer {
+  padding: 12px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer-collapsed {
+  display: flex;
+  justify-content: center;
+}
+
+.footer-expanded {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.footer-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  border-radius: 8px;
+  position: relative;
+  color: #fff;
+}
+
+.footer-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.footer-icon-btn svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 2;
+}
+
+.footer-icon-btn .badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  font-size: 10px;
+  color: #fff;
+  background: #ff4d4f;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.footer-icon-btn.bell-shake {
+  animation: bell-shake 2s ease-in-out infinite;
+}
+
+@keyframes bell-shake {
+  0%, 100% { transform: rotate(0); }
+  5%, 15% { transform: rotate(-12deg); }
+  10%, 20% { transform: rotate(12deg); }
+  25% { transform: rotate(0); }
+}
+
+.footer-user {
+  position: relative;
+}
+
+.footer-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.footer-avatar:hover {
+  transform: scale(1.05);
+}
+
+.footer-dropdown {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  margin-bottom: 8px;
+  min-width: 160px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  overflow: hidden;
+}
+
+:root.dark .footer-dropdown {
+  background: #1f1f1f;
+  border: 1px solid #333;
+}
+
+.footer-dropdown .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+  color: #333;
+  font-size: 13px;
+  transition: background 0.2s;
+}
+
+:root.dark .footer-dropdown .dropdown-item {
+  color: #e5e5e5;
+}
+
+.footer-dropdown .dropdown-item:hover {
+  background: #f5f5f5;
+}
+
+:root.dark .footer-dropdown .dropdown-item:hover {
+  background: #333;
+}
+
+.footer-dropdown .dropdown-item.danger {
+  color: #ff4d4f;
+}
+
+.footer-dropdown .dropdown-item.danger:hover {
+  background: rgba(255, 77, 79, 0.1);
+}
+
+.footer-dropdown .dropdown-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 4px 0;
+}
+
+:root.dark .footer-dropdown .dropdown-divider {
+  background: #333;
+}
+
+
+/* 铃铛按钮特殊样式 */
+.footer-icon-btn.bell-btn {
+  background: rgba(250, 173, 20, 0.3);
+  color: #ffc53d;
+}
+
+.footer-icon-btn.bell-btn:hover {
+  background: rgba(250, 173, 20, 0.45);
+}

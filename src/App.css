@@ -1,0 +1,100 @@
+/* App 全局样式 */
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* 启动页样式 */
+.startup-container {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.startup-content {
+  text-align: center;
+  color: #fff;
+}
+
+.startup-logo {
+  font-size: 48px;
+  font-weight: 700;
+  margin-bottom: 32px;
+  letter-spacing: 4px;
+}
+
+.startup-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 24px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.startup-message {
+  font-size: 16px;
+  margin-bottom: 32px;
+  opacity: 0.9;
+}
+
+.startup-progress {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.progress-step {
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.5);
+  transition: all 0.3s;
+}
+
+.progress-step.active {
+  background: rgba(255, 255, 255, 0.3);
+  color: #fff;
+}
+
+.progress-step.done {
+  background: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.progress-step.done::before {
+  content: '✓ ';
+}
+
+/* 旧的加载容器（兼容） */
+.loading-container {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-page);
+  color: var(--text-secondary);
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 16px;
+}

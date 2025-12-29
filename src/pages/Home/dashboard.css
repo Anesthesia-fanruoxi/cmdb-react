@@ -1,0 +1,316 @@
+/**
+ * 仪表盘样式
+ */
+
+.dashboard {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 1s ease;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 不同时间段的背景色 */
+.dashboard.dawn { background: linear-gradient(135deg, #1a237e 0%, #4a148c 100%); }
+.dashboard.morning { background: linear-gradient(135deg, #ff9800 0%, #ffeb3b 100%); }
+.dashboard.day { background: linear-gradient(135deg, #2196f3 0%, #4caf50 100%); }
+.dashboard.dusk { background: linear-gradient(135deg, #ff5722 0%, #ffc107 100%); }
+.dashboard.night { background: linear-gradient(135deg, #1a237e 0%, #311b92 100%); }
+
+/* 暗色主题 - 统一深色背景 */
+:root.dark .dashboard {
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%) !important;
+}
+
+:root.dark .dashboard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(24, 144, 255, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 80% 20%, rgba(54, 207, 201, 0.06) 0%, transparent 40%);
+  pointer-events: none;
+}
+
+.clock-container {
+  text-align: center;
+  padding: clamp(20px, 4vh, 60px);
+  width: min(556px, 90vw);
+  max-height: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: fadeIn 1s ease-out;
+  color: white;
+  position: relative;
+  z-index: 1;
+}
+
+/* 时钟容器 */
+.clock-wrapper {
+  cursor: pointer;
+  position: relative;
+  margin-bottom: 24px;
+}
+
+.clock-hint {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.clock-wrapper:hover .clock-hint {
+  opacity: 1;
+}
+
+.clock-area {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 数字时钟 */
+.tech-frame {
+  position: relative;
+  padding: 4px;
+  background: linear-gradient(45deg, rgba(0,255,255,0.2), rgba(0,255,255,0.1), rgba(0,255,255,0.2));
+  border-radius: 16px;
+}
+
+.tech-border {
+  position: relative;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  overflow: hidden;
+}
+
+.tech-border::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(0, 255, 255, 0.1), transparent);
+  animation: shine 4s linear infinite;
+}
+
+.time-wrapper {
+  position: relative;
+}
+
+.time {
+  font-size: clamp(48px, 8vw, 96px);
+  font-weight: 200;
+  font-family: 'Courier New', monospace;
+  color: #0ff;
+  text-shadow: 0 0 20px rgba(0, 255, 255, 0.5), 0 0 40px rgba(0, 255, 255, 0.3);
+  position: relative;
+  z-index: 2;
+}
+
+.time-shadow {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  font-size: clamp(48px, 8vw, 96px);
+  font-weight: 200;
+  font-family: 'Courier New', monospace;
+  color: rgba(255, 0, 255, 0.5);
+  filter: blur(4px);
+  z-index: 1;
+}
+
+/* 圆形指针时钟 */
+.round-clock {
+  width: min(430px, 60vmin);
+  height: min(430px, 60vmin);
+}
+
+.clock-face {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(0, 255, 255, 0.4);
+  position: relative;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.2), inset 0 0 20px rgba(0, 255, 255, 0.1);
+}
+
+.minute-tick {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+.tick-line {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  width: 1px;
+  height: 12px;
+  margin-left: -0.5px;
+  background: rgba(0, 255, 255, 0.3);
+}
+
+.tick-line.hour-tick {
+  width: 2px;
+  height: 20px;
+  margin-left: -1px;
+  background: rgba(0, 255, 255, 0.6);
+}
+
+.hour-mark {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+.mark-number {
+  position: absolute;
+  top: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 22px;
+  font-weight: 500;
+  font-family: 'Courier New', monospace;
+  color: rgba(0, 255, 255, 0.9);
+  text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
+}
+
+.hand {
+  position: absolute;
+  bottom: 50%;
+  left: 50%;
+  transform-origin: bottom center;
+  border-radius: 4px;
+}
+
+.hour-hand {
+  width: 6px;
+  height: 26%;
+  margin-left: -3px;
+  background: linear-gradient(to top, #0ff, rgba(0, 255, 255, 0.6));
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+}
+
+.minute-hand {
+  width: 4px;
+  height: 35%;
+  margin-left: -2px;
+  background: linear-gradient(to top, #0ff, rgba(0, 255, 255, 0.4));
+  box-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
+}
+
+.second-hand {
+  width: 2px;
+  height: 40%;
+  margin-left: -1px;
+  background: linear-gradient(to top, #ff0066, rgba(255, 0, 102, 0.4));
+  box-shadow: 0 0 6px rgba(255, 0, 102, 0.8);
+}
+
+.center-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  background: #0ff;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 1);
+}
+
+/* 日期信息 */
+.date {
+  font-size: clamp(16px, 2.5vw, 24px);
+  margin-bottom: clamp(8px, 1.5vh, 12px);
+  font-weight: 300;
+  opacity: 0.9;
+}
+
+.lunar-info {
+  font-size: clamp(14px, 2vw, 18px);
+  margin-bottom: clamp(12px, 2vh, 24px);
+  font-weight: 300;
+  opacity: 0.8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.lunar-info .divider {
+  opacity: 0.5;
+}
+
+.lunar-info .zodiac {
+  color: #ffd700;
+}
+
+.greeting {
+  font-size: clamp(24px, 4vw, 36px);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.greeting-icon {
+  font-size: clamp(32px, 5vw, 48px);
+  animation: bounce 2s infinite;
+}
+
+/* 动画 */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes shine {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* 小屏幕优化 */
+@media (max-height: 600px) {
+  .clock-wrapper {
+    margin-bottom: 12px;
+  }
+  
+  .clock-hint {
+    bottom: -12px;
+  }
+}

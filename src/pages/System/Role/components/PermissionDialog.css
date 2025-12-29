@@ -1,0 +1,225 @@
+/**
+ * 权限设置对话框样式
+ */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h4 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--text-color);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-muted);
+  line-height: 1;
+  padding: 0;
+}
+
+.close-btn:hover {
+  color: var(--text-color);
+}
+
+.permission-dialog {
+  background: var(--bg-color);
+  border-radius: 8px;
+  width: 600px;
+  max-width: 90%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-md);
+}
+
+.dialog-toolbar {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.cascade-switch {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-color);
+}
+
+.cascade-switch input {
+  cursor: pointer;
+}
+
+.dialog-body {
+  flex: 1;
+  overflow: auto;
+  padding: 0;
+}
+
+.perm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.perm-table th,
+.perm-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-color);
+}
+
+.perm-table th {
+  background: var(--bg-secondary);
+  font-weight: 500;
+  color: var(--text-secondary);
+  position: sticky;
+  top: 0;
+}
+
+.perm-table tr:hover {
+  background: var(--bg-hover);
+}
+
+.perm-cell {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.perm-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.perm-checkbox input {
+  cursor: pointer;
+}
+
+.tree-icon {
+  display: inline-block;
+  width: 16px;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.dialog-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: var(--primary-color);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-default {
+  background: var(--bg-color);
+  color: var(--text-color);
+  border: 1px solid var(--border-color-dark);
+}
+
+.btn-default:hover {
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+/* 独立窗口版本样式 */
+.role-permission-config {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--bg-color);
+  color: var(--text-color);
+  overflow: hidden;
+}
+
+.role-permission-config .config-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.role-permission-config .config-header h4 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.role-permission-config .dialog-toolbar {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.role-permission-config .dialog-body {
+  flex: 1;
+  overflow: auto;
+}
+
+.role-permission-config .dialog-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.role-permission-config .dialog-loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}

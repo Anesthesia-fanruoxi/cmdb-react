@@ -1,0 +1,122 @@
+/**
+ * SQL查询页面 - 标签页样式
+ */
+
+.tabs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  height: 44px;
+  background: var(--bg-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tabs-list {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  flex: 1;
+}
+
+.tabs-list::-webkit-scrollbar { display: none; }
+
+.tab-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px 8px 0 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  background: var(--bg-secondary);
+  border: 1px solid transparent;
+  border-bottom: none;
+  transition: all 0.2s;
+  user-select: none;
+  white-space: nowrap;
+  max-width: 180px;
+}
+
+.tab-item:hover {
+  color: var(--text-color);
+  background: var(--bg-hover);
+}
+
+.tab-item.active {
+  background: var(--bg-color);
+  color: var(--primary-color);
+  font-weight: 500;
+  border-color: var(--border-color);
+  border-bottom: 1px solid var(--bg-color);
+  margin-bottom: -1px;
+}
+
+.tab-item.dragging {
+  opacity: 0.5;
+  border-style: dashed;
+}
+
+.tab-item.drag-over {
+  border-left: 2px solid var(--primary-color);
+}
+
+.tab-item .tab-name {
+  pointer-events: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tab-close {
+  width: 16px;
+  height: 16px;
+  font-size: 14px;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.tab-close:hover {
+  color: var(--danger-color);
+  background: rgba(255, 77, 79, 0.1);
+}
+
+.tabs-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: 12px;
+}
+
+.tabs-actions .icon-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tabs-actions .icon-btn:hover {
+  background: var(--primary-color);
+  color: #fff;
+}
+
+/* 隐藏 number 输入框的上下箭头 */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}

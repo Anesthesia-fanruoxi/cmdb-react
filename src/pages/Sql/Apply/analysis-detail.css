@@ -1,0 +1,96 @@
+/**
+ * SQL分析详情样式
+ */
+
+/* 分析详情 */
+.analysis-detail { display: flex; flex-direction: column; gap: 16px; }
+
+.blocker-alert {
+  padding: 16px;
+  background: rgba(255, 77, 79, 0.1);
+  border: 1px solid var(--danger-color);
+  border-radius: 8px;
+  color: var(--danger-color);
+}
+.blocker-alert strong { display: block; margin-bottom: 4px; }
+.blocker-alert p { margin: 0; font-size: 13px; }
+
+/* 信息区块 */
+.info-section { background: var(--bg-secondary); border-radius: 6px; padding: 12px 16px; }
+.section-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 12px; }
+
+/* 卡片式信息布局 */
+.info-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+
+.info-card {
+  background: var(--bg-color);
+  border-radius: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color-light);
+  transition: all 0.3s;
+}
+.info-card:hover { border-color: var(--border-color); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); }
+
+.card-label { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
+.card-value { font-size: 13px; font-weight: 500; color: var(--text-color); word-break: break-word; }
+.card-value.highlight { color: var(--primary-color); font-weight: 600; font-size: 14px; }
+.card-value.valid { color: var(--success-color); font-weight: 600; }
+.card-value.rule { color: var(--warning-color); font-weight: 600; }
+.card-value.danger { color: var(--danger-color); font-weight: 600; }
+
+/* 字段列表 */
+.columns-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.column-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+}
+
+.no-analysis-tip { text-align: center; padding: 40px; color: var(--text-muted); }
+
+/* 字段详情表格 */
+.field-table { border: 1px solid var(--border-color); border-radius: 4px; overflow: hidden; }
+.field-table .table-row { display: flex; border-bottom: 1px solid var(--border-color-light); }
+.field-table .table-row:last-child { border-bottom: none; }
+.field-table .table-row.header { background: var(--bg-secondary); font-weight: 600; font-size: 12px; }
+.field-table .col { flex: 1; padding: 8px 12px; font-size: 13px; display: flex; align-items: center; }
+.field-table .col-name { flex: 1.2; font-family: 'Consolas', 'Monaco', monospace; }
+.field-table .col-type { flex: 1; }
+.field-table .col-null { flex: 0.5; justify-content: center; }
+.field-table .col-default { flex: 0.8; }
+.field-table .col-comment { flex: 1.5; }
+.field-table .col-comment.missing { color: var(--warning-color); }
+.warning-text { color: var(--warning-color); font-size: 12px; }
+
+/* 索引详情表格 */
+.index-table { border: 1px solid var(--border-color); border-radius: 4px; overflow: hidden; }
+.index-table .table-row { display: flex; padding: 8px 16px; border-bottom: 1px solid var(--border-color-light); gap: 40px; }
+.index-table .table-row:last-child { border-bottom: none; }
+.index-table .table-row.header { background: var(--bg-secondary); font-weight: 600; font-size: 13px; }
+.index-table .table-row:not(.header):hover { background: var(--bg-hover); }
+.index-table .col { font-size: 13px; display: flex; align-items: center; }
+.index-table .col-type { flex: 0 0 auto; min-width: 100px; }
+.index-table .col-name { flex: 0 0 auto; min-width: 180px; font-family: 'Consolas', 'Monaco', monospace; font-weight: 500; }
+.index-table .col-columns { flex: 1; font-family: 'Consolas', 'Monaco', monospace; color: var(--text-secondary); }
+
+/* 数据预览表格 */
+.values-table-wrapper { overflow-x: auto; }
+.values-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.values-table th, .values-table td { padding: 8px 12px; border: 1px solid var(--border-color-light); text-align: left; white-space: nowrap; }
+.values-table th { background: var(--bg-secondary); font-weight: 600; font-size: 12px; color: var(--text-secondary); }
+.values-table .row-num { width: 40px; text-align: center; color: var(--text-secondary); background: var(--bg-secondary); }
+.values-table .value-cell { font-family: 'Consolas', 'Monaco', monospace; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+
+.more-hint {
+  padding: 8px 12px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-align: center;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color-light);
+  border-top: none;
+}

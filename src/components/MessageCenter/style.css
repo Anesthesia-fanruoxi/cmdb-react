@@ -1,0 +1,339 @@
+/* 消息中心 */
+
+.message-center {
+  position: relative;
+}
+
+.msg-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: var(--text-color, #333);
+  cursor: pointer;
+  border-radius: 6px;
+  position: relative;
+}
+
+.msg-trigger:hover {
+  color: var(--primary-color, #1890ff);
+}
+
+.msg-trigger svg {
+  width: 20px;
+  height: 20px;
+}
+
+.msg-trigger.has-unread {
+  animation: bell-shake 2s ease-in-out infinite;
+}
+
+@keyframes bell-shake {
+  0%, 100% { transform: rotate(0); }
+  5%, 15% { transform: rotate(-12deg); }
+  10%, 20% { transform: rotate(12deg); }
+  25% { transform: rotate(0); }
+}
+
+.msg-trigger .badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+  background: #ff4d4f;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.msg-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  width: 360px;
+  max-height: 480px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+}
+
+.msg-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.msg-header .title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.msg-header .header-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.msg-header .btn-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: #999;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.msg-header .btn-action:hover {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.msg-list {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 400px;
+}
+
+.msg-empty {
+  padding: 40px;
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+}
+
+.msg-item {
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid #f5f5f5;
+  position: relative;
+}
+
+.msg-item:hover {
+  background: #fafafa;
+}
+
+.msg-item.unread {
+  background: #f0f9ff;
+}
+
+.msg-item.unread:hover {
+  background: #e6f4ff;
+}
+
+.msg-item .msg-icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.msg-item.msg-success .msg-icon { background: #f6ffed; color: #52c41a; }
+.msg-item.msg-error .msg-icon { background: #fff2f0; color: #ff4d4f; }
+.msg-item.msg-warning .msg-icon { background: #fffbe6; color: #faad14; }
+.msg-item.msg-info .msg-icon { background: #e6f7ff; color: #1890ff; }
+
+.msg-item .msg-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.msg-item .msg-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.msg-item .msg-text {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.5;
+  word-break: break-all;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.msg-item .msg-time {
+  font-size: 11px;
+  color: #999;
+  margin-top: 4px;
+}
+
+.msg-item .btn-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: #ccc;
+  cursor: pointer;
+  border-radius: 4px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.msg-item:hover .btn-remove {
+  display: flex;
+}
+
+.msg-item .btn-remove:hover {
+  background: #f0f0f0;
+  color: #999;
+}
+
+
+/* 抽屉模式 */
+.msg-drawer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 999;
+}
+
+.msg-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 380px;
+  max-width: 90vw;
+  height: 100vh;
+  background: var(--bg-color);
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.msg-drawer .drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.msg-drawer .drawer-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--text-color);
+}
+
+.msg-drawer .header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.msg-drawer .btn-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.msg-drawer .btn-action:hover {
+  background: var(--bg-hover);
+  color: var(--text-color);
+}
+
+.msg-drawer .close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.msg-drawer .close-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-color);
+}
+
+.msg-drawer .drawer-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.msg-drawer .msg-empty {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.msg-drawer .msg-item {
+  display: flex;
+  gap: 10px;
+  padding: 14px 20px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-color);
+  position: relative;
+}
+
+.msg-drawer .msg-item:hover {
+  background: var(--bg-hover);
+}
+
+.msg-drawer .msg-item.unread {
+  background: rgba(24, 144, 255, 0.05);
+}
+
+.msg-drawer .msg-item .msg-title {
+  color: var(--text-color);
+}
+
+.msg-drawer .msg-item .msg-text {
+  color: var(--text-secondary);
+}
+
+.msg-drawer .msg-item .msg-time {
+  color: var(--text-secondary);
+}

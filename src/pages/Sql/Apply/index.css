@@ -1,0 +1,11 @@
+/**
+ * SQL变更申请模块样式入口
+ */
+
+@import './style.css';
+@import './drawer.css';
+@import './form.css';
+@import './detail.css';
+@import './analysis.css';
+@import './analysis-detail.css';
+@import './analysis-rules.css';

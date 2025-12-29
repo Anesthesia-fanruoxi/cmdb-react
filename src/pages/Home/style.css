@@ -1,0 +1,26 @@
+/**
+ * 主页布局样式
+ */
+
+.home-layout {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: #f0f2f5;
+}
+
+/* 主内容区容器 */
+.main-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  margin-left: 220px;
+  transition: margin-left 0.3s ease;
+}
+
+.main-container.collapsed {
+  margin-left: 64px;
+}

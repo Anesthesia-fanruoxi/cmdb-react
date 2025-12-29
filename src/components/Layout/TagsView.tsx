@@ -1,0 +1,196 @@
+/**
+ * 标签页导航组件
+ * 只包含折叠按钮和标签页
+ */
+
+import { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useMenuStore } from '../../stores/menuStore';
+import type { TagView } from '../../types/menu';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import './TagsView.css';
+
+interface TagsViewProps {
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
+}
+
+const TagsView = ({ collapsed, onToggleCollapse }: TagsViewProps) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { visitedViews, delVisitedView, delOtherViews, delAllViews, addVisitedView, menuList } = useMenuStore();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  
+  const [contextMenu, setContextMenu] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+    tag: TagView | null;
+  }>({ visible: false, x: 0, y: 0, tag: null });
+
+  // 根据路径查找菜单标题
+  const findMenuTitle = (path: string): string => {
+    if (path === '/' || path === '/dashboard') return '首页';
+    const search = (menus: typeof menuList): string => {
+      if (!menus) return '';
+      for (const menu of menus) {
+        if (menu.path === path) return menu.meta?.title || menu.name;
+        if (menu.children) {
+          const title = search(menu.children);
+          if (title) return title;
+        }
+      }
+      return '';
+    };
+    return search(menuList) || path.split('/').pop() || '页面';
+  };
+
+  // 监听路由变化，自动添加标签
+  useEffect(() => {
+    let path = location.pathname;
+    if (path === '/login') return;
+    if (path === '/') path = '/dashboard';
+    
+    const exists = visitedViews.some(v => v.path === path);
+    if (exists) return;
+    
+    const title = findMenuTitle(path);
+    addVisitedView({
+      path,
+      name: path,
+      title,
+      meta: { title, affix: path === '/dashboard' },
+    });
+  }, [location.pathname, menuList, addVisitedView, visitedViews]);
+
+  // 点击标签
+  const handleClick = (tag: TagView) => {
+    if (tag.path !== location.pathname) navigate(tag.path);
+  };
+
+  // 关闭标签
+  const handleClose = (e: React.MouseEvent, tag: TagView) => {
+    e.stopPropagation();
+    if (tag.meta?.affix) return;
+
+    if (tag.path === location.pathname) {
+      const index = visitedViews.findIndex(v => v.path === tag.path);
+      const remaining = visitedViews.filter(v => v.path !== tag.path);
+      const nextTag = remaining[Math.min(index, remaining.length - 1)] || remaining[0];
+      navigate(nextTag?.path || '/dashboard');
+      setTimeout(() => delVisitedView(tag), 0);
+    } else {
+      delVisitedView(tag);
+    }
+  };
+
+  // 右键菜单
+  const handleContextMenu = (e: React.MouseEvent, tag: TagView) => {
+    e.preventDefault();
+    setContextMenu({ visible: true, x: e.clientX, y: e.clientY, tag });
+  };
+
+  // 菜单操作
+  const handleMenuAction = (action: string) => {
+    const { tag } = contextMenu;
+    setContextMenu({ visible: false, x: 0, y: 0, tag: null });
+    if (!tag) return;
+
+    switch (action) {
+      case 'close':
+        if (!tag.meta?.affix) {
+          const index = visitedViews.findIndex(v => v.path === tag.path);
+          delVisitedView(tag);
+          if (tag.path === location.pathname) {
+            const nextTag = visitedViews[index] || visitedViews[index - 1];
+            navigate(nextTag?.path || '/');
+          }
+        }
+        break;
+      case 'closeOthers':
+        delOtherViews(tag);
+        if (tag.path !== location.pathname) navigate(tag.path);
+        break;
+      case 'closeAll':
+        delAllViews();
+        navigate('/');
+        break;
+    }
+  };
+
+  // 点击外部关闭右键菜单
+  useEffect(() => {
+    const close = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.tags-context-menu')) {
+        setContextMenu(m => ({ ...m, visible: false }));
+      }
+    };
+    if (contextMenu.visible) document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [contextMenu.visible]);
+
+  // 滚动到当前标签
+  useEffect(() => {
+    const el = scrollRef.current?.querySelector('.tag-item.active');
+    el?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }, [location.pathname]);
+
+  // 鼠标滚轮横向滚动
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const handleWheel = (e: WheelEvent) => {
+      if (e.deltaY !== 0) {
+        e.preventDefault();
+        el.scrollLeft += e.deltaY;
+      }
+    };
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheel);
+  }, []);
+
+  return (
+    <div className="tags-view">
+      {/* 左侧：折叠按钮 */}
+      <div className="tags-left">
+        {onToggleCollapse && (
+          <button className="collapse-btn" onClick={onToggleCollapse}>
+            {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+          </button>
+        )}
+      </div>
+
+      {/* 标签页 */}
+      <div className="tags-scroll" ref={scrollRef}>
+        {visitedViews.map(tag => (
+          <div
+            key={tag.path}
+            className={`tag-item ${tag.path === location.pathname ? 'active' : ''}`}
+            onClick={() => handleClick(tag)}
+            onContextMenu={e => handleContextMenu(e, tag)}
+          >
+            {tag.path === location.pathname && <span className="tag-dot" />}
+            <span className="tag-text">{tag.title || tag.meta?.title}</span>
+            {!tag.meta?.affix && (
+              <span className="tag-close" onClick={e => handleClose(e, tag)}>×</span>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* 右键菜单 */}
+      {contextMenu.visible && (
+        <ul className="tags-context-menu" style={{ left: contextMenu.x, top: contextMenu.y }}>
+          {!contextMenu.tag?.meta?.affix && (
+            <li onClick={() => handleMenuAction('close')}>关闭</li>
+          )}
+          <li onClick={() => handleMenuAction('closeOthers')}>关闭其他</li>
+          <li onClick={() => handleMenuAction('closeAll')}>关闭所有</li>
+        </ul>
+      )}
+    </div>
+  );
+};
+
+export default TagsView;

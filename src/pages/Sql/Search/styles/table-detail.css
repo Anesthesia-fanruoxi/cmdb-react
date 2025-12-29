@@ -1,0 +1,166 @@
+/**
+ * SQL查询页面 - 表详情样式
+ */
+
+.table-meta {
+  display: flex;
+  gap: 24px;
+  padding: 12px 20px;
+  background: var(--bg-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.meta-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.meta-label { color: var(--text-muted); }
+.meta-value { color: var(--text-color); }
+
+/* 详情表格 */
+.detail-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+.detail-table th, .detail-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border: 1px solid var(--border-color);
+}
+
+.detail-table th {
+  background: var(--bg-secondary);
+  font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.detail-table td { color: var(--text-color); }
+.detail-table tbody tr:hover { background: var(--bg-hover); }
+
+.detail-table .field-name {
+  font-family: 'Consolas', 'Monaco', monospace;
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.detail-table .field-type {
+  font-family: 'Consolas', 'Monaco', monospace;
+  color: #059669;
+  font-size: 12px;
+}
+
+.detail-table .field-comment {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+
+/* 键类型标签 */
+.key-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+.key-primary { background: rgba(255, 77, 79, 0.1); color: #ff4d4f; }
+.key-unique { background: rgba(250, 173, 20, 0.1); color: #faad14; }
+.key-index { background: rgba(102, 126, 234, 0.1); color: var(--primary-color); }
+
+/* DDL Tab */
+.ddl-tab .ddl-actions { margin-bottom: 12px; text-align: right; }
+.fields-tab { overflow-x: auto; }
+.indexes-tab { overflow-x: auto; }
+
+/* Preview Tab */
+.preview-tab { display: flex; flex-direction: column; height: 100%; }
+
+.preview-info {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border-radius: 4px;
+}
+
+.preview-table-wrapper { flex: 1; overflow: auto; max-height: 500px; }
+.preview-table { min-width: 100%; }
+.preview-table td { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.preview-table .null-value { color: var(--text-muted); font-style: italic; }
+.preview-table .row-num { width: 50px; text-align: center; color: var(--text-muted); background: var(--bg-secondary); }
+
+.ddl-content {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 16px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-color);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-x: auto;
+  max-height: 500px;
+  overflow-y: auto;
+  margin: 0;
+}
+
+/* 独立窗口样式 */
+.table-detail-content {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  background: var(--bg-color);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.table-detail-content .table-meta {
+  display: flex;
+  gap: 20px;
+  padding: 8px 16px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+  font-size: 12px;
+}
+
+.table-detail-content .detail-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-color);
+  flex-shrink: 0;
+}
+
+.table-detail-content .detail-tabs .tab-btn { padding: 6px 12px; font-size: 12px; }
+
+.table-detail-content .detail-body {
+  flex: 1;
+  overflow: auto;
+  padding: 12px 16px;
+  min-height: 0;
+  background: var(--bg-color);
+}
+
+.table-detail-content .fields-tab,
+.table-detail-content .indexes-tab,
+.table-detail-content .preview-tab,
+.table-detail-content .ddl-tab { height: 100%; overflow: auto; }
+
+.table-detail-content .detail-table { width: 100%; }
+.table-detail-content .detail-table th,
+.table-detail-content .detail-table td { padding: 6px 10px; font-size: 12px; }
+.table-detail-content .detail-table .field-name { font-size: 12px; }
+.table-detail-content .detail-table .field-type { font-size: 11px; }
+.table-detail-content .key-tag { padding: 1px 6px; font-size: 10px; }
+
+.table-detail-content .loading-state,
+.table-detail-content .error-state,
+.table-detail-content .empty-state { height: 100%; min-height: 200px; font-size: 13px; }
+
+.table-detail-content .preview-tab { display: flex; flex-direction: column; }
+.table-detail-content .preview-info { padding: 6px 10px; font-size: 12px; margin-bottom: 8px; flex-shrink: 0; }
+.table-detail-content .preview-table-wrapper { flex: 1; overflow: auto; max-height: none; }
+.table-detail-content .ddl-tab { display: flex; flex-direction: column; }
+.table-detail-content .ddl-actions { margin-bottom: 8px; flex-shrink: 0; }
+.table-detail-content .ddl-content { flex: 1; padding: 12px; font-size: 12px; max-height: none; overflow: auto; }

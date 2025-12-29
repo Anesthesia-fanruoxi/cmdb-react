@@ -1,0 +1,227 @@
+/**
+ * SQL审核流程管理页面样式
+ */
+
+.sql-process {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-color);
+}
+
+/* 页面头部 */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.page-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+/* 按钮 */
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: var(--primary-color);
+  color: #fff;
+}
+
+.btn-primary:hover { background: var(--primary-hover); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn-default {
+  background: var(--bg-color);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+}
+
+.btn-default:hover {
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.btn-link {
+  background: transparent;
+  color: var(--primary-color);
+  padding: 4px 8px;
+}
+
+.btn-link:hover { color: var(--primary-hover); }
+.btn-link.btn-danger { color: var(--danger-color); }
+.btn-link.btn-danger:hover { color: var(--danger-hover); }
+
+/* 表格 */
+.table-container {
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  background: var(--bg-color);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.data-table th,
+.data-table td {
+  padding: 14px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-color);
+}
+
+.data-table th {
+  background: var(--bg-secondary);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.data-table tbody tr:hover { background: var(--bg-hover); }
+.data-table tbody tr:last-child td { border-bottom: none; }
+
+.action-cell { white-space: nowrap; }
+.empty-cell {
+  text-align: center !important;
+  color: var(--text-muted);
+  padding: 60px !important;
+}
+
+/* 标签 */
+.tag {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.tag-primary { background: rgba(102, 126, 234, 0.1); color: var(--primary-color); }
+.tag-success { background: rgba(82, 196, 26, 0.1); color: #52c41a; }
+
+/* 弹窗 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: var(--bg-color);
+  border-radius: 12px;
+  width: 500px;
+  max-width: 90%;
+  box-shadow: var(--shadow-md);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.close-btn:hover { color: var(--text-color); }
+
+/* 表单 */
+form {
+  padding: 20px;
+}
+
+.form-item {
+  margin-bottom: 16px;
+}
+
+.form-item label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: var(--text-color);
+}
+
+.form-item .required { color: var(--danger-color); }
+
+.form-item select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--bg-color);
+  color: var(--text-color);
+}
+
+.form-item select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.form-item select:disabled {
+  background: var(--bg-secondary);
+  cursor: not-allowed;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+/* 加载状态 */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  color: var(--text-muted);
+}

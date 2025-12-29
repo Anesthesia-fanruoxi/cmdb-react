@@ -1,0 +1,202 @@
+/* ELFK 日志搜索 - 日志面板 */
+
+.logs-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-color, #fff);
+  border-radius: 8px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.logs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: var(--bg-secondary, #fafafa);
+  border-bottom: 1px solid var(--border-color, #e8e8e8);
+  flex-shrink: 0;
+}
+
+.logs-header .header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.logs-header .title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-color, #333);
+}
+
+.logs-header .count {
+  font-size: 13px;
+  color: var(--text-secondary, #666);
+}
+
+.logs-header .header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.logs-header .btn-sort,
+.logs-header .btn-analysis,
+.logs-header .btn-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--border-color, #d9d9d9);
+  border-radius: 4px;
+  background: var(--bg-color, #fff);
+  font-size: 12px;
+  color: var(--text-color, #333);
+  cursor: pointer;
+}
+
+.logs-header .btn-sort svg {
+  color: #1890ff;
+}
+
+.logs-header .btn-analysis svg {
+  color: #52c41a;
+}
+
+.logs-header .btn-export svg {
+  color: #722ed1;
+}
+
+.logs-header .btn-sort:hover,
+.logs-header .btn-analysis:hover:not(:disabled),
+.logs-header .btn-export:hover:not(:disabled) {
+  border-color: var(--primary-color, #1890ff);
+  color: var(--primary-color, #1890ff);
+  background: transparent;
+}
+
+.logs-header .btn-analysis:disabled,
+.logs-header .btn-export:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.logs-content {
+  flex: 1;
+  overflow: auto;
+}
+
+.logs-empty, .logs-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--text-secondary, #999);
+  font-size: 14px;
+}
+
+.logs-list {
+  font-family: 'Consolas', 'Monaco', 'Menlo', monospace;
+  font-size: 12px;
+}
+
+/* 日志条目 */
+.log-entry {
+  display: flex;
+  border-bottom: 1px solid var(--border-color, #f0f0f0);
+  padding: 10px 16px;
+}
+
+.log-entry:hover {
+  background: var(--bg-hover, #fafafa);
+}
+
+.log-time {
+  width: 160px;
+  flex-shrink: 0;
+  color: var(--text-secondary, #666);
+  padding-right: 16px;
+}
+
+.log-body {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.6;
+}
+
+.field-pair {
+  margin-bottom: 6px;
+  word-break: break-all;
+}
+
+.field-pair.tag-path {
+  color: var(--text-secondary, #909399);
+  font-style: italic;
+}
+
+.field-pair.tag-path .field-name,
+.field-pair.tag-path .field-value {
+  color: var(--text-secondary, #909399) !important;
+}
+
+.log-body .field-name {
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+.log-body .field-value {
+  color: var(--text-color, #333);
+  white-space: pre-wrap;
+}
+
+.highlight {
+  background: #fff59d;
+  padding: 0 2px;
+  border-radius: 2px;
+  color: #333;
+}
+
+/* 分页 */
+.logs-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  border-top: 1px solid var(--border-color, #e8e8e8);
+  background: var(--bg-secondary, #fafafa);
+  flex-shrink: 0;
+}
+
+.logs-pagination .page-info {
+  font-size: 13px;
+  color: var(--text-secondary, #666);
+}
+
+.logs-pagination .page-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.logs-pagination .page-btns button {
+  height: 28px;
+  padding: 0 14px;
+  border: 1px solid var(--border-color, #d9d9d9);
+  border-radius: 4px;
+  background: var(--bg-color, #fff);
+  font-size: 13px;
+  color: var(--text-color, #333);
+  cursor: pointer;
+}
+
+.logs-pagination .page-btns button:hover:not(:disabled) {
+  border-color: var(--primary-color, #1890ff);
+  color: var(--primary-color, #1890ff);
+}
+
+.logs-pagination .page-btns button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

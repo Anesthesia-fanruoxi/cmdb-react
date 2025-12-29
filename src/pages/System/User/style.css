@@ -1,0 +1,287 @@
+/**
+ * 用户管理页面样式 - 现代化设计
+ */
+
+.user-management {
+  padding: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+/* 页面头部 */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--bg-color);
+}
+
+.page-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.search-input {
+  padding: 8px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 14px;
+  min-width: 200px;
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  transition: all 0.2s;
+}
+
+.search-input::placeholder { color: var(--text-muted); }
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  background: var(--bg-color);
+}
+
+.role-select {
+  padding: 8px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 14px;
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.role-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+/* 按钮样式 */
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-primary {
+  background: var(--primary-color);
+  color: #fff;
+}
+.btn-primary:hover {
+  background: var(--primary-hover);
+}
+
+.btn-default {
+  background: var(--bg-color);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+}
+.btn-default:hover {
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.btn-link {
+  background: transparent;
+  color: var(--primary-color);
+  padding: 4px 8px;
+  font-weight: 400;
+}
+.btn-link:hover { color: var(--primary-hover); }
+.btn-link.btn-danger { color: var(--danger-color); }
+.btn-link.btn-danger:hover { color: var(--danger-hover); }
+
+/* 表格容器 */
+.table-container {
+  flex: 1;
+  overflow: auto;
+  background: var(--bg-color);
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  color: var(--text-muted);
+}
+
+/* 数据表格 */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.data-table th,
+.data-table td {
+  padding: 10px 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-color);
+}
+
+.data-table th {
+  background: var(--bg-secondary);
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--text-secondary);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.data-table tbody tr {
+  transition: background 0.15s;
+}
+
+.data-table tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.email-cell {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.action-cell { white-space: nowrap; }
+
+.empty-cell {
+  text-align: center !important;
+  color: var(--text-muted);
+  padding: 60px !important;
+}
+
+/* 现代化开关样式 */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--border-color-dark);
+  transition: all 0.25s;
+  border-radius: 20px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background: white;
+  transition: all 0.25s;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+input:checked + .slider {
+  background: var(--primary-color);
+}
+
+input:checked + .slider:before {
+  transform: translateX(16px);
+}
+
+/* 标签样式 */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.tag-success {
+  background: rgba(82, 196, 26, 0.1);
+  color: #52c41a;
+}
+
+.tag-info {
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+}
+
+/* 分页 */
+.pagination {
+  padding: 10px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--text-secondary);
+  font-size: 13px;
+  border-top: 1px solid var(--border-color);
+}
+
+.page-btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.page-btns button {
+  padding: 6px 14px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-color);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-color);
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.page-btns button:hover:not(:disabled) {
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.page-btns button:disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.page-btns span {
+  padding: 0 12px;
+  color: var(--text-secondary);
+}
