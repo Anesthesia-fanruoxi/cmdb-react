@@ -1,9 +1,17 @@
+# 构建产物
 /dist
-/cmdb-ui
-/node_modules
+node_modules
+
+# IDE 配置
 .idea
-.kiro
-.env
 .vscode
-/src-tauri
-*.md
+
+# 本地配置
+.kiro
+
+# 旧项目
+/cmdb-ui
+
+# Tauri 构建产物（保留源码）
+/src-tauri/target
+/src-tauri/gen
