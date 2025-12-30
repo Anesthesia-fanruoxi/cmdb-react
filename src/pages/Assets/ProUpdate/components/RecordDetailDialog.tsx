@@ -147,11 +147,11 @@ const RecordDetailDialog = ({ visible, record, projectDetail, onClose, onRefresh
             <>
               <div className="detail-grid">
                 <div className="detail-item span-2"><span className="label">任务ID</span><span className="mono">{detail.task_id || detail.id}</span></div>
-                <div className="detail-item"><span className="label">状态</span><span className={`status-tag ${getStatusClass(detail.status)}`}>{getStatusText(detail.status)}</span></div>
+                <div className="detail-item no-bg"><span className="label">状态</span><span className={`status-tag ${getStatusClass(detail.status)}`}>{getStatusText(detail.status)}</span></div>
                 <div className="detail-item"><span className="label">开始时间</span><span>{detail.started_at || '-'}</span></div>
                 <div className="detail-item"><span className="label">完成时间</span><span>{detail.finished_at || '-'}</span></div>
                 <div className="detail-item"><span className="label">当前步骤</span><span>{detail.step || '-'}</span></div>
-                {detail.type && <div className="detail-item"><span className="label">发版类型</span><span className="tag warning">{detail.type === 'web' ? '前端' : '后端'}</span></div>}
+                {detail.type && <div className="detail-item no-bg"><span className="label">发版类型</span><span className="tag warning">{detail.type === 'web' ? '前端' : '后端'}</span></div>}
                 {detail.category && <div className="detail-item"><span className="label">额外参数</span><span className="tag info">{detail.category}</span></div>}
               </div>
 
@@ -194,7 +194,7 @@ const RecordDetailDialog = ({ visible, record, projectDetail, onClose, onRefresh
         .dialog-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1100; }
         .record-detail-dialog { position: fixed; top: 5vh; left: 50%; transform: translateX(-50%); width: 35%; min-width: 500px; max-width: 90%; max-height: 90vh; background: var(--bg-color, #fff); border-radius: 8px; z-index: 1101; display: flex; flex-direction: column; box-shadow: 0 6px 30px rgba(0,0,0,0.2); }
         .dialog-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color, #e8e8e8); }
-        .dialog-header h3 { margin: 0; font-size: 16px; }
+        .dialog-header h3 { margin: 0; font-size: 16px; color: var(--text-color, #e0e0e0); }
         .dialog-close { background: none; border: none; cursor: pointer; color: var(--text-secondary, #666); }
         .dialog-body { flex: 1; overflow: auto; padding: 20px; }
         .dialog-loading { display: flex; align-items: center; justify-content: center; gap: 8px; height: 150px; color: var(--text-secondary, #999); }
@@ -202,13 +202,14 @@ const RecordDetailDialog = ({ visible, record, projectDetail, onClose, onRefresh
         .detail-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 12px; background: var(--bg-secondary, #fafafa); border-radius: 6px; border: 1px solid var(--border-color, #e8e8e8); }
         .detail-item { display: flex; flex-direction: column; gap: 4px; }
         .detail-item.span-2 { grid-column: span 2; }
+        .detail-item.no-bg .status-tag, .detail-item.no-bg .tag { background: transparent !important; border: none !important; box-shadow: none !important; }
         .detail-item .label { font-size: 12px; color: var(--text-secondary, #999); }
         .detail-item .mono { font-family: monospace; font-size: 13px; word-break: break-all; }
-        .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
-        .tag.warning { background: #fff7e6; color: #fa8c16; }
-        .tag.info { background: #e6f7ff; color: #1890ff; }
+        .tag { display: inline-block; padding: 2px 8px; font-size: 12px; }
+        .tag.warning { color: #ffa940; }
+        .tag.info { color: #40a9ff; }
         .step-section { margin-top: 20px; }
-        .step-section h4 { margin: 0 0 12px; font-size: 15px; }
+        .step-section h4 { margin: 0 0 12px; font-size: 15px; color: var(--text-color, #e0e0e0); }
         .step-table { border: 1px solid var(--border-color, #e8e8e8); border-radius: 4px; overflow: auto; max-height: calc(100vh - 400px); }
         .step-table table { width: 100%; border-collapse: collapse; font-size: 13px; }
         .step-table th, .step-table td { padding: 8px; border-bottom: 1px solid var(--border-color, #e8e8e8); text-align: center; }
@@ -217,12 +218,15 @@ const RecordDetailDialog = ({ visible, record, projectDetail, onClose, onRefresh
         .btn-logs:hover { color: var(--primary-color, #1890ff); border-color: var(--primary-color, #1890ff); }
         .btn-danger { display: flex; align-items: center; gap: 4px; padding: 6px 12px; background: #ff4d4f; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
         .btn-danger:disabled { opacity: 0.6; cursor: not-allowed; }
-        .btn-default { padding: 6px 16px; border: 1px solid var(--border-color, #d9d9d9); background: #fff; border-radius: 4px; cursor: pointer; }
-        .status-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
-        .status-tag.success { background: #f6ffed; color: #52c41a; }
-        .status-tag.danger { background: #fff2f0; color: #ff4d4f; }
-        .status-tag.warning { background: #fff7e6; color: #fa8c16; }
-        .status-tag.default { background: #f0f0f0; color: #666; }
+        .btn-default { padding: 6px 16px; border: 1px solid var(--border-color, #d9d9d9); background: var(--bg-secondary, #2a2a2a); color: var(--text-color, #e0e0e0); border-radius: 4px; cursor: pointer; }
+        .status-tag { display: inline-block; padding: 2px 8px; font-size: 12px; border: none; background: none; }
+        .status-tag.success { color: #73d13d; }
+        .status-tag.danger { color: #ff7875; }
+        .status-tag.warning { color: #ffa940; }
+        .status-tag.default { color: var(--text-secondary, #999); }
+        .step-table .status-tag { background: rgba(82, 196, 26, 0.15); border-radius: 4px; }
+        .step-table .status-tag.danger { background: rgba(255, 77, 79, 0.15); }
+        .step-table .status-tag.warning { background: rgba(250, 140, 22, 0.15); }
         .spin { animation: spin 1s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>

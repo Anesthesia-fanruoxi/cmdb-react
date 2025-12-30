@@ -30,7 +30,7 @@
 
 .data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .data-table th, .data-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border-color); color: var(--text-color); }
-.data-table th { background: var(--bg-secondary); font-weight: 500; color: var(--text-secondary); position: sticky; top: 0; }
+.data-table th { background: var(--bg-secondary); font-weight: 500; color: var(--text-secondary); position: sticky; top: 0; z-index: 1; }
 .data-table tr:hover { background: var(--bg-hover); }
 
 .tree-table .expand-icon { cursor: pointer; margin-right: 8px; font-size: 10px; color: var(--text-secondary); display: inline-block; width: 16px; }

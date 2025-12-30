@@ -51,6 +51,7 @@
   color: var(--text-secondary);
   position: sticky;
   top: 0;
+  z-index: 1;
 }
 
 .data-table tr:hover {

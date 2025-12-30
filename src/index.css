@@ -190,3 +190,37 @@ button:focus-visible {
     transform: rotate(360deg);
   }
 }
+
+
+/* 全局滚动条美化 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color-dark, #d9d9d9);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary, #666);
+}
+
+/* 暗色模式滚动条 */
+:root.dark ::-webkit-scrollbar-thumb {
+  background: var(--border-color, #333);
+}
+
+:root.dark ::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted, #666);
+}
+
+/* 滚动条角落 */
+::-webkit-scrollbar-corner {
+  background: transparent;
+}

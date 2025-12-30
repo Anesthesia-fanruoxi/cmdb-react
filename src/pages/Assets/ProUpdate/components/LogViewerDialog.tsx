@@ -44,6 +44,16 @@ const LogViewerDialog = ({ visible, logStep, taskInfo, projectDetail, onClose }:
     return () => disconnectWS();
   }, [visible, logStep, taskInfo]);
 
+  // ESC 键关闭
+  useEffect(() => {
+    if (!visible) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [visible, onClose]);
+
   // 自动滚动到底部
   useEffect(() => {
     if (logContentRef.current) {
@@ -56,7 +66,8 @@ const LogViewerDialog = ({ visible, logStep, taskInfo, projectDetail, onClose }:
     if (!logStep || !taskInfo) return;
 
     const taskId = taskInfo.task_id || String(taskInfo.id);
-    const stepType = logStep.step_type || String(logStep.step);
+    // step_type 可能是字符串类型的步骤标识，如果没有则使用 step_name
+    const stepType = logStep.step_type || logStep.step_name || '';
     const project = taskInfo.project || projectDetail?.project || '';
     let type = taskInfo.type || projectDetail?.type || '';
     if (type === '前端') type = 'web';
@@ -145,7 +156,7 @@ const LogViewerDialog = ({ visible, logStep, taskInfo, projectDetail, onClose }:
         .log-line { margin: 2px 0; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; }
         .no-logs { color: #B0C4DE; text-align: center; padding: 50px 0; font-size: 14px; }
         .log-dialog-footer { display: flex; justify-content: flex-end; padding: 12px 20px; border-top: 1px solid var(--border-color, #e8e8e8); }
-        .btn-default { padding: 6px 16px; border: 1px solid var(--border-color, #d9d9d9); background: #fff; border-radius: 4px; cursor: pointer; }
+        .btn-default { padding: 6px 16px; border: 1px solid var(--border-color, #d9d9d9); background: var(--bg-secondary, #2a2a2a); color: var(--text-color, #e0e0e0); border-radius: 4px; cursor: pointer; }
       `}</style>
     </>
   );

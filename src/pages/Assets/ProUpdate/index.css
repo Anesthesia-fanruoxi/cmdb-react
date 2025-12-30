@@ -66,7 +66,7 @@
   vertical-align: middle;
 }
 
-.data-table th { background: var(--bg-secondary, #fafafa); font-weight: 600; position: sticky; top: 0; white-space: nowrap; }
+.data-table th { background: var(--bg-secondary, #fafafa); font-weight: 600; position: sticky; top: 0; z-index: 1; white-space: nowrap; }
 
 .data-table td.editable-cell {
   position: relative;

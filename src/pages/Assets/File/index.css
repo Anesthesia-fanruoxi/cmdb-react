@@ -163,7 +163,7 @@
   width: 180px;
 }
 
-.data-table th { font-weight: 600; background: var(--bg-secondary, #fafafa); position: sticky; top: 0; }
+.data-table th { font-weight: 600; background: var(--bg-secondary, #fafafa); position: sticky; top: 0; z-index: 1; }
 .data-table tr.clickable { cursor: pointer; }
 .data-table tr.clickable:hover { background: var(--bg-hover, #f5f5f5); }
 
