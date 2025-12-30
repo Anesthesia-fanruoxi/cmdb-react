@@ -81,7 +81,7 @@ const TrafficSwitching = () => {
   }, [selectedProject, selectedService]);
 
   // 时间范围变化处理
-  const handleTimeRangeChange = (value: string) => {
+  const handleTimeRangeChange = (value: TimeRangeType) => {
     setTimeRange(value);
     timeRangeRef.current = value;
     setTimeout(() => refreshData(), 0);
