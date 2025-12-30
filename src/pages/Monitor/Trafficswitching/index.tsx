@@ -6,6 +6,7 @@ import { useEffect, useState, useMemo, useRef } from 'react';
 import { RefreshCw, HelpCircle, User, Globe, Shuffle, Monitor } from 'lucide-react';
 import { getMonitorMetricsList } from '../../../services/monitor';
 import type { MonitorMetric } from '../../../services/monitor';
+import type { TimeRangeType } from '../../../types/monitor';
 import { ProjectSelector, TimeRangeSelector, AutoRefresh, MetricChart } from '../components';
 import { TIME_RANGE_OPTIONS } from '../hooks/useTimeRange';
 import { formatTimestamp } from '../utils/format';
@@ -24,7 +25,7 @@ const TrafficSwitching = () => {
   const [selectedProject, setSelectedProject] = useState('');
   const [selectedService, setSelectedService] = useState('scfq-buyer-api');
   const [showHelp, setShowHelp] = useState(false);
-  const [timeRange, setTimeRange] = useState('1h');
+  const [timeRange, setTimeRange] = useState<TimeRangeType>('1h');
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [refreshInterval, setRefreshInterval] = useState(60);
   const [countdown, setCountdown] = useState(60);
