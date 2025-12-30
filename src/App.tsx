@@ -52,7 +52,6 @@ function App() {
     const hasToken = !!useAuthStore.getState().token;
     if (!hasToken) return;
     
-    console.log('[App] 强制保存状态...');
     try {
       // 保存菜单状态
       const menuState = useMenuStore.getState();
@@ -77,10 +76,8 @@ function App() {
         version: 0,
       });
       await encryptedStorage.setItem('page-state', pageData);
-      
-      console.log('[App] 状态保存完成');
     } catch (e) {
-      console.error('[App] 状态保存失败:', e);
+      // 静默处理保存失败
     }
   }, []);
 
@@ -99,8 +96,6 @@ function App() {
       forceSaveState();
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
-
-    console.log('[App] 已启动定时保存（每30秒）和退出前保存');
 
     return () => {
       if (saveIntervalRef.current) {
@@ -135,11 +130,8 @@ function App() {
       const clear = params.get('clear');
       const isDetached = window.location.pathname === '/detached';
       
-      console.log('[App] 启动参数:', { from, clear, path: window.location.pathname, isDetached });
-      
       // 独立窗口：跳过启动流程，直接显示
       if (isDetached) {
-        console.log('[App] 独立窗口，跳过启动流程');
         initSecurity();
         initTheme();
         await initFromStorage();
@@ -161,18 +153,15 @@ function App() {
       
       // 获取最新的认证状态
       const hasToken = !!useAuthStore.getState().token;
-      console.log('[App] 初始化完成, hasToken:', hasToken);
 
       // 场景1: 退出登录 - 直接显示登录页
       if (from === 'logout') {
-        console.log('[App] 退出登录，显示登录页');
         setReady(true);
         return;
       }
 
       // 场景2: 清除缓存（清除完成后直接进入首页，不再跳转）
       if (clear === '1') {
-        console.log('[App] 清除缓存');
         await runFlow('clear');
         usePageStateStore.getState().clearAllPageStates();
         useMenuStore.getState().delAllViews();
@@ -182,7 +171,6 @@ function App() {
 
       // 场景3: 登录成功后（有 token 且来自登录页）
       if (from === 'login' && hasToken) {
-        console.log('[App] 登录成功，显示登录流程');
         // 清理旧的无前缀存储数据
         await cleanupLegacyStorage();
         await runFlow('login');
@@ -195,13 +183,10 @@ function App() {
 
       // 场景4: 正常启动
       if (hasToken) {
-        console.log('[App] 有Token，显示Token流程');
         await runFlow('token');
         // 确保页面状态和菜单状态已加载
         await usePageStateStore.getState().rehydrate();
         await useMenuStore.getState().rehydrate();
-      } else {
-        console.log('[App] 无Token，显示登录页');
       }
       setReady(true);
     };

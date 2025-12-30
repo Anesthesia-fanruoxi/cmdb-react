@@ -192,7 +192,7 @@ const RecordDetailDialog = ({ visible, record, projectDetail, onClose, onRefresh
       </div>
       <style>{`
         .dialog-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1100; }
-        .record-detail-dialog { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 700px; max-width: 90%; max-height: 85vh; background: var(--bg-color, #fff); border-radius: 8px; z-index: 1101; display: flex; flex-direction: column; box-shadow: 0 6px 30px rgba(0,0,0,0.2); }
+        .record-detail-dialog { position: fixed; top: 5vh; left: 50%; transform: translateX(-50%); width: 35%; min-width: 500px; max-width: 90%; max-height: 90vh; background: var(--bg-color, #fff); border-radius: 8px; z-index: 1101; display: flex; flex-direction: column; box-shadow: 0 6px 30px rgba(0,0,0,0.2); }
         .dialog-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color, #e8e8e8); }
         .dialog-header h3 { margin: 0; font-size: 16px; }
         .dialog-close { background: none; border: none; cursor: pointer; color: var(--text-secondary, #666); }
@@ -209,7 +209,7 @@ const RecordDetailDialog = ({ visible, record, projectDetail, onClose, onRefresh
         .tag.info { background: #e6f7ff; color: #1890ff; }
         .step-section { margin-top: 20px; }
         .step-section h4 { margin: 0 0 12px; font-size: 15px; }
-        .step-table { border: 1px solid var(--border-color, #e8e8e8); border-radius: 4px; overflow: auto; max-height: 300px; }
+        .step-table { border: 1px solid var(--border-color, #e8e8e8); border-radius: 4px; overflow: auto; max-height: calc(100vh - 400px); }
         .step-table table { width: 100%; border-collapse: collapse; font-size: 13px; }
         .step-table th, .step-table td { padding: 8px; border-bottom: 1px solid var(--border-color, #e8e8e8); text-align: center; }
         .step-table th { background: var(--bg-secondary, #fafafa); font-weight: 600; position: sticky; top: 0; }

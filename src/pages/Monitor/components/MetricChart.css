@@ -1,0 +1,9 @@
+/**
+ * 指标图表样式
+ */
+
+.echarts-container {
+  width: 100%;
+  min-height: 100px;
+  cursor: default;
+}

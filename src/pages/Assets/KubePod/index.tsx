@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { RefreshCw, Server, Play, Square } from 'lucide-react';
+import { RefreshCw, Server, Copy } from 'lucide-react';
 import { getKubePodProjects, getK8sList, operatePod } from '../../../services/assets/kubePod';
 import type { PodProject, PodStatus } from '../../../services/assets/kubePod';
 import toast from '../../../components/Toast';
@@ -22,14 +22,18 @@ const KubePodPage = () => {
     const total = tableData.length;
     const running = tableData.filter(d => d.status === 'running').length;
     const stopped = tableData.filter(d => d.status === 'stopped').length;
-    const pending = tableData.filter(d => d.status === 'pending').length;
-    return { total, running, stopped, pending };
+    return { total, running, stopped };
   }, [tableData]);
 
-  // 过滤后的数据
+  // 过滤并排序后的数据（运行中优先，其次按 namespace 排序）
   const filteredData = useMemo(() => {
-    if (!statusFilter) return tableData;
-    return tableData.filter(d => d.status === statusFilter);
+    let data = statusFilter ? tableData.filter(d => d.status === statusFilter) : tableData;
+    return [...data].sort((a, b) => {
+      if (a.status !== b.status) {
+        return a.status === 'running' ? -1 : 1;
+      }
+      return a.namespace.localeCompare(b.namespace);
+    });
   }, [tableData, statusFilter]);
 
   useEffect(() => { fetchProjects(); fetchList(); }, []);
@@ -49,10 +53,23 @@ const KubePodPage = () => {
   const fetchList = useCallback(async () => {
     setLoading(true);
     try {
-      const params = selectedProject ? { projects: [selectedProject] } : {};
+      const params = selectedProject ? { project: selectedProject } : { project: '*' };
       const res = await getK8sList(params);
-      if (res.code === 200 && Array.isArray(res.data)) {
-        setTableData(res.data);
+      if (res.code === 200 && res.data) {
+        // API 返回结构: { result: [...], active_count, inactive_count, count }
+        const result = res.data.result || [];
+        setTableData(result.map((item: any) => ({
+          project: item.project,
+          project_name: item.project_name || item.project,
+          namespace: item.namespace,
+          service_name: item.namespace, // 使用 namespace 作为服务名
+          domain: item.domain,
+          replicas: item.is_active ? 1 : 0,
+          ready_replicas: item.is_active ? 1 : 0,
+          available_replicas: item.is_active ? 1 : 0,
+          status: item.is_active ? 'running' : 'stopped',
+          last_update: ''
+        })));
       }
     } catch (err) {
       console.error('获取服务列表失败:', err);
@@ -64,18 +81,18 @@ const KubePodPage = () => {
   useEffect(() => { fetchList(); }, [fetchList]);
 
   const handleOperate = async (row: PodStatus, action: 'start' | 'stop') => {
-    const key = `${row.project}-${row.service_name}`;
+    const key = `${row.namespace}`;
     const replicas = action === 'start' ? 1 : 0;
     const actionText = action === 'start' ? '启动' : '停止';
     
-    if (!confirm(`确定要${actionText}服务 ${row.service_name} 吗？`)) return;
+    if (!confirm(`确定要${actionText}服务 ${row.namespace} 吗？`)) return;
     
     setActionLoading(prev => ({ ...prev, [key]: true }));
     try {
       const res = await operatePod({
         project: row.project,
         namespace: row.namespace,
-        service_name: row.service_name,
+        service_name: row.namespace,
         replicas
       });
       if (res.code === 200) {
@@ -88,26 +105,6 @@ const KubePodPage = () => {
       toast.error(`${actionText}失败`);
     } finally {
       setActionLoading(prev => ({ ...prev, [key]: false }));
-    }
-  };
-
-  const getStatusClass = (status: string) => {
-    switch (status) {
-      case 'running': return 'success';
-      case 'stopped': return 'default';
-      case 'pending': return 'warning';
-      case 'error': return 'danger';
-      default: return 'default';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'running': return '运行中';
-      case 'stopped': return '已停止';
-      case 'pending': return '启动中';
-      case 'error': return '异常';
-      default: return status;
     }
   };
 
@@ -124,10 +121,18 @@ const KubePodPage = () => {
         <div className="filter-section">
           <div className="project-filter">
             <span className="filter-label">项目筛选：</span>
-            <select value={selectedProject} onChange={e => setSelectedProject(e.target.value)}>
-              <option value="">全部项目</option>
-              {projectList.map(p => <option key={p.project} value={p.project}>{p.project_name}</option>)}
-            </select>
+            <div className="project-radios">
+              <label className={`radio-item ${selectedProject === '' ? 'active' : ''}`}>
+                <input type="radio" name="project" checked={selectedProject === ''} onChange={() => setSelectedProject('')} />
+                全部项目
+              </label>
+              {projectList.map(p => (
+                <label key={p.project} className={`radio-item ${selectedProject === p.project ? 'active' : ''}`}>
+                  <input type="radio" name="project" checked={selectedProject === p.project} onChange={() => setSelectedProject(p.project)} />
+                  {p.project_name}
+                </label>
+              ))}
+            </div>
           </div>
 
           <div className="stats-cards">
@@ -143,10 +148,6 @@ const KubePodPage = () => {
               <span className="stat-value">{statistics.stopped}</span>
               <span className="stat-label">已停止</span>
             </div>
-            <div className={`stat-card warning ${statusFilter === 'pending' ? 'active' : ''}`} onClick={() => setStatusFilter('pending')}>
-              <span className="stat-value">{statistics.pending}</span>
-              <span className="stat-label">启动中</span>
-            </div>
           </div>
         </div>
 
@@ -154,36 +155,49 @@ const KubePodPage = () => {
           <table className="data-table">
             <thead>
               <tr>
-                <th>项目</th><th>命名空间</th><th>服务名称</th><th>副本数</th><th>就绪数</th><th>状态</th><th>更新时间</th><th>操作</th>
+                <th>项目名称</th><th>命名空间</th><th>域名地址</th><th>运行状态</th>
               </tr>
             </thead>
             <tbody>
-              {loading ? <tr><td colSpan={8} className="loading-cell">加载中...</td></tr> :
-               filteredData.length === 0 ? <tr><td colSpan={8} className="empty-cell">暂无数据</td></tr> :
+              {loading ? <tr><td colSpan={4} className="loading-cell">加载中...</td></tr> :
+               filteredData.length === 0 ? <tr><td colSpan={4} className="empty-cell">暂无数据</td></tr> :
                filteredData.map(row => {
-                 const key = `${row.project}-${row.service_name}`;
+                 const key = `${row.namespace}`;
                  const isLoading = actionLoading[key];
                  return (
                   <tr key={key}>
                     <td>{row.project_name}</td>
-                    <td>{row.namespace}</td>
-                    <td>{row.service_name}</td>
-                    <td>{row.replicas}</td>
-                    <td>{row.ready_replicas}/{row.replicas}</td>
-                    <td><span className={`status-tag ${getStatusClass(row.status)}`}>{getStatusText(row.status)}</span></td>
-                    <td>{row.last_update}</td>
+                    <td><span className="namespace-tag">{row.namespace}</span></td>
+                    <td>
+                      {row.domain ? (
+                        <div className="domain-cell">
+                          <a href={`https://${row.domain}`} target="_blank" rel="noopener noreferrer" className="domain-link">
+                            {row.domain}
+                          </a>
+                          <button
+                            className="copy-btn"
+                            onClick={() => {
+                              navigator.clipboard.writeText(`https://${row.domain}`);
+                              toast.success('已复制到剪贴板');
+                            }}
+                            title="复制地址"
+                          >
+                            <Copy size={14} />
+                          </button>
+                        </div>
+                      ) : '-'}
+                    </td>
                     <td className="action-cell">
-                      {row.status === 'stopped' ? (
-                        <button className="btn-action success" onClick={() => handleOperate(row, 'start')} disabled={isLoading}>
-                          <Play size={12} /> 启动
-                        </button>
-                      ) : row.status === 'running' ? (
-                        <button className="btn-action danger" onClick={() => handleOperate(row, 'stop')} disabled={isLoading}>
-                          <Square size={12} /> 停止
-                        </button>
-                      ) : (
-                        <span className="action-disabled">操作中...</span>
-                      )}
+                      <label className={`status-switch ${row.status === 'running' ? 'active' : ''} ${isLoading ? 'loading' : ''}`}>
+                        <input
+                          type="checkbox"
+                          checked={row.status === 'running'}
+                          disabled={isLoading}
+                          onChange={() => handleOperate(row, row.status === 'running' ? 'stop' : 'start')}
+                        />
+                        <span className="switch-slider"></span>
+                        <span className="switch-text">{isLoading ? '执行中' : (row.status === 'running' ? '运行中' : '已停止')}</span>
+                      </label>
                     </td>
                   </tr>
                 );

@@ -144,13 +144,10 @@ export const useMenuStore = create<MenuState>()(
 
   // 手动触发 rehydrate（登录后调用）
   rehydrate: async () => {
-    console.log('[MenuStore] 开始手动 rehydrate...')
     const stored = await encryptedStorage.getItem('menu-state')
-    console.log('[MenuStore] 读取到数据:', stored ? '有' : '无')
     if (stored) {
       try {
         const parsed = JSON.parse(stored)
-        console.log('[MenuStore] 解析数据:', parsed)
         if (parsed.state) {
           const { visitedViews, cachedViews, collapsed } = parsed.state
           set({
@@ -158,14 +155,12 @@ export const useMenuStore = create<MenuState>()(
             cachedViews: cachedViews || [],
             collapsed: collapsed ?? false,
           })
-          console.log('[MenuStore] 手动 rehydrate 成功, visitedViews:', visitedViews?.length || 0)
           return
         }
       } catch (e) {
         console.error('[MenuStore] rehydrate 解析失败:', e)
       }
     }
-    console.log('[MenuStore] 无数据可恢复')
   },
 
   // 添加已访问视图

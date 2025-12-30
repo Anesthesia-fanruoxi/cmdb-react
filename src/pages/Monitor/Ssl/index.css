@@ -1,0 +1,131 @@
+/**
+ * SSL 证书监控页面样式
+ */
+
+.ssl-monitor .search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 16px;
+  padding: 0 12px;
+  height: 32px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: var(--bg-color);
+}
+
+.ssl-monitor .search-box input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  color: var(--text-color);
+  width: 150px;
+}
+
+.ssl-monitor .search-box input::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* 表格 */
+.ssl-monitor .table-container {
+  background-color: var(--bg-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.ssl-monitor .ssl-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ssl-monitor .ssl-table th,
+.ssl-monitor .ssl-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color-light);
+}
+
+.ssl-monitor .ssl-table th {
+  background-color: var(--bg-secondary);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-color);
+}
+
+.ssl-monitor .ssl-table td {
+  font-size: 13px;
+  color: var(--text-color);
+}
+
+.ssl-monitor .ssl-table tbody tr:hover {
+  background-color: var(--bg-hover);
+}
+
+.ssl-monitor .domain-cell {
+  font-family: monospace;
+  color: var(--primary-color);
+}
+
+/* 行状态 - 浅色主题 */
+.ssl-monitor .row-expired {
+  background-color: rgba(255, 77, 79, 0.1) !important;
+}
+
+.ssl-monitor .row-critical {
+  background-color: rgba(255, 77, 79, 0.08) !important;
+}
+
+.ssl-monitor .row-warning {
+  background-color: rgba(250, 173, 20, 0.1) !important;
+}
+
+/* 天数状态 */
+.ssl-monitor .days-normal {
+  color: #52c41a;
+  font-weight: 600;
+}
+
+.ssl-monitor .days-warning {
+  color: #faad14;
+  font-weight: 600;
+}
+
+.ssl-monitor .days-critical {
+  color: #ff4d4f;
+  font-weight: 600;
+}
+
+.ssl-monitor .days-expired {
+  color: #ff4d4f;
+  font-weight: 600;
+  text-decoration: line-through;
+}
+
+/* 状态标签 */
+.ssl-monitor .status-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.ssl-monitor .status-tag.success {
+  background-color: rgba(82, 196, 26, 0.15);
+  color: #52c41a;
+}
+
+.ssl-monitor .status-tag.warning {
+  background-color: rgba(250, 173, 20, 0.15);
+  color: #faad14;
+}
+
+.ssl-monitor .status-tag.error {
+  background-color: rgba(255, 77, 79, 0.15);
+  color: #ff4d4f;
+}
+
+.ssl-monitor .status-tag.default {
+  background-color: var(--bg-secondary);
+  color: var(--text-muted);
+}

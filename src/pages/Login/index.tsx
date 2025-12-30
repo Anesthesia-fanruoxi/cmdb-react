@@ -11,6 +11,23 @@ import './style.css';
 
 type LoginType = 'password' | 'totp';
 
+// 获取登录历史记录
+const getLoginHistory = (): string[] => {
+  try {
+    const history = localStorage.getItem('loginHistory');
+    return history ? JSON.parse(history) : [];
+  } catch {
+    return [];
+  }
+};
+
+// 保存登录历史记录（最多保存10个）
+const saveLoginHistory = (username: string) => {
+  const history = getLoginHistory().filter(u => u !== username);
+  history.unshift(username);
+  localStorage.setItem('loginHistory', JSON.stringify(history.slice(0, 10)));
+};
+
 const Login = () => {
   const { login, autoLogin, bindDevice } = useAuthStore();
   
@@ -22,12 +39,35 @@ const Login = () => {
   const [error, setError] = useState('');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [canAutoLogin, setCanAutoLogin] = useState(false);
+  const [loginHistory, setLoginHistory] = useState<string[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
   
   // 重新绑定相关状态
   const [showRebindPrompt, setShowRebindPrompt] = useState(false);
   const [rebindError, setRebindError] = useState('');
   
   const codeInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const usernameRef = useRef<HTMLInputElement>(null);
+  const historyRef = useRef<HTMLDivElement>(null);
+
+  // 加载登录历史
+  useEffect(() => {
+    setLoginHistory(getLoginHistory());
+    const lastUsername = localStorage.getItem('lastLoginUsername');
+    if (lastUsername) setUsername(lastUsername);
+  }, []);
+
+  // 点击外部关闭下拉框
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (historyRef.current && !historyRef.current.contains(e.target as Node)) {
+        setShowHistory(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // 检查是否可以自动登录（用户名变化时检测）
   useEffect(() => {
@@ -35,10 +75,8 @@ const Login = () => {
       if (isTauriEnv() && username.trim()) {
         try {
           const has = await hasDeviceCredentials(username.trim());
-          console.log('[Login] 检测设备凭证:', username, has);
           setCanAutoLogin(has);
-        } catch (err) {
-          console.error('[Login] 检测设备凭证失败:', err);
+        } catch {
           setCanAutoLogin(false);
         }
       } else {
@@ -50,12 +88,6 @@ const Login = () => {
     return () => clearTimeout(timer);
   }, [username]);
 
-  // 初始化上次登录的用户名
-  useEffect(() => {
-    const lastUsername = localStorage.getItem('lastLoginUsername');
-    if (lastUsername) setUsername(lastUsername);
-  }, []);
-
   // 切换主题
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
@@ -63,8 +95,9 @@ const Login = () => {
     document.documentElement.classList.toggle('dark', newTheme === 'dark');
   };
 
-  // 切换登录方式
-  const switchLoginType = () => {
+  // 切换登录方式（保持焦点）
+  const switchLoginType = (e: React.MouseEvent) => {
+    e.preventDefault();
     const newType = loginType === 'totp' ? 'password' : 'totp';
     setLoginType(newType);
     setError('');
@@ -72,7 +105,15 @@ const Login = () => {
       setPassword('');
       setTotpInputs(['', '', '', '', '', '']);
       setTimeout(() => codeInputRefs.current[0]?.focus(), 50);
+    } else {
+      setTimeout(() => passwordRef.current?.focus(), 50);
     }
+  };
+
+  // 选择历史用户
+  const selectHistoryUser = (user: string) => {
+    setUsername(user);
+    setShowHistory(false);
   };
 
   // 处理验证码输入
@@ -151,6 +192,7 @@ const Login = () => {
       });
       
       localStorage.setItem('lastLoginUsername', username);
+      saveLoginHistory(username);
       
       if (result?.isDefaultPass) {
         window.location.href = '/force-two-factor';
@@ -181,6 +223,7 @@ const Login = () => {
       const success = await autoLogin(username.trim());
       if (success) {
         localStorage.setItem('lastLoginUsername', username);
+        saveLoginHistory(username);
         onLoginSuccess();
       } else {
         setError('自动登录失败');
@@ -217,6 +260,7 @@ const Login = () => {
       });
       
       localStorage.setItem('lastLoginUsername', username);
+      saveLoginHistory(username);
       
       if (result?.isDefaultPass) {
         window.location.href = '/force-two-factor';
@@ -281,17 +325,42 @@ const Login = () => {
             <h2 className="login-title">CMDB运维管理系统</h2>
             <p className="login-subtitle">欢迎回来，请登录您的账号</p>
 
-            {/* 用户名输入 */}
-            <div className="form-item">
-              <div className="input-wrapper">
+            {/* 用户名输入（带历史下拉） */}
+            <div className="form-item" ref={historyRef}>
+              <div className="input-wrapper has-dropdown">
                 <span className="input-icon">👤</span>
                 <input
+                  ref={usernameRef}
                   type="text"
                   placeholder="用户名"
                   value={username}
                   onChange={e => setUsername(e.target.value)}
-                  autoComplete="username"
+                  onFocus={() => loginHistory.length > 0 && setShowHistory(true)}
+                  autoComplete="off"
                 />
+                {loginHistory.length > 0 && (
+                  <button 
+                    type="button" 
+                    className="dropdown-toggle"
+                    onClick={() => setShowHistory(!showHistory)}
+                  >
+                    ▼
+                  </button>
+                )}
+                {showHistory && loginHistory.length > 0 && (
+                  <div className="history-dropdown">
+                    {loginHistory.map(user => (
+                      <div 
+                        key={user} 
+                        className={`history-item ${user === username ? 'active' : ''}`}
+                        onClick={() => selectHistoryUser(user)}
+                      >
+                        <span className="history-icon">👤</span>
+                        <span className="history-name">{user}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -379,6 +448,7 @@ const Login = () => {
                     <div className="input-wrapper">
                       <span className="input-icon">🔒</span>
                       <input
+                        ref={passwordRef}
                         type="password"
                         placeholder="密码"
                         value={password}

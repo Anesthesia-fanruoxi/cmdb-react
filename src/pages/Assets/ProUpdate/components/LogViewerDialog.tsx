@@ -65,14 +65,19 @@ const LogViewerDialog = ({ visible, logStep, taskInfo, projectDetail, onClose }:
     if (!taskId || !stepType) return;
 
     // 构建 WebSocket URL
+    // Tauri 桌面应用中 location.host 不是后端地址，需要从 API URL 提取
     let wsUrl: string;
-    const isDev = import.meta.env.DEV;
-    if (isDev) {
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
+    
+    if (apiBaseUrl) {
+      // 从 API URL 提取主机地址，如 https://cmdb.hzbxhd.com/api -> wss://cmdb.hzbxhd.com
+      const apiUrl = new URL(apiBaseUrl);
+      const wsProtocol = apiUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+      wsUrl = `${wsProtocol}//${apiUrl.host}/ws/assets/proUpdate/logs?task_id=${encodeURIComponent(taskId)}&step_type=${encodeURIComponent(stepType)}&project=${encodeURIComponent(project)}&type=${encodeURIComponent(type)}`;
+    } else {
+      // 开发环境 fallback
       const wsBase = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8080';
       wsUrl = `${wsBase}/ws/assets/proUpdate/logs?task_id=${encodeURIComponent(taskId)}&step_type=${encodeURIComponent(stepType)}&project=${encodeURIComponent(project)}&type=${encodeURIComponent(type)}`;
-    } else {
-      const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-      wsUrl = `${protocol}//${location.host}/ws/assets/proUpdate/logs?task_id=${encodeURIComponent(taskId)}&step_type=${encodeURIComponent(stepType)}&project=${encodeURIComponent(project)}&type=${encodeURIComponent(type)}`;
     }
 
     try {

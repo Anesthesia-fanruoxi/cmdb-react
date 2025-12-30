@@ -1,0 +1,70 @@
+/**
+ * 指标卡片样式
+ */
+
+.metric-card {
+  background-color: var(--bg-color);
+  border-radius: 4px;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.metric-card .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 12px 16px;
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.metric-card .header-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.metric-card .metric-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 6px;
+  display: block;
+}
+
+.metric-card .metric-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.metric-card .hosts-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  background-color: rgba(24, 144, 255, 0.1);
+  color: var(--color-info);
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+.metric-card .update-time {
+  color: var(--text-muted);
+}
+
+.metric-card .query-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: help;
+}
+
+.metric-card .card-body {
+  padding: 8px;
+}

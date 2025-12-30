@@ -6,7 +6,6 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { SystemSetting } from '../types/system';
 import { getSystemSetting } from '../services/system';
-import { getTheme, setTheme as saveTheme } from '../utils/storage';
 
 type ThemeMode = 'light' | 'dark';
 
@@ -48,7 +47,7 @@ export const useAppStore = create<AppState>()(
       systemLogo: '',
       faviconLogo: '',
       loginLogo: '',
-      theme: getTheme(),
+      theme: 'light',
       loading: false,
       isLoading: false,
       error: null,
@@ -95,7 +94,6 @@ export const useAppStore = create<AppState>()(
 
       // 设置主题
       setTheme: (theme) => {
-        saveTheme(theme);
         set({ theme });
 
         // 更新 DOM
@@ -112,10 +110,15 @@ export const useAppStore = create<AppState>()(
         get().setTheme(newTheme);
       },
 
-      // 初始化主题
+      // 初始化主题（从持久化状态恢复后调用）
       initTheme: () => {
-        const savedTheme = getTheme();
-        get().setTheme(savedTheme);
+        const theme = get().theme;
+        // 更新 DOM
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
       },
 
       // 设置加载状态

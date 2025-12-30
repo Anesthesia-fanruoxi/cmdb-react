@@ -98,13 +98,10 @@ export const usePageStateStore = create<PageStateStore>()(
 
       // 手动触发 rehydrate（登录后调用）
       rehydrate: async () => {
-        console.log('[PageState] 开始手动 rehydrate...')
         const stored = await encryptedStorage.getItem('page-state')
-        console.log('[PageState] 读取到数据:', stored ? '有' : '无')
         if (stored) {
           try {
             const parsed = JSON.parse(stored)
-            console.log('[PageState] 解析数据:', parsed)
             if (parsed.state) {
               set({
                 pages: parsed.state.pages || {},
@@ -112,7 +109,6 @@ export const usePageStateStore = create<PageStateStore>()(
                 lastSaveTime: parsed.state.lastSaveTime || null,
                 _hasHydrated: true,
               })
-              console.log('[PageState] 手动 rehydrate 成功, pages:', Object.keys(parsed.state.pages || {}))
               return
             }
           } catch (e) {

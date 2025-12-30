@@ -1,0 +1,200 @@
+/**
+ * 文档表单组件样式
+ */
+
+.doc-form-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.doc-form-drawer {
+  width: 70%;
+  max-width: 900px;
+  height: 100%;
+  background: var(--bg-color, #fff);
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.doc-form-drawer .drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color, #e8e8e8);
+}
+
+.doc-form-drawer .drawer-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-color, #333);
+}
+
+.doc-form-drawer .close-btn {
+  padding: 4px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary, #666);
+  border-radius: 4px;
+}
+
+.doc-form-drawer .close-btn:hover {
+  background-color: var(--bg-hover, #f5f5f5);
+}
+
+.doc-form-drawer .drawer-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.doc-form-drawer .form-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.doc-form-drawer .form-item.flex-1 {
+  flex: 1;
+  min-height: 0;
+}
+
+.doc-form-drawer .form-item label {
+  font-size: 14px;
+  color: var(--text-color, #333);
+  font-weight: 500;
+}
+
+.doc-form-drawer .form-item input {
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--border-color, #d9d9d9);
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--text-color, #333);
+  background: var(--bg-color, #fff);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.doc-form-drawer .form-item input:focus {
+  border-color: var(--primary-color, #1890ff);
+}
+
+.doc-form-drawer .form-item textarea {
+  flex: 1;
+  min-height: 300px;
+  padding: 12px;
+  border: 1px solid var(--border-color, #d9d9d9);
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--text-color, #333);
+  background: var(--bg-color, #fff);
+  outline: none;
+  resize: none;
+  font-family: 'Consolas', 'Monaco', monospace;
+  line-height: 1.6;
+  transition: border-color 0.2s;
+}
+
+.doc-form-drawer .form-item textarea:focus {
+  border-color: var(--primary-color, #1890ff);
+}
+
+.doc-form-drawer .drawer-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-color, #e8e8e8);
+}
+
+.doc-form-drawer .btn-cancel {
+  padding: 8px 20px;
+  background: var(--bg-color, #fff);
+  border: 1px solid var(--border-color, #d9d9d9);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-color, #333);
+}
+
+.doc-form-drawer .btn-cancel:hover {
+  border-color: var(--primary-color, #1890ff);
+  color: var(--primary-color, #1890ff);
+}
+
+.doc-form-drawer .btn-submit {
+  padding: 8px 20px;
+  background: var(--primary-color, #1890ff);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #fff;
+}
+
+.doc-form-drawer .btn-submit:hover:not(:disabled) {
+  background: var(--primary-color-hover, #40a9ff);
+}
+
+.doc-form-drawer .btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 深色主题 */
+[data-theme="dark"] .doc-form-drawer {
+  background: var(--bg-color, #1f1f1f);
+}
+
+[data-theme="dark"] .doc-form-drawer .drawer-header {
+  border-color: var(--border-color, #303030);
+}
+
+[data-theme="dark"] .doc-form-drawer .drawer-header h3 {
+  color: var(--text-color, #e0e0e0);
+}
+
+[data-theme="dark"] .doc-form-drawer .form-item label {
+  color: var(--text-color, #e0e0e0);
+}
+
+[data-theme="dark"] .doc-form-drawer .form-item input,
+[data-theme="dark"] .doc-form-drawer .form-item textarea {
+  background: var(--bg-secondary, #141414);
+  border-color: var(--border-color, #303030);
+  color: var(--text-color, #e0e0e0);
+}
+
+[data-theme="dark"] .doc-form-drawer .drawer-footer {
+  border-color: var(--border-color, #303030);
+}
+
+[data-theme="dark"] .doc-form-drawer .btn-cancel {
+  background: var(--bg-secondary, #141414);
+  border-color: var(--border-color, #303030);
+  color: var(--text-color, #e0e0e0);
+}

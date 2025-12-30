@@ -16,11 +16,29 @@ export interface PodStatus {
   project_name: string;
   namespace: string;
   service_name: string;
+  domain?: string;
   replicas: number;
   ready_replicas: number;
   available_replicas: number;
   status: 'running' | 'stopped' | 'pending' | 'error';
   last_update: string;
+}
+
+/** API 原始返回的 Pod 项 */
+export interface PodRawItem {
+  project: string;
+  project_name?: string;
+  namespace: string;
+  domain?: string;
+  is_active: boolean;
+}
+
+/** K8s 列表响应 */
+export interface K8sListResponse {
+  result: PodRawItem[];
+  active_count: number;
+  inactive_count: number;
+  count: number;
 }
 
 // 获取项目列表
@@ -29,8 +47,8 @@ export function getKubePodProjects() {
 }
 
 // 获取 K8s 服务状态列表
-export function getK8sList(data: { projects?: string[] }) {
-  return apiClient.post<PodStatus[]>('/assets/kubePod/status', data);
+export function getK8sList(data: { project?: string }) {
+  return apiClient.post<K8sListResponse>('/assets/kubePod/status', data);
 }
 
 // 操作 Pod（扩缩容）

@@ -230,7 +230,23 @@ export async function setLastLoginUsername(username: string): Promise<void> {
 // ==================== 主题（不加密） ====================
 
 export function getTheme(): 'light' | 'dark' {
-  return (memoryCache.get(THEME_KEY) as 'light' | 'dark') || 'light';
+  // 先从内存缓存读取
+  const cached = memoryCache.get(THEME_KEY) as 'light' | 'dark' | undefined;
+  if (cached) return cached;
+  
+  // 从持久化存储读取
+  if (isTauriEnv()) {
+    // Tauri 环境在 initStorage 时已加载到 memoryCache
+    return 'light';
+  } else {
+    // 浏览器环境直接从 localStorage 读取
+    const saved = localStorage.getItem(THEME_KEY) as 'light' | 'dark' | null;
+    if (saved === 'light' || saved === 'dark') {
+      memoryCache.set(THEME_KEY, saved);
+      return saved;
+    }
+  }
+  return 'light';
 }
 
 export function setTheme(theme: 'light' | 'dark'): void {

@@ -1,0 +1,104 @@
+/**
+ * Gauge 进度条卡片样式
+ */
+
+.gauge-card {
+  background-color: var(--bg-color);
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.gauge-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.gauge-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.gauge-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.gauge-count {
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 2px 8px;
+  background-color: var(--bg-color);
+  border-radius: 4px;
+}
+
+.gauge-content {
+  padding: 16px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.gauge-empty {
+  text-align: center;
+  padding: 40px 0;
+  color: var(--text-muted);
+}
+
+.gauge-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.gauge-item:last-child {
+  margin-bottom: 0;
+}
+
+.gauge-name {
+  width: 200px;
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--text-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gauge-bar-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gauge-bar-bg {
+  flex: 1;
+  height: 22px;
+  background-color: var(--bg-secondary);
+  border-radius: 11px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--border-color);
+}
+
+.gauge-bar-fill {
+  height: 100%;
+  border-radius: 11px;
+  transition: width 0.4s ease;
+  min-width: 3px;
+}
+
+.gauge-percentage {
+  width: 55px;
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-color);
+  text-align: right;
+}

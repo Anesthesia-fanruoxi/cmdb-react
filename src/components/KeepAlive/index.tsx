@@ -3,7 +3,7 @@
  * 类似 Vue 的 keep-alive，缓存已访问的页面，切换时不重新渲染
  */
 
-import { useRef, useEffect, ReactElement, memo } from 'react';
+import { useRef, useEffect, ReactElement, memo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useMenuStore } from '../../stores/menuStore';
 
@@ -22,13 +22,14 @@ const KeepAlive = memo(({ children, maxCache = 10 }: KeepAliveProps) => {
   const location = useLocation();
   const { cachedViews } = useMenuStore();
   const cacheRef = useRef<Map<string, CacheItem>>(new Map());
+  const [, forceUpdate] = useState(0);
   const currentPath = location.pathname;
 
   // 更新缓存
   useEffect(() => {
     const cache = cacheRef.current;
     
-    // 添加当前页面到缓存
+    // 只有当页面不在缓存中时才添加（保持已有页面的状态）
     if (!cache.has(currentPath)) {
       // 超出最大缓存数量时，删除最早的
       if (cache.size >= maxCache) {
@@ -36,19 +37,20 @@ const KeepAlive = memo(({ children, maxCache = 10 }: KeepAliveProps) => {
         if (firstKey) cache.delete(firstKey);
       }
       cache.set(currentPath, { path: currentPath, element: children });
-    } else {
-      // 更新已有缓存的元素
-      cache.set(currentPath, { path: currentPath, element: children });
+      forceUpdate(n => n + 1);
     }
 
     // 清理不在 cachedViews 中的缓存（被关闭的标签）
+    let needUpdate = false;
     cache.forEach((_, key) => {
       const shouldCache = cachedViews.includes(key) || key === currentPath || key === '/' || key === '/dashboard';
       if (!shouldCache) {
         cache.delete(key);
+        needUpdate = true;
       }
     });
-  }, [currentPath, children, cachedViews, maxCache]);
+    if (needUpdate) forceUpdate(n => n + 1);
+  }, [currentPath, cachedViews, maxCache]);
 
   // 渲染所有缓存的页面，当前页面显示，其他隐藏
   return (

@@ -10,3 +10,6 @@ export * from './auth';
 
 // 系统管理模块
 export * as systemApi from './system';
+
+// 监控模块
+export * as monitorApi from './monitor';

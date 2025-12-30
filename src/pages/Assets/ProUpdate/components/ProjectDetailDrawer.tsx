@@ -181,7 +181,7 @@ const ProjectDetailDrawer = ({ visible, project, onClose, onRefresh }: Props) =>
       </div>
       <style>{`
         .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000; }
-        .drawer-container { position: fixed; top: 0; right: 0; width: 600px; max-width: 90%; height: 100vh; background: var(--bg-color, #fff); z-index: 1001; display: flex; flex-direction: column; box-shadow: -4px 0 20px rgba(0,0,0,0.15); }
+        .drawer-container { position: fixed; top: 0; right: 0; width: 42%; min-width: 500px; max-width: 90%; height: 100vh; background: var(--bg-color, #fff); z-index: 1001; display: flex; flex-direction: column; box-shadow: -4px 0 20px rgba(0,0,0,0.15); }
         .drawer-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color, #e8e8e8); }
         .drawer-header h3 { margin: 0; font-size: 16px; }
         .drawer-close { background: none; border: none; cursor: pointer; color: var(--text-secondary, #666); }

@@ -59,21 +59,14 @@ export const encryptedStorage: StateStorage = {
   getItem: async (name: string): Promise<string | null> => {
     try {
       const userKey = getUserKey(name)
-      // 没有用户名时不读取
-      if (!userKey) {
-        console.log(`[Storage] 跳过读取 ${name}: 用户未登录`)
-        return null
-      }
+      if (!userKey) return null
       
       if (isTauriEnv()) {
         const store = await getStore()
         if (!store) return null
         const encrypted = await store.get<string>(userKey)
-        console.log(`[Storage] 读取 ${userKey}:`, encrypted ? '有数据' : '无数据')
         if (!encrypted) return null
-        const decrypted = await decryptData(encrypted)
-        console.log(`[Storage] 解密 ${userKey} 成功`)
-        return decrypted
+        return await decryptData(encrypted)
       } else {
         const encrypted = localStorage.getItem(userKey)
         if (!encrypted) return null
@@ -88,20 +81,14 @@ export const encryptedStorage: StateStorage = {
   setItem: async (name: string, value: string): Promise<void> => {
     try {
       const userKey = getUserKey(name)
-      // 没有用户名时不保存
-      if (!userKey) {
-        console.log(`[Storage] 跳过保存 ${name}: 用户未登录`)
-        return
-      }
+      if (!userKey) return
       
-      console.log(`[Storage] 保存 ${userKey}, 数据长度:`, value.length)
       const encrypted = await encryptData(value)
       if (isTauriEnv()) {
         const store = await getStore()
         if (store) {
           await store.set(userKey, encrypted)
           await store.save()
-          console.log(`[Storage] 保存 ${userKey} 成功`)
         }
       } else {
         localStorage.setItem(userKey, encrypted)
@@ -145,7 +132,6 @@ export async function cleanupLegacyStorage(): Promise<void> {
           const exists = await store.get(key)
           if (exists) {
             await store.delete(key)
-            console.log(`[Storage] 清理旧数据: ${key}`)
           }
         }
         await store.save()
@@ -154,7 +140,6 @@ export async function cleanupLegacyStorage(): Promise<void> {
       for (const key of legacyKeys) {
         if (localStorage.getItem(key)) {
           localStorage.removeItem(key)
-          console.log(`[Storage] 清理旧数据: ${key}`)
         }
       }
     }

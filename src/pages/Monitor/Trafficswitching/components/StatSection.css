@@ -1,0 +1,22 @@
+/**
+ * 统计区域样式
+ */
+
+.stat-section {
+  margin-bottom: 24px;
+}
+
+.stat-section .section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.stat-grid {
+  display: grid;
+  gap: 16px;
+}

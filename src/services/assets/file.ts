@@ -36,7 +36,7 @@ export function getFileProjects() {
 
 // 获取文件列表
 export function getFileList(params: FileListParams) {
-  return apiClient.get<{ data: { files: FileItem[]; total: number; page: number } }>('/assets/file/list', params);
+  return apiClient.get<{ data: { files: FileItem[]; total: number; page: number } }>('/assets/file/list', params as unknown as Record<string, unknown>);
 }
 
 // 上传文件

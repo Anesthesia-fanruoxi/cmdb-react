@@ -30,7 +30,7 @@ const DomainPage = () => {
   const [tableData, setTableData] = useState<DomainRecord[]>([]);
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize] = useState(10);
   
   // 查询条件
   const [queryParams, setQueryParams] = useState({ rrKeyWord: '', typeKeyWord: '', valueKeyWord: '', status: '' });

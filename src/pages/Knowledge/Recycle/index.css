@@ -1,0 +1,175 @@
+/**
+ * 回收站页面样式
+ */
+
+.recycle-page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-color, #fff);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.recycle-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.type-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-secondary, #f5f5f5);
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.type-tabs button {
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-secondary, #666);
+  transition: all 0.2s;
+}
+
+.type-tabs button:hover {
+  color: var(--text-color, #333);
+}
+
+.type-tabs button.active {
+  background: var(--bg-color, #fff);
+  color: var(--primary-color, #1890ff);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.recycle-header .btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--bg-color, #fff);
+  border: 1px solid var(--border-color, #d9d9d9);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-color, #333);
+}
+
+.recycle-header .btn-icon:hover {
+  border-color: var(--primary-color, #1890ff);
+  color: var(--primary-color, #1890ff);
+}
+
+.recycle-header .btn-icon .spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.recycle-content {
+  flex: 1;
+  overflow: auto;
+}
+
+.loading-state,
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--text-secondary, #999);
+}
+
+.recycle-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.recycle-table th,
+.recycle-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color, #e8e8e8);
+}
+
+.recycle-table th {
+  background: var(--bg-secondary, #fafafa);
+  font-weight: 500;
+  color: var(--text-color, #333);
+}
+
+.recycle-table td {
+  color: var(--text-color, #333);
+}
+
+.recycle-table .doc-title {
+  font-weight: 500;
+}
+
+.recycle-table .actions {
+  display: flex;
+  gap: 8px;
+}
+
+.recycle-table .btn-restore,
+.recycle-table .btn-remove {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.recycle-table .btn-restore {
+  background: var(--primary-bg, #e6f7ff);
+  color: var(--primary-color, #1890ff);
+}
+
+.recycle-table .btn-restore:hover {
+  background: var(--primary-color, #1890ff);
+  color: #fff;
+}
+
+.recycle-table .btn-remove {
+  background: #fff1f0;
+  color: #ff4d4f;
+}
+
+.recycle-table .btn-remove:hover {
+  background: #ff4d4f;
+  color: #fff;
+}
+
+/* 深色主题 */
+[data-theme="dark"] .recycle-page {
+  background: var(--bg-color, #1f1f1f);
+}
+
+[data-theme="dark"] .type-tabs {
+  background: var(--bg-secondary, #141414);
+}
+
+[data-theme="dark"] .type-tabs button.active {
+  background: var(--bg-color, #1f1f1f);
+}
+
+[data-theme="dark"] .recycle-table th {
+  background: var(--bg-secondary, #141414);
+}
+
+[data-theme="dark"] .recycle-table th,
+[data-theme="dark"] .recycle-table td {
+  border-color: var(--border-color, #303030);
+}

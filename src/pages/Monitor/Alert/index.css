@@ -1,0 +1,134 @@
+/**
+ * 告警监控页面样式
+ */
+
+/* 告警列表 */
+.alert-monitor .alert-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.alert-monitor .alert-item {
+  background-color: var(--bg-color, #fff);
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #e8e8e8);
+  border-left: 4px solid #e6a23c;
+  padding: 16px;
+  transition: box-shadow 0.3s;
+}
+
+.alert-monitor .alert-item:hover {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.alert-monitor .alert-item.severity-critical {
+  border-left-color: #f56c6c;
+}
+
+.alert-monitor .alert-item.severity-warning {
+  border-left-color: #e6a23c;
+}
+
+.alert-monitor .alert-item.severity-info {
+  border-left-color: #409eff;
+}
+
+.alert-monitor .alert-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.alert-monitor .alert-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--text-color, #333);
+}
+
+.alert-monitor .alert-status {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.alert-monitor .alert-status.status-firing {
+  background-color: #fef0f0;
+  color: #f56c6c;
+}
+
+.alert-monitor .alert-status.status-resolved {
+  background-color: #f0f9eb;
+  color: #67c23a;
+}
+
+.alert-monitor .alert-info {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.alert-monitor .alert-detail .summary {
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: var(--text-color, #333);
+}
+
+.alert-monitor .alert-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.alert-monitor .alert-meta .meta-item {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+}
+
+.alert-monitor .alert-meta .label {
+  color: var(--text-secondary, #909399);
+  margin-right: 5px;
+}
+
+.alert-monitor .severity-tag {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  margin-left: 4px;
+}
+
+.alert-monitor .severity-tag.severity-critical {
+  background-color: #fef0f0;
+  color: #f56c6c;
+}
+
+.alert-monitor .severity-tag.severity-warning {
+  background-color: #fdf6ec;
+  color: #e6a23c;
+}
+
+.alert-monitor .severity-tag.severity-info {
+  background-color: #ecf5ff;
+  color: #409eff;
+}
+
+/* 深色主题 */
+[data-theme="dark"] .alert-monitor .alert-item {
+  background-color: var(--bg-color, #1f1f1f);
+  border-color: var(--border-color, #303030);
+}
+
+[data-theme="dark"] .alert-monitor .alert-title {
+  color: var(--text-color, #e0e0e0);
+}
+
+[data-theme="dark"] .alert-monitor .alert-detail .summary {
+  color: var(--text-color, #e0e0e0);
+}
+
+[data-theme="dark"] .alert-monitor .alert-item:hover {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}

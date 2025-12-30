@@ -135,18 +135,16 @@ const KubeServicePage = () => {
             </div>
 
             {/* 类型选择 */}
-            {project && (
-              <div className="filter-row">
-                <span className="filter-label">选择类型：</span>
-                <div className="radio-group">
-                  <button className={`radio-item ${type === 'service' ? 'active' : ''}`} onClick={() => setType('service')}>服务</button>
-                  <button className={`radio-item ${type === 'middleware' ? 'active' : ''}`} onClick={() => setType('middleware')}>中间件</button>
-                </div>
-                {namespaceList.length > 0 && (
-                  <input className="search-input" placeholder="搜索命名空间" value={nsSearch} onChange={e => setNsSearch(e.target.value)} />
-                )}
+            <div className="filter-row">
+              <span className="filter-label">选择类型：</span>
+              <div className="radio-group">
+                <button className={`radio-item ${type === 'service' ? 'active' : ''}`} onClick={() => setType('service')}>服务</button>
+                <button className={`radio-item ${type === 'middleware' ? 'active' : ''}`} onClick={() => setType('middleware')}>中间件</button>
               </div>
-            )}
+              {namespaceList.length > 0 && (
+                <input className="search-input" placeholder="搜索命名空间" value={nsSearch} onChange={e => setNsSearch(e.target.value)} />
+              )}
+            </div>
 
             {/* 命名空间选择 */}
             {namespaceList.length > 0 && (

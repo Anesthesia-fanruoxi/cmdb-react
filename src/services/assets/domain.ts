@@ -3,7 +3,6 @@
  */
 
 import { apiClient } from '../request';
-import type { ApiResponse, PaginatedResponse } from '../../types/api';
 
 /** 域名记录 */
 export interface DomainRecord {
@@ -38,7 +37,7 @@ export interface DomainFormData {
 
 // 获取域名列表
 export function getDomainList(params: DomainListParams) {
-  return apiClient.get<{ list: DomainRecord[]; total: number }>('/assets/domain/list', params);
+  return apiClient.get<{ list: DomainRecord[]; total: number }>('/assets/domain/list', params as unknown as Record<string, unknown>);
 }
 
 // 添加域名记录

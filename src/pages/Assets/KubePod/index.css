@@ -50,20 +50,52 @@
 .filter-section {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   padding: 16px 20px;
   border-bottom: 1px solid var(--border-color, #e8e8e8);
-  flex-wrap: wrap;
   gap: 16px;
 }
 
 .project-filter {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  gap: 8px;
+  flex: 1;
+}
+
+.filter-label { 
+  font-size: 13px; 
+  color: var(--text-secondary, #666); 
+  flex-shrink: 0;
+  line-height: 28px;
+}
+
+.project-radios {
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
-.filter-label { font-size: 13px; color: var(--text-secondary, #666); }
+.radio-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border: 1px solid var(--border-color, #d9d9d9);
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.radio-item input { display: none; }
+.radio-item:hover { border-color: var(--primary-color, #1890ff); }
+.radio-item.active { 
+  border-color: var(--primary-color, #1890ff); 
+  background: var(--primary-color, #1890ff); 
+  color: #fff; 
+}
 
 .project-filter select {
   height: 32px;
@@ -77,6 +109,7 @@
 .stats-cards {
   display: flex;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .stat-card {
@@ -94,7 +127,6 @@
 .stat-card:hover { border-color: var(--primary-color, #1890ff); }
 .stat-card.active { border-color: var(--primary-color, #1890ff); background: rgba(24, 144, 255, 0.1); }
 .stat-card.success .stat-value { color: #52c41a; }
-.stat-card.warning .stat-value { color: #faad14; }
 
 .stat-value { font-size: 20px; font-weight: 600; }
 .stat-label { font-size: 12px; color: var(--text-secondary, #999); }
@@ -161,4 +193,101 @@
   text-align: center;
   padding: 40px !important;
   color: var(--text-secondary, #999);
+}
+
+
+/* 命名空间标签 */
+.namespace-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  background: #f0f5ff;
+  border: 1px solid #adc6ff;
+  border-radius: 4px;
+  color: #2f54eb;
+  font-size: 12px;
+}
+
+/* 域名链接 */
+.domain-link {
+  color: var(--primary-color, #1890ff);
+  text-decoration: none;
+}
+.domain-link:hover { text-decoration: underline; }
+
+/* 状态开关 */
+.status-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.status-switch input { display: none; }
+
+.switch-slider {
+  position: relative;
+  width: 44px;
+  height: 22px;
+  background: #f56c6c;
+  border-radius: 11px;
+  transition: background 0.3s;
+}
+
+.switch-slider::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+
+.status-switch.active .switch-slider { background: #67c23a; }
+.status-switch.active .switch-slider::after { transform: translateX(22px); }
+
+.status-switch.loading .switch-slider { background: #e6a23c; }
+
+.switch-text {
+  font-size: 12px;
+  min-width: 42px;
+}
+
+.status-switch.active .switch-text { color: #67c23a; }
+.status-switch:not(.active) .switch-text { color: #f56c6c; }
+.status-switch.loading .switch-text { color: #e6a23c; }
+
+
+/* 域名单元格 */
+.domain-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #999);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+  opacity: 0;
+}
+
+.domain-cell:hover .copy-btn {
+  opacity: 1;
+}
+
+.copy-btn:hover {
+  background: var(--bg-secondary, #f5f5f5);
+  color: var(--primary-color, #1890ff);
 }

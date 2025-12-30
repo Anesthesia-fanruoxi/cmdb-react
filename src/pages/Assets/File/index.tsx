@@ -2,10 +2,11 @@
  * 文件管理页面
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Search, Upload, Folder, FileText, ArrowLeft, Home } from 'lucide-react';
-import { getFileProjects, getFileList, uploadFile } from '../../../services/assets/file';
+import { getFileProjects, getFileList } from '../../../services/assets/file';
 import type { FileProject, FileItem } from '../../../services/assets/file';
+import UploadDialog, { type UploadFileItem } from './UploadDialog';
 import toast from '../../../components/Toast';
 import './index.css';
 
@@ -17,11 +18,19 @@ const keyOptions = [
 
 const FilePage = () => {
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [projectOptions, setProjectOptions] = useState<FileProject[]>([]);
   const [fileList, setFileList] = useState<FileItem[]>([]);
   const [total, setTotal] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const dragCounterRef = useRef(0);
+  
+  // 预览弹窗状态
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState('');
+  
+  // 上传弹窗状态
+  const [uploadVisible, setUploadVisible] = useState(false);
+  const [uploadFiles, setUploadFiles] = useState<UploadFileItem[]>([]);
 
   const [queryParams, setQueryParams] = useState({
     project: '', key: '', search: '', path: '', page: 1, sort: 'name' as const
@@ -79,7 +88,14 @@ const FilePage = () => {
     } else if (item.url) {
       let url = item.url;
       if (!/^https?:\/\//.test(url)) url = `https://${url}`;
-      window.open(url, '_blank');
+      
+      // 校验文件使用内置预览窗口
+      if (queryParams.key === 'verify') {
+        setPreviewUrl(url);
+        setPreviewVisible(true);
+      } else {
+        window.open(url, '_blank');
+      }
     }
   };
 
@@ -113,68 +129,132 @@ const FilePage = () => {
   // 拖拽上传
   const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
-    if (e.dataTransfer?.types?.includes('Files')) setIsDragging(true);
+    e.stopPropagation();
+    dragCounterRef.current++;
+    if (e.dataTransfer?.types?.includes('Files')) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
-    setIsDragging(false);
+    e.stopPropagation();
+    dragCounterRef.current--;
+    if (dragCounterRef.current === 0) {
+      setIsDragging(false);
+    }
+  };
+
+  // 递归遍历文件树（支持目录上传）
+  const traverseFileTree = async (
+    entry: FileSystemEntry,
+    basePath: string,
+    fileList: { file: File; path: string }[]
+  ): Promise<void> => {
+    if (entry.isFile) {
+      return new Promise((resolve, reject) => {
+        (entry as FileSystemFileEntry).file((file) => {
+          fileList.push({ file, path: basePath || '' });
+          resolve();
+        }, reject);
+      });
+    } else if (entry.isDirectory) {
+      const dirReader = (entry as FileSystemDirectoryEntry).createReader();
+      return new Promise((resolve, reject) => {
+        const allEntries: FileSystemEntry[] = [];
+        
+        const readEntries = () => {
+          dirReader.readEntries(async (entries) => {
+            if (entries.length === 0) {
+              const newBasePath = basePath ? `${basePath}/${entry.name}` : entry.name;
+              try {
+                for (const childEntry of allEntries) {
+                  await traverseFileTree(childEntry, newBasePath, fileList);
+                }
+                resolve();
+              } catch (error) {
+                reject(error);
+              }
+              return;
+            }
+            allEntries.push(...entries);
+            readEntries();
+          }, reject);
+        };
+        
+        readEntries();
+      });
+    }
   };
 
   const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
+    dragCounterRef.current = 0;
     setIsDragging(false);
     if (!canUpload) { toast.warning('请先选择项目和功能类型'); return; }
     
     const items = e.dataTransfer?.items;
     if (!items || items.length === 0) return;
 
-    const allFiles: { file: File; path: string }[] = [];
-    
+    // 立即提取所有 Entry 对象
+    const entries: { entry: FileSystemEntry | null; file: File | null }[] = [];
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       if (item.kind === 'file') {
-        const file = item.getAsFile();
-        if (file) allFiles.push({ file, path: '' });
+        const entry = item.webkitGetAsEntry?.();
+        if (entry) {
+          entries.push({ entry, file: null });
+        } else {
+          const file = item.getAsFile();
+          if (file) entries.push({ entry: null, file });
+        }
       }
     }
 
-    if (allFiles.length === 0) return;
+    if (entries.length === 0) return;
     
-    setUploading(true);
     try {
-      const formData = new FormData();
-      formData.append('project', queryParams.project);
-      formData.append('key', queryParams.key);
-      if (queryParams.path) formData.append('path', queryParams.path);
+      const allFiles: UploadFileItem[] = [];
       
-      allFiles.forEach(item => {
-        formData.append('file', item.file);
-        formData.append('filePath', item.path);
-      });
-
-      const res = await uploadFile(formData);
-      if (res.code === 200) {
-        toast.success(`成功上传 ${allFiles.length} 个文件`);
-        fetchList();
-      } else {
-        toast.error(res.message || '上传失败');
+      for (const item of entries) {
+        if (item.entry) {
+          await traverseFileTree(item.entry, '', allFiles);
+        } else if (item.file) {
+          allFiles.push({ file: item.file, path: '' });
+        }
       }
+
+      if (allFiles.length === 0) {
+        toast.warning('未找到可上传的文件');
+        return;
+      }
+
+      // 打开上传弹窗
+      setUploadFiles(allFiles);
+      setUploadVisible(true);
     } catch (err) {
-      toast.error('上传出错');
-    } finally {
-      setUploading(false);
+      toast.error('读取文件出错');
     }
   };
 
+  const handleUploadClose = () => {
+    setUploadVisible(false);
+    setUploadFiles([]);
+  };
+
   return (
-    <div className="file-page" onDragEnter={handleDragEnter} onDragOver={e => e.preventDefault()} onDragLeave={handleDragLeave} onDrop={handleDrop}>
-      {isDragging && canUpload && (
-        <div className="drop-overlay">
+    <div className="file-page" onDragEnter={handleDragEnter} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
+      {isDragging && (
+        <div className={`drop-overlay ${canUpload ? '' : 'disabled'}`}>
           <div className="drop-content">
             <Upload size={48} />
-            <p>释放鼠标上传文件</p>
-            <span>支持同时上传文件和目录</span>
+            <p>{canUpload ? '释放鼠标上传文件' : '无法上传'}</p>
+            <span>{canUpload ? '支持同时上传文件和目录' : '请先选择项目和功能类型'}</span>
           </div>
         </div>
       )}
@@ -240,9 +320,11 @@ const FilePage = () => {
                fileList.length === 0 ? <tr><td colSpan={3} className="empty-cell">暂无数据</td></tr> :
                fileList.map((item, i) => (
                 <tr key={i} className={item.is_dir || item.url ? 'clickable' : ''} onClick={() => handleEnterDir(item)}>
-                  <td className="name-cell">
-                    {item.is_dir ? <Folder size={16} className="icon folder" /> : <FileText size={16} className="icon file" />}
-                    <span className={item.is_dir || item.url ? 'link-text' : ''}>{item.name}</span>
+                  <td>
+                    <div className="name-cell">
+                      {item.is_dir ? <Folder size={16} className="icon folder" /> : <FileText size={16} className="icon file" />}
+                      <span className={item.is_dir || item.url ? 'link-text' : ''}>{item.name}</span>
+                    </div>
                   </td>
                   <td>{formatSize(item.size, item.is_dir)}</td>
                   <td>{item.mod_time}</td>
@@ -263,6 +345,37 @@ const FilePage = () => {
           </div>
         )}
       </div>
+
+      {/* 校验文件预览弹窗 */}
+      {previewVisible && (
+        <div className="preview-overlay" onClick={() => setPreviewVisible(false)}>
+          <div className="preview-dialog" onClick={e => e.stopPropagation()}>
+            <div className="preview-header">
+              <span className="preview-title">文件预览</span>
+              <button className="preview-close" onClick={() => setPreviewVisible(false)}>×</button>
+            </div>
+            <div className="preview-url">
+              <span className="url-label">URL:</span>
+              <a href={previewUrl} target="_blank" rel="noreferrer" className="url-link">{previewUrl}</a>
+              <button className="btn-copy" onClick={() => { navigator.clipboard.writeText(previewUrl); toast.success('已复制'); }}>复制</button>
+            </div>
+            <div className="preview-body">
+              <iframe src={previewUrl} className="preview-iframe" title="文件预览" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 上传明细弹窗 */}
+      <UploadDialog
+        visible={uploadVisible}
+        files={uploadFiles}
+        project={queryParams.project}
+        fileKey={queryParams.key}
+        targetPath={queryParams.path}
+        onClose={handleUploadClose}
+        onSuccess={fetchList}
+      />
     </div>
   );
 };

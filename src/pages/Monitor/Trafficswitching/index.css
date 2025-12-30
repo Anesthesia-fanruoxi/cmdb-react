@@ -1,0 +1,119 @@
+/**
+ * 流量切换监控页面样式
+ */
+
+.traffic-monitor .help-trigger {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  color: var(--text-muted);
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.traffic-monitor .help-trigger:hover {
+  color: var(--primary-color);
+}
+
+.traffic-monitor .help-popover {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 100;
+  width: 420px;
+  padding: 16px;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  margin-top: 8px;
+}
+
+.traffic-monitor .help-desc {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: var(--text-color);
+  line-height: 1.6;
+}
+
+.traffic-monitor .flow-diagram {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+}
+
+.traffic-monitor .flow-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.traffic-monitor .flow-node.client { background: #e6f7ff; color: #1890ff; }
+.traffic-monitor .flow-node.nginx { background: #fff7e6; color: #fa8c16; }
+.traffic-monitor .flow-node.plugin { background: #f6ffed; color: #52c41a; }
+.traffic-monitor .flow-node.gateway { background: #f9f0ff; color: #722ed1; }
+
+.traffic-monitor .flow-arrow {
+  font-size: 18px;
+  color: var(--text-muted);
+}
+
+.traffic-monitor .service-select {
+  min-width: 140px;
+}
+
+.traffic-monitor .traffic-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.traffic-monitor .section {
+  margin-bottom: 0;
+}
+
+.traffic-monitor .section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.traffic-monitor .charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.traffic-monitor .chart-card {
+  background: var(--bg-color);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.traffic-monitor .chart-header {
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border-bottom: 1px solid var(--border-color-light);
+  color: var(--text-color);
+}
+
+/* 深色主题 */
+[data-theme="dark"] .traffic-monitor .flow-node.client { background: rgba(24, 144, 255, 0.2); }
+[data-theme="dark"] .traffic-monitor .flow-node.nginx { background: rgba(250, 140, 22, 0.2); }
+[data-theme="dark"] .traffic-monitor .flow-node.plugin { background: rgba(82, 196, 26, 0.2); }
+[data-theme="dark"] .traffic-monitor .flow-node.gateway { background: rgba(114, 46, 209, 0.2); }
