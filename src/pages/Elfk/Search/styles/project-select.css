@@ -5,14 +5,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-primary, #fff);
+  background: var(--bg-color);
   border-radius: 8px;
   margin: 12px;
   overflow-y: auto;
+  border: 1px solid var(--border-color);
 }
 
 .loading-state {
-  color: var(--text-secondary, #666);
+  color: var(--text-secondary);
   font-size: 14px;
 }
 
@@ -30,13 +31,13 @@
 .select-header h3 {
   margin: 0 0 8px;
   font-size: 20px;
-  color: var(--text-primary, #333);
+  color: var(--text-color);
 }
 
 .select-header p {
   margin: 0;
   font-size: 14px;
-  color: var(--text-secondary, #666);
+  color: var(--text-secondary);
 }
 
 /* 项目分组 */
@@ -54,7 +55,7 @@
   align-items: center;
   gap: 8px;
   font-size: 14px;
-  color: var(--text-secondary, #666);
+  color: var(--text-secondary);
   margin-bottom: 12px;
 }
 
@@ -62,7 +63,7 @@
 
 .group-tip {
   font-size: 12px;
-  color: var(--text-secondary, #999);
+  color: var(--text-secondary);
   margin-left: 8px;
 }
 
@@ -76,14 +77,14 @@
   grid-column: 1 / -1;
   text-align: center;
   padding: 20px;
-  color: var(--text-secondary, #999);
+  color: var(--text-secondary);
   font-size: 13px;
 }
 
 .select-card {
   padding: 16px 12px;
-  background: var(--bg-secondary, #fafafa);
-  border: 1px solid var(--border-color, #e8e8e8);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   cursor: pointer;
   text-align: center;
@@ -91,13 +92,13 @@
 }
 
 .select-card:hover {
-  border-color: var(--primary-color, #1890ff);
-  background: var(--bg-hover, #f0f7ff);
+  border-color: var(--primary-color);
+  background: var(--bg-hover);
 }
 
 .select-card.active {
-  border-color: var(--primary-color, #1890ff);
-  background: #e6f7ff;
+  border-color: var(--primary-color);
+  background: rgba(24, 144, 255, 0.15);
   box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
 }
 
@@ -107,5 +108,5 @@
 }
 
 .select-card .card-icon { font-size: 24px; margin-bottom: 8px; }
-.select-card .card-name { font-size: 13px; color: var(--text-primary, #333); margin-bottom: 2px; }
-.select-card .card-key { font-size: 11px; color: var(--text-secondary, #999); }
+.select-card .card-name { font-size: 13px; color: var(--text-color); margin-bottom: 2px; }
+.select-card .card-key { font-size: 11px; color: var(--text-secondary); }

@@ -1,0 +1,170 @@
+/**
+ * 插件管理页面样式
+ */
+
+.agent-plugins-page {
+  height: 100%;
+  padding: 20px;
+  background: var(--bg-secondary);
+}
+
+.agent-plugins-page .page-card {
+  height: 100%;
+  background: var(--bg-color);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+}
+
+.agent-plugins-page .search-bar {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
+}
+
+.agent-plugins-page .search-input {
+  width: 280px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  font-size: 13px;
+}
+
+.agent-plugins-page .search-select {
+  width: 140px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  font-size: 13px;
+}
+
+.agent-plugins-page .btn-default,
+.agent-plugins-page .btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.agent-plugins-page .btn-default {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+}
+
+.agent-plugins-page .btn-primary {
+  background: var(--primary-color);
+  border: none;
+  color: #fff;
+}
+
+.agent-plugins-page .table-wrapper {
+  flex: 1;
+  overflow: auto;
+  padding: 16px 20px;
+}
+
+.agent-plugins-page .loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 200px;
+  color: var(--text-secondary);
+}
+
+.agent-plugins-page .data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.agent-plugins-page .data-table th,
+.agent-plugins-page .data-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.agent-plugins-page .data-table th {
+  background: var(--bg-secondary);
+  font-weight: 500;
+  color: var(--text-color);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.agent-plugins-page .data-table td {
+  color: var(--text-secondary);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.agent-plugins-page .data-table tr:hover td {
+  background: var(--bg-hover);
+}
+
+.agent-plugins-page .tag {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--primary-color);
+  color: #fff;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.agent-plugins-page .type-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.agent-plugins-page .type-tag.container {
+  background: rgba(82, 196, 26, 0.1);
+  color: #52c41a;
+}
+
+.agent-plugins-page .type-tag.binary {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+.agent-plugins-page .action-cell {
+  white-space: nowrap;
+}
+
+.agent-plugins-page .btn-link {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 6px;
+}
+
+.agent-plugins-page .btn-link.danger {
+  color: #ff4d4f;
+}
+
+.agent-plugins-page .empty-cell {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 40px !important;
+}
+
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

@@ -51,13 +51,49 @@ jobs:
         run: npm ci
 
       - name: Build Tauri App
-        uses: tauri-apps/tauri-action@v0
+        run: npm run tauri build -- --target ${{ matrix.target }}
+
+      - name: Prepare Windows artifacts
+        if: matrix.platform == 'windows-latest'
+        run: |
+          mkdir -p release
+          cp "src-tauri/target/${{ matrix.target }}/release/CMDB Desktop.exe" "release/CMDB-Desktop-${{ matrix.name }}.exe"
+        shell: bash
+
+      - name: Prepare macOS artifacts
+        if: matrix.platform == 'macos-latest'
+        run: |
+          mkdir -p release
+          cd "src-tauri/target/${{ matrix.target }}/release/bundle/macos"
+          zip -r "../../../../../../release/CMDB-Desktop-${{ matrix.name }}.app.zip" "CMDB Desktop.app"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: CMDB-Desktop-${{ matrix.name }}
+          path: release/*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          files: artifacts/*
+          body: |
+            ## 下载说明
+            - Windows: 下载 `.exe` 文件直接运行
+            - macOS Intel: 下载 `macos-intel.app.zip` 解压后运行
+            - macOS ARM (M芯片): 下载 `macos-arm64.app.zip` 解压后运行
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tagName: ${{ github.ref_name }}
-          releaseName: 'CMDB Desktop ${{ github.ref_name }}'
-          releaseBody: '请查看 assets 下载对应平台的安装包'
-          releaseDraft: true
-          prerelease: false
-          args: --target ${{ matrix.target }}

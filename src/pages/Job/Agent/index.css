@@ -1,0 +1,152 @@
+/**
+ * Agent 管理页面样式
+ */
+
+.agent-page {
+  padding: 20px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.agent-page .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.agent-page .header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.agent-page .header-left h2 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--text-color);
+}
+
+.agent-page .subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.agent-page .btn-refresh {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-color);
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.agent-page .btn-refresh:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.agent-page .btn-refresh:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.agent-page .project-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  align-content: start;
+}
+
+.agent-page .loading-state,
+.agent-page .empty-state {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 60px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.agent-page .project-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  background: #483D8B;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 12px rgba(132, 112, 255, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.agent-page .project-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ffffff, rgba(255, 255, 255, 0.6));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+}
+
+.agent-page .project-card:hover {
+  background: #9580FF;
+  box-shadow: 0 8px 24px rgba(132, 112, 255, 0.4);
+  transform: translateY(-4px);
+}
+
+.agent-page .project-card:hover::before {
+  transform: scaleX(1);
+}
+
+.agent-page .project-card:active {
+  transform: translateY(-2px);
+}
+
+.agent-page .project-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 10px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.agent-page .project-code {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
+  font-family: 'Consolas', 'Monaco', monospace;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 4px 12px;
+  border-radius: 4px;
+}
+
+/* 旋转动画 */
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

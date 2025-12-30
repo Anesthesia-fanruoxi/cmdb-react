@@ -1,0 +1,167 @@
+/**
+ * 操作日志页面样式
+ */
+
+.audit-operation-page {
+  height: 100%;
+  padding: 20px;
+  background: var(--bg-secondary);
+}
+
+.audit-operation-page .page-card {
+  height: 100%;
+  background: var(--bg-color);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+}
+
+.audit-operation-page .search-bar {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.audit-operation-page .search-input,
+.audit-operation-page .search-select,
+.audit-operation-page .search-date {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  font-size: 13px;
+}
+
+.audit-operation-page .search-input { width: 160px; }
+.audit-operation-page .search-select { width: 140px; }
+.audit-operation-page .search-date { width: 140px; }
+.audit-operation-page .date-sep { color: var(--text-secondary); font-size: 13px; }
+
+.audit-operation-page .btn-primary,
+.audit-operation-page .btn-default {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.audit-operation-page .btn-primary {
+  background: var(--primary-color);
+  border: none;
+  color: #fff;
+}
+
+.audit-operation-page .btn-default {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+}
+
+.audit-operation-page .table-header {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.audit-operation-page .table-header .title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.audit-operation-page .table-wrapper {
+  flex: 1;
+  overflow: auto;
+  padding: 0 20px;
+}
+
+.audit-operation-page .loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 200px;
+  color: var(--text-secondary);
+}
+
+.audit-operation-page .data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.audit-operation-page .data-table th,
+.audit-operation-page .data-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.audit-operation-page .data-table th {
+  background: var(--bg-secondary);
+  font-weight: 500;
+  color: var(--text-color);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.audit-operation-page .data-table td {
+  color: var(--text-secondary);
+}
+
+.audit-operation-page .data-table tr:hover td {
+  background: var(--bg-hover);
+}
+
+.audit-operation-page .btn-link {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.audit-operation-page .empty-cell {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 40px !important;
+}
+
+.audit-operation-page .pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--border-color);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.audit-operation-page .pagination select,
+.audit-operation-page .pagination button {
+  padding: 6px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.audit-operation-page .pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

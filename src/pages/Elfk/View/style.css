@@ -6,15 +6,15 @@
   flex-direction: column;
   gap: 16px;
   padding: 16px;
-  background: var(--bg-secondary, #f5f5f5);
+  background: var(--bg-secondary);
 }
 
 /* 搜索卡片 */
 .search-card {
-  background: var(--bg-primary, #fff);
+  background: var(--bg-color);
   border-radius: 8px;
   padding: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color);
 }
 
 .filter-row {
@@ -27,18 +27,18 @@
 .filter-input {
   height: 36px;
   padding: 0 12px;
-  border: 1px solid var(--border-color, #d9d9d9);
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   font-size: 14px;
-  background: var(--bg-primary, #fff);
-  color: var(--text-primary, #333);
+  background: var(--bg-secondary);
+  color: var(--text-color);
   min-width: 160px;
 }
 
 .filter-select:focus,
 .filter-input:focus {
   outline: none;
-  border-color: var(--primary-color, #1890ff);
+  border-color: var(--primary-color);
 }
 
 /* 表格卡片 */
@@ -46,9 +46,9 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: var(--bg-primary, #fff);
+  background: var(--bg-color);
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color);
   min-height: 0;
 }
 
@@ -57,7 +57,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  border-bottom: 1px solid var(--border-color, #e8e8e8);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .header-left {
@@ -69,13 +69,13 @@
 .header-left .title {
   font-size: 16px;
   font-weight: 600;
-  color: var(--text-primary, #333);
+  color: var(--text-color);
 }
 
 .header-left .count {
   font-size: 13px;
-  color: var(--text-secondary, #666);
-  background: var(--bg-secondary, #f5f5f5);
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
   padding: 2px 8px;
   border-radius: 4px;
 }
@@ -83,7 +83,7 @@
 .btn-primary {
   height: 36px;
   padding: 0 16px;
-  background: var(--primary-color, #1890ff);
+  background: var(--primary-color);
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -93,7 +93,7 @@
 }
 
 .btn-primary:hover {
-  background: var(--primary-hover, #40a9ff);
+  opacity: 0.9;
 }
 
 /* 表格 */
@@ -113,24 +113,24 @@
 .data-table td {
   padding: 12px 8px;
   text-align: left;
-  border-bottom: 1px solid var(--border-color, #e8e8e8);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .data-table th {
   font-weight: 500;
-  color: var(--text-secondary, #666);
-  background: var(--bg-secondary, #fafafa);
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
   position: sticky;
   top: 0;
   z-index: 1;
 }
 
 .data-table td {
-  color: var(--text-primary, #333);
+  color: var(--text-color);
 }
 
 .data-table tbody tr:hover {
-  background: var(--bg-hover, #f5f5f5);
+  background: var(--bg-hover);
 }
 
 .name-cell {
@@ -144,7 +144,7 @@
 .pattern-cell {
   font-family: monospace;
   font-size: 13px;
-  color: var(--text-secondary, #666);
+  color: var(--text-secondary);
 }
 
 .desc-cell {
@@ -152,7 +152,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--text-secondary, #666);
+  color: var(--text-secondary);
 }
 
 .action-cell {
@@ -162,18 +162,18 @@
 .btn-link {
   background: none;
   border: none;
-  color: var(--primary-color, #1890ff);
+  color: var(--primary-color);
   cursor: pointer;
   padding: 4px 8px;
   font-size: 14px;
 }
 
 .btn-link:hover {
-  color: var(--primary-hover, #40a9ff);
+  opacity: 0.8;
 }
 
 .btn-link.danger {
-  color: var(--danger-color, #ff4d4f);
+  color: #ff4d4f;
 }
 
 .btn-link.danger:hover {
@@ -183,7 +183,7 @@
 .loading-cell,
 .empty-cell {
   text-align: center !important;
-  color: var(--text-secondary, #999);
+  color: var(--text-secondary);
   padding: 40px !important;
 }
 
@@ -194,23 +194,23 @@
   justify-content: flex-end;
   gap: 12px;
   padding: 16px;
-  border-top: 1px solid var(--border-color, #e8e8e8);
+  border-top: 1px solid var(--border-color);
 }
 
 .pagination button {
   height: 32px;
   padding: 0 12px;
-  border: 1px solid var(--border-color, #d9d9d9);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
-  background: var(--bg-primary, #fff);
-  color: var(--text-primary, #333);
+  background: var(--bg-secondary);
+  color: var(--text-color);
   cursor: pointer;
   font-size: 14px;
 }
 
 .pagination button:hover:not(:disabled) {
-  border-color: var(--primary-color, #1890ff);
-  color: var(--primary-color, #1890ff);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 .pagination button:disabled {
@@ -219,11 +219,11 @@
 }
 
 .page-info {
-  color: var(--text-secondary, #666);
+  color: var(--text-secondary);
   font-size: 14px;
 }
 
 .page-num {
-  color: var(--text-primary, #333);
+  color: var(--text-color);
   font-size: 14px;
 }

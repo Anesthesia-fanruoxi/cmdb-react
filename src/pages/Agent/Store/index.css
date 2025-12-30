@@ -1,0 +1,195 @@
+/**
+ * 插件市场页面样式
+ */
+
+.agent-store-page {
+  height: 100%;
+  padding: 20px;
+  background: var(--bg-secondary);
+}
+
+.agent-store-page .page-card {
+  height: 100%;
+  background: var(--bg-color);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+}
+
+.agent-store-page .search-bar {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
+}
+
+.agent-store-page .search-input {
+  width: 200px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  font-size: 13px;
+}
+
+.agent-store-page .search-select {
+  width: 140px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  font-size: 13px;
+}
+
+.agent-store-page .btn-default {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-color);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.agent-store-page .plugin-container {
+  flex: 1;
+  overflow: auto;
+  padding: 20px;
+}
+
+.agent-store-page .loading-state,
+.agent-store-page .empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 200px;
+  color: var(--text-secondary);
+}
+
+.agent-store-page .plugin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.agent-store-page .plugin-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s;
+}
+
+.agent-store-page .plugin-card:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.agent-store-page .plugin-header {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.agent-store-page .plugin-icon {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  color: #fff;
+}
+
+.agent-store-page .plugin-info {
+  flex: 1;
+}
+
+.agent-store-page .plugin-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 8px;
+}
+
+.agent-store-page .plugin-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.agent-store-page .type-tag {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.agent-store-page .type-tag.container {
+  background: rgba(82, 196, 26, 0.1);
+  color: #52c41a;
+}
+
+.agent-store-page .type-tag.binary {
+  background: var(--bg-color);
+  color: var(--text-secondary);
+}
+
+.agent-store-page .version {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.agent-store-page .plugin-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 16px;
+  min-height: 40px;
+}
+
+.agent-store-page .plugin-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.agent-store-page .btn-install,
+.agent-store-page .btn-detail {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: opacity 0.2s;
+}
+
+.agent-store-page .btn-install {
+  background: var(--primary-color);
+  color: #fff;
+}
+
+.agent-store-page .btn-detail {
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+}
+
+.agent-store-page .btn-install:hover,
+.agent-store-page .btn-detail:hover {
+  opacity: 0.9;
+}
+
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

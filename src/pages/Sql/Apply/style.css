@@ -6,7 +6,7 @@
 .sql-apply-page {
   height: 100%;
   padding: 0;
-  background: #f5f7fa;
+  background: var(--bg-secondary);
 }
 
 /* 卡片容器 */
@@ -82,16 +82,16 @@
   white-space: nowrap;
 }
 
-.apply-table th { background: #f5f7fa; font-weight: 500; color: var(--text-secondary); }
+.apply-table th { background: var(--bg-secondary); font-weight: 500; color: var(--text-secondary); position: sticky; top: 0; z-index: 1; }
 .apply-table tbody tr:hover { background: var(--bg-hover); }
 .apply-table .empty-row { text-align: center; color: var(--text-muted); padding: 60px 14px; }
 
 /* 状态标签 */
 .status-tag { display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 12px; }
-.status-warning { background: rgba(250, 173, 20, 0.1); color: #d48806; }
+.status-warning { background: rgba(250, 173, 20, 0.1); color: #faad14; }
 .status-success { background: rgba(82, 196, 26, 0.1); color: #52c41a; }
 .status-danger { background: rgba(255, 77, 79, 0.1); color: #ff4d4f; }
-.status-info { background: #f0f0f0; color: #666; }
+.status-info { background: var(--bg-secondary); color: var(--text-secondary); }
 .status-primary { background: rgba(102, 126, 234, 0.1); color: var(--primary-color); }
 
 /* 加载状态 */
@@ -105,10 +105,10 @@
 
 /* 标签 */
 .tag { display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 13px; }
-.tag-warning { background: rgba(250, 173, 20, 0.1); color: #d48806; }
+.tag-warning { background: rgba(250, 173, 20, 0.1); color: #faad14; }
 .tag-success { background: rgba(82, 196, 26, 0.1); color: #52c41a; }
 .tag-danger { background: rgba(255, 77, 79, 0.1); color: #ff4d4f; }
-.tag-info { background: #f0f0f0; color: #666; }
+.tag-info { background: var(--bg-secondary); color: var(--text-secondary); }
 .tag-primary { background: rgba(102, 126, 234, 0.1); color: var(--primary-color); }
 .tag-lg { padding: 6px 14px; font-size: 14px; }
 .tag-plain { background: transparent; border: 1px solid var(--border-color); color: var(--text-color); }
