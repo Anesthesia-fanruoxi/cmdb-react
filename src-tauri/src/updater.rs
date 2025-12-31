@@ -196,8 +196,7 @@ pub async fn check_github_update(app: AppHandle, owner: String, repo: String, to
         if !is_newer_version(&current, &release.tag_name) {
             eprintln!("[更新检查] 无需更新");
             emit_status(&app, UpdateStatus::NotAvailable);
-            // 调试：返回错误信息显示版本对比
-            return Err(format!("调试: 本地={}, 远程={}, 无需更新", current, release.tag_name));
+            return Ok(None);
         }
         
         eprintln!("[更新检查] 发现新版本!");
