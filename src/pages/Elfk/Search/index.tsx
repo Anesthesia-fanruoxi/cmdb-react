@@ -267,6 +267,7 @@ const ElfkSearch = () => {
               onViewChange={handleViewChange}
               onSearch={handleSearch}
               onReset={() => activeTab && updateTab(activeTab.id, { logs: [], total: 0, keyword: '', lastParams: {} })}
+              onAddTab={handleAddTab}
             />
             {/* 下方：左侧字段 + 右侧结果 */}
             <div className="main-layout">

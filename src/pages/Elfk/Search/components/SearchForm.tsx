@@ -2,9 +2,13 @@
  * 搜索表单 - 顶部栏：视图选择 + 搜索框 + 时间范围
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { getViewList, getViewDetail } from '../../../../services/elfk/view';
+import { useUserPrefsStore } from '../../../../stores';
 import TimeRangePicker from './TimeRangePicker';
+import HistoryDropdown, { saveLocalHistory } from './HistoryDropdown';
+import SaveSharedDialog from './SaveSharedDialog';
+import ShortcutSettings from './ShortcutSettings';
 import type { ViewListItem, ViewDetail } from '../../../../services/elfk/view';
 
 interface ProjectInfo {
@@ -22,10 +26,8 @@ interface Props {
   onViewChange: (view: ViewDetail) => void;
   onSearch: (params: Record<string, unknown>) => void;
   onReset: () => void;
+  onAddTab?: () => void;
 }
-
-const HISTORY_KEY = 'elfk_search_history';
-const MAX_HISTORY = 20;
 
 // 格式化本地时间
 const formatLocalDateTime = (date: Date) => {
@@ -47,29 +49,42 @@ const getTodayRange = () => {
   return { start: formatLocalDateTime(start), end: formatLocalDateTime(now), label: '今日' };
 };
 
-// 读取历史记录
-const loadHistory = (): string[] => {
-  try {
-    return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
-  } catch { return []; }
+// 解析快捷键
+const parseShortcut = (shortcut: string) => {
+  const parts = shortcut.split('-');
+  return {
+    ctrl: parts.includes('Ctrl'),
+    shift: parts.includes('Shift'),
+    alt: parts.includes('Alt'),
+    key: parts[parts.length - 1].toLowerCase(),
+  };
 };
 
-// 保存历史记录
-const saveHistory = (keyword: string) => {
-  if (!keyword.trim()) return;
-  const history = loadHistory().filter(h => h !== keyword);
-  history.unshift(keyword);
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, MAX_HISTORY)));
+// 检查快捷键是否匹配
+const matchShortcut = (e: KeyboardEvent, shortcut: string) => {
+  const parsed = parseShortcut(shortcut);
+  const key = e.key.toLowerCase() === 'enter' ? 'enter' : e.key.toLowerCase();
+  return (
+    (e.ctrlKey || e.metaKey) === parsed.ctrl &&
+    e.shiftKey === parsed.shift &&
+    e.altKey === parsed.alt &&
+    key === parsed.key
+  );
 };
 
-const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, onViewChange, onSearch, onReset }: Props) => {
+const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, onViewChange, onSearch, onReset, onAddTab }: Props) => {
   const [allViews, setAllViews] = useState<ViewListItem[]>([]);
   const [viewLoading, setViewLoading] = useState(false);
   const [timeRange, setTimeRange] = useState(getTodayRange);
   const [localKeyword, setLocalKeyword] = useState(initialKeyword || '');
+  
+  // 弹框状态
   const [historyVisible, setHistoryVisible] = useState(false);
-  const [history, setHistory] = useState<string[]>([]);
-  const historyRef = useRef<HTMLDivElement>(null);
+  const [saveSharedVisible, setSaveSharedVisible] = useState(false);
+  const [shortcutVisible, setShortcutVisible] = useState(false);
+
+  const { elfkShortcuts } = useUserPrefsStore();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // 同步外部传入的 keyword
   useEffect(() => {
@@ -86,17 +101,6 @@ const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, onViewC
   useEffect(() => {
     if (projectInfo) fetchViews();
   }, [projectInfo?.project]);
-
-  // 点击外部关闭历史记录
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (historyRef.current && !historyRef.current.contains(e.target as Node)) {
-        setHistoryVisible(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   const fetchViews = async () => {
     if (!projectInfo) return;
@@ -116,9 +120,9 @@ const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, onViewC
     } catch (err) { console.error('获取视图详情失败:', err); }
   };
 
-  const handleSearch = () => {
+  const handleSearch = useCallback(() => {
     if (!currentView || !projectInfo) return;
-    if (localKeyword.trim()) saveHistory(localKeyword.trim());
+    if (localKeyword.trim()) saveLocalHistory(localKeyword.trim());
     onSearch({
       project: projectInfo.project,
       view_id: currentView.id,
@@ -131,8 +135,7 @@ const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, onViewC
       keyword: localKeyword.trim(),
       log_type: currentView.log_type || 'elfk'
     });
-    setHistoryVisible(false);
-  };
+  }, [currentView, projectInfo, localKeyword, timeRange, onSearch]);
 
   const handleReset = () => {
     setLocalKeyword('');
@@ -140,72 +143,135 @@ const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, onViewC
     onReset();
   };
 
-  const handleShowHistory = () => {
-    setHistory(loadHistory());
-    setHistoryVisible(!historyVisible);
-  };
-
+  // 选择历史记录（填入并搜索）
   const handleSelectHistory = (keyword: string) => {
     setLocalKeyword(keyword);
     setHistoryVisible(false);
+    // 直接触发搜索
+    if (!currentView || !projectInfo) return;
+    if (keyword.trim()) saveLocalHistory(keyword.trim());
+    onSearch({
+      project: projectInfo.project,
+      view_id: currentView.id,
+      view_name: currentView.name,
+      index_pattern: currentView.index_pattern,
+      start_time: formatSearchTime(timeRange.start),
+      end_time: formatSearchTime(timeRange.end),
+      time_field: currentView.time_field || '@timestamp',
+      time_format: currentView.time_format || 'epoch_millis',
+      keyword: keyword.trim(),
+      log_type: currentView.log_type || 'elfk'
+    });
   };
 
-  const handleClearHistory = () => {
-    localStorage.removeItem(HISTORY_KEY);
-    setHistory([]);
+  // 追加历史记录
+  const handleAppendHistory = (keyword: string) => {
+    setLocalKeyword(prev => prev ? `${prev} ${keyword}` : keyword);
+    setHistoryVisible(false);
   };
+
+  // 快捷键处理
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // 搜索
+      if (matchShortcut(e, elfkShortcuts.search)) {
+        e.preventDefault();
+        handleSearch();
+        return;
+      }
+      // 历史记录
+      if (matchShortcut(e, elfkShortcuts.history)) {
+        e.preventDefault();
+        setHistoryVisible(true);
+        return;
+      }
+      // 保存共享
+      if (matchShortcut(e, elfkShortcuts.saveShared)) {
+        e.preventDefault();
+        if (localKeyword.trim() && currentView) {
+          setSaveSharedVisible(true);
+        }
+        return;
+      }
+      // 新建标签页
+      if (matchShortcut(e, elfkShortcuts.newTab)) {
+        e.preventDefault();
+        onAddTab?.();
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [elfkShortcuts, handleSearch, localKeyword, currentView, onAddTab]);
 
   return (
-    <div className="search-form-bar">
-      {/* 视图选择 */}
-      <div className="view-select">
-        <select value={currentView?.id || ''} onChange={e => handleViewSelect(e.target.value)} disabled={viewLoading}>
-          <option value="">{viewLoading ? '加载中...' : '请选择视图'}</option>
-          {views.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-        </select>
-      </div>
+    <>
+      <div className="search-form-bar">
+        {/* 视图选择 */}
+        <div className="view-select">
+          <select value={currentView?.id || ''} onChange={e => handleViewSelect(e.target.value)} disabled={viewLoading}>
+            <option value="">{viewLoading ? '加载中...' : '请选择视图'}</option>
+            {views.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+          </select>
+        </div>
 
-      {/* 搜索框 */}
-      <div className="search-input" ref={historyRef}>
-        <span className="search-icon" onClick={handleShowHistory} title="搜索历史">🔍</span>
-        <input
-          type="text"
-          placeholder="输入搜索关键词，支持 Lucene 语法"
-          value={localKeyword}
-          onChange={e => setLocalKeyword(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleSearch()}
-        />
-        {/* 搜索历史下拉 */}
-        {historyVisible && (
-          <div className="search-history-dropdown">
-            <div className="history-header">
-              <span>搜索历史</span>
-              {history.length > 0 && <button onClick={handleClearHistory}>清空</button>}
-            </div>
-            {history.length === 0 ? (
-              <div className="history-empty">暂无搜索历史</div>
-            ) : (
-              <ul className="history-list">
-                {history.map((h, i) => (
-                  <li key={i} onClick={() => handleSelectHistory(h)}>{h}</li>
-                ))}
-              </ul>
-            )}
+        {/* 搜索框 */}
+        <div className="search-input-wrapper">
+          <div className="search-input">
+            <span className="search-icon" onClick={() => setHistoryVisible(!historyVisible)} title="历史记录">🔍</span>
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder="输入搜索关键词，支持 Lucene 语法"
+              value={localKeyword}
+              onChange={e => setLocalKeyword(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleSearch()}
+              onFocus={() => setHistoryVisible(true)}
+            />
           </div>
-        )}
+          <HistoryDropdown
+            visible={historyVisible}
+            projectInfo={projectInfo}
+            viewId={Number(currentView?.id) || 0}
+            onClose={() => setHistoryVisible(false)}
+            onSelect={handleSelectHistory}
+            onAppend={handleAppendHistory}
+          />
+        </div>
+
+        {/* 时间范围选择器 */}
+        <TimeRangePicker value={timeRange} onChange={(range) => setTimeRange({ ...range, label: range.label || '自定义' })} />
+
+        {/* 按钮 */}
+        <div className="form-btns">
+          <button className="btn-search" onClick={handleSearch} disabled={loading || !currentView}>
+            {loading ? '搜索中...' : '搜索'}
+          </button>
+          <button className="btn-reset" onClick={handleReset}>重置</button>
+          <button className="btn-settings" onClick={() => setShortcutVisible(true)} title="快捷键设置">
+            ⚙️
+          </button>
+        </div>
       </div>
 
-      {/* 时间范围选择器 */}
-      <TimeRangePicker value={timeRange} onChange={(range) => setTimeRange({ ...range, label: range.label || '自定义' })} />
+      {/* 保存共享记录弹框 */}
+      <SaveSharedDialog
+        visible={saveSharedVisible}
+        projectInfo={projectInfo}
+        viewId={Number(currentView?.id) || 0}
+        viewName={currentView?.name || ''}
+        keyword={localKeyword}
+        onClose={() => setSaveSharedVisible(false)}
+        onSuccess={() => console.log('保存成功')}
+      />
 
-      {/* 按钮 */}
-      <div className="form-btns">
-        <button className="btn-search" onClick={handleSearch} disabled={loading || !currentView}>
-          {loading ? '搜索中...' : '搜索'}
-        </button>
-        <button className="btn-reset" onClick={handleReset}>重置</button>
-      </div>
-    </div>
+      {/* 快捷键设置 */}
+      <ShortcutSettings
+        visible={shortcutVisible}
+        onClose={() => setShortcutVisible(false)}
+      />
+    </>
   );
 };
 

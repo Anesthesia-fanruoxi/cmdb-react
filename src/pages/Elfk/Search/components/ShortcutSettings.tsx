@@ -1,10 +1,10 @@
 /**
- * SQL 快捷键设置组件
+ * ELFK 快捷键设置组件
  */
 
 import { useState, useEffect, useCallback } from 'react';
 import { X, RotateCcw } from 'lucide-react';
-import { useUserPrefsStore, type SqlShortcuts } from '../../../../stores';
+import { useUserPrefsStore, type ElfkShortcuts } from '../../../../stores';
 import './ShortcutSettings.css';
 
 interface Props {
@@ -13,34 +13,29 @@ interface Props {
 }
 
 // 快捷键配置项
-const SHORTCUT_ITEMS: { key: keyof SqlShortcuts; label: string; description: string }[] = [
-  { key: 'execute', label: '执行查询', description: '执行当前 SQL 语句' },
-  { key: 'format', label: '格式化 SQL', description: '格式化 SQL 代码' },
-  { key: 'comment', label: '注释/取消注释', description: '切换行注释' },
-  { key: 'find', label: '查找', description: '打开查找框' },
-  { key: 'replace', label: '替换', description: '打开查找替换框' },
-  { key: 'newTab', label: '新建标签页', description: '创建新的查询标签' },
+const SHORTCUT_ITEMS: { key: keyof ElfkShortcuts; label: string; description: string }[] = [
+  { key: 'search', label: '搜索', description: '执行搜索查询' },
   { key: 'history', label: '历史记录', description: '打开历史记录面板' },
-  { key: 'saveShared', label: '保存共享', description: '保存当前SQL到共享记录' },
+  { key: 'saveShared', label: '保存共享', description: '保存当前关键词到共享记录' },
+  { key: 'newTab', label: '新建标签页', description: '创建新的搜索标签' },
 ];
 
 const ShortcutSettings = ({ visible, onClose }: Props) => {
-  const { sqlShortcuts, setSqlShortcut, resetSqlShortcuts } = useUserPrefsStore();
-  const [editingKey, setEditingKey] = useState<keyof SqlShortcuts | null>(null);
+  const { elfkShortcuts, setElfkShortcut, resetElfkShortcuts } = useUserPrefsStore();
+  const [editingKey, setEditingKey] = useState<keyof ElfkShortcuts | null>(null);
   const [tempShortcut, setTempShortcut] = useState('');
 
   // 检测快捷键冲突
-  const getConflict = (shortcut: string, currentKey: keyof SqlShortcuts): string | null => {
+  const getConflict = (shortcut: string, currentKey: keyof ElfkShortcuts): string | null => {
     if (!shortcut) return null;
     for (const item of SHORTCUT_ITEMS) {
-      if (item.key !== currentKey && sqlShortcuts[item.key] === shortcut) {
+      if (item.key !== currentKey && elfkShortcuts[item.key] === shortcut) {
         return item.label;
       }
     }
     return null;
   };
 
-  // 当前编辑的快捷键是否有冲突
   const currentConflict = editingKey ? getConflict(tempShortcut, editingKey) : null;
 
   // 格式化快捷键显示
@@ -56,20 +51,18 @@ const ShortcutSettings = ({ visible, onClose }: Props) => {
   // 保存快捷键
   const saveShortcut = useCallback(() => {
     if (editingKey && tempShortcut && !currentConflict) {
-      setSqlShortcut(editingKey, tempShortcut);
+      setElfkShortcut(editingKey, tempShortcut);
     }
     setEditingKey(null);
     setTempShortcut('');
-  }, [editingKey, tempShortcut, currentConflict, setSqlShortcut]);
+  }, [editingKey, tempShortcut, currentConflict, setElfkShortcut]);
 
-  // 处理键盘事件，捕获快捷键
+  // 处理键盘事件
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (!editingKey) return;
-    
     e.preventDefault();
     e.stopPropagation();
 
-    // 如果已有快捷键，按回车直接保存
     if (e.key === 'Enter' && tempShortcut) {
       saveShortcut();
       return;
@@ -80,7 +73,6 @@ const ShortcutSettings = ({ visible, onClose }: Props) => {
     if (e.shiftKey) parts.push('Shift');
     if (e.altKey) parts.push('Alt');
 
-    // 获取按键
     let key = e.key;
     if (key === ' ') key = 'Space';
     else if (key === 'Enter') key = 'Enter';
@@ -90,19 +82,17 @@ const ShortcutSettings = ({ visible, onClose }: Props) => {
       return;
     }
     else if (key.length === 1) key = key.toUpperCase();
-    else if (key.startsWith('F') && key.length <= 3) key = key; // F1-F12
-    else if (['Control', 'Shift', 'Alt', 'Meta'].includes(key)) return; // 忽略修饰键单独按下
+    else if (key.startsWith('F') && key.length <= 3) key = key;
+    else if (['Control', 'Shift', 'Alt', 'Meta'].includes(key)) return;
 
     if (parts.length === 0 && !['Enter', 'Space'].includes(key) && !key.startsWith('F')) {
-      return; // 需要至少一个修饰键（除了 Enter、Space、F 键）
+      return;
     }
 
     parts.push(key);
-    const shortcut = parts.join('-');
-    setTempShortcut(shortcut);
+    setTempShortcut(parts.join('-'));
   }, [editingKey, tempShortcut, saveShortcut]);
 
-  // 监听键盘事件
   useEffect(() => {
     if (editingKey) {
       window.addEventListener('keydown', handleKeyDown, true);
@@ -110,29 +100,15 @@ const ShortcutSettings = ({ visible, onClose }: Props) => {
     }
   }, [editingKey, handleKeyDown]);
 
-  // 开始编辑
-  const startEditing = (key: keyof SqlShortcuts) => {
-    setEditingKey(key);
-    setTempShortcut('');
-  };
-
-  // 取消编辑
-  const cancelEditing = () => {
-    setEditingKey(null);
-    setTempShortcut('');
-  };
-
   if (!visible) return null;
 
   return (
     <>
-      <div className="shortcut-overlay" onClick={onClose} />
-      <div className="shortcut-dialog">
+      <div className="elfk-shortcut-overlay" onClick={onClose} />
+      <div className="elfk-shortcut-dialog">
         <div className="shortcut-header">
           <h3>快捷键设置</h3>
-          <button className="close-btn" onClick={onClose}>
-            <X size={18} />
-          </button>
+          <button className="close-btn" onClick={onClose}><X size={18} /></button>
         </div>
         
         <div className="shortcut-body">
@@ -158,19 +134,12 @@ const ShortcutSettings = ({ visible, onClose }: Props) => {
                           <span className="conflict-tip">与「{currentConflict}」冲突</span>
                         )}
                       </div>
-                      <button className="btn-sm" onClick={saveShortcut} disabled={!tempShortcut || !!currentConflict}>
-                        确定
-                      </button>
-                      <button className="btn-sm btn-cancel" onClick={cancelEditing}>
-                        取消
-                      </button>
+                      <button className="btn-sm" onClick={saveShortcut} disabled={!tempShortcut || !!currentConflict}>确定</button>
+                      <button className="btn-sm btn-cancel" onClick={() => { setEditingKey(null); setTempShortcut(''); }}>取消</button>
                     </div>
                   ) : (
-                    <button
-                      className="shortcut-btn"
-                      onClick={() => startEditing(item.key)}
-                    >
-                      {formatShortcut(sqlShortcuts[item.key])}
+                    <button className="shortcut-btn" onClick={() => { setEditingKey(item.key); setTempShortcut(''); }}>
+                      {formatShortcut(elfkShortcuts[item.key])}
                     </button>
                   )}
                 </div>
@@ -180,13 +149,10 @@ const ShortcutSettings = ({ visible, onClose }: Props) => {
         </div>
 
         <div className="shortcut-footer">
-          <button className="btn-reset" onClick={resetSqlShortcuts}>
-            <RotateCcw size={14} />
-            恢复默认
+          <button className="btn-reset" onClick={resetElfkShortcuts}>
+            <RotateCcw size={14} />恢复默认
           </button>
-          <button className="btn-primary" onClick={onClose}>
-            完成
-          </button>
+          <button className="btn-primary" onClick={onClose}>完成</button>
         </div>
       </div>
     </>

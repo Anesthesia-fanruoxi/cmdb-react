@@ -1,0 +1,150 @@
+/* 保存共享记录弹框样式 */
+
+.save-shared-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1300;
+}
+
+.save-shared-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 450px;
+  max-width: 90vw;
+  background: var(--bg-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 1301;
+}
+
+.save-shared-dialog .dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.save-shared-dialog .dialog-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.save-shared-dialog .close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+}
+
+.save-shared-dialog .close-btn:hover {
+  background: var(--bg-secondary);
+}
+
+.save-shared-dialog .dialog-body {
+  padding: 20px;
+}
+
+.save-shared-dialog .form-item {
+  margin-bottom: 16px;
+}
+
+.save-shared-dialog .form-item:last-child {
+  margin-bottom: 0;
+}
+
+.save-shared-dialog .form-item label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.save-shared-dialog .form-value {
+  font-size: 14px;
+  color: var(--text-color);
+}
+
+.save-shared-dialog .keyword-preview {
+  padding: 10px 12px;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: 'Monaco', 'Consolas', monospace;
+  color: var(--text-color);
+  max-height: 80px;
+  overflow-y: auto;
+  word-break: break-all;
+}
+
+.save-shared-dialog textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 13px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  resize: vertical;
+}
+
+.save-shared-dialog textarea:focus {
+  border-color: var(--primary-color);
+  outline: none;
+}
+
+.save-shared-dialog .error-tip {
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: rgba(231, 76, 60, 0.1);
+  border-radius: 4px;
+  font-size: 13px;
+  color: #e74c3c;
+}
+
+.save-shared-dialog .dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.save-shared-dialog .btn-cancel {
+  padding: 8px 16px;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.save-shared-dialog .btn-cancel:hover {
+  border-color: var(--text-secondary);
+}
+
+.save-shared-dialog .btn-save {
+  padding: 8px 20px;
+  background: var(--primary-color);
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #fff;
+  cursor: pointer;
+}
+
+.save-shared-dialog .btn-save:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.save-shared-dialog .btn-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

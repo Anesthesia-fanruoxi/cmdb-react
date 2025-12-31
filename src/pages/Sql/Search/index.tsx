@@ -5,15 +5,17 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   getProjectList, getDatabases, getTables, executeQuery, 
-  executePageQuery, exportQueryResult, getHistoryList, 
-  type Project, type HistoryItem 
+  executePageQuery, exportQueryResult,
+  type Project
 } from '../../../services/sql/search';
 import { openComponentWindow, onReattachTab } from '../../../utils/window';
-import { usePageStateStore, useMessageStore } from '../../../stores';
+import { usePageStateStore, useMessageStore, useUserPrefsStore } from '../../../stores';
 import TableTree from './components/TableTree';
 import SqlWorkspace from './components/SqlWorkspace';
 import DraggableTabs from './components/DraggableTabs';
 import ShortcutSettings from './components/ShortcutSettings';
+import SqlHistoryPanel, { saveSqlLocalHistory } from './components/SqlHistoryPanel';
+import SaveSqlSharedDialog from './components/SaveSqlSharedDialog';
 import { handleQueryData } from './utils/handleQueryData';
 import './styles/index.css';
 
@@ -93,14 +95,14 @@ const SqlSearch = () => {
   const [activeTabId, setActiveTabId] = useState('1');
   const [tabCounter, setTabCounter] = useState(1);
   
-  const [historyVisible, setHistoryVisible] = useState(false);
-  const [historyList, setHistoryList] = useState<HistoryItem[]>([]);
-  const [selectedHistory, setSelectedHistory] = useState<HistoryItem | null>(null);
   const [settingsVisible, setSettingsVisible] = useState(false);
+  const [sqlHistoryPanelVisible, setSqlHistoryPanelVisible] = useState(false);
+  const [saveSharedVisible, setSaveSharedVisible] = useState(false);
 
   // 页面状态管理
   const { setPageState, getPageState, _hasHydrated } = usePageStateStore();
   const addMessage = useMessageStore(state => state.addMessage);
+  const { sqlShortcuts } = useUserPrefsStore();
   const hasRestored = useRef(false);
   const [isRestoring, setIsRestoring] = useState(true);
 
@@ -118,14 +120,49 @@ const SqlSearch = () => {
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (selectedHistory) setSelectedHistory(null);
-        else if (historyVisible) setHistoryVisible(false);
+        if (sqlHistoryPanelVisible) setSqlHistoryPanelVisible(false);
+        else if (saveSharedVisible) setSaveSharedVisible(false);
         else if (settingsVisible) setSettingsVisible(false);
       }
     };
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
-  }, [selectedHistory, historyVisible, settingsVisible]);
+  }, [sqlHistoryPanelVisible, saveSharedVisible, settingsVisible]);
+
+  // 快捷键：历史记录和保存共享
+  useEffect(() => {
+    const handleShortcut = (e: KeyboardEvent) => {
+      const matchShortcut = (shortcut: string) => {
+        const parts = shortcut.split('-');
+        const ctrl = parts.includes('Ctrl');
+        const shift = parts.includes('Shift');
+        const alt = parts.includes('Alt');
+        const key = parts[parts.length - 1].toLowerCase();
+        const pressedKey = e.key.toLowerCase() === 'enter' ? 'enter' : e.key.toLowerCase();
+        return (e.ctrlKey || e.metaKey) === ctrl && e.shiftKey === shift && e.altKey === alt && pressedKey === key;
+      };
+
+      // 历史记录快捷键
+      if (matchShortcut(sqlShortcuts.history)) {
+        e.preventDefault();
+        setSqlHistoryPanelVisible(true);
+        return;
+      }
+
+      // 保存共享快捷键
+      if (matchShortcut(sqlShortcuts.saveShared)) {
+        e.preventDefault();
+        const tab = tabsRef.current.find(t => t.id === activeTabId);
+        if (tab?.sqlQuery?.trim() && tab.project && tab.dbName) {
+          setSaveSharedVisible(true);
+        }
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', handleShortcut);
+    return () => window.removeEventListener('keydown', handleShortcut);
+  }, [sqlShortcuts, activeTabId]);
 
   // 恢复保存的状态（等待 hydration 完成）
   useEffect(() => {
@@ -317,6 +354,9 @@ const SqlSearch = () => {
       });
       return;
     }
+
+    // 保存到本地历史
+    saveSqlLocalHistory(sql.trim(), tabProject, tabDbName);
 
     updateTab(activeTabId, { 
       queryLoading: true, 
@@ -529,36 +569,9 @@ const SqlSearch = () => {
     }
   };
 
-  // 显示历史记录
-  const showHistory = async () => {
-    try {
-      const res = await getHistoryList();
-      if (res.code === 200) {
-        setHistoryList(res.data || []);
-        setHistoryVisible(true);
-      }
-    } catch (error) {
-      console.error('获取历史记录失败:', error);
-    }
-  };
-
-  const applyHistory = (item: HistoryItem) => {
-    updateTab(activeTabId, { sqlQuery: item.query_sql });
-    setHistoryVisible(false);
-    setSelectedHistory(null);
-  };
-
-  // 追加历史SQL到当前编辑器
-  const appendHistory = (item: HistoryItem) => {
-    setTabs(prev => {
-      const tab = prev.find(t => t.id === activeTabId);
-      if (!tab) return prev;
-      const currentSql = tab.sqlQuery || '';
-      const newSql = currentSql ? `${currentSql}\n\n${item.query_sql}` : item.query_sql;
-      return prev.map(t => t.id === activeTabId ? { ...t, sqlQuery: newSql } : t);
-    });
-    setHistoryVisible(false);
-    setSelectedHistory(null);
+  // 显示历史记录（新面板）
+  const showHistory = () => {
+    setSqlHistoryPanelVisible(true);
   };
 
   // 标签页重新排序
@@ -682,56 +695,29 @@ const SqlSearch = () => {
         </div>
       </div>
 
-      {historyVisible && (
-        <div className="drawer-overlay" onClick={() => setHistoryVisible(false)}>
-          <div className="drawer history-drawer" onClick={e => e.stopPropagation()}>
-            <div className="drawer-header">
-              <h4>📋 历史SQL记录</h4>
-              <button className="close-btn" onClick={() => setHistoryVisible(false)}>×</button>
-            </div>
-            <div className="drawer-body">
-              {historyList.length === 0 ? <div className="empty-tip">暂无历史记录</div> : (
-                <div className="history-list">
-                  {historyList.map(item => (
-                    <div key={item.id} className="history-card" onClick={() => setSelectedHistory(item)}>
-                      <div className="history-card-header">
-                        <span className="history-time">🕐 {item.created_at}</span>
-                        <div className="history-card-actions">
-                          <button className="btn-icon" title="替换" onClick={(e) => { e.stopPropagation(); applyHistory(item); }}>📋</button>
-                          <button className="btn-icon" title="追加" onClick={(e) => { e.stopPropagation(); appendHistory(item); }}>➕</button>
-                        </div>
-                      </div>
-                      <div className="history-sql-preview">{item.query_sql.replace(/\s+/g, ' ').slice(0, 120)}{item.query_sql.length > 120 ? '...' : ''}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* SQL详情弹框 */}
-      {selectedHistory && (
-        <div className="modal-overlay" onClick={() => setSelectedHistory(null)}>
-          <div className="sql-detail-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h4>SQL 详情</h4>
-              <button className="close-btn" onClick={() => setSelectedHistory(null)}>×</button>
-            </div>
-            <div className="modal-meta">执行时间：{selectedHistory.created_at}</div>
-            <div className="modal-content">
-              <pre>{selectedHistory.query_sql}</pre>
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-default" onClick={() => appendHistory(selectedHistory)}>➕ 追加填入</button>
-              <button className="btn btn-primary" onClick={() => applyHistory(selectedHistory)}>📋 替换填入</button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <ShortcutSettings visible={settingsVisible} onClose={() => setSettingsVisible(false)} />
+
+      {/* SQL 历史记录面板（本地+共享） */}
+      <SqlHistoryPanel
+        visible={sqlHistoryPanelVisible}
+        project={currentTab.project}
+        projectName={projects.find(p => p.value === currentTab.project)?.label || currentTab.project}
+        dbName={currentTab.dbName}
+        onClose={() => setSqlHistoryPanelVisible(false)}
+        onSelect={(sql) => { updateTab(activeTabId, { sqlQuery: sql }); setSqlHistoryPanelVisible(false); }}
+        onAppend={(sql) => { updateTab(activeTabId, { sqlQuery: currentTab.sqlQuery ? `${currentTab.sqlQuery}\n\n${sql}` : sql }); setSqlHistoryPanelVisible(false); }}
+      />
+
+      {/* 保存共享记录弹框 */}
+      <SaveSqlSharedDialog
+        visible={saveSharedVisible}
+        project={currentTab.project}
+        projectName={projects.find(p => p.value === currentTab.project)?.label || currentTab.project}
+        dbName={currentTab.dbName}
+        sql={currentTab.sqlQuery}
+        onClose={() => setSaveSharedVisible(false)}
+        onSuccess={() => addMessage({ type: 'success', title: '保存成功', content: 'SQL已保存到共享记录' })}
+      />
     </div>
   );
 };

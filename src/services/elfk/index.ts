@@ -4,3 +4,4 @@
 
 export * from './search';
 export * from './view';
+export * from './sharedKeyword';

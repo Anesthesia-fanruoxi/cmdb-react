@@ -16,6 +16,15 @@ export interface SqlShortcuts {
   replace: string;        // 替换，默认 Ctrl+H
   newTab: string;         // 新建标签页，默认 Ctrl+T
   history: string;        // 历史记录，默认 Ctrl+Shift+H
+  saveShared: string;     // 保存共享记录，默认 Ctrl+Shift+S
+}
+
+/** ELFK 日志搜索快捷键配置 */
+export interface ElfkShortcuts {
+  search: string;         // 搜索，默认 Ctrl+Enter
+  history: string;        // 历史记录，默认 Ctrl+Shift+H
+  saveShared: string;     // 保存共享记录，默认 Ctrl+S
+  newTab: string;         // 新建标签页，默认 Ctrl+T
 }
 
 /** 监控默认设置 */
@@ -45,6 +54,9 @@ interface UserPrefsState {
   // SQL 快捷键
   sqlShortcuts: SqlShortcuts;
   
+  // ELFK 快捷键
+  elfkShortcuts: ElfkShortcuts;
+  
   // 监控设置
   monitorDefaults: MonitorDefaults;
   
@@ -63,6 +75,8 @@ interface UserPrefsState {
   // 操作方法
   setSqlShortcut: (key: keyof SqlShortcuts, value: string) => void;
   resetSqlShortcuts: () => void;
+  setElfkShortcut: (key: keyof ElfkShortcuts, value: string) => void;
+  resetElfkShortcuts: () => void;
   setMonitorDefault: (key: keyof MonitorDefaults, value: number | string) => void;
   addRecentSearch: (search: string) => void;
   clearRecentSearches: () => void;
@@ -80,6 +94,15 @@ const DEFAULT_SQL_SHORTCUTS: SqlShortcuts = {
   replace: 'Ctrl-H',
   newTab: 'Ctrl-T',
   history: 'Ctrl-Shift-H',
+  saveShared: 'Ctrl-Shift-S',
+};
+
+/** 默认 ELFK 快捷键 */
+const DEFAULT_ELFK_SHORTCUTS: ElfkShortcuts = {
+  search: 'Ctrl-Enter',
+  history: 'Ctrl-Shift-H',
+  saveShared: 'Ctrl-S',
+  newTab: 'Ctrl-T',
 };
 
 /** 默认监控设置 */
@@ -106,8 +129,9 @@ const DEFAULT_UI_PREFS: UiPrefs = {
 
 export const useUserPrefsStore = create<UserPrefsState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       sqlShortcuts: { ...DEFAULT_SQL_SHORTCUTS },
+      elfkShortcuts: { ...DEFAULT_ELFK_SHORTCUTS },
       monitorDefaults: { ...DEFAULT_MONITOR },
       esSearchPrefs: { ...DEFAULT_ES_PREFS },
       uiPrefs: { ...DEFAULT_UI_PREFS },
@@ -124,6 +148,18 @@ export const useUserPrefsStore = create<UserPrefsState>()(
       // 重置 SQL 快捷键为默认值
       resetSqlShortcuts: () => {
         set({ sqlShortcuts: { ...DEFAULT_SQL_SHORTCUTS } });
+      },
+
+      // 设置单个 ELFK 快捷键
+      setElfkShortcut: (key, value) => {
+        set((state) => ({
+          elfkShortcuts: { ...state.elfkShortcuts, [key]: value },
+        }));
+      },
+
+      // 重置 ELFK 快捷键为默认值
+      resetElfkShortcuts: () => {
+        set({ elfkShortcuts: { ...DEFAULT_ELFK_SHORTCUTS } });
       },
 
       // 设置监控默认值
@@ -187,6 +223,11 @@ export const useUserPrefsStore = create<UserPrefsState>()(
           sqlShortcuts: {
             ...DEFAULT_SQL_SHORTCUTS,
             ...(persisted.sqlShortcuts || {}),
+          },
+          // 确保 elfkShortcuts 包含所有新字段
+          elfkShortcuts: {
+            ...DEFAULT_ELFK_SHORTCUTS,
+            ...(persisted.elfkShortcuts || {}),
           },
         };
       },
