@@ -19,16 +19,50 @@ import type { Tab } from '../index';
 import '../styles/index.css';
 
 interface Props {
-  initialTab: Tab;
+  detachKey?: string;
+  project?: string;
+  dbName?: string;
+  initialTab?: Tab;
 }
 
 const DETACHED_KEY = 'sql/detached-tabs';
 
-const SqlWorkspaceDetached = ({ initialTab }: Props) => {
-  const tabId = useRef(initialTab.id || `detached-${Date.now()}`);
+// 创建默认 Tab
+const createDefaultTab = (id: string): Tab => ({
+  id, name: `查询 ${id}`, project: '', dbName: '', sqlQuery: '',
+  dbList: [], tableList: [], queryLoading: false, treeLoading: false, exportLoading: false,
+  results: [], columns: [], total: 0, took: 0, queryId: '', currentPage: 1, pageSize: 50,
+  allResults: [], currentResultIndex: 0, lastExecutedSql: '', messages: []
+});
+
+const SqlWorkspaceDetached = ({ detachKey, project, dbName, initialTab }: Props) => {
+  // 从 localStorage 读取完整数据
+  const getInitialTab = (): Partial<Tab> => {
+    if (detachKey) {
+      try {
+        const saved = localStorage.getItem(detachKey);
+        if (saved) {
+          localStorage.removeItem(detachKey); // 读取后删除
+          return JSON.parse(saved);
+        }
+      } catch (e) {
+        console.error('读取分离数据失败:', e);
+      }
+    }
+    if (initialTab) return initialTab;
+    return { project: project || '', dbName: dbName || '' };
+  };
+  
+  const initData = getInitialTab();
+  const tabId = useRef(initData.id || `detached-${Date.now()}`);
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectLoading, setProjectLoading] = useState(false);
-  const [tab, setTab] = useState<Tab>({ ...initialTab, id: tabId.current });
+  // 合并默认值和传入的初始数据
+  const [tab, setTab] = useState<Tab>(() => ({
+    ...createDefaultTab(tabId.current),
+    ...initData,
+    id: tabId.current,
+  }));
   const { setPageState, getPageState } = usePageStateStore();
 
   const updateTab = useCallback((updates: Partial<Tab>) => {
@@ -50,7 +84,6 @@ const SqlWorkspaceDetached = ({ initialTab }: Props) => {
     else existing.tabs.push(stateToSave);
     
     setPageState(DETACHED_KEY, existing);
-    console.log('[SqlDetached] 保存状态:', tab.name);
   }, [tab, setPageState, getPageState]);
 
   // 定时保存 + 窗口关闭前保存
@@ -59,9 +92,7 @@ const SqlWorkspaceDetached = ({ initialTab }: Props) => {
     
     const currentWindow = getCurrentWebviewWindow();
     const unlisten = currentWindow.onCloseRequested(() => {
-      console.log('[SqlDetached] 窗口关闭，保存状态');
       saveDetachedState();
-      // 同步执行，不阻止关闭
     });
 
     return () => {

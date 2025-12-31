@@ -2,19 +2,25 @@
  * SQL编辑器组件 - 使用 ACE 编辑器，支持智能提示
  */
 
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useImperativeHandle, forwardRef, useState } from 'react'
 import ace from 'ace-builds'
 import 'ace-builds/src-noconflict/mode-sql'
 import 'ace-builds/src-noconflict/theme-xcode'
 import 'ace-builds/src-noconflict/theme-twilight'
 import 'ace-builds/src-noconflict/ext-language_tools'
 import { createSqlCompleter } from '@/utils/sql'
+import { useUserPrefsStore } from '@/stores/userPrefsStore'
+import { formatSqlContent, createDotHandler } from './sqlEditorUtils'
+import SearchDialog from './SearchDialog'
+import ReplaceDialog from './ReplaceDialog'
 import type { TableInfo, FieldInfo } from '@/utils/sql'
 
 interface Props {
   value: string
   onChange: (value: string) => void
   onExecute: () => void
+  onNewTab?: () => void
+  onShowHistory?: () => void
   loading: boolean
   onFocus?: () => void
   onBlur?: () => void
@@ -23,15 +29,52 @@ interface Props {
   loadTableStructure?: (tableName: string) => Promise<FieldInfo[] | null>
 }
 
-const SqlEditor = ({ 
-  value, onChange, onExecute, loading, onFocus, onBlur,
+/** 暴露给父组件的方法 */
+export interface SqlEditorRef {
+  format: () => void
+  getSelectedText: () => string
+  showFind: () => void
+  showReplace: () => void
+  getEditor: () => ace.Ace.Editor | null
+}
+
+const SqlEditor = forwardRef<SqlEditorRef, Props>(({ 
+  value, onChange, onExecute, onNewTab, onShowHistory, loading, onFocus, onBlur,
   tables = [], loadTableStructure 
-}: Props) => {
+}, ref) => {
   const editorRef = useRef<HTMLDivElement>(null)
   const aceEditorRef = useRef<ace.Ace.Editor | null>(null)
   const completerRef = useRef<any>(null)
   const tablesRef = useRef<TableInfo[]>(tables)
   const loadTableStructureRef = useRef(loadTableStructure)
+  
+  // 查找/替换对话框状态
+  const [showFindDialog, setShowFindDialog] = useState(false)
+  const [showReplaceDialog, setShowReplaceDialog] = useState(false)
+  
+  // 获取用户自定义快捷键
+  const sqlShortcuts = useUserPrefsStore((state) => state.sqlShortcuts)
+
+  // 暴露方法给父组件
+  useImperativeHandle(ref, () => ({
+    format: () => {
+      if (aceEditorRef.current) {
+        formatSqlContent(aceEditorRef.current)
+      }
+    },
+    getSelectedText: () => {
+      return aceEditorRef.current?.getSelectedText() || ''
+    },
+    showFind: () => {
+      setShowReplaceDialog(false)
+      setShowFindDialog(true)
+    },
+    showReplace: () => {
+      setShowFindDialog(false)
+      setShowReplaceDialog(true)
+    },
+    getEditor: () => aceEditorRef.current
+  }))
 
   // 更新 tables ref
   useEffect(() => {
@@ -99,15 +142,6 @@ const SqlEditor = ({
     editor.on('focus', () => onFocus?.())
     editor.on('blur', () => onBlur?.())
 
-    // 添加执行快捷键 Ctrl+Enter
-    editor.commands.addCommand({
-      name: 'executeQuery',
-      bindKey: { win: 'Ctrl-Enter', mac: 'Command-Enter' },
-      exec: () => {
-        if (!loading) onExecute()
-      }
-    })
-
     // 添加点号处理器（用于 table.field 补全）
     createDotHandler(editor, loadTableStructure)
 
@@ -133,97 +167,101 @@ const SqlEditor = ({
     }
   }, [value])
 
+  // 当快捷键配置变化时，更新编辑器命令绑定
+  useEffect(() => {
+    const editor = aceEditorRef.current
+    if (!editor) return
+
+    // 更新执行快捷键
+    editor.commands.removeCommand('executeQuery')
+    editor.commands.addCommand({
+      name: 'executeQuery',
+      bindKey: { win: sqlShortcuts.execute, mac: sqlShortcuts.execute.replace('Ctrl', 'Command') },
+      exec: () => {
+        if (!loading) onExecute()
+      }
+    })
+
+    // 更新格式化快捷键
+    editor.commands.removeCommand('formatSql')
+    editor.commands.addCommand({
+      name: 'formatSql',
+      bindKey: { win: sqlShortcuts.format, mac: sqlShortcuts.format.replace('Ctrl', 'Command') },
+      exec: (ed) => {
+        formatSqlContent(ed)
+      }
+    })
+
+    // 更新注释快捷键
+    editor.commands.removeCommand('toggleComment')
+    editor.commands.addCommand({
+      name: 'toggleComment',
+      bindKey: { win: sqlShortcuts.comment, mac: sqlShortcuts.comment.replace('Ctrl', 'Command') },
+      exec: (ed) => {
+        ed.toggleCommentLines()
+      }
+    })
+
+    // 更新查找快捷键
+    editor.commands.removeCommand('customFind')
+    editor.commands.addCommand({
+      name: 'customFind',
+      bindKey: { win: sqlShortcuts.find, mac: sqlShortcuts.find.replace('Ctrl', 'Command') },
+      exec: () => {
+        setShowReplaceDialog(false)
+        setShowFindDialog(true)
+      }
+    })
+
+    // 更新替换快捷键
+    editor.commands.removeCommand('customReplace')
+    editor.commands.addCommand({
+      name: 'customReplace',
+      bindKey: { win: sqlShortcuts.replace, mac: sqlShortcuts.replace.replace('Ctrl', 'Command') },
+      exec: () => {
+        setShowFindDialog(false)
+        setShowReplaceDialog(true)
+      }
+    })
+
+    // 更新新建标签快捷键
+    editor.commands.removeCommand('newTab')
+    editor.commands.addCommand({
+      name: 'newTab',
+      bindKey: { win: sqlShortcuts.newTab, mac: sqlShortcuts.newTab.replace('Ctrl', 'Command') },
+      exec: () => {
+        onNewTab?.()
+      }
+    })
+
+    // 更新历史记录快捷键
+    editor.commands.removeCommand('showHistory')
+    editor.commands.addCommand({
+      name: 'showHistory',
+      bindKey: { win: sqlShortcuts.history, mac: sqlShortcuts.history.replace('Ctrl', 'Command') },
+      exec: () => {
+        onShowHistory?.()
+      }
+    })
+  }, [sqlShortcuts, loading, onExecute, onNewTab, onShowHistory])
+
   return (
     <div className="sql-editor">
       <div ref={editorRef} className="ace-editor" style={{ width: '100%', height: '100%' }} />
+      <SearchDialog 
+        visible={showFindDialog} 
+        onClose={() => setShowFindDialog(false)} 
+        editor={aceEditorRef.current} 
+      />
+      <ReplaceDialog 
+        visible={showReplaceDialog} 
+        onClose={() => setShowReplaceDialog(false)} 
+        editor={aceEditorRef.current} 
+      />
     </div>
   )
-}
+})
 
-/** 创建点号处理器，用于 table.field 补全 - 与 Vue 版本对齐 */
-function createDotHandler(
-  editor: ace.Ace.Editor, 
-  loadTableStructure?: (tableName: string) => Promise<FieldInfo[] | null>
-) {
-  editor.commands.addCommand({
-    name: 'dotAndComplete',
-    bindKey: { win: '.', mac: '.' },
-    exec: async (ed) => {
-      // 插入点号
-      ed.insert('.')
-
-      // 获取光标位置和当前行
-      const pos = ed.getCursorPosition()
-      const line = ed.session.getLine(pos.row)
-      const cursorColumn = pos.column
-
-      // 点号前的文本
-      const textBeforeDot = line.substring(0, cursorColumn - 1)
-      // 尝试提取表名或别名
-      const match = textBeforeDot.match(/(\w+)$/)
-
-      if (!match) {
-        // 没有匹配到标识符，触发普通补全
-        setTimeout(() => ed.execCommand('startAutocomplete'), 50)
-        return true
-      }
-
-      const identifier = match[1]
-      const key = identifier.toLowerCase()
-
-      // 初始化缓存
-      if (!window.sqlFieldSuggestions) {
-        window.sqlFieldSuggestions = {}
-      }
-
-      // 检查是否需要缓存别名对应的表字段
-      if (!window.sqlFieldSuggestions[key] && !window.sqlFieldSuggestions[identifier]) {
-        const fullSql = ed.getValue()
-        // 获取当前语句（分号后的部分）
-        const lastSemicolon = fullSql.lastIndexOf(';')
-        const currentSql = lastSemicolon === -1 ? fullSql : fullSql.substring(lastSemicolon + 1)
-        
-        // 分析当前 SQL 找出别名对应的表名
-        const fromMatch = currentSql.match(/\bFROM\b\s+([^;]*?)(?:\bWHERE\b|\bGROUP\s+BY\b|\bHAVING\b|\bORDER\s+BY\b|\bLIMIT\b|$)/is)
-        if (fromMatch) {
-          const fromClause = fromMatch[1].trim()
-          // 匹配 "表名 别名" 或 "表名 AS 别名"
-          const tableAliasMatch = fromClause.match(new RegExp(`\\b(\\w+)\\s+(?:AS\\s+)?${identifier}\\b`, 'i'))
-          if (tableAliasMatch) {
-            const tableName = tableAliasMatch[1]
-            const tableKey = tableName.toLowerCase()
-            // 将表字段缓存到别名下
-            const fields = window.sqlFieldSuggestions[tableKey] || window.sqlFieldSuggestions[tableName]
-            if (fields) {
-              window.sqlFieldSuggestions[identifier] = fields
-              window.sqlFieldSuggestions[key] = fields
-            } else if (loadTableStructure) {
-              // 如果表字段未缓存，先加载表结构
-              const loadedFields = await loadTableStructure(tableName)
-              if (loadedFields && loadedFields.length > 0) {
-                // loadTableStructure 已经缓存了表字段，现在缓存到别名
-                window.sqlFieldSuggestions[identifier] = loadedFields
-                window.sqlFieldSuggestions[key] = loadedFields
-              }
-            }
-          } else if (loadTableStructure) {
-            // 不是别名，可能是表名，尝试加载表结构
-            await loadTableStructure(identifier)
-          }
-        } else if (loadTableStructure) {
-          // 没有 FROM 子句，直接尝试加载表结构
-          await loadTableStructure(identifier)
-        }
-      }
-
-      // 触发自动补全
-      setTimeout(() => {
-        ed.execCommand('startAutocomplete')
-      }, 50)
-
-      return true
-    }
-  })
-}
+SqlEditor.displayName = 'SqlEditor'
 
 export default SqlEditor

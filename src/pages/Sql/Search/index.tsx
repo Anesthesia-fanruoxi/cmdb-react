@@ -13,6 +13,7 @@ import { usePageStateStore, useMessageStore } from '../../../stores';
 import TableTree from './components/TableTree';
 import SqlWorkspace from './components/SqlWorkspace';
 import DraggableTabs from './components/DraggableTabs';
+import ShortcutSettings from './components/ShortcutSettings';
 import { handleQueryData } from './utils/handleQueryData';
 import './styles/index.css';
 
@@ -71,7 +72,7 @@ const createTab = (id: string): Tab => ({
 const PAGE_KEY = 'sql/search';
 const DETACHED_KEY = 'sql/detached-tabs';
 
-// 需要保存的 Tab 字段（包含查询结果）
+// 需要保存的 Tab 字段（不包含查询结果，避免大数据问题）
 const serializeTab = (tab: Tab): Partial<Tab> => ({
   id: tab.id,
   name: tab.name,
@@ -80,16 +81,8 @@ const serializeTab = (tab: Tab): Partial<Tab> => ({
   sqlQuery: tab.sqlQuery,
   dbList: tab.dbList,
   tableList: tab.tableList,
-  // 查询结果
-  results: tab.results,
-  columns: tab.columns,
-  total: tab.total,
-  took: tab.took,
-  queryId: tab.queryId,
   currentPage: tab.currentPage,
   pageSize: tab.pageSize,
-  allResults: tab.allResults,
-  currentResultIndex: tab.currentResultIndex,
   lastExecutedSql: tab.lastExecutedSql,
 });
 
@@ -102,6 +95,8 @@ const SqlSearch = () => {
   
   const [historyVisible, setHistoryVisible] = useState(false);
   const [historyList, setHistoryList] = useState<HistoryItem[]>([]);
+  const [selectedHistory, setSelectedHistory] = useState<HistoryItem | null>(null);
+  const [settingsVisible, setSettingsVisible] = useState(false);
 
   // 页面状态管理
   const { setPageState, getPageState, _hasHydrated } = usePageStateStore();
@@ -109,11 +104,28 @@ const SqlSearch = () => {
   const hasRestored = useRef(false);
   const [isRestoring, setIsRestoring] = useState(true);
 
+  // 保存最新的 tabs 引用，用于在异步操作中获取最新状态
+  const tabsRef = useRef(tabs);
+  tabsRef.current = tabs;
+
   const currentTab = tabs.find(t => t.id === activeTabId) || tabs[0];
 
   const updateTab = useCallback((tabId: string, updates: Partial<Tab>) => {
     setTabs(prev => prev.map(t => t.id === tabId ? { ...t, ...updates } : t));
   }, []);
+
+  // ESC 关闭弹框
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (selectedHistory) setSelectedHistory(null);
+        else if (historyVisible) setHistoryVisible(false);
+        else if (settingsVisible) setSettingsVisible(false);
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [selectedHistory, historyVisible, settingsVisible]);
 
   // 恢复保存的状态（等待 hydration 完成）
   useEffect(() => {
@@ -123,8 +135,6 @@ const SqlSearch = () => {
     try {
       const saved = getPageState<{ tabs: Partial<Tab>[]; activeTabId: string; tabCounter: number }>(PAGE_KEY);
       const detached = getPageState<{ tabs: Partial<Tab>[] }>(DETACHED_KEY);
-
-      console.log('恢复 SQL 页面状态:', saved, '独立窗口:', detached);
 
       let restoredTabs: Tab[] = [];
       
@@ -143,7 +153,6 @@ const SqlSearch = () => {
         }));
         restoredTabs = [...restoredTabs, ...detachedTabs];
         setPageState(DETACHED_KEY, { tabs: [] });
-        console.log('[SQL] 恢复独立窗口标签页:', detachedTabs.length);
       }
 
       if (restoredTabs.length > 0) {
@@ -198,7 +207,6 @@ const SqlSearch = () => {
       
       setTabs(prev => [...prev, newTab]);
       setActiveTabId(newTab.id);
-      console.log('[SQL] 放回标签页:', newTab.name);
     });
 
     return () => { unlisten.then(fn => fn()); };
@@ -278,27 +286,32 @@ const SqlSearch = () => {
 
   // 数据库变更
   const handleDbChange = async (dbName: string, tabId: string) => {
-    const tab = tabs.find(t => t.id === tabId);
-    if (!tab) return;
+    const tab = tabsRef.current.find(t => t.id === tabId);
+    const project = tab?.project || '';
     
     updateTab(tabId, { dbName, tableList: [], treeLoading: true });
-    if (dbName && tab.project) {
+    
+    if (dbName && project) {
       try {
-        const res = await getTables({ agent: tab.project, dbName });
-        if (res.code === 200) {
-          updateTab(tabId, { tableList: res.data?.tables || [] });
-        }
+        const res = await getTables({ agent: project, dbName });
+        updateTab(tabId, { tableList: res.code === 200 ? (res.data?.tables || []) : [], treeLoading: false });
       } catch (error) {
         console.error('获取表列表失败:', error);
-      } finally {
         updateTab(tabId, { treeLoading: false });
       }
+    } else {
+      updateTab(tabId, { treeLoading: false });
     }
   };
 
   // 执行查询
   const handleExecute = async (sql: string, _isSelection: boolean = false) => {
-    if (!currentTab.project || !currentTab.dbName || !sql.trim()) {
+    // 从 ref 获取最新的 tab 状态
+    const tab = tabsRef.current.find(t => t.id === activeTabId);
+    const tabProject = tab?.project || '';
+    const tabDbName = tab?.dbName || '';
+
+    if (!tabProject || !tabDbName || !sql.trim()) {
       updateTab(activeTabId, { 
         messages: [{ type: 'warning', content: '请选择项目、数据库并输入SQL' }] 
       });
@@ -319,14 +332,14 @@ const SqlSearch = () => {
     
     try {
       const res = await executeQuery({
-        agent: currentTab.project,
-        dbName: currentTab.dbName,
+        agent: tabProject,
+        dbName: tabDbName,
         query: sql
       });
       
       if (res.code === 200 && res.data) {
         // 使用 handleQueryData 处理查询结果
-        const processed = handleQueryData(res.data, currentTab.dbName, sql);
+        const processed = handleQueryData(res.data, tabDbName, sql);
         
         updateTab(activeTabId, {
           results: processed.queryResults,
@@ -532,6 +545,20 @@ const SqlSearch = () => {
   const applyHistory = (item: HistoryItem) => {
     updateTab(activeTabId, { sqlQuery: item.query_sql });
     setHistoryVisible(false);
+    setSelectedHistory(null);
+  };
+
+  // 追加历史SQL到当前编辑器
+  const appendHistory = (item: HistoryItem) => {
+    setTabs(prev => {
+      const tab = prev.find(t => t.id === activeTabId);
+      if (!tab) return prev;
+      const currentSql = tab.sqlQuery || '';
+      const newSql = currentSql ? `${currentSql}\n\n${item.query_sql}` : item.query_sql;
+      return prev.map(t => t.id === activeTabId ? { ...t, sqlQuery: newSql } : t);
+    });
+    setHistoryVisible(false);
+    setSelectedHistory(null);
   };
 
   // 标签页重新排序
@@ -544,37 +571,52 @@ const SqlSearch = () => {
 
   // 标签页分离为独立窗口
   const handleTabDetach = (tab: { id: string; name: string }) => {
-    const fullTab = tabs.find(t => t.id === tab.id);
-    if (!fullTab) return;
-    
-    // 打开独立窗口
-    openComponentWindow({
-      type: 'sql-workspace',
-      label: `sql-workspace-${tab.id}-${Date.now()}`,
-      title: `${tab.name} - SQL查询`,
-      props: {
-        initialTab: fullTab
-      },
-      width: 1200,
-      height: 800
-    });
-    
-    // 如果只有一个标签页，先创建新标签再移除
-    if (tabs.length <= 1) {
-      const newId = String(tabCounter + 1);
-      setTabCounter(tabCounter + 1);
-      const newTab = createTab(newId);
-      setTabs([newTab]);
-      setActiveTabId(newId);
-    } else {
-      // 从当前标签列表中移除，并切换到其他标签
-      const remainingTabs = tabs.filter(t => t.id !== tab.id);
-      setTabs(remainingTabs);
-      // 如果移除的是当前激活的标签，切换到第一个
-      if (activeTabId === tab.id && remainingTabs.length > 0) {
-        setActiveTabId(remainingTabs[0].id);
+    setTabs(prevTabs => {
+      const fullTab = prevTabs.find(t => t.id === tab.id);
+      if (!fullTab) return prevTabs;
+      
+      // 保存完整数据到 localStorage（避免 URL 过长）
+      const detachKey = `sql-detach-${tab.id}`;
+      const fullData = {
+        id: fullTab.id,
+        name: fullTab.name,
+        project: fullTab.project,
+        dbName: fullTab.dbName,
+        sqlQuery: fullTab.sqlQuery,
+        dbList: fullTab.dbList,
+        tableList: fullTab.tableList,
+      };
+      localStorage.setItem(detachKey, JSON.stringify(fullData));
+      
+      // URL 只传递必要的标识参数
+      openComponentWindow({
+        type: 'sql-workspace',
+        label: `sql-workspace-${tab.id}-${Date.now()}`,
+        title: `${tab.name} - SQL查询`,
+        props: {
+          detachKey,
+          project: fullTab.project,
+          dbName: fullTab.dbName,
+        },
+        width: 1200,
+        height: 800
+      });
+      
+      // 如果只有一个标签页，创建新空白标签
+      if (prevTabs.length <= 1) {
+        const newId = String(tabCounter + 1);
+        setTabCounter(c => c + 1);
+        setTimeout(() => setActiveTabId(newId), 0);
+        return [createTab(newId)];
+      } else {
+        // 从当前标签列表中移除
+        const remainingTabs = prevTabs.filter(t => t.id !== tab.id);
+        if (activeTabId === tab.id && remainingTabs.length > 0) {
+          setTimeout(() => setActiveTabId(remainingTabs[0].id), 0);
+        }
+        return remainingTabs;
       }
-    }
+    });
   };
 
   return (
@@ -588,6 +630,7 @@ const SqlSearch = () => {
         onTabDetach={handleTabDetach}
         onAddTab={addTab}
         onShowHistory={showHistory}
+        onShowSettings={() => setSettingsVisible(true)}
       />
 
       <div className="main-content">
@@ -607,57 +650,88 @@ const SqlSearch = () => {
           />
         </div>
         <div className="content">
-          <SqlWorkspace
-            sql={currentTab.sqlQuery}
-            onSqlChange={(sql: string) => updateTab(activeTabId, { sqlQuery: sql })}
-            onExecute={handleExecute}
-            loading={currentTab.queryLoading}
-            exportLoading={currentTab.exportLoading}
-            results={currentTab.results}
-            columns={currentTab.columns}
-            total={currentTab.total}
-            took={currentTab.took}
-            dbName={currentTab.dbName}
-            queryId={currentTab.queryId}
-            allResults={currentTab.allResults}
-            currentResultIndex={currentTab.currentResultIndex}
-            onResultChange={handleResultChange}
-            currentPage={currentTab.currentPage}
-            onPageChange={handlePageChange}
-            onExport={handleExport}
-            messages={currentTab.messages}
-            tableList={currentTab.tableList}
-            project={currentTab.project}
-          />
+          {/* 渲染所有标签页的工作区，用 display 控制显示隐藏，避免重新挂载 */}
+          {tabs.map(tab => (
+            <div key={tab.id} style={{ display: tab.id === activeTabId ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+              <SqlWorkspace
+                sql={tab.sqlQuery}
+                onSqlChange={(sql: string) => updateTab(tab.id, { sqlQuery: sql })}
+                onExecute={handleExecute}
+                onNewTab={addTab}
+                onShowHistory={showHistory}
+                loading={tab.queryLoading}
+                exportLoading={tab.exportLoading}
+                results={tab.results}
+                columns={tab.columns}
+                total={tab.total}
+                took={tab.took}
+                dbName={tab.dbName}
+                queryId={tab.queryId}
+                allResults={tab.allResults}
+                currentResultIndex={tab.currentResultIndex}
+                onResultChange={handleResultChange}
+                currentPage={tab.currentPage}
+                onPageChange={handlePageChange}
+                onExport={handleExport}
+                messages={tab.messages}
+                tableList={tab.tableList}
+                project={tab.project}
+              />
+            </div>
+          ))}
         </div>
       </div>
 
       {historyVisible && (
         <div className="drawer-overlay" onClick={() => setHistoryVisible(false)}>
-          <div className="drawer" onClick={e => e.stopPropagation()}>
+          <div className="drawer history-drawer" onClick={e => e.stopPropagation()}>
             <div className="drawer-header">
-              <h4>历史SQL记录</h4>
+              <h4>📋 历史SQL记录</h4>
               <button className="close-btn" onClick={() => setHistoryVisible(false)}>×</button>
             </div>
             <div className="drawer-body">
               {historyList.length === 0 ? <div className="empty-tip">暂无历史记录</div> : (
-                <table className="history-table">
-                  <thead><tr><th>执行时间</th><th>SQL语句</th><th>操作</th></tr></thead>
-                  <tbody>
-                    {historyList.map(item => (
-                      <tr key={item.id}>
-                        <td>{item.created_at}</td>
-                        <td className="sql-cell">{item.query_sql}</td>
-                        <td><button className="btn btn-link" onClick={() => applyHistory(item)}>复制</button></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="history-list">
+                  {historyList.map(item => (
+                    <div key={item.id} className="history-card" onClick={() => setSelectedHistory(item)}>
+                      <div className="history-card-header">
+                        <span className="history-time">🕐 {item.created_at}</span>
+                        <div className="history-card-actions">
+                          <button className="btn-icon" title="替换" onClick={(e) => { e.stopPropagation(); applyHistory(item); }}>📋</button>
+                          <button className="btn-icon" title="追加" onClick={(e) => { e.stopPropagation(); appendHistory(item); }}>➕</button>
+                        </div>
+                      </div>
+                      <div className="history-sql-preview">{item.query_sql.replace(/\s+/g, ' ').slice(0, 120)}{item.query_sql.length > 120 ? '...' : ''}</div>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>
         </div>
       )}
+
+      {/* SQL详情弹框 */}
+      {selectedHistory && (
+        <div className="modal-overlay" onClick={() => setSelectedHistory(null)}>
+          <div className="sql-detail-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h4>SQL 详情</h4>
+              <button className="close-btn" onClick={() => setSelectedHistory(null)}>×</button>
+            </div>
+            <div className="modal-meta">执行时间：{selectedHistory.created_at}</div>
+            <div className="modal-content">
+              <pre>{selectedHistory.query_sql}</pre>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-default" onClick={() => appendHistory(selectedHistory)}>➕ 追加填入</button>
+              <button className="btn btn-primary" onClick={() => applyHistory(selectedHistory)}>📋 替换填入</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ShortcutSettings visible={settingsVisible} onClose={() => setSettingsVisible(false)} />
     </div>
   );
 };

@@ -72,3 +72,170 @@
 .doc-value { color: var(--primary-color); }
 .doc-comment { color: var(--text-secondary); font-size: 12px; }
 .doc-badge { margin-top: 6px; font-size: 11px; color: #ff4d4f; }
+
+
+/* ACE 查找替换框样式美化 */
+.ace_search {
+  background: var(--bg-color) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+  padding: 14px 16px !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  width: 480px !important;
+  max-width: calc(100vw - 40px) !important;
+  right: 16px !important;
+  top: 16px !important;
+  /* 支持拖拽 */
+  cursor: move !important;
+  resize: both !important;
+  overflow: hidden !important;
+  min-width: 360px !important;
+  min-height: 120px !important;
+}
+
+.ace_search_form,
+.ace_replace_form {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 0 0 10px 0 !important;
+  border: none !important;
+  padding: 0 !important;
+  cursor: default !important;
+}
+
+.ace_search_field {
+  flex: 1 !important;
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 6px !important;
+  padding: 10px 14px !important;
+  font-size: 14px !important;
+  color: var(--text-color) !important;
+  outline: none !important;
+  transition: border-color 0.2s, box-shadow 0.2s !important;
+  cursor: text !important;
+}
+
+.ace_search_field:focus {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.12) !important;
+}
+
+.ace_search_field::placeholder {
+  color: var(--text-muted) !important;
+}
+
+/* 按钮通用样式 */
+.ace_searchbtn,
+.ace_replacebtn {
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 6px !important;
+  padding: 8px 14px !important;
+  font-size: 13px !important;
+  color: var(--text-color) !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  white-space: nowrap !important;
+  min-width: 60px !important;
+}
+
+.ace_searchbtn:hover,
+.ace_replacebtn:hover {
+  background: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  color: #fff !important;
+}
+
+/* 上一个/下一个按钮 */
+.ace_searchbtn_prev,
+.ace_searchbtn_next {
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  min-width: 50px !important;
+}
+
+/* 关闭按钮 */
+.ace_searchbtn.ace_searchbtn_close {
+  background: transparent !important;
+  border: none !important;
+  padding: 6px !important;
+  font-size: 18px !important;
+  color: var(--text-muted) !important;
+  position: absolute !important;
+  right: 10px !important;
+  top: 10px !important;
+  min-width: auto !important;
+  cursor: pointer !important;
+}
+
+.ace_searchbtn.ace_searchbtn_close:hover {
+  color: var(--danger-color) !important;
+  background: rgba(255, 77, 79, 0.1) !important;
+  border-radius: 4px !important;
+}
+
+/* 选项按钮（正则、大小写等） */
+.ace_button {
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 5px !important;
+  padding: 5px 10px !important;
+  font-size: 12px !important;
+  color: var(--text-secondary) !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  margin: 0 3px !important;
+}
+
+.ace_button:hover {
+  border-color: var(--primary-color) !important;
+  color: var(--primary-color) !important;
+}
+
+.ace_button.checked {
+  background: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  color: #fff !important;
+}
+
+/* 搜索选项行 */
+.ace_search_options {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-top: 10px !important;
+  padding-top: 10px !important;
+  border-top: 1px solid var(--border-color) !important;
+  cursor: default !important;
+}
+
+/* 匹配计数 */
+.ace_search_counter {
+  font-size: 13px !important;
+  color: var(--text-muted) !important;
+  padding: 4px 0 !important;
+}
+
+/* 暗色主题适配 */
+:root.dark .ace_search {
+  background: var(--bg-color) !important;
+  border-color: var(--border-color) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+:root.dark .ace_search_field {
+  background: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-color) !important;
+}
+
+:root.dark .ace_searchbtn,
+:root.dark .ace_replacebtn,
+:root.dark .ace_button {
+  background: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-color) !important;
+}

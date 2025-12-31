@@ -3,9 +3,10 @@
  */
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import SqlEditor from './SqlEditor';
+import SqlEditor, { type SqlEditorRef } from './SqlEditor';
 import ResultPanel from './ResultPanel';
 import { getTableStructure } from '@/services/sql/search';
+import { useUserPrefsStore } from '@/stores/userPrefsStore';
 import type { TableInfo, FieldInfo } from '@/utils/sql';
 
 /** 结果集类型 */
@@ -30,6 +31,8 @@ interface Props {
   sql: string;
   onSqlChange: (sql: string) => void;
   onExecute: (sql: string, isSelection: boolean) => void;
+  onNewTab?: () => void;
+  onShowHistory?: () => void;
   loading: boolean;
   exportLoading: boolean;
   // 结果数据
@@ -59,6 +62,8 @@ const SqlWorkspace = ({
   sql,
   onSqlChange,
   onExecute,
+  onNewTab,
+  onShowHistory,
   loading,
   exportLoading,
   results,
@@ -77,15 +82,25 @@ const SqlWorkspace = ({
   tableList = [],
   project = ''
 }: Props) => {
-  // 编辑器高度（手动调整）
+  // 从用户偏好获取编辑器高度
+  const { uiPrefs, setUiPref, _hasHydrated } = useUserPrefsStore();
   const [editorHeight, setEditorHeight] = useState(200);
   // 是否正在拖动
   const [isDragging, setIsDragging] = useState(false);
+
+  // hydration 完成后同步高度
+  useEffect(() => {
+    if (_hasHydrated && uiPrefs.sqlEditorHeight) {
+      setEditorHeight(uiPrefs.sqlEditorHeight);
+    }
+  }, [_hasHydrated, uiPrefs.sqlEditorHeight]);
   // 拖动起始位置
   const dragStartY = useRef(0);
   const dragStartHeight = useRef(0);
   // 编辑器容器引用
   const editorContainerRef = useRef<HTMLDivElement>(null);
+  // SQL 编辑器引用
+  const sqlEditorRef = useRef<SqlEditorRef>(null);
 
   // 转换表列表为 TableInfo 格式
   const tables: TableInfo[] = useMemo(() => 
@@ -130,13 +145,28 @@ const SqlWorkspace = ({
     return null;
   }, [project, dbName]);
 
-  // 执行 SQL
+  // 执行 SQL - 使用编辑器的选中文本
   const handleExecute = useCallback(() => {
-    const selection = window.getSelection()?.toString()?.trim();
-    const isSelection = !!selection;
-    const sqlToExecute = selection || sql;
+    const selectedText = sqlEditorRef.current?.getSelectedText()?.trim();
+    const isSelection = !!selectedText;
+    const sqlToExecute = selectedText || sql;
     onExecute(sqlToExecute, isSelection);
   }, [sql, onExecute]);
+
+  // 格式化 SQL
+  const handleFormat = useCallback(() => {
+    sqlEditorRef.current?.format();
+  }, []);
+
+  // 查找
+  const handleFind = useCallback(() => {
+    sqlEditorRef.current?.showFind();
+  }, []);
+
+  // 替换
+  const handleReplace = useCallback(() => {
+    sqlEditorRef.current?.showReplace();
+  }, []);
 
   // 处理拖动开始
   const handleDragStart = useCallback((e: React.MouseEvent) => {
@@ -145,6 +175,10 @@ const SqlWorkspace = ({
     dragStartY.current = e.clientY;
     dragStartHeight.current = editorHeight;
   }, [editorHeight]);
+
+  // 当前高度 ref（用于拖动结束时保存最新值）
+  const currentHeightRef = useRef(editorHeight);
+  currentHeightRef.current = editorHeight;
 
   // 处理拖动
   useEffect(() => {
@@ -158,6 +192,8 @@ const SqlWorkspace = ({
 
     const handleMouseUp = () => {
       setIsDragging(false);
+      // 保存高度到用户偏好（使用 ref 获取最新值）
+      setUiPref('sqlEditorHeight', currentHeightRef.current);
     };
 
     document.addEventListener('mousemove', handleMouseMove);
@@ -167,7 +203,7 @@ const SqlWorkspace = ({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging]);
+  }, [isDragging, editorHeight, setUiPref]);
 
   // Ctrl+E 快捷键执行
   useEffect(() => {
@@ -192,14 +228,18 @@ const SqlWorkspace = ({
           <button className="btn btn-primary" onClick={handleExecute} disabled={loading || !sql.trim()}>
             {loading ? '执行中...' : '▶ 执行'}
           </button>
+          <button className="btn btn-default" onClick={handleFormat} disabled={!sql.trim()}>
+            格式化
+          </button>
+          <button className="btn btn-default" onClick={handleFind} disabled={!sql.trim()}>
+            查找
+          </button>
+          <button className="btn btn-default" onClick={handleReplace} disabled={!sql.trim()}>
+            替换
+          </button>
           <button className="btn btn-default" onClick={() => onSqlChange('')} disabled={!sql}>
             清空
           </button>
-        </div>
-        <div className="toolbar-shortcuts">
-          <span className="shortcut-hint">Ctrl+E 执行</span>
-          <span className="shortcut-hint">Ctrl+Enter 执行</span>
-          <span className="shortcut-hint">Ctrl+F 格式化</span>
         </div>
       </div>
 
@@ -210,9 +250,12 @@ const SqlWorkspace = ({
         style={{ height: editorHeight }}
       >
         <SqlEditor
+          ref={sqlEditorRef}
           value={sql}
           onChange={onSqlChange}
           onExecute={handleExecute}
+          onNewTab={onNewTab}
+          onShowHistory={onShowHistory}
           loading={loading}
           tables={tables}
           currentDb={dbName}

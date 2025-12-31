@@ -19,10 +19,11 @@ interface Props {
   onTabDetach: (tab: Tab) => void;
   onAddTab: () => void;
   onShowHistory: () => void;
+  onShowSettings?: () => void;
 }
 
 const DraggableTabs = ({
-  tabs, activeTabId, onTabClick, onTabClose, onTabsReorder, onTabDetach, onAddTab, onShowHistory
+  tabs, activeTabId, onTabClick, onTabClose, onTabsReorder, onTabDetach, onAddTab, onShowHistory, onShowSettings
 }: Props) => {
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
@@ -144,6 +145,9 @@ const DraggableTabs = ({
       <div className="tabs-actions">
         <button className="icon-btn" onClick={onAddTab} title="新建查询">+</button>
         <button className="icon-btn" onClick={onShowHistory} title="历史记录">⏱</button>
+        {onShowSettings && (
+          <button className="icon-btn" onClick={onShowSettings} title="快捷键设置">⚙</button>
+        )}
       </div>
     </div>
   );

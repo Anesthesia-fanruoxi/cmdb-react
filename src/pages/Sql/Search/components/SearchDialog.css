@@ -1,0 +1,168 @@
+/* 查找/替换对话框样式 */
+
+.search-dialog {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 380px;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+}
+
+.search-dialog.floating {
+  position: fixed;
+  z-index: 9999;
+}
+
+.search-dialog.replace-dialog {
+  width: 420px;
+}
+
+.search-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-color);
+  cursor: grab;
+  user-select: none;
+}
+
+.search-header:active {
+  cursor: grabbing;
+}
+
+.search-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.search-header .close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+}
+
+.search-header .close-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--text-color);
+}
+
+.search-body {
+  padding: 12px 14px;
+}
+
+.search-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.search-input-row:last-of-type {
+  margin-bottom: 10px;
+}
+
+.search-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 13px;
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus {
+  border-color: var(--primary-color);
+}
+
+.search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-count {
+  font-size: 12px;
+  color: var(--text-muted);
+  min-width: 60px;
+  text-align: center;
+}
+
+.nav-btn {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 6px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.nav-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.replace-btn {
+  padding: 7px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.replace-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.replace-btn.replace-all {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #fff;
+}
+
+.replace-btn.replace-all:hover {
+  opacity: 0.9;
+}
+
+.search-options {
+  display: flex;
+  gap: 16px;
+  padding-top: 8px;
+}
+
+.search-options label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.search-options input[type="checkbox"] {
+  cursor: pointer;
+}
+
+/* 暗色主题 */
+:root.dark .search-dialog {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
