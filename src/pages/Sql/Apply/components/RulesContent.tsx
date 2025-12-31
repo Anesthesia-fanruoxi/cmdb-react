@@ -8,25 +8,6 @@ interface Props {
   rules: RuleInfo[]
 }
 
-// 获取规则类型文本
-const getRuleTypeText = (type: string) => {
-  const map: Record<string, string> = {
-    field_check: '字段检查', table_check: '表检查', index_check: '索引检查',
-    syntax_check: '语法检查', security_check: '安全检查', performance_check: '性能检查'
-  }
-  return map[type] || type || '-'
-}
-
-// 获取规则分类文本
-const getRuleCategoryText = (category?: string) => {
-  if (!category) return '-'
-  const map: Record<string, string> = {
-    standard: '规范标准', security: '安全规则', performance: '性能规则',
-    naming: '命名规范', blocker: '阻断规则', syntax: '语法规则'
-  }
-  return map[category] || category
-}
-
 // 获取规则卡片样式类
 const getRuleClass = (rule: RuleInfo) => {
   if (rule.passed) return 'rule-passed'

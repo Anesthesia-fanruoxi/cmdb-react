@@ -50,7 +50,9 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
   const hasPermission = useAuthStore(s => s.hasPermission);
   const addMessage = useMessageStore(s => s.addMessage);
   const hasExportPermission = hasPermission('elfk:search:w');
-  const timeField = currentView?.time_field || '@timestamp';
+  // SLS 类型固定使用 __time__ 字段，ELFK 使用视图配置的时间字段
+  const logType = currentView?.log_type;
+  const timeField = logType === 'sls' ? '__time__' : (currentView?.time_field || '@timestamp');
   const totalPages = searchParams?.pages as number || 1;
   const queryId = searchParams?.query_id as string || '';
   const hasMore = currentPage < totalPages;
@@ -69,11 +71,20 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
     if (!value) return '-';
     try {
       let date: Date;
-      if (typeof value === 'number') {
-        date = value > 9999999999 ? new Date(value) : new Date(value * 1000);
+      const strValue = String(value);
+      
+      // SLS 时间戳是秒级（10位数字），需要 * 1000
+      if (logType === 'sls' || (strValue.length === 10 && !isNaN(Number(strValue)))) {
+        date = new Date(Number(strValue) * 1000);
+      } else if (typeof value === 'number') {
+        // 毫秒级时间戳
+        date = new Date(value);
       } else {
+        // ISO8601 或其他字符串格式
         date = new Date(value as string);
       }
+      
+      if (isNaN(date.getTime())) return String(value);
       return date.toLocaleString('zh-CN', { hour12: false });
     } catch { return String(value); }
   };
