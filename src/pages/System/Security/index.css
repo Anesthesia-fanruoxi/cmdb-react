@@ -1,0 +1,187 @@
+/**
+ * 安全配置页面样式
+ */
+
+.security-page {
+  height: 100%;
+  padding: 20px;
+  background: var(--bg-secondary);
+  overflow: auto;
+}
+
+.security-page .page-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.security-page .page-card {
+  background: var(--bg-color);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+}
+
+.security-page .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.security-page .card-header .title {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.security-page .card-header .actions {
+  display: flex;
+  gap: 8px;
+}
+
+.security-page .card-body {
+  flex: 1;
+  padding: 20px;
+  overflow: auto;
+}
+
+.security-page .btn-primary,
+.security-page .btn-default {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.security-page .btn-primary { background: var(--primary-color); border: none; color: #fff; }
+.security-page .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+.security-page .btn-default { background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-color); }
+
+.security-page .btn-danger-text {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: #ff4d4f;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.security-page .data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.security-page .data-table th,
+.security-page .data-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.security-page .data-table th {
+  background: var(--bg-secondary);
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.security-page .data-table td { color: var(--text-secondary); }
+.security-page .empty-cell { text-align: center; padding: 40px !important; }
+
+.security-page .config-form { display: flex; flex-direction: column; gap: 20px; }
+
+.security-page .form-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.security-page .form-item label {
+  width: 120px;
+  font-size: 14px;
+  color: var(--text-color);
+  flex-shrink: 0;
+}
+
+.security-page .form-item input {
+  width: 180px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  font-size: 13px;
+}
+
+.security-page .form-item .tip {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.security-page .loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 200px;
+  color: var(--text-secondary);
+}
+
+/* 弹框样式 */
+.security-page .dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1100;
+}
+
+.security-page .dialog-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  background: var(--bg-color);
+  border-radius: 8px;
+  z-index: 1101;
+}
+
+.security-page .dialog-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.security-page .dialog-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--text-color);
+}
+
+.security-page .dialog-body { padding: 20px; }
+
+.security-page .dialog-body input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  color: var(--text-color);
+}
+
+.security-page .dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

@@ -22,7 +22,7 @@
 }
 
 .title-section svg { color: var(--primary-color, #1890ff); }
-.title-section h2 { margin: 0; font-size: 18px; }
+.title-section h2 { margin: 0; font-size: 18px; color: var(--text-color, #333); }
 
 .search-section {
   display: flex;
@@ -39,6 +39,13 @@
   border-radius: 4px;
   font-size: 13px;
   min-width: 150px;
+  background: var(--bg-secondary, #fafafa);
+  color: var(--text-color, #333);
+}
+
+.search-section select option {
+  background: var(--bg-color, #fff);
+  color: var(--text-color, #333);
 }
 
 .toolbar {

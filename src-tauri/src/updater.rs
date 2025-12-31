@@ -226,6 +226,7 @@ pub fn get_app_version() -> String {
 }
 
 /// 启动定时检查更新任务
+#[allow(dead_code)]
 pub fn start_update_checker(app: AppHandle, update_url: String, interval_hours: u64) {
     tauri::async_runtime::spawn(async move {
         let interval = Duration::from_secs(interval_hours * 3600);

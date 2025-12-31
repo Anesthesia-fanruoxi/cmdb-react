@@ -1,0 +1,102 @@
+/**
+ * 加解密审计日志页面样式
+ */
+
+.audit-key-page {
+  height: 100%;
+  padding: 20px;
+  background: var(--bg-secondary);
+}
+
+.audit-key-page .page-card {
+  height: 100%;
+  background: var(--bg-color);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+}
+
+.audit-key-page .search-bar {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.audit-key-page .search-input,
+.audit-key-page .search-select {
+  width: 160px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  font-size: 13px;
+}
+
+.audit-key-page .search-input.datetime { width: 180px; }
+.audit-key-page .date-sep { color: var(--text-secondary); font-size: 13px; }
+
+.audit-key-page .btn-primary,
+.audit-key-page .btn-default {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.audit-key-page .btn-primary { background: var(--primary-color); border: none; color: #fff; }
+.audit-key-page .btn-default { background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-color); }
+
+.audit-key-page .card-header { padding: 12px 20px; border-bottom: 1px solid var(--border-color); }
+.audit-key-page .card-header .title { font-size: 16px; font-weight: 500; color: var(--text-color); }
+
+.audit-key-page .table-wrapper { flex: 1; overflow: auto; }
+.audit-key-page .loading-state { display: flex; align-items: center; justify-content: center; gap: 8px; height: 200px; color: var(--text-secondary); }
+
+.audit-key-page .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.audit-key-page .data-table th,
+.audit-key-page .data-table td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color); }
+.audit-key-page .data-table th { background: var(--bg-secondary); font-weight: 500; color: var(--text-color); position: sticky; top: 0; z-index: 1; }
+.audit-key-page .data-table td { color: var(--text-secondary); }
+.audit-key-page .data-table tr:hover td { background: var(--bg-hover); }
+
+.audit-key-page .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+.audit-key-page .tag.primary { background: rgba(64, 158, 255, 0.1); color: #409eff; }
+.audit-key-page .tag.success { background: rgba(82, 196, 26, 0.1); color: #52c41a; }
+.audit-key-page .tag.warning { background: rgba(250, 173, 20, 0.1); color: #faad14; }
+.audit-key-page .tag.danger { background: rgba(255, 77, 79, 0.1); color: #ff4d4f; }
+
+.audit-key-page .empty-cell { text-align: center; color: var(--text-secondary); padding: 40px !important; }
+
+.audit-key-page .pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--border-color);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.audit-key-page .pagination button {
+  padding: 6px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-color);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.audit-key-page .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

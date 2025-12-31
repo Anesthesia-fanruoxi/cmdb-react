@@ -70,21 +70,20 @@ export function parseApiResponse<T>(response: unknown): ApiResponse<T> {
   if (
     typeof response !== 'object' ||
     response === null ||
-    !('code' in response) ||
-    !('message' in response)
+    !('code' in response)
   ) {
     throw new RequestError(
       -1,
       '无效的 API 响应格式',
-      'Response must contain code and message fields'
+      'Response must contain code field'
     );
   }
 
-  const apiResponse = response as ApiResponse<T>;
+  const apiResponse = response as Record<string, unknown>;
   return {
-    code: apiResponse.code,
-    message: apiResponse.message,
-    data: apiResponse.data,
+    code: apiResponse.code as number,
+    message: (apiResponse.message || apiResponse.msg || '') as string,
+    data: apiResponse.data as T,
   };
 }
 
@@ -228,11 +227,10 @@ export const apiClient = {
    */
   get<T>(url: string, params?: Record<string, unknown>, config?: RequestConfig) {
     const queryString = params
-      ? '?' + new URLSearchParams(
-          Object.entries(params)
-            .filter(([, v]) => v !== undefined && v !== null)
-            .map(([k, v]) => [k, String(v)])
-        ).toString()
+      ? '?' + Object.entries(params)
+          .filter(([, v]) => v !== undefined && v !== null)
+          .map(([k, v]) => `${encodeURIComponent(k)}=${String(v)}`)
+          .join('&')
       : '';
     return request<T>('GET', url + queryString, undefined, config);
   },
