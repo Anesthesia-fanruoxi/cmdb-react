@@ -6,7 +6,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { HardDrive, Database, RefreshCw, Download, CheckCircle } from 'lucide-react';
 import { isTauriEnv, getSystemInfo, type SystemInfo } from '../../services/machine';
-import { checkUpdate, downloadUpdate, installUpdate, onUpdateStatus, formatSize, type VersionInfo, type UpdateStatus } from '../../services/updater';
+import { checkUpdate, downloadUpdate, installUpdate, onUpdateStatus, type VersionInfo, type UpdateStatus } from '../../services/updater';
 import toast from '../../components/Toast';
 import './style.css';
 

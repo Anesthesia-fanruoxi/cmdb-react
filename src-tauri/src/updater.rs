@@ -314,6 +314,7 @@ pub fn get_app_version() -> String {
 }
 
 /// 启动定时检查更新任务（GitHub Release）
+#[allow(dead_code)]
 pub fn start_github_update_checker(app: AppHandle, owner: String, repo: String, interval_hours: u64) {
     tauri::async_runtime::spawn(async move {
         let interval = Duration::from_secs(interval_hours * 3600);
