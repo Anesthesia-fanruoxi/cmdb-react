@@ -33,8 +33,13 @@ export const getTaskBindDetail = (jobId: number) =>
   apiClient.get('/job/task/bind/detail', { job_id: jobId });
 
 // 验证 cron 表达式
-export const validateCronExpression = (cron: string) => 
+export const validateCronExpression = (cron: string): Promise<{ code: number; data?: CronValidateResult }> => 
   apiClient.post('/job/task/cron', { cron });
+
+export interface CronValidateResult {
+  is_valid: boolean;
+  next_run?: string[];
+}
 
 // 类型定义
 export interface Task {

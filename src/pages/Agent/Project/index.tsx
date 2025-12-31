@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
-import { getProjectPluginList, getProjectPluginDetail, Project, Plugin, ProjectDetail } from '../../../services/agent/project';
+import { getProjectPluginList, getProjectPluginDetail, Project, ProjectDetail } from '../../../services/agent/project';
 import toast from '../../../components/Toast';
 import PluginDrawer from './components/PluginDrawer';
 import './index.css';

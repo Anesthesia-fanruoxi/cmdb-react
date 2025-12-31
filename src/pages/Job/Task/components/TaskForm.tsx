@@ -58,8 +58,9 @@ const TaskForm = ({ visible, task, onClose, onSuccess }: Props) => {
 
     setLoading(true);
     try {
-      const api = isEdit ? updateTask : createTask;
-      const res = await api(form);
+      const res = isEdit 
+        ? await updateTask(form as TaskFormData & { id: number })
+        : await createTask(form);
       if (res.code === 200) {
         toast.success(isEdit ? '更新成功' : '创建成功');
         onSuccess();

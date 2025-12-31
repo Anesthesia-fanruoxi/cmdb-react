@@ -14,11 +14,11 @@ export const getOperationLog = (data: OperationLogParams) =>
 
 // 获取IP访问审计日志
 export const getIpAuditLog = (params: IpAuditParams) => 
-  apiClient.get('/audit/ip/list', params as Record<string, unknown>);
+  apiClient.get('/audit/ip/list', params as unknown as Record<string, unknown>);
 
 // 获取加解密审计日志
 export const getKeyAuditLog = (params: KeyAuditParams) => 
-  apiClient.get('/audit/key/list', params as Record<string, unknown>);
+  apiClient.get('/audit/key/list', params as unknown as Record<string, unknown>);
 
 // 类型定义
 export interface LoginLogParams {
