@@ -1,7 +1,7 @@
 //! 应用在线更新模块
 //! 
 //! 功能：
-//! - 定时检查版本更新
+//! - 定时检查 GitHub Release 版本更新
 //! - 下载更新包
 //! - 触发安装（Windows: MSI, Mac: DMG）
 
@@ -13,6 +13,23 @@ use std::time::Duration;
 use tauri::{AppHandle, Emitter};
 
 static CHECKING: AtomicBool = AtomicBool::new(false);
+
+/// GitHub Release 响应结构
+#[derive(Debug, Deserialize)]
+struct GitHubRelease {
+    tag_name: String,
+    name: Option<String>,
+    body: Option<String>,
+    published_at: Option<String>,
+    assets: Vec<GitHubAsset>,
+}
+
+#[derive(Debug, Deserialize)]
+struct GitHubAsset {
+    name: String,
+    size: u64,
+    browser_download_url: String,
+}
 
 /// 版本信息
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -84,7 +101,7 @@ fn emit_status(app: &AppHandle, status: UpdateStatus) {
     let _ = app.emit("update-status", &status);
 }
 
-/// 检查更新
+/// 检查更新（兼容旧接口）
 #[tauri::command]
 pub async fn check_update(app: AppHandle, update_url: String) -> Result<Option<VersionInfo>, String> {
     if CHECKING.swap(true, Ordering::SeqCst) {
@@ -120,6 +137,77 @@ pub async fn check_update(app: AppHandle, update_url: String) -> Result<Option<V
             emit_status(&app, UpdateStatus::NotAvailable);
             Ok(None)
         }
+    }.await;
+    
+    CHECKING.store(false, Ordering::SeqCst);
+    result
+}
+
+/// 从 GitHub Release 检查更新
+#[tauri::command]
+pub async fn check_github_update(app: AppHandle, owner: String, repo: String) -> Result<Option<VersionInfo>, String> {
+    if CHECKING.swap(true, Ordering::SeqCst) {
+        return Err("正在检查更新中".to_string());
+    }
+    
+    emit_status(&app, UpdateStatus::Checking);
+    
+    let result = async {
+        let url = format!("https://api.github.com/repos/{}/{}/releases/latest", owner, repo);
+        
+        let client = reqwest::Client::builder()
+            .timeout(Duration::from_secs(15))
+            .user_agent("CMDB-Desktop-Updater")
+            .build()
+            .map_err(|e| e.to_string())?;
+        
+        let resp = client.get(&url)
+            .send()
+            .await
+            .map_err(|e| format!("请求 GitHub 失败: {}", e))?;
+        
+        if resp.status() == 404 {
+            emit_status(&app, UpdateStatus::NotAvailable);
+            return Ok(None);
+        }
+        
+        if !resp.status().is_success() {
+            return Err(format!("GitHub 返回错误: {}", resp.status()));
+        }
+        
+        let release: GitHubRelease = resp.json()
+            .await
+            .map_err(|e| format!("解析 Release 信息失败: {}", e))?;
+        
+        let current = get_current_version();
+        if !is_newer_version(&current, &release.tag_name) {
+            emit_status(&app, UpdateStatus::NotAvailable);
+            return Ok(None);
+        }
+        
+        // 从 assets 中匹配各平台安装包
+        let find_asset = |keyword: &str| -> Option<PlatformAsset> {
+            release.assets.iter()
+                .find(|a| a.name.to_lowercase().contains(keyword))
+                .map(|a| PlatformAsset {
+                    url: a.browser_download_url.clone(),
+                    size: a.size,
+                    sha256: String::new(),
+                })
+        };
+        
+        let info = VersionInfo {
+            version: release.tag_name.clone(),
+            release_date: release.published_at.unwrap_or_default(),
+            changelog: release.body.unwrap_or_else(|| release.name.unwrap_or_default()),
+            mandatory: false,
+            windows: find_asset("windows").or_else(|| find_asset(".msi")),
+            macos_intel: find_asset("intel").or_else(|| find_asset("x64.dmg")),
+            macos_arm: find_asset("arm64").or_else(|| find_asset("aarch64")),
+        };
+        
+        emit_status(&app, UpdateStatus::Available { info: info.clone() });
+        Ok(Some(info))
     }.await;
     
     CHECKING.store(false, Ordering::SeqCst);
@@ -225,7 +313,22 @@ pub fn get_app_version() -> String {
     get_current_version()
 }
 
-/// 启动定时检查更新任务
+/// 启动定时检查更新任务（GitHub Release）
+pub fn start_github_update_checker(app: AppHandle, owner: String, repo: String, interval_hours: u64) {
+    tauri::async_runtime::spawn(async move {
+        let interval = Duration::from_secs(interval_hours * 3600);
+        
+        // 启动后延迟 30 秒再首次检查
+        tokio::time::sleep(Duration::from_secs(30)).await;
+        
+        loop {
+            let _ = check_github_update(app.clone(), owner.clone(), repo.clone()).await;
+            tokio::time::sleep(interval).await;
+        }
+    });
+}
+
+/// 启动定时检查更新任务（旧接口）
 #[allow(dead_code)]
 pub fn start_update_checker(app: AppHandle, update_url: String, interval_hours: u64) {
     tauri::async_runtime::spawn(async move {

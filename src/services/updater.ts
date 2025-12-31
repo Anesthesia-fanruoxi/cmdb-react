@@ -5,6 +5,10 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 
+// GitHub 仓库配置
+const GITHUB_OWNER = 'Anesthesia-fanruoxi';
+const GITHUB_REPO = 'cmdb-react';
+
 /** 平台资源 */
 export interface PlatformAsset {
   url: string;
@@ -33,24 +37,19 @@ export type UpdateStatus =
   | { type: 'Installing' }
   | { type: 'Error'; message: string };
 
-/** 获取更新检查 URL */
-const getUpdateUrl = (): string => {
-  const customUrl = import.meta.env.VITE_UPDATE_URL;
-  if (customUrl) return customUrl;
-  
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
-  return `${baseUrl}/app/version`;
-};
-
 /** 获取当前版本 */
 export const getAppVersion = (): Promise<string> => {
   return invoke('get_app_version');
 };
 
-/** 检查更新 */
-export const checkUpdate = (updateUrl?: string): Promise<VersionInfo | null> => {
-  const url = updateUrl || getUpdateUrl();
-  return invoke('check_update', { updateUrl: url });
+/** 从 GitHub Release 检查更新 */
+export const checkGitHubUpdate = (): Promise<VersionInfo | null> => {
+  return invoke('check_github_update', { owner: GITHUB_OWNER, repo: GITHUB_REPO });
+};
+
+/** 检查更新（兼容旧接口，现在默认使用 GitHub） */
+export const checkUpdate = (): Promise<VersionInfo | null> => {
+  return checkGitHubUpdate();
 };
 
 /** 下载更新 */
