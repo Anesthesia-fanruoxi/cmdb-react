@@ -57,7 +57,18 @@ jobs:
         if: matrix.platform == 'windows-latest'
         run: |
           mkdir -p release
-          cp "src-tauri/target/${{ matrix.target }}/release/CMDB Desktop.exe" "release/CMDB-Desktop-${{ matrix.name }}.exe"
+          # 列出目录内容以便调试
+          ls -la "src-tauri/target/${{ matrix.target }}/release/" || true
+          # Tauri 2.0 生成的 exe 文件名可能是 "CMDB Desktop.exe" 或 "CMDB-Desktop.exe"
+          if [ -f "src-tauri/target/${{ matrix.target }}/release/CMDB Desktop.exe" ]; then
+            cp "src-tauri/target/${{ matrix.target }}/release/CMDB Desktop.exe" "release/CMDB-Desktop-${{ matrix.name }}.exe"
+          elif [ -f "src-tauri/target/${{ matrix.target }}/release/CMDB-Desktop.exe" ]; then
+            cp "src-tauri/target/${{ matrix.target }}/release/CMDB-Desktop.exe" "release/CMDB-Desktop-${{ matrix.name }}.exe"
+          else
+            echo "找不到 exe 文件，列出可用文件："
+            find src-tauri/target/${{ matrix.target }}/release -name "*.exe" -type f
+            exit 1
+          fi
         shell: bash
 
       - name: Prepare macOS artifacts
