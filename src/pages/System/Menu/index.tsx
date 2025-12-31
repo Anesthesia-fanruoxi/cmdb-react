@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getMenuTree, createMenu, updateMenu, deleteMenu } from '../../../services/system/menu';
+import { toast } from '../../../components/AppNotification';
 import type { MenuItem, CreateMenuRequest } from '../../../types/menu';
 import Icon from '../../../components/Icon';
 import IconSelect from '../../../components/IconSelect';
@@ -119,7 +120,7 @@ const MenuManagement = () => {
 
   const handleDelete = async (menu: MenuItem) => {
     if (menu.children?.length) {
-      alert('该菜单下有子菜单，无法删除');
+      toast.warning('该菜单下有子菜单，无法删除');
       return;
     }
     if (!confirm(`确定要删除菜单 "${menu.meta?.title || menu.name}" 吗？`)) return;
@@ -134,7 +135,7 @@ const MenuManagement = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim() || !form.path.trim()) {
-      alert('请填写菜单名称和路径');
+      toast.warning('请填写菜单名称和路径');
       return;
     }
 

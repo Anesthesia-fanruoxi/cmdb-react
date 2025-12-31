@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
+import { toast } from '../../../../components/AppNotification';
 import { PluginItem, PluginFormData } from '../../../../services/agent/plugins';
 
 interface Props {
@@ -37,10 +38,10 @@ const PluginFormDialog = ({ visible, plugin, onClose, onSubmit }: Props) => {
   }, [visible, plugin]);
 
   const handleSubmit = async () => {
-    if (!form.name?.trim()) { alert('请输入插件名称'); return; }
-    if (!isEdit && !/^[a-z0-9-]+$/.test(form.name)) { alert('插件名称只能包含小写字母、数字和连字符'); return; }
-    if (!form.version?.trim()) { alert('请输入版本号'); return; }
-    if (!form.display_name?.trim()) { alert('请输入显示名称'); return; }
+    if (!form.name?.trim()) { toast.warning('请输入插件名称'); return; }
+    if (!isEdit && !/^[a-z0-9-]+$/.test(form.name)) { toast.warning('插件名称只能包含小写字母、数字和连字符'); return; }
+    if (!form.version?.trim()) { toast.warning('请输入版本号'); return; }
+    if (!form.display_name?.trim()) { toast.warning('请输入显示名称'); return; }
 
     setLoading(true);
     const success = await onSubmit(form, isEdit, plugin?.id);

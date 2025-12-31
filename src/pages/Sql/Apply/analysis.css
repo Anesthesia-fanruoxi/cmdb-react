@@ -2,22 +2,22 @@
  * SQL分析对话框样式
  */
 
-/* SQL分析布局 */
+/* SQL分析布局 - 参照 Vue 版本优化 */
 .analysis-layout {
   display: flex;
   flex: 1;
   overflow: hidden;
-  height: 70vh;
+  height: 80vh;
   gap: 20px;
-  padding: 16px;
+  padding: 20px;
 }
 
 .analysis-left {
-  flex: 0 0 450px;
+  flex: 0 0 500px;
   display: flex;
   flex-direction: column;
   background: var(--bg-secondary);
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 16px;
 }
 
@@ -27,7 +27,7 @@
   font-size: 14px;
   font-weight: 600;
   margin-bottom: 12px;
-  padding-bottom: 8px;
+  padding-bottom: 10px;
   border-bottom: 1px solid var(--border-color);
   color: var(--text-color);
 }
@@ -36,18 +36,19 @@
 .sql-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
 
 .sql-tab {
-  padding: 6px 12px;
+  padding: 8px 14px;
   border: 1px solid var(--border-color);
-  border-radius: 4px;
+  border-radius: 6px;
   background: var(--bg-color);
   cursor: pointer;
   font-size: 13px;
+  font-weight: 500;
   transition: all 0.2s;
 }
 
-.sql-tab:hover { border-color: var(--primary-color); }
+.sql-tab:hover { border-color: var(--primary-color); color: var(--primary-color); }
 .sql-tab.active { border-color: var(--primary-color); color: var(--primary-color); background: rgba(102, 126, 234, 0.1); }
-.sql-tab.has-error { border-color: var(--danger-color); color: var(--danger-color); }
+.sql-tab.has-error { border-color: var(--danger-color); color: var(--danger-color); background: rgba(255, 77, 79, 0.08); }
 .sql-tab .error-icon { margin-left: 4px; }
 
 /* SQL 编辑器盒子 */
@@ -55,7 +56,7 @@
   flex: 1;
   min-height: 200px;
   font-family: 'Consolas', 'Monaco', monospace;
-  border-radius: 4px;
+  border-radius: 6px;
   overflow: hidden;
   border: 1px solid var(--border-color-light);
 }
@@ -63,21 +64,24 @@
 .sql-editor-box.has-error { border-color: var(--danger-color); background: rgba(255, 77, 79, 0.05); }
 
 /* 结果标签页 */
-.result-tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 16px; }
+.result-tabs { display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 16px; }
 
 .tab-btn {
-  padding: 10px 16px;
+  padding: 12px 20px;
   border: none;
   background: none;
   cursor: pointer;
   font-size: 14px;
+  font-weight: 500;
   color: var(--text-secondary);
   border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
+  margin-bottom: -2px;
+  transition: all 0.2s;
 }
 
+.tab-btn:hover { color: var(--primary-color); }
 .tab-btn.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
-.result-content { flex: 1; overflow: auto; }
+.result-content { flex: 1; overflow: auto; padding-right: 4px; }
 
 /* 语法错误面板 */
 .syntax-error-panel { height: 100%; display: flex; flex-direction: column; }
@@ -101,7 +105,7 @@
 .error-message-box {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  border-radius: 4px;
+  border-radius: 6px;
   padding: 16px;
 }
 
@@ -125,7 +129,7 @@
   gap: 8px;
   padding: 12px 16px;
   background: var(--bg-secondary);
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 14px;
   color: var(--text-secondary);
 }

@@ -12,6 +12,7 @@ import {
   type ApplyProject, type ProcessInfo, type ApplyItem, type SqlCheckResult
 } from '../../../services/sql/apply';
 import { getDatabases } from '../../../services/sql/search';
+import { toast } from '../../../components/AppNotification';
 import SqlAnalysisDialog from './SqlAnalysisDialog';
 import ace from 'ace-builds';
 import 'ace-builds/src-noconflict/mode-sql';
@@ -55,13 +56,17 @@ const ApplyCreateDrawer = ({ prefillData, onClose, onSuccess }: Props) => {
     remark: '', sqlContent: ''
   });
 
-  // 加载表结构（用于智能提示）
+  // 加载表结构（用于智能提示）- 使用 ref 避免重新创建
+  const formDataRef = useRef(formData);
+  formDataRef.current = formData;
+  
   const loadTableStructure = useCallback(async (tableName: string): Promise<FieldInfo[] | null> => {
-    if (!formData.project || !formData.database) return null;
+    const { project, database } = formDataRef.current;
+    if (!project || !database) return null;
     try {
       const res = await getTableStructure({ 
-        agent: formData.project, 
-        dbName: formData.database, 
+        agent: project, 
+        dbName: database, 
         tbName: tableName 
       });
       if (res.code === 200 && res.data?.columns) {
@@ -75,7 +80,7 @@ const ApplyCreateDrawer = ({ prefillData, onClose, onSuccess }: Props) => {
       }
     } catch (e) { console.error('加载表结构失败:', e); }
     return null;
-  }, [formData.project, formData.database]);
+  }, []); // 空依赖，使用 ref 获取最新值
 
   // 初始化 Ace 编辑器
   useEffect(() => {
@@ -276,7 +281,7 @@ const ApplyCreateDrawer = ({ prefillData, onClose, onSuccess }: Props) => {
         };
         reader.readAsText(file);
       } else {
-        alert('请上传 .sql 文件');
+        toast.warning('请上传 .sql 文件');
       }
     }
   };
@@ -284,7 +289,7 @@ const ApplyCreateDrawer = ({ prefillData, onClose, onSuccess }: Props) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.project || !formData.database || !formData.sqlContent || !formData.remark) {
-      alert('请填写完整信息'); return;
+      toast.warning('请填写完整信息'); return;
     }
     setSubmitting(true);
     try {
@@ -296,10 +301,10 @@ const ApplyCreateDrawer = ({ prefillData, onClose, onSuccess }: Props) => {
       if (res.code === 200 && res.data?.sql_results) {
         setParseResults(res.data.sql_results);
         setAnalysisVisible(true);
-      } else alert(res.message || 'SQL检查失败');
+      } else toast.error(res.message || 'SQL检查失败');
     } catch (e) { 
       console.error('SQL检查失败:', e); 
-      alert('SQL检查失败'); 
+      toast.error('SQL检查失败'); 
     } finally { 
       setSubmitting(false); 
     }
@@ -323,10 +328,10 @@ const ApplyCreateDrawer = ({ prefillData, onClose, onSuccess }: Props) => {
       if (res.code === 200) { 
         setAnalysisVisible(false); 
         onSuccess(); 
-      } else alert(res.message || '提交失败');
+      } else toast.error(res.message || '提交失败');
     } catch (e) { 
       console.error('提交失败:', e); 
-      alert('提交失败'); 
+      toast.error('提交失败'); 
     } finally { 
       setSubmitting(false); 
     }

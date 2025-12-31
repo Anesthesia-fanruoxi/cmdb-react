@@ -5,6 +5,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getDeptList, createDept, updateDept, type Dept } from '../../../../services/system/dept';
 import { closeCurrentWindow } from '../../../../utils/window';
+import { toast } from '../../../../components/AppNotification';
 import './DeptForm.css';
 
 interface Props {
@@ -90,7 +91,7 @@ const DeptForm = ({ deptId, parentId, onSuccess, onClose }: Props) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name.trim()) { alert('请输入部门名称'); return; }
+    if (!formData.name.trim()) { toast.warning('请输入部门名称'); return; }
 
     setLoading(true);
     try {

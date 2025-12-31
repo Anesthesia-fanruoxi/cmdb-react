@@ -10,6 +10,7 @@ import {
 } from '../../../services/sql/export';
 import { getDatabases } from '../../../services/sql/search';
 import { getUserInfo } from '../../../utils/storage';
+import { toast } from '../../../components/AppNotification';
 
 interface Props {
   visible: boolean;
@@ -103,11 +104,11 @@ const ExportDetailDrawer = ({ visible, exportId, onClose, onRefresh }: Props) =>
     try {
       setLoading(true);
       await updateExport({ id: detail.id, process_type: 0 });
-      alert('申请已撤回');
+      toast.success('申请已撤回');
       onRefresh();
       onClose();
     } catch (error) {
-      alert('操作失败');
+      toast.error('操作失败');
     } finally {
       setLoading(false);
     }
@@ -119,11 +120,11 @@ const ExportDetailDrawer = ({ visible, exportId, onClose, onRefresh }: Props) =>
     try {
       setLoading(true);
       await updateExport({ id: detail.id, process_type: 1 });
-      alert('审批通过');
+      toast.success('审批通过');
       onRefresh();
       onClose();
     } catch (error) {
-      alert('操作失败');
+      toast.error('操作失败');
     } finally {
       setLoading(false);
     }
@@ -133,7 +134,7 @@ const ExportDetailDrawer = ({ visible, exportId, onClose, onRefresh }: Props) =>
   const handleApprove = async () => {
     if (!detail) return;
     if (!approveForm.database || !approveForm.sql) {
-      alert('请填写数据库和SQL语句');
+      toast.warning('请填写数据库和SQL语句');
       return;
     }
     try {
@@ -143,11 +144,11 @@ const ExportDetailDrawer = ({ visible, exportId, onClose, onRefresh }: Props) =>
         database_name: approveForm.database, 
         sql_content: approveForm.sql 
       });
-      alert('审批通过');
+      toast.success('审批通过');
       onRefresh();
       onClose();
     } catch (error) {
-      alert('操作失败');
+      toast.error('操作失败');
     } finally {
       setLoading(false);
     }
@@ -159,11 +160,11 @@ const ExportDetailDrawer = ({ visible, exportId, onClose, onRefresh }: Props) =>
     try {
       setLoading(true);
       await updateExport({ id: detail.id, process_type: 0 });
-      alert('已拒绝该申请');
+      toast.success('已拒绝该申请');
       onRefresh();
       onClose();
     } catch (error) {
-      alert('操作失败');
+      toast.error('操作失败');
     } finally {
       setLoading(false);
     }
@@ -175,11 +176,11 @@ const ExportDetailDrawer = ({ visible, exportId, onClose, onRefresh }: Props) =>
     try {
       setLoading(true);
       await updateExport({ id: detail.id, process_type: 1 });
-      alert('审核通过');
+      toast.success('审核通过');
       onRefresh();
       onClose();
     } catch (error) {
-      alert('操作失败');
+      toast.error('操作失败');
     } finally {
       setLoading(false);
     }
@@ -191,11 +192,11 @@ const ExportDetailDrawer = ({ visible, exportId, onClose, onRefresh }: Props) =>
     try {
       setLoading(true);
       await updateExport({ id: detail.id, process_type: 0 });
-      alert('审核不通过');
+      toast.success('审核不通过');
       onRefresh();
       onClose();
     } catch (error) {
-      alert('操作失败');
+      toast.error('操作失败');
     } finally {
       setLoading(false);
     }
@@ -207,11 +208,11 @@ const ExportDetailDrawer = ({ visible, exportId, onClose, onRefresh }: Props) =>
     try {
       setLoading(true);
       await updateExport({ id: detail.id, process_type: 1 });
-      alert('执行完成');
+      toast.success('执行完成');
       onRefresh();
       onClose();
     } catch (error) {
-      alert('操作失败');
+      toast.error('操作失败');
     } finally {
       setLoading(false);
     }
@@ -223,11 +224,11 @@ const ExportDetailDrawer = ({ visible, exportId, onClose, onRefresh }: Props) =>
     try {
       setLoading(true);
       await resendEmail({ id: detail.id });
-      alert('邮件重新发送请求已提交');
+      toast.success('邮件重新发送请求已提交');
       onRefresh();
       onClose();
     } catch (error) {
-      alert('操作失败');
+      toast.error('操作失败');
     } finally {
       setLoading(false);
     }

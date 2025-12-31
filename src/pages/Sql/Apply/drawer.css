@@ -26,7 +26,7 @@
   flex-direction: column;
 }
 
-.drawer.drawer-wide { width: 70%; max-width: 1100px; }
+.drawer.drawer-wide { width: 65% !important; max-width: none !important; }
 
 .drawer-header {
   display: flex;
@@ -85,7 +85,7 @@
   flex-direction: column;
 }
 
-.modal-content.modal-xl { width: 90%; max-width: 1200px; }
+.modal-content.modal-xl { width: 80% !important; max-width: none !important; }
 
 .modal-header {
   display: flex;

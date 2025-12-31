@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getTableStructure } from '../../../../services/sql/search';
+import { toast } from '../../../../components/AppNotification';
 import '../styles/index.css';
 
 type TabType = 'fields' | 'preview' | 'indexes' | 'ddl';
@@ -94,8 +95,8 @@ const TableDetailContent = ({ agent, dbName, tableName, initialTab = 'fields' }:
   const copyDDL = () => {
     if (!ddl) return;
     navigator.clipboard.writeText(ddl)
-      .then(() => alert('DDL语句已复制到剪贴板'))
-      .catch(() => alert('复制失败'));
+      .then(() => toast.success('DDL语句已复制到剪贴板'))
+      .catch(() => toast.error('复制失败'));
   };
 
   const formatDDL = (ddlStr: string) => {

@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { getMenuTree } from '../../../../services/system/menu';
 import { getRoleMenus, updateRoleMenus, type RolePermissions } from '../../../../services/system/role';
 import { closeCurrentWindow } from '../../../../utils/window';
+import { toast } from '../../../../components/AppNotification';
 import type { MenuItem } from '../../../../types/menu';
 import './PermissionDialog.css';
 
@@ -118,7 +119,7 @@ const RolePermissionConfig = ({ roleId, roleName }: Props) => {
       closeCurrentWindow();
     } catch (error) {
       console.error('更新权限失败:', error);
-      alert('更新权限失败');
+      toast.error('更新权限失败');
     }
   };
 

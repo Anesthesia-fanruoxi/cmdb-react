@@ -4,7 +4,7 @@
  */
 
 import { create } from 'zustand';
-import { showNotification, startTrayFlash, stopTrayFlash } from '../services/tray';
+import { showNotification, startTrayFlash, stopTrayFlash } from '../services/notification';
 
 export type MessageType = 'success' | 'error' | 'warning' | 'info';
 

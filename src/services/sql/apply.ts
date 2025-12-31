@@ -58,6 +58,42 @@ export interface SqlCheckResult {
       row_count?: number;
       columns?: string[];
       values?: any[][];
+      // DML 相关字段
+      has_where?: boolean;
+      where_clause?: string;
+      estimated_rows?: number;
+      has_limit?: boolean;
+      set_clauses?: Array<{
+        column: string;
+        value: any;
+        is_expr?: boolean;
+      }>;
+      // ALTER 相关字段
+      alter_info?: {
+        table_name?: string;
+        total_actions?: number;
+        add_field_count?: number;
+        modify_field_count?: number;
+        change_field_count?: number;
+        drop_field_count?: number;
+        add_index_count?: number;
+        drop_index_count?: number;
+      };
+      alter_detail?: Array<{
+        action?: string;
+        target?: string;
+        column?: {
+          name?: string;
+          type?: string;
+          nullable?: boolean;
+          comment?: string;
+        };
+        index?: {
+          name?: string;
+        };
+        position?: string;
+        description?: string;
+      }>;
       table_info?: {
         table_name: string;
         primary_key?: string;
@@ -68,18 +104,25 @@ export interface SqlCheckResult {
         collation?: string;
         comment?: string;
       };
+      field_info?: {
+        comment_summary?: string;  // 如 "15/17 (88%)"
+        default_summary?: string;
+        nullable_summary?: string;
+      };
       field_detail?: Array<{
         name?: string;
         column_name?: string;
         type?: string;
         column_type?: string;
         nullable?: boolean;
+        default?: string;
         default_value?: string;
         comment?: string;
       }>;
       index_detail?: Array<{
         name?: string;
         index_name?: string;
+        type?: string;
         is_primary?: boolean;
         is_unique?: boolean;
         columns?: string[];

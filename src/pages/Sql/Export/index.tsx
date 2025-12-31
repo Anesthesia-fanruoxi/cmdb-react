@@ -8,6 +8,7 @@ import {
   EXPORT_STATUS_MAP, type ExportItem, type ExportProject
 } from '../../../services/sql/export';
 import { getDatabases } from '../../../services/sql/search';
+import { toast } from '../../../components/AppNotification';
 import ExportDetailDrawer from './ExportDetail';
 import './style.css';
 
@@ -101,7 +102,7 @@ const SqlExport = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.project || !formData.database_name || !formData.sql_content || !formData.recipient_email) {
-      alert('请填写完整信息');
+      toast.warning('请填写完整信息');
       return;
     }
 

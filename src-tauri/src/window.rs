@@ -1,0 +1,33 @@
+//! 窗口管理模块
+//! 
+//! 功能：
+//! - 任务栏图标高亮（有消息时闪烁）
+
+use tauri::{AppHandle, Manager, UserAttentionType};
+
+/// 请求任务栏注意力（图标高亮/闪烁）
+/// Windows: 任务栏图标闪烁
+/// macOS: Dock 图标跳动
+#[tauri::command]
+pub async fn request_attention(app: AppHandle, critical: bool) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("main") {
+        let attention_type = if critical {
+            Some(UserAttentionType::Critical)
+        } else {
+            Some(UserAttentionType::Informational)
+        };
+        window.request_user_attention(attention_type)
+            .map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+/// 取消任务栏注意力请求
+#[tauri::command]
+pub async fn cancel_attention(app: AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("main") {
+        window.request_user_attention(None)
+            .map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}

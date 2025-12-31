@@ -5,6 +5,7 @@
 import { useState, useEffect } from 'react';
 import { createUser, updateUser, type User, type CreateUserRequest, type UpdateUserRequest } from '../../../../services/system/user';
 import { getBasicSetting } from '../../../../services/system/setting';
+import { toast } from '../../../../components/AppNotification';
 import type { Role } from '../../../../services/system/role';
 import type { Dept } from '../../../../services/system/dept';
 import './UserForm.css';
@@ -89,7 +90,7 @@ const UserForm = ({ visible, editData, roleOptions, deptOptions, onClose, onSucc
     e.preventDefault();
 
     if (!isEdit && !form.user_name.trim()) {
-      alert('请输入用户名');
+      toast.warning('请输入用户名');
       return;
     }
 

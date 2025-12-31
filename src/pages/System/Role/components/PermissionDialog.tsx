@@ -5,6 +5,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getMenuTree } from '../../../../services/system/menu';
 import { updateRoleMenus, type RolePermissions } from '../../../../services/system/role';
+import { toast } from '../../../../components/AppNotification';
 import type { MenuItem } from '../../../../types/menu';
 import './PermissionDialog.css';
 
@@ -136,7 +137,7 @@ const PermissionDialog = ({ visible, roleId, rolePerms, onClose }: Props) => {
       await updateRoleMenus({ role_id: roleId, permissions });
     } catch (error) {
       console.error('更新权限失败:', error);
-      alert('更新权限失败');
+      toast.error('更新权限失败');
     } finally {
       setLoading(false);
     }

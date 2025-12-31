@@ -5,6 +5,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getBasicSetting, updateBasicSetting } from '../../../services/system/setting';
 import type { BasicSetting } from '../../../services/system/setting';
+import { toast } from '../../../components/AppNotification';
 import { Settings, Lock, Key, Shield, Upload, Eye, EyeOff } from 'lucide-react';
 import './style.css';
 
@@ -40,9 +41,9 @@ const SystemSetting = () => {
       const res = await updateBasicSetting(settings);
       if (res.code === 200) {
         setInitialSettings(JSON.stringify(settings));
-        alert('保存成功');
+        toast.success('保存成功');
       }
-    } catch { alert('保存失败'); }
+    } catch { toast.error('保存失败'); }
     finally { setSaving(false); }
   };
 

@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { createView, updateView, getViewDetail } from '../../../../services/elfk/view';
+import { toast } from '../../../../components/AppNotification';
 import type { ViewListItem, CreateViewParams } from '../../../../services/elfk/view';
 import './ViewForm.css';
 
@@ -76,10 +77,10 @@ const ViewForm = ({ visible, editData, projectOptions, categoryOptions, onClose,
   };
 
   const handleSubmit = async () => {
-    if (!form.name.trim()) return alert('请输入视图名称');
-    if (!form.project) return alert('请选择项目');
-    if (!form.index_pattern.trim()) return alert('请输入索引模式');
-    if (!form.time_field.trim()) return alert('请输入时间字段');
+    if (!form.name.trim()) return toast.warning('请输入视图名称');
+    if (!form.project) return toast.warning('请选择项目');
+    if (!form.index_pattern.trim()) return toast.warning('请输入索引模式');
+    if (!form.time_field.trim()) return toast.warning('请输入时间字段');
 
     setLoading(true);
     try {

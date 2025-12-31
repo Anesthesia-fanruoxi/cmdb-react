@@ -11,6 +11,8 @@ import { type SqlCheckResult } from '../../../services/sql/apply'
 import SyntaxErrorPanel from './components/SyntaxErrorPanel'
 import AnalysisContent from './components/AnalysisContent'
 import RulesContent from './components/RulesContent'
+import './drawer.css'
+import './analysis.css'
 
 interface Props {
   sqlList: SqlCheckResult[]

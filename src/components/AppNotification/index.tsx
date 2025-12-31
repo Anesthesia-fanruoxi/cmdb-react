@@ -91,10 +91,18 @@ const show = (type: NotificationType, title: string, content: string, duration?:
 };
 
 export const appNotification = {
-  success: (title: string, content: string, duration?: number) => show('success', title, content, duration),
-  error: (title: string, content: string, duration?: number) => show('error', title, content, duration),
-  warning: (title: string, content: string, duration?: number) => show('warning', title, content, duration),
-  info: (title: string, content: string, duration?: number) => show('info', title, content, duration),
+  success: (title: string, content?: string, duration?: number) => show('success', title, content || '', duration),
+  error: (title: string, content?: string, duration?: number) => show('error', title, content || '', duration),
+  warning: (title: string, content?: string, duration?: number) => show('warning', title, content || '', duration),
+  info: (title: string, content?: string, duration?: number) => show('info', title, content || '', duration),
+};
+
+// 简化版本，用于替换 alert()
+export const toast = {
+  success: (msg: string) => show('success', '成功', msg),
+  error: (msg: string) => show('error', '错误', msg),
+  warning: (msg: string) => show('warning', '警告', msg),
+  info: (msg: string) => show('info', '提示', msg),
 };
 
 export default appNotification;

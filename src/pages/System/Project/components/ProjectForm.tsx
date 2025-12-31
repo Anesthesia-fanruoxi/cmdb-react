@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { createProject, updateProject, type Project } from '../../../../services/system/project';
+import { toast } from '../../../../components/AppNotification';
 import './ProjectForm.css';
 
 interface ProjectFormProps {
@@ -55,11 +56,11 @@ const ProjectForm = ({ visible, data, onClose, onSuccess }: ProjectFormProps) =>
 
   const handleSubmit = async () => {
     if (!form.project?.trim()) {
-      alert('请输入项目简称');
+      toast.warning('请输入项目简称');
       return;
     }
     if (!form.project_name?.trim()) {
-      alert('请输入项目名称');
+      toast.warning('请输入项目名称');
       return;
     }
 
@@ -69,11 +70,11 @@ const ProjectForm = ({ visible, data, onClose, onSuccess }: ProjectFormProps) =>
       if (res.code === 200) {
         onSuccess(form, isEdit);
       } else {
-        alert((res as { msg?: string }).msg || '操作失败');
+        toast.error((res as { msg?: string }).msg || '操作失败');
       }
     } catch (error) {
       console.error('提交失败:', error);
-      alert('操作失败');
+      toast.error('操作失败');
     } finally {
       setLoading(false);
     }

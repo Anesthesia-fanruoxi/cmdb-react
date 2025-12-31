@@ -8,6 +8,7 @@ import {
   type ApplyDetail as ApplyDetailType, type ApplyItem, type SqlCheckResult
 } from '../../../services/sql/apply';
 import { useAuthStore } from '../../../stores/authStore';
+import { toast } from '../../../components/AppNotification';
 import SqlAnalysisDialog from './SqlAnalysisDialog';
 
 interface Props {
@@ -44,15 +45,15 @@ const ApplyDetailDrawer = ({ detail, onClose, onRefresh, onResubmit }: Props) =>
     try {
       const res = await updateApply({ id: detail.id, process_type: processType });
       if (res.code === 200) {
-        alert(successMsg);
+        toast.success(successMsg);
         onClose();
         onRefresh();
       } else {
-        alert(res.message || '操作失败');
+        toast.error(res.message || '操作失败');
       }
     } catch (error) {
       console.error('操作失败:', error);
-      alert('操作失败');
+      toast.error('操作失败');
     }
   };
 
@@ -104,7 +105,7 @@ const ApplyDetailDrawer = ({ detail, onClose, onRefresh, onResubmit }: Props) =>
     }
 
     if (!detail.sql_content) {
-      alert('SQL内容为空');
+      toast.warning('SQL内容为空');
       return;
     }
 
@@ -118,11 +119,11 @@ const ApplyDetailDrawer = ({ detail, onClose, onRefresh, onResubmit }: Props) =>
         setAnalysisResults(res.data.sql_results);
         setAnalysisVisible(true);
       } else {
-        alert(res.message || '获取分析结果失败');
+        toast.error(res.message || '获取分析结果失败');
       }
     } catch (error) {
       console.error('获取分析结果失败:', error);
-      alert('获取分析结果失败');
+      toast.error('获取分析结果失败');
     }
   };
 

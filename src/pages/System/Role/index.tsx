@@ -5,6 +5,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getRoleList, createRole, updateRole, deleteRole, type Role } from '../../../services/system/role';
 import { openComponentWindow } from '../../../utils/window';
+import { toast } from '../../../components/AppNotification';
 import './style.css';
 
 const RoleManagement = () => {
@@ -39,13 +40,13 @@ const RoleManagement = () => {
   const handleAdd = () => { setEditData({ level: 1 }); setFormVisible(true); };
 
   const handleEdit = (role: Role) => {
-    if (role.level === 0) { alert('超级管理员角色不能编辑'); return; }
+    if (role.level === 0) { toast.warning('超级管理员角色不能编辑'); return; }
     setEditData(role);
     setFormVisible(true);
   };
 
   const handleDelete = async (role: Role) => {
-    if (role.level === 0) { alert('超级管理员角色不能删除'); return; }
+    if (role.level === 0) { toast.warning('超级管理员角色不能删除'); return; }
     if (!confirm(`确定要删除角色 "${role.name}" 吗？`)) return;
     try {
       const res = await deleteRole(role.id);
@@ -75,7 +76,7 @@ const RoleManagement = () => {
     const level = parseInt(formData.get('level') as string) || 1;
     const description = formData.get('description') as string;
 
-    if (!name.trim() || !code.trim()) { alert('请填写必填项'); return; }
+    if (!name.trim() || !code.trim()) { toast.warning('请填写必填项'); return; }
 
     try {
       if (editData.id) {

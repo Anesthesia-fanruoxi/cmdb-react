@@ -8,6 +8,7 @@ import {
   type ProcessItem, type ProcessUser 
 } from '../../../services/sql/process';
 import { getDictDetail } from '../../../services/system/dict';
+import { toast } from '../../../components/AppNotification';
 import './style.css';
 
 interface ProjectOption {
@@ -125,7 +126,7 @@ const SqlProcess = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.projectId || !formData.applyId || !formData.executorId) {
-      alert('请填写完整信息');
+      toast.warning('请填写完整信息');
       return;
     }
 

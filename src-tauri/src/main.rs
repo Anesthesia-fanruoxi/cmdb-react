@@ -6,11 +6,10 @@ mod crypto;
 mod auth;
 mod elfk;
 mod commands;
-mod tray;
+mod updater;
+mod window;
 
 use commands::*;
-use tauri::Manager;
-use tray::setup_tray;
 
 fn main() {
     tauri::Builder::default()
@@ -19,21 +18,9 @@ fn main() {
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_notification::init())
         .setup(|app| {
-            // 设置系统托盘
-            setup_tray(app)?;
-            
-            // 监听主窗口关闭事件 - 最小化到托盘而不是退出
-            let main_window = app.get_webview_window("main").unwrap();
-            let app_handle = app.handle().clone();
-            main_window.on_window_event(move |event| {
-                if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                    // 阻止默认关闭行为，改为隐藏窗口
-                    api.prevent_close();
-                    if let Some(window) = app_handle.get_webview_window("main") {
-                        let _ = window.hide();
-                    }
-                }
-            });
+            // 更新检查由前端触发，不在这里启动定时任务
+            // 前端会在登录后调用 check_update 并传入正确的 URL
+            let _ = app;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -48,8 +35,12 @@ fn main() {
             clear_device_credentials,
             has_device_credentials,
             export_elfk_logs,
-            tray::set_tray_icon_flash,
-            tray::stop_tray_icon_flash
+            updater::check_update,
+            updater::download_update,
+            updater::install_update,
+            updater::get_app_version,
+            window::request_attention,
+            window::cancel_attention
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
