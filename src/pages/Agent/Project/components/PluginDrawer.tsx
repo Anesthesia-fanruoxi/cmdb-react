@@ -23,6 +23,13 @@ const PluginDrawer = ({ visible, project, detail, loading, onClose, onRefresh }:
   const [editPlugin, setEditPlugin] = useState<Plugin | null>(null);
   const [logsPlugin, setLogsPlugin] = useState<Plugin | null>(null);
 
+  // 抽屉关闭时重置状态
+  const handleClose = () => {
+    setEditPlugin(null);
+    setLogsPlugin(null);
+    onClose();
+  };
+
   const getStatusText = (status: string) => {
     const map: Record<string, string> = { running: '运行中', stopped: '已停止', error: '异常' };
     return map[status] || status;
@@ -62,11 +69,11 @@ const PluginDrawer = ({ visible, project, detail, loading, onClose, onRefresh }:
 
   return (
     <>
-      <div className="drawer-overlay" onClick={onClose} />
+      <div className="drawer-overlay" onClick={handleClose} />
       <div className="drawer-container plugin-drawer">
         <div className="drawer-header">
           <h3>{project?.project_name || ''} - 插件管理</h3>
-          <button className="drawer-close" onClick={onClose}><X size={18} /></button>
+          <button className="drawer-close" onClick={handleClose}><X size={18} /></button>
         </div>
         <div className="drawer-body">
           <div className="project-info-alert">

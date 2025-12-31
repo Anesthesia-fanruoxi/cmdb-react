@@ -25,15 +25,19 @@ const PluginLogsDialog = ({ visible, plugin, project, onClose }: Props) => {
     setLoading(true);
     setLogs([]);
 
-    // 构建 WebSocket URL
-    const isDev = import.meta.env.DEV;
+    // 构建 WebSocket URL - 从 API URL 提取主机地址
     let wsUrl: string;
-    if (isDev) {
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
+    
+    if (apiBaseUrl) {
+      // 从 API URL 提取主机地址，如 https://cmdb.hzbxhd.com/api -> wss://cmdb.hzbxhd.com
+      const apiUrl = new URL(apiBaseUrl);
+      const wsProtocol = apiUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+      wsUrl = `${wsProtocol}//${apiUrl.host}/ws/agent/project/logs?project=${encodeURIComponent(project.project)}&name=${encodeURIComponent(plugin.name)}`;
+    } else {
+      // 开发环境 fallback
       const wsBaseUrl = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8080';
       wsUrl = `${wsBaseUrl}/ws/agent/project/logs?project=${encodeURIComponent(project.project)}&name=${encodeURIComponent(plugin.name)}`;
-    } else {
-      const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-      wsUrl = `${protocol}//${location.host}/ws/agent/project/logs?project=${encodeURIComponent(project.project)}&name=${encodeURIComponent(plugin.name)}`;
     }
 
     const ws = new WebSocket(wsUrl);
