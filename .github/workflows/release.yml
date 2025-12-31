@@ -57,26 +57,16 @@ jobs:
         if: matrix.platform == 'windows-latest'
         run: |
           mkdir -p release
-          # 列出目录内容以便调试
-          ls -la "src-tauri/target/${{ matrix.target }}/release/" || true
-          # Tauri 2.0 生成的 exe 文件名可能是 "CMDB Desktop.exe" 或 "CMDB-Desktop.exe"
-          if [ -f "src-tauri/target/${{ matrix.target }}/release/CMDB Desktop.exe" ]; then
-            cp "src-tauri/target/${{ matrix.target }}/release/CMDB Desktop.exe" "release/CMDB-Desktop-${{ matrix.name }}.exe"
-          elif [ -f "src-tauri/target/${{ matrix.target }}/release/CMDB-Desktop.exe" ]; then
-            cp "src-tauri/target/${{ matrix.target }}/release/CMDB-Desktop.exe" "release/CMDB-Desktop-${{ matrix.name }}.exe"
-          else
-            echo "找不到 exe 文件，列出可用文件："
-            find src-tauri/target/${{ matrix.target }}/release -name "*.exe" -type f
-            exit 1
-          fi
+          # 查找 msi 文件
+          find src-tauri/target/${{ matrix.target }}/release/bundle -name "*.msi" -type f -exec cp {} "release/CMDB-Desktop-${{ matrix.name }}.msi" \;
         shell: bash
 
       - name: Prepare macOS artifacts
         if: matrix.platform == 'macos-latest'
         run: |
           mkdir -p release
-          cd "src-tauri/target/${{ matrix.target }}/release/bundle/macos"
-          zip -r "../../../../../../release/CMDB-Desktop-${{ matrix.name }}.app.zip" "CMDB Desktop.app"
+          # 查找 dmg 文件
+          find src-tauri/target/${{ matrix.target }}/release/bundle -name "*.dmg" -type f -exec cp {} "release/CMDB-Desktop-${{ matrix.name }}.dmg" \;
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -103,8 +93,8 @@ jobs:
           files: artifacts/*
           body: |
             ## 下载说明
-            - Windows: 下载 `.exe` 文件直接运行
-            - macOS Intel: 下载 `macos-intel.app.zip` 解压后运行
-            - macOS ARM (M芯片): 下载 `macos-arm64.app.zip` 解压后运行
+            - Windows: 下载 `.msi` 文件安装
+            - macOS Intel: 下载 `macos-intel.dmg` 安装
+            - macOS ARM (M芯片): 下载 `macos-arm64.dmg` 安装
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
