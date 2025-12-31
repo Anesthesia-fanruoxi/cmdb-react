@@ -260,6 +260,7 @@ const ElfkSearch = () => {
           <div className="search-layout">
             {/* 顶部：视图选择 + 搜索框 */}
             <SearchForm
+              key={activeTab.id}
               projectInfo={activeTab.projectInfo}
               currentView={activeTab.currentView}
               loading={activeTab.loading}
@@ -268,6 +269,7 @@ const ElfkSearch = () => {
               onSearch={handleSearch}
               onReset={() => activeTab && updateTab(activeTab.id, { logs: [], total: 0, keyword: '', lastParams: {} })}
               onAddTab={handleAddTab}
+              onKeywordChange={(keyword) => updateTab(activeTab.id, { keyword })}
             />
             {/* 下方：左侧字段 + 右侧结果 */}
             <div className="main-layout">

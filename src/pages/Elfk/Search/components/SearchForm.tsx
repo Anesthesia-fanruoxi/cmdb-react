@@ -27,6 +27,7 @@ interface Props {
   onSearch: (params: Record<string, unknown>) => void;
   onReset: () => void;
   onAddTab?: () => void;
+  onKeywordChange?: (keyword: string) => void;
 }
 
 // 格式化本地时间
@@ -72,7 +73,7 @@ const matchShortcut = (e: KeyboardEvent, shortcut: string) => {
   );
 };
 
-const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, onViewChange, onSearch, onReset, onAddTab }: Props) => {
+const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, onViewChange, onSearch, onReset, onAddTab, onKeywordChange }: Props) => {
   const [allViews, setAllViews] = useState<ViewListItem[]>([]);
   const [viewLoading, setViewLoading] = useState(false);
   const [timeRange, setTimeRange] = useState(getTodayRange);
@@ -88,10 +89,16 @@ const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, onViewC
 
   // 同步外部传入的 keyword
   useEffect(() => {
-    if (initialKeyword !== undefined) {
+    if (initialKeyword !== undefined && initialKeyword !== localKeyword) {
       setLocalKeyword(initialKeyword);
     }
   }, [initialKeyword]);
+
+  // 输入变化时同步到父组件
+  const handleKeywordChange = (value: string) => {
+    setLocalKeyword(value);
+    onKeywordChange?.(value);
+  };
 
   // 根据分类过滤视图
   const views = projectInfo?.category
@@ -225,7 +232,7 @@ const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, onViewC
               type="text"
               placeholder="输入搜索关键词，支持 Lucene 语法"
               value={localKeyword}
-              onChange={e => setLocalKeyword(e.target.value)}
+              onChange={e => handleKeywordChange(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSearch()}
               onFocus={() => setHistoryVisible(true)}
             />
