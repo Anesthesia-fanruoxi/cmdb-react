@@ -92,8 +92,8 @@ const UpdateDialog = ({ visible, versionInfo, onClose }: Props) => {
               {versionInfo.changelog 
                 ? versionInfo.changelog
                     .replace(/^##\s*/gm, '')  // 去掉 ## 标题
-                    .replace(/```[\s\S]*?```/g, '')  // 去掉代码块
-                    .replace(/`([^`]+)`/g, '$1')  // 去掉行内代码
+                    .replace(/```\w*\n?/g, '')  // 去掉代码块标记，保留内容
+                    .replace(/`([^`]+)`/g, '$1')  // 去掉行内代码标记
                     .replace(/\*\*([^*]+)\*\*/g, '$1')  // 去掉加粗
                     .replace(/\n{3,}/g, '\n\n')  // 多个换行合并
                     .trim()
