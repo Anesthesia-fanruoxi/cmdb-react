@@ -89,7 +89,15 @@ const UpdateDialog = ({ visible, versionInfo, onClose }: Props) => {
           <div className="changelog-section">
             <h4>更新内容</h4>
             <div className="changelog-content">
-              {versionInfo.changelog || '性能优化与问题修复'}
+              {versionInfo.changelog 
+                ? versionInfo.changelog
+                    .replace(/^##\s*/gm, '')  // 去掉 ## 标题
+                    .replace(/```[\s\S]*?```/g, '')  // 去掉代码块
+                    .replace(/`([^`]+)`/g, '$1')  // 去掉行内代码
+                    .replace(/\*\*([^*]+)\*\*/g, '$1')  // 去掉加粗
+                    .replace(/\n{3,}/g, '\n\n')  // 多个换行合并
+                    .trim()
+                : '性能优化与问题修复'}
             </div>
           </div>
         </div>

@@ -122,17 +122,7 @@ jobs:
           draft: false
           files: artifacts/*
           body: |
-            ## 下载说明
-            - Windows: 下载 `.msi` 文件安装
-            - macOS Intel: 下载 `macos-intel.dmg` 安装
-            - macOS ARM (M芯片): 下载 `macos-arm64.dmg` 安装
-            
-            ## macOS 安装提示
-            由于应用未经 Apple 签名，首次打开可能提示"无法打开"或"文件已损坏"。
-            请在终端执行以下命令解除限制：
-            ```bash
-            sudo xattr -rd com.apple.quarantine /Applications/CMDB\ Desktop.app
-            ```
+            性能优化与问题修复
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

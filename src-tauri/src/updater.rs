@@ -310,25 +310,44 @@ pub async fn install_update(app: AppHandle, file_path: String) -> Result<(), Str
     
     #[cfg(target_os = "windows")]
     {
-        // Windows: 使用 msiexec 安装 MSI
-        std::process::Command::new("msiexec")
-            .args(["/i", &file_path, "/passive", "/norestart"])
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+        
+        // Windows: 使用 msiexec 安装 MSI，安装完成后启动应用
+        let exe_path = std::env::current_exe()
+            .map(|p| p.to_string_lossy().to_string())
+            .unwrap_or_default();
+        
+        // 创建批处理脚本：安装完成后启动应用
+        let script = format!(
+            r#"@echo off
+msiexec /i "{}" /passive /norestart
+start "" "{}"
+"#,
+            file_path, exe_path
+        );
+        
+        let script_path = std::env::temp_dir().join("cmdb_update.bat");
+        std::fs::write(&script_path, script).map_err(|e| e.to_string())?;
+        
+        std::process::Command::new("cmd")
+            .args(["/c", &script_path.to_string_lossy()])
+            .creation_flags(CREATE_NO_WINDOW)
             .spawn()
             .map_err(|e| format!("启动安装程序失败: {}", e))?;
         
-        // 退出当前应用，让安装程序接管
+        // 退出当前应用
         std::process::exit(0);
     }
     
     #[cfg(target_os = "macos")]
     {
-        // macOS: 打开 DMG 文件，用户手动拖拽安装
+        // macOS: 打开 DMG 文件
         std::process::Command::new("open")
             .arg(&file_path)
             .spawn()
             .map_err(|e| format!("打开安装包失败: {}", e))?;
         
-        // macOS 不自动退出，让用户手动操作
         Ok(())
     }
     
