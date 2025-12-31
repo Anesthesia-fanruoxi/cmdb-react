@@ -1,5 +1,5 @@
 /**
- * 系统信息独立页面样式
+ * 系统信息页面样式
  */
 
 .system-info-page {
@@ -7,6 +7,7 @@
   height: 100vh;
   box-sizing: border-box;
   background: var(--bg-color, #fff);
+  overflow-y: auto;
 }
 
 .system-info-page .system-info-logo {
@@ -17,15 +18,8 @@
   margin-bottom: 24px;
 }
 
-.system-info-page .logo-icon {
-  font-size: 48px;
-}
-
-.system-info-page .logo-text {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-color, #1f2937);
-}
+.system-info-page .logo-icon { font-size: 48px; }
+.system-info-page .logo-text { font-size: 18px; font-weight: 600; color: var(--text-color, #1f2937); }
 
 .system-info-page .system-info-list {
   display: flex;
@@ -51,6 +45,9 @@
 }
 
 .system-info-page .info-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 14px;
   font-weight: 500;
   color: var(--text-color, #1f2937);
@@ -61,6 +58,24 @@
   color: #10b981;
 }
 
+.system-info-page .btn-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: transparent;
+  border: 1px solid var(--border-color, #d9d9d9);
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-secondary, #6b7280);
+  padding: 0;
+}
+
+.system-info-page .btn-check:hover:not(:disabled) { border-color: var(--primary-color); color: var(--primary-color); }
+.system-info-page .btn-check:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* 资源区域 */
 .system-info-page .resource-section {
   margin-top: 24px;
   padding-top: 20px;
@@ -74,6 +89,15 @@
   color: var(--text-color, #1f2937);
 }
 
+.system-info-page .resource-section .info-item {
+  margin-bottom: 12px;
+}
+
+.system-info-page .resource-section .info-item:last-child {
+  margin-bottom: 0;
+}
+
+/* 页脚 */
 .system-info-page .system-info-footer {
   margin-top: 24px;
   text-align: center;
@@ -85,146 +109,14 @@
   color: var(--text-tertiary, #9ca3af);
 }
 
+/* 动画 */
+.system-info-page .spin { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
 /* 暗色模式 */
-:root.dark .system-info-page {
-  background: #1f2937;
-}
-
-:root.dark .system-info-page .logo-text {
-  color: #f3f4f6;
-}
-
-:root.dark .system-info-page .info-item {
-  background: #374151;
-}
-
-:root.dark .system-info-page .info-value {
-  color: #f3f4f6;
-}
-
-:root.dark .system-info-page .resource-section {
-  border-color: #374151;
-}
-
-:root.dark .system-info-page .resource-section h4 {
-  color: #f3f4f6;
-}
-
-
-/* 更新检查区域 */
-.system-info-page .update-section {
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid var(--border-color, #e5e7eb);
-}
-
-.system-info-page .update-section h4 {
-  margin: 0 0 12px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-color, #1f2937);
-}
-
-.system-info-page .btn-check-update {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  width: 100%;
-  padding: 10px;
-  background: var(--primary-color, #667eea);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.system-info-page .btn-check-update:hover:not(:disabled) { opacity: 0.9; }
-.system-info-page .btn-check-update:disabled { opacity: 0.6; cursor: not-allowed; }
-
-.system-info-page .update-available {
-  background: var(--bg-secondary, #f9fafb);
-  border-radius: 8px;
-  padding: 14px;
-}
-
-.system-info-page .version-info { margin-bottom: 12px; }
-
-.system-info-page .new-version {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--primary-color, #667eea);
-}
-
-.system-info-page .changelog {
-  margin: 8px 0 0;
-  font-size: 12px;
-  color: var(--text-secondary, #6b7280);
-  line-height: 1.5;
-  max-height: 60px;
-  overflow-y: auto;
-}
-
-.system-info-page .btn-download {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  width: 100%;
-  padding: 8px;
-  background: #10b981;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.system-info-page .btn-download:hover:not(:disabled) { opacity: 0.9; }
-.system-info-page .btn-download:disabled { opacity: 0.7; cursor: not-allowed; }
-
-.system-info-page .update-ready {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: var(--bg-secondary, #f9fafb);
-  border-radius: 8px;
-  padding: 12px 14px;
-}
-
-.system-info-page .ready-text {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: #10b981;
-}
-
-.system-info-page .btn-install {
-  padding: 6px 14px;
-  background: var(--primary-color, #667eea);
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.system-info-page .btn-install:hover { opacity: 0.9; }
-
-.system-info-page .spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* 暗色模式 - 更新区域 */
-:root.dark .system-info-page .update-section { border-color: #374151; }
-:root.dark .system-info-page .update-section h4 { color: #f3f4f6; }
-:root.dark .system-info-page .update-available { background: #374151; }
-:root.dark .system-info-page .update-ready { background: #374151; }
+:root.dark .system-info-page { background: #1f2937; }
+:root.dark .system-info-page .logo-text { color: #f3f4f6; }
+:root.dark .system-info-page .info-item { background: #374151; }
+:root.dark .system-info-page .info-value { color: #f3f4f6; }
+:root.dark .system-info-page .resource-section { border-color: #374151; }
+:root.dark .system-info-page .resource-section h4 { color: #f3f4f6; }

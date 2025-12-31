@@ -26,6 +26,7 @@ struct GitHubRelease {
 
 #[derive(Debug, Deserialize)]
 struct GitHubAsset {
+    id: u64,
     name: String,
     size: u64,
     browser_download_url: String,
@@ -47,6 +48,7 @@ pub struct VersionInfo {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PlatformAsset {
     pub url: String,
+    pub api_url: String,  // GitHub API 下载地址
     pub size: u64,
     pub sha256: String,
 }
@@ -143,9 +145,9 @@ pub async fn check_update(app: AppHandle, update_url: String) -> Result<Option<V
     result
 }
 
-/// 从 GitHub Release 检查更新
+/// 从 GitHub Release 检查更新（支持私有仓库）
 #[tauri::command]
-pub async fn check_github_update(app: AppHandle, owner: String, repo: String) -> Result<Option<VersionInfo>, String> {
+pub async fn check_github_update(app: AppHandle, owner: String, repo: String, token: Option<String>) -> Result<Option<VersionInfo>, String> {
     if CHECKING.swap(true, Ordering::SeqCst) {
         return Err("正在检查更新中".to_string());
     }
@@ -154,6 +156,8 @@ pub async fn check_github_update(app: AppHandle, owner: String, repo: String) ->
     
     let result = async {
         let url = format!("https://api.github.com/repos/{}/{}/releases/latest", owner, repo);
+        eprintln!("[更新检查] URL: {}", url);
+        eprintln!("[更新检查] Token: {}", if token.is_some() { "已配置" } else { "未配置" });
         
         let client = reqwest::Client::builder()
             .timeout(Duration::from_secs(15))
@@ -161,10 +165,17 @@ pub async fn check_github_update(app: AppHandle, owner: String, repo: String) ->
             .build()
             .map_err(|e| e.to_string())?;
         
-        let resp = client.get(&url)
-            .send()
+        let mut req = client.get(&url);
+        // 添加 Token 认证（支持私有仓库，提高 API 限额）
+        if let Some(t) = &token {
+            req = req.header("Authorization", format!("Bearer {}", t));
+        }
+        
+        let resp = req.send()
             .await
             .map_err(|e| format!("请求 GitHub 失败: {}", e))?;
+        
+        eprintln!("[更新检查] 响应状态: {}", resp.status());
         
         if resp.status() == 404 {
             emit_status(&app, UpdateStatus::NotAvailable);
@@ -180,10 +191,16 @@ pub async fn check_github_update(app: AppHandle, owner: String, repo: String) ->
             .map_err(|e| format!("解析 Release 信息失败: {}", e))?;
         
         let current = get_current_version();
+        eprintln!("[更新检查] 本地版本: {}, 远程版本: {}", current, release.tag_name);
+        
         if !is_newer_version(&current, &release.tag_name) {
+            eprintln!("[更新检查] 无需更新");
             emit_status(&app, UpdateStatus::NotAvailable);
-            return Ok(None);
+            // 调试：返回错误信息显示版本对比
+            return Err(format!("调试: 本地={}, 远程={}, 无需更新", current, release.tag_name));
         }
+        
+        eprintln!("[更新检查] 发现新版本!");
         
         // 从 assets 中匹配各平台安装包
         let find_asset = |keyword: &str| -> Option<PlatformAsset> {
@@ -191,6 +208,7 @@ pub async fn check_github_update(app: AppHandle, owner: String, repo: String) ->
                 .find(|a| a.name.to_lowercase().contains(keyword))
                 .map(|a| PlatformAsset {
                     url: a.browser_download_url.clone(),
+                    api_url: format!("https://api.github.com/repos/{}/{}/releases/assets/{}", owner, repo, a.id),
                     size: a.size,
                     sha256: String::new(),
                 })
@@ -216,7 +234,7 @@ pub async fn check_github_update(app: AppHandle, owner: String, repo: String) ->
 
 /// 下载更新
 #[tauri::command]
-pub async fn download_update(app: AppHandle, info: VersionInfo) -> Result<String, String> {
+pub async fn download_update(app: AppHandle, info: VersionInfo, token: Option<String>) -> Result<String, String> {
     let (asset, arch_suffix) = if cfg!(target_os = "windows") {
         (info.windows.ok_or("没有 Windows 版本")?, "x64")
     } else if cfg!(target_os = "macos") {
@@ -241,10 +259,26 @@ pub async fn download_update(app: AppHandle, info: VersionInfo) -> Result<String
     let file_path = download_dir.join(&filename);
     
     let client = reqwest::Client::new();
-    let resp = client.get(&asset.url)
-        .send()
+    
+    // 私有仓库使用 API URL 下载
+    let download_url = if token.is_some() { &asset.api_url } else { &asset.url };
+    
+    let mut req = client.get(download_url)
+        .header("User-Agent", "CMDB-Desktop-Updater")
+        .header("Accept", "application/octet-stream");
+    
+    // 私有仓库需要 Token 认证
+    if let Some(t) = &token {
+        req = req.header("Authorization", format!("Bearer {}", t));
+    }
+    
+    let resp = req.send()
         .await
         .map_err(|e| format!("下载请求失败: {}", e))?;
+    
+    if !resp.status().is_success() {
+        return Err(format!("下载失败: {}", resp.status()));
+    }
     
     let total = resp.content_length().unwrap_or(asset.size);
     let mut downloaded: u64 = 0;
@@ -263,8 +297,6 @@ pub async fn download_update(app: AppHandle, info: VersionInfo) -> Result<String
         let progress = (downloaded as f64 / total as f64) * 100.0;
         emit_status(&app, UpdateStatus::Downloading { progress, downloaded, total });
     }
-    
-    // TODO: 验证 SHA256
     
     let path_str = file_path.to_string_lossy().to_string();
     emit_status(&app, UpdateStatus::Downloaded { path: path_str.clone() });
@@ -323,7 +355,7 @@ pub fn start_github_update_checker(app: AppHandle, owner: String, repo: String, 
         tokio::time::sleep(Duration::from_secs(30)).await;
         
         loop {
-            let _ = check_github_update(app.clone(), owner.clone(), repo.clone()).await;
+            let _ = check_github_update(app.clone(), owner.clone(), repo.clone(), None).await;
             tokio::time::sleep(interval).await;
         }
     });

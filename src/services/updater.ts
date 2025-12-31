@@ -8,10 +8,13 @@ import { listen, UnlistenFn } from '@tauri-apps/api/event';
 // GitHub 仓库配置
 const GITHUB_OWNER = 'Anesthesia-fanruoxi';
 const GITHUB_REPO = 'cmdb-react';
+// GitHub Personal Access Token（只读权限，用于私有仓库和提高 API 限额）
+const GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN || '';
 
 /** 平台资源 */
 export interface PlatformAsset {
   url: string;
+  api_url: string;
   size: number;
   sha256: string;
 }
@@ -44,7 +47,11 @@ export const getAppVersion = (): Promise<string> => {
 
 /** 从 GitHub Release 检查更新 */
 export const checkGitHubUpdate = (): Promise<VersionInfo | null> => {
-  return invoke('check_github_update', { owner: GITHUB_OWNER, repo: GITHUB_REPO });
+  return invoke('check_github_update', { 
+    owner: GITHUB_OWNER, 
+    repo: GITHUB_REPO,
+    token: GITHUB_TOKEN || null
+  });
 };
 
 /** 检查更新（兼容旧接口，现在默认使用 GitHub） */
@@ -54,7 +61,7 @@ export const checkUpdate = (): Promise<VersionInfo | null> => {
 
 /** 下载更新 */
 export const downloadUpdate = (info: VersionInfo): Promise<string> => {
-  return invoke('download_update', { info });
+  return invoke('download_update', { info, token: GITHUB_TOKEN || null });
 };
 
 /** 安装更新 */

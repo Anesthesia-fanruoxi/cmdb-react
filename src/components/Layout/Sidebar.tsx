@@ -172,7 +172,7 @@ const Sidebar = ({ collapsed = false }: SidebarProps) => {
                   {isTauriEnv() && (
                     <div className="dropdown-item" onClick={() => { 
                       setDropdownVisible(false); 
-                      openComponentWindow({ type: 'system-info', label: 'system-info', title: '系统信息', width: 400, height: 500 });
+                      openComponentWindow({ type: 'system-info', label: 'system-info', title: '系统信息', width: 400, height: 600 });
                     }}><Info size={16} /><span>系统信息</span></div>
                   )}
                   <div className="dropdown-divider" />
