@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import { HardDrive, Database, RefreshCw } from 'lucide-react';
 import { isTauriEnv, getSystemInfo, type SystemInfo } from '../../services/machine';
 import { checkUpdate, type VersionInfo } from '../../services/updater';
+import { useAppStore } from '../../stores/appStore';
 import UpdateDialog from '../../components/UpdateDialog';
 import toast from '../../components/Toast';
 import './style.css';
@@ -22,6 +23,7 @@ const formatBytes = (bytes: number): string => {
 };
 
 const SystemInfoPage = () => {
+  const { initTheme } = useAppStore();
   const [sysInfo, setSysInfo] = useState<SystemInfo | null>(null);
   const [newVersion, setNewVersion] = useState<VersionInfo | null>(null);
   const [showUpdateDialog, setShowUpdateDialog] = useState(false);
@@ -29,6 +31,9 @@ const SystemInfoPage = () => {
   const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
+    // 独立窗口需要初始化主题
+    initTheme();
+    
     const fetchSysInfo = async () => {
       if (!isTauriEnv()) return;
       try {
@@ -44,7 +49,7 @@ const SystemInfoPage = () => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, []);
+  }, [initTheme]);
 
   const handleCheckUpdate = async () => {
     console.log('点击检查更新, isTauri:', isTauriEnv(), 'checking:', checking);

@@ -11,20 +11,7 @@ permissions:
   actions: write
 
 jobs:
-  # 清理旧的 workflow runs
-  cleanup:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Delete old workflow runs
-        uses: Mattraks/delete-workflow-runs@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          repository: ${{ github.repository }}
-          retain_days: 7
-          keep_minimum_runs: 3
-
   build:
-    needs: cleanup
     strategy:
       fail-fast: false
       matrix:
@@ -53,25 +40,16 @@ jobs:
           else
             VERSION="v0.0.0-dev"
           fi
-          # 去掉 v 前缀用于 Cargo.toml
           VERSION_NUM="${VERSION#v}"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "version_num=$VERSION_NUM" >> $GITHUB_OUTPUT
-          echo "Building version: $VERSION"
         shell: bash
 
       - name: Update version in files
         run: |
-          # 更新 .env 中的版本号
           sed -i.bak "s/VITE_APP_VERSION=.*/VITE_APP_VERSION=${{ steps.version.outputs.version }}/" .env || true
-          
-          # 更新 Cargo.toml 中的版本号
           sed -i.bak 's/^version = ".*"/version = "${{ steps.version.outputs.version_num }}"/' src-tauri/Cargo.toml
-          
-          # 更新 tauri.conf.json 中的版本号
           sed -i.bak 's/"version": ".*"/"version": "${{ steps.version.outputs.version_num }}"/' src-tauri/tauri.conf.json
-          
-          # 更新 package.json 中的版本号
           sed -i.bak 's/"version": ".*"/"version": "${{ steps.version.outputs.version_num }}"/' package.json
         shell: bash
 
@@ -128,7 +106,7 @@ jobs:
         uses: dev-drprasad/delete-older-releases@v0.3.4
         with:
           keep_latest: 3
-          delete_tags: false
+          delete_tags: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -151,10 +129,17 @@ jobs:
             
             ## macOS 安装提示
             由于应用未经 Apple 签名，首次打开可能提示"无法打开"或"文件已损坏"。
-            
             请在终端执行以下命令解除限制：
             ```bash
             sudo xattr -rd com.apple.quarantine /Applications/CMDB\ Desktop.app
             ```
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete old workflow runs
+        uses: Mattraks/delete-workflow-runs@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          retain_days: 0
+          keep_minimum_runs: 3

@@ -10,6 +10,7 @@ mod updater;
 mod window;
 
 use commands::*;
+use tauri::Manager;
 
 fn main() {
     tauri::Builder::default()
@@ -18,10 +19,19 @@ fn main() {
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_notification::init())
         .setup(|app| {
-            // 更新检查由前端触发，不在这里启动定时任务
-            // 前端会在登录后调用 check_update 并传入正确的 URL
             let _ = app;
             Ok(())
+        })
+        .on_window_event(|window, event| {
+            // 主窗口关闭时，关闭所有其他窗口
+            if let tauri::WindowEvent::CloseRequested { .. } = event {
+                if window.label() == "main" {
+                    // 关闭所有窗口
+                    for (_, win) in window.app_handle().webview_windows() {
+                        let _ = win.close();
+                    }
+                }
+            }
         })
         .invoke_handler(tauri::generate_handler![
             get_machine_id,
