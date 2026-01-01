@@ -54,6 +54,9 @@ export async function createDetachedWindow(options: DetachWindowOptions): Promis
     }
   }
 
+  // 获取当前主题
+  const isDark = document.documentElement.classList.contains('dark');
+
   try {
     const webview = new WebviewWindow(`detached-${label}`, {
       url,
@@ -66,6 +69,7 @@ export async function createDetachedWindow(options: DetachWindowOptions): Promis
       resizable: true,
       decorations: true,
       focus: true,
+      theme: isDark ? 'dark' : 'light',
     });
 
     webview.once('tauri://destroyed', () => {

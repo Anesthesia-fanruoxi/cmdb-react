@@ -102,6 +102,11 @@ export const useAppStore = create<AppState>()(
         } else {
           document.documentElement.classList.remove('dark');
         }
+        
+        // 更新所有窗口标题栏主题
+        import('@tauri-apps/api/core').then(({ invoke }) => {
+          invoke('set_window_theme', { dark: theme === 'dark' }).catch(() => {});
+        }).catch(() => {});
       },
 
       // 切换主题
@@ -119,6 +124,11 @@ export const useAppStore = create<AppState>()(
         } else {
           document.documentElement.classList.remove('dark');
         }
+        
+        // 更新窗口标题栏主题
+        import('@tauri-apps/api/core').then(({ invoke }) => {
+          invoke('set_window_theme', { dark: theme === 'dark' }).catch(() => {});
+        }).catch(() => {});
       },
 
       // 设置加载状态

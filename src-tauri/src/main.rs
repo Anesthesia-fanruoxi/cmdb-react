@@ -51,7 +51,8 @@ fn main() {
             updater::install_update,
             updater::get_app_version,
             window::request_attention,
-            window::cancel_attention
+            window::cancel_attention,
+            window::set_window_theme
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

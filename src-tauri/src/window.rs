@@ -2,8 +2,9 @@
 //! 
 //! 功能：
 //! - 任务栏图标高亮（有消息时闪烁）
+//! - 窗口主题切换
 
-use tauri::{AppHandle, Manager, UserAttentionType};
+use tauri::{AppHandle, Manager, UserAttentionType, Theme};
 
 /// 请求任务栏注意力（图标高亮/闪烁）
 /// Windows: 任务栏图标闪烁
@@ -28,6 +29,18 @@ pub async fn cancel_attention(app: AppHandle) -> Result<(), String> {
     if let Some(window) = app.get_webview_window("main") {
         window.request_user_attention(None)
             .map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+/// 设置所有窗口主题
+#[tauri::command]
+pub async fn set_window_theme(app: AppHandle, dark: bool) -> Result<(), String> {
+    let theme = if dark { Theme::Dark } else { Theme::Light };
+    
+    // 设置所有窗口的主题
+    for (_, window) in app.webview_windows() {
+        let _ = window.set_theme(Some(theme));
     }
     Ok(())
 }
