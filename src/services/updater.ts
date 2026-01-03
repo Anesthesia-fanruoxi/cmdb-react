@@ -89,15 +89,17 @@ let checkInterval: ReturnType<typeof setInterval> | null = null;
 export const startAutoCheck = (intervalMinutes = 5): void => {
   if (checkInterval) return;
   
+  // 动态导入避免循环依赖
+  const doCheck = async () => {
+    const { useUpdateStore } = await import('../stores/updateStore');
+    useUpdateStore.getState().checkForUpdate();
+  };
+  
   // 启动后延迟 30 秒首次检查
-  setTimeout(() => {
-    checkUpdate().catch(console.error);
-  }, 30 * 1000);
+  setTimeout(doCheck, 30 * 1000);
   
   // 定时检查（分钟）
-  checkInterval = setInterval(() => {
-    checkUpdate().catch(console.error);
-  }, intervalMinutes * 60 * 1000);
+  checkInterval = setInterval(doCheck, intervalMinutes * 60 * 1000);
 };
 
 export const stopAutoCheck = (): void => {

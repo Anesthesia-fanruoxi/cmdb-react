@@ -9,6 +9,7 @@ import { useMenuStore } from '../../stores/menuStore';
 import { useAuthStore } from '../../stores/authStore';
 import { useAppStore } from '../../stores/appStore';
 import { useMessageStore } from '../../stores/messageStore';
+import { useUpdateStore } from '../../stores/updateStore';
 import type { MenuItem } from '../../types/menu';
 import Icon from '../Icon';
 import { Package, LogOut, User, ListTodo, RefreshCw, Trash2, Info } from 'lucide-react';
@@ -32,6 +33,7 @@ const Sidebar = ({ collapsed = false }: SidebarProps) => {
   const { userName, logout, fetchProfile } = useAuthStore();
   const { theme, toggleTheme } = useAppStore();
   const unreadCount = useMessageStore(state => state.unreadCount);
+  const hasUpdate = useUpdateStore(state => state.hasUpdate);
   
   const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
   const [dropdownVisible, setDropdownVisible] = useState(false);
@@ -164,6 +166,7 @@ const Sidebar = ({ collapsed = false }: SidebarProps) => {
             <div className="footer-user" ref={dropdownRef}>
               <div className="footer-avatar" onClick={() => setDropdownVisible(!dropdownVisible)}>
                 {getInitial(userName)}
+                {hasUpdate && <span className="avatar-new-dot" />}
               </div>
               {dropdownVisible && (
                 <div className="footer-dropdown">
@@ -173,7 +176,11 @@ const Sidebar = ({ collapsed = false }: SidebarProps) => {
                     <div className="dropdown-item" onClick={() => { 
                       setDropdownVisible(false); 
                       openComponentWindow({ type: 'system-info', label: 'system-info', title: '系统信息', width: 400, height: 600 });
-                    }}><Info size={16} /><span>系统信息</span></div>
+                    }}>
+                      <Info size={16} />
+                      <span>系统信息</span>
+                      {hasUpdate && <span className="new-badge">NEW</span>}
+                    </div>
                   )}
                   <div className="dropdown-divider" />
                   <div className="dropdown-item" onClick={handleRefreshPermissions}><RefreshCw size={16} /><span>刷新权限</span></div>

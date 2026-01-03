@@ -3,10 +3,11 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { HardDrive, Database, RefreshCw } from 'lucide-react';
+import { HardDrive, Database, RefreshCw, Download } from 'lucide-react';
 import { isTauriEnv, getSystemInfo, type SystemInfo } from '../../services/machine';
 import { checkUpdate, type VersionInfo } from '../../services/updater';
 import { useAppStore } from '../../stores/appStore';
+import { useUpdateStore } from '../../stores/updateStore';
 import UpdateDialog from '../../components/UpdateDialog';
 import toast from '../../components/Toast';
 import './style.css';
@@ -24,6 +25,7 @@ const formatBytes = (bytes: number): string => {
 
 const SystemInfoPage = () => {
   const { initTheme } = useAppStore();
+  const { hasUpdate, versionInfo: storeVersionInfo, checkForUpdate, clearUpdate } = useUpdateStore();
   const [sysInfo, setSysInfo] = useState<SystemInfo | null>(null);
   const [newVersion, setNewVersion] = useState<VersionInfo | null>(null);
   const [showUpdateDialog, setShowUpdateDialog] = useState(false);
@@ -33,6 +35,9 @@ const SystemInfoPage = () => {
   useEffect(() => {
     // 独立窗口需要初始化主题
     initTheme();
+    
+    // 独立窗口打开时检查更新状态
+    checkForUpdate();
     
     const fetchSysInfo = async () => {
       if (!isTauriEnv()) return;
@@ -49,7 +54,14 @@ const SystemInfoPage = () => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [initTheme]);
+  }, [initTheme, checkForUpdate]);
+  
+  // 监听 store 中的更新状态变化
+  useEffect(() => {
+    if (hasUpdate && storeVersionInfo) {
+      setNewVersion(storeVersionInfo);
+    }
+  }, [hasUpdate, storeVersionInfo]);
 
   const handleCheckUpdate = async () => {
     console.log('点击检查更新, isTauri:', isTauriEnv(), 'checking:', checking);
@@ -80,6 +92,12 @@ const SystemInfoPage = () => {
     }
   };
 
+  const handleShowUpdate = () => {
+    if (newVersion) {
+      setShowUpdateDialog(true);
+    }
+  };
+
   return (
     <div className="system-info-page">
       <div className="system-info-logo">
@@ -92,9 +110,16 @@ const SystemInfoPage = () => {
           <span className="info-label">当前版本</span>
           <span className="info-value">
             {APP_VERSION}
-            <button className="btn-check" onClick={handleCheckUpdate} disabled={checking} title="检查更新">
-              <RefreshCw size={12} className={checking ? 'spin' : ''} />
-            </button>
+            {newVersion ? (
+              <button className="btn-update-now" onClick={handleShowUpdate} title="立即更新">
+                <Download size={12} />
+                <span>更新</span>
+              </button>
+            ) : (
+              <button className="btn-check" onClick={handleCheckUpdate} disabled={checking} title="检查更新">
+                <RefreshCw size={12} className={checking ? 'spin' : ''} />
+              </button>
+            )}
           </span>
         </div>
         <div className="info-item">
