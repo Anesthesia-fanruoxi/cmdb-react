@@ -86,7 +86,7 @@ export const formatSize = (bytes: number): string => {
 /** 启动定时检查（前端控制） */
 let checkInterval: ReturnType<typeof setInterval> | null = null;
 
-export const startAutoCheck = (intervalHours = 6): void => {
+export const startAutoCheck = (intervalMinutes = 5): void => {
   if (checkInterval) return;
   
   // 启动后延迟 30 秒首次检查
@@ -94,10 +94,10 @@ export const startAutoCheck = (intervalHours = 6): void => {
     checkUpdate().catch(console.error);
   }, 30 * 1000);
   
-  // 定时检查
+  // 定时检查（分钟）
   checkInterval = setInterval(() => {
     checkUpdate().catch(console.error);
-  }, intervalHours * 60 * 60 * 1000);
+  }, intervalMinutes * 60 * 1000);
 };
 
 export const stopAutoCheck = (): void => {

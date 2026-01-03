@@ -23,7 +23,27 @@ import { useMenuStore } from './stores/menuStore';
 import { initSecurity } from './utils/security';
 import { cleanupLegacyStorage, encryptedStorage } from './utils/persistStorage';
 import { StatusModalContainer } from './components/StatusModal';
+import { sendNotification, isPermissionGranted, requestPermission } from '@tauri-apps/plugin-notification';
 import './App.css';
+
+// 测试通知
+const testNotification = async () => {
+  try {
+    let permitted = await isPermissionGranted();
+    if (!permitted) {
+      const permission = await requestPermission();
+      permitted = permission === 'granted';
+    }
+    if (permitted) {
+      sendNotification({
+        title: '发现新版本',
+        body: 'CMDB Desktop v1.0.3 已发布，点击查看更新内容',
+      });
+    }
+  } catch (e) {
+    console.log('通知发送失败:', e);
+  }
+};
 
 // 流程类型
 type FlowType = 'none' | 'token' | 'login' | 'clear';
@@ -147,6 +167,9 @@ function App() {
       // 初始化基础设置
       initSecurity();
       initTheme();
+      
+      // 测试通知（启动时发送）
+      testNotification();
       
       // 等待存储初始化完成
       await initFromStorage();
