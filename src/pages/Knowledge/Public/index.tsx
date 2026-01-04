@@ -8,6 +8,7 @@ import { getPublicDocList, getPublicDocDetail, deletePublicDoc, DocItem } from '
 import { getDictDetail } from '../../../services/system/dict';
 import type { DictItem } from '../../../services/system/dict';
 import toast from '../../../components/Toast';
+import { confirm } from '../../../components/ConfirmModal';
 import DocForm from '../components/DocForm';
 import DocView from '../components/DocView';
 import ShareDialog from './components/ShareDialog';
@@ -76,7 +77,7 @@ const PublicKnowledge = () => {
   };
 
   const handleDelete = async (doc: DocItem) => {
-    if (!confirm('确认要删除该文档吗？')) return;
+    if (!await confirm({ content: '确认要删除该文档吗？', type: 'danger' })) return;
     try {
       const res = await deletePublicDoc(doc.id);
       if (res.code === 200) {

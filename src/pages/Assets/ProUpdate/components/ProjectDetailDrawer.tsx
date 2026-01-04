@@ -5,6 +5,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Loader2, Play } from 'lucide-react';
 import { subscribeProjectDetail, startRelease, cancelTask } from '../../../../services/assets/proUpdate';
+import { confirm } from '../../../../components/ConfirmModal';
 import type { ProjectUpdate, ReleaseRecord, ProjectDetailResponse } from '../../../../services/assets/proUpdate';
 import RecordDetailDialog from './RecordDetailDialog';
 
@@ -70,7 +71,7 @@ const ProjectDetailDrawer = ({ visible, project, onClose, onRefresh }: Props) =>
 
   const handleStartRelease = async () => {
     if (!project || !detail) return;
-    if (!confirm(`确定要开始发版项目 "${detail.project_name}" 吗？`)) return;
+    if (!await confirm({ content: `确定要开始发版项目 "${detail.project_name}" 吗？`, type: 'warning' })) return;
     
     setReleaseLoading(true);
     try {
@@ -87,7 +88,7 @@ const ProjectDetailDrawer = ({ visible, project, onClose, onRefresh }: Props) =>
   };
 
   const handleCancelTask = async (taskId: string) => {
-    if (!confirm('确定要取消该任务吗？')) return;
+    if (!await confirm({ content: '确定要取消该任务吗？', type: 'warning' })) return;
     try {
       await cancelTask(taskId);
       connectSSE();

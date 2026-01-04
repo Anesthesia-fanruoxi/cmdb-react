@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { FileText, Plus, Edit, Trash2, Search, RefreshCw } from 'lucide-react';
 import { getPersonalDocList, getPersonalDocDetail, deletePersonalDoc, DocItem } from '../../../services/knowledge';
 import toast from '../../../components/Toast';
+import { confirm } from '../../../components/ConfirmModal';
 import DocForm from '../components/DocForm';
 import DocView from '../components/DocView';
 import './index.css';
@@ -78,7 +79,7 @@ const PersonalKnowledge = () => {
 
   // 删除文档
   const handleDelete = async (doc: DocItem) => {
-    if (!confirm('确认要删除该文档吗？')) return;
+    if (!await confirm({ content: '确认要删除该文档吗？', type: 'danger' })) return;
     
     try {
       const res = await deletePersonalDoc(doc.id);

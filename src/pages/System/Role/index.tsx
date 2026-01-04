@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { getRoleList, createRole, updateRole, deleteRole, type Role } from '../../../services/system/role';
 import { openComponentWindow } from '../../../utils/window';
 import { toast } from '../../../components/AppNotification';
+import { confirm } from '../../../components/ConfirmModal';
 import './style.css';
 
 const RoleManagement = () => {
@@ -47,7 +48,7 @@ const RoleManagement = () => {
 
   const handleDelete = async (role: Role) => {
     if (role.level === 0) { toast.warning('超级管理员角色不能删除'); return; }
-    if (!confirm(`确定要删除角色 "${role.name}" 吗？`)) return;
+    if (!await confirm({ content: `确定要删除角色 "${role.name}" 吗？`, type: 'danger' })) return;
     try {
       const res = await deleteRole(role.id);
       if (res.code === 200) fetchRoles();

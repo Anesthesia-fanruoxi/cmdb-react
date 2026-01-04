@@ -8,6 +8,7 @@ import { getDocumentList, getDocumentDetail, deleteDocument, getDocProjects, Doc
 import { getDictDetail } from '../../../services/system/dict';
 import type { DictItem } from '../../../services/system/dict';
 import toast from '../../../components/Toast';
+import { confirm } from '../../../components/ConfirmModal';
 import DocForm from '../components/DocForm';
 import DocView from '../components/DocView';
 import UploadDialog from './components/UploadDialog';
@@ -99,7 +100,7 @@ const DocumentKnowledge = () => {
   };
 
   const handleDelete = async (doc: DocItem) => {
-    if (!confirm('确认要删除该文档吗？删除后可在回收站恢复')) return;
+    if (!await confirm({ content: '确认要删除该文档吗？删除后可在回收站恢复', type: 'danger' })) return;
     try {
       const res = await deleteDocument(doc.id);
       if (res.code === 200) {

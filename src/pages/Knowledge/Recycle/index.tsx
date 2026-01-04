@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { RefreshCw, RotateCcw, Trash2 } from 'lucide-react';
 import { getRecycleList, restoreDoc, removeDoc, RecycleDocItem } from '../../../services/knowledge';
 import toast from '../../../components/Toast';
+import { confirm } from '../../../components/ConfirmModal';
 import './index.css';
 
 type DocType = 'doc' | 'personal' | 'public';
@@ -32,7 +33,7 @@ const RecycleKnowledge = () => {
   useEffect(() => { fetchDocuments(); }, [docType]);
 
   const handleRestore = async (doc: RecycleDocItem) => {
-    if (!confirm('确定要恢复该文档吗？')) return;
+    if (!await confirm({ content: '确定要恢复该文档吗？', type: 'warning' })) return;
     try {
       const res = await restoreDoc({ id: doc.id, type: docType });
       if (res.code === 200) {
@@ -45,7 +46,7 @@ const RecycleKnowledge = () => {
   };
 
   const handleRemove = async (doc: RecycleDocItem) => {
-    if (!confirm('彻底删除后将无法恢复，是否继续？')) return;
+    if (!await confirm({ content: '彻底删除后将无法恢复，是否继续？', type: 'danger' })) return;
     try {
       const res = await removeDoc(doc.id, docType);
       if (res.code === 200) {

@@ -9,6 +9,7 @@ import {
 } from '../../../services/sql/apply';
 import { useAuthStore } from '../../../stores/authStore';
 import { toast } from '../../../components/AppNotification';
+import { confirm } from '../../../components/ConfirmModal';
 import SqlAnalysisDialog from './SqlAnalysisDialog';
 
 interface Props {
@@ -58,26 +59,26 @@ const ApplyDetailDrawer = ({ detail, onClose, onRefresh, onResubmit }: Props) =>
   };
 
   // 驳回
-  const handleReject = () => {
-    if (!confirm('确定要驳回该申请吗？')) return;
+  const handleReject = async () => {
+    if (!await confirm({ content: '确定要驳回该申请吗？', type: 'warning' })) return;
     doAction(0, '已驳回');
   };
 
   // 审批通过
-  const handleApprove = () => {
-    if (!confirm('确定要通过该申请吗？')) return;
+  const handleApprove = async () => {
+    if (!await confirm({ content: '确定要通过该申请吗？' })) return;
     doAction(1, '审批通过');
   };
 
   // 撤销
-  const handleCancel = () => {
-    if (!confirm('确定要撤销该申请吗？')) return;
+  const handleCancel = async () => {
+    if (!await confirm({ content: '确定要撤销该申请吗？', type: 'warning' })) return;
     doAction(0, '已撤销');
   };
 
   // 执行
   const handleExecute = async () => {
-    if (!confirm('确定要执行该SQL吗？')) return;
+    if (!await confirm({ content: '确定要执行该SQL吗？', type: 'danger' })) return;
     setExecuting(true);
     try {
       await doAction(1, '执行成功');

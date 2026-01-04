@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { getDeptList, deleteDept, type Dept } from '../../../services/system/dept';
 import { openComponentWindow } from '../../../utils/window';
 import { toast } from '../../../components/AppNotification';
+import { confirm } from '../../../components/ConfirmModal';
 import DraggableModal from '../../../components/DraggableModal';
 import DeptForm from './components/DeptForm';
 import './style.css';
@@ -61,7 +62,7 @@ const DeptManagement = () => {
 
   const handleDelete = async (dept: Dept) => {
     if (dept.children?.length) { toast.warning('该部门下有子部门，无法删除'); return; }
-    if (!confirm(`确定要删除部门 "${dept.name}" 吗？`)) return;
+    if (!await confirm({ content: `确定要删除部门 "${dept.name}" 吗？`, type: 'danger' })) return;
     try {
       const res = await deleteDept(dept.id);
       if (res.code === 200) fetchDepts();

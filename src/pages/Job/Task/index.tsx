@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Plus, RefreshCw, Loader2 } from 'lucide-react';
 import { getTaskList, deleteTask, updateTask, Task } from '../../../services/job/task';
 import toast from '../../../components/Toast';
+import { confirm } from '../../../components/ConfirmModal';
 import TaskForm from './components/TaskForm';
 import TaskBindDialog from './components/TaskBindDialog';
 import TaskDetailDialog from './components/TaskDetailDialog';
@@ -66,7 +67,7 @@ const TaskManagement = () => {
   };
 
   const handleDelete = async (task: Task) => {
-    if (!confirm(`确定要删除任务 "${task.name}" 吗？`)) return;
+    if (!await confirm({ content: `确定要删除任务 "${task.name}" 吗？`, type: 'danger' })) return;
     try {
       const res = await deleteTask(task.id);
       if (res.code === 200) { toast.success('删除成功'); fetchList(); }

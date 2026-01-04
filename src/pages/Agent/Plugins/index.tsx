@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Search, RefreshCw, Plus, Loader2 } from 'lucide-react';
 import { getPluginsList, createPlugin, updatePlugin, deletePlugin, PluginItem, PluginFormData } from '../../../services/agent/plugins';
 import toast from '../../../components/Toast';
+import { confirm } from '../../../components/ConfirmModal';
 import PluginFormDialog from './components/PluginFormDialog';
 import './index.css';
 
@@ -41,7 +42,7 @@ const AgentPlugins = () => {
   const handleEdit = (plugin: PluginItem) => { setEditingPlugin(plugin); setFormVisible(true); };
 
   const handleDelete = async (plugin: PluginItem) => {
-    if (!confirm(`确定要删除插件 ${plugin.display_name}（${plugin.name} v${plugin.version}）吗？`)) return;
+    if (!await confirm({ content: `确定要删除插件 ${plugin.display_name}（${plugin.name} v${plugin.version}）吗？`, type: 'danger' })) return;
     try {
       const res = await deletePlugin(plugin.id);
       if (res.code === 200) { toast.success('删除成功'); fetchPlugins(); }

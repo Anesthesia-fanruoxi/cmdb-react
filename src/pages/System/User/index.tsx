@@ -8,6 +8,7 @@ import { getRoleList, type Role } from '../../../services/system/role';
 import { getDeptList, type Dept } from '../../../services/system/dept';
 import { getUserInfo } from '../../../utils/storage';
 import { openComponentWindow } from '../../../utils/window';
+import { confirm } from '../../../components/ConfirmModal';
 import UserForm from './components/UserForm';
 import './style.css';
 
@@ -96,7 +97,7 @@ const UserManagement = () => {
 
   // 删除
   const handleDelete = async (user: User) => {
-    if (!confirm(`确定要删除用户 "${user.nick_name}" 吗？`)) return;
+    if (!await confirm({ content: `确定要删除用户 "${user.nick_name}" 吗？`, type: 'danger' })) return;
     try {
       const res = await deleteUser(user.id);
       if (res.code === 200) fetchUsers(pagination.page);

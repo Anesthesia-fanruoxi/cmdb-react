@@ -11,6 +11,7 @@ import {
 import { getDatabases } from '../../../services/sql/search';
 import { getUserInfo } from '../../../utils/storage';
 import { toast } from '../../../components/AppNotification';
+import { confirm } from '../../../components/ConfirmModal';
 
 interface Props {
   visible: boolean;
@@ -100,7 +101,13 @@ const ExportDetailDrawer = ({ visible, exportId, onClose, onRefresh }: Props) =>
 
   // 撤回申请
   const handleWithdraw = async () => {
-    if (!detail || !confirm('确定要撤回此导出申请吗？')) return;
+    if (!detail) return;
+    const confirmed = await confirm({
+      title: '撤回确认',
+      content: '确定要撤回此导出申请吗？',
+      type: 'warning'
+    });
+    if (!confirmed) return;
     try {
       setLoading(true);
       await updateExport({ id: detail.id, process_type: 0 });
@@ -156,7 +163,13 @@ const ExportDetailDrawer = ({ visible, exportId, onClose, onRefresh }: Props) =>
 
   // 审批拒绝
   const handleApproveReject = async () => {
-    if (!detail || !confirm('确定要拒绝此导出申请吗？')) return;
+    if (!detail) return;
+    const confirmed = await confirm({
+      title: '拒绝确认',
+      content: '确定要拒绝此导出申请吗？',
+      type: 'danger'
+    });
+    if (!confirmed) return;
     try {
       setLoading(true);
       await updateExport({ id: detail.id, process_type: 0 });
@@ -188,7 +201,13 @@ const ExportDetailDrawer = ({ visible, exportId, onClose, onRefresh }: Props) =>
 
   // 审核拒绝
   const handleReviewReject = async () => {
-    if (!detail || !confirm('确定审核不通过此申请吗？')) return;
+    if (!detail) return;
+    const confirmed = await confirm({
+      title: '审核确认',
+      content: '确定审核不通过此申请吗？',
+      type: 'danger'
+    });
+    if (!confirmed) return;
     try {
       setLoading(true);
       await updateExport({ id: detail.id, process_type: 0 });

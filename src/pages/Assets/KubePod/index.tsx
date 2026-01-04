@@ -7,6 +7,7 @@ import { RefreshCw, Server, Copy } from 'lucide-react';
 import { getKubePodProjects, getK8sList, operatePod } from '../../../services/assets/kubePod';
 import type { PodProject, PodStatus } from '../../../services/assets/kubePod';
 import toast from '../../../components/Toast';
+import { confirm } from '../../../components/ConfirmModal';
 import './index.css';
 
 const KubePodPage = () => {
@@ -85,7 +86,7 @@ const KubePodPage = () => {
     const replicas = action === 'start' ? 1 : 0;
     const actionText = action === 'start' ? '启动' : '停止';
     
-    if (!confirm(`确定要${actionText}服务 ${row.namespace} 吗？`)) return;
+    if (!await confirm({ content: `确定要${actionText}服务 ${row.namespace} 吗？`, type: 'warning' })) return;
     
     setActionLoading(prev => ({ ...prev, [key]: true }));
     try {

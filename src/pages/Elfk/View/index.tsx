@@ -5,6 +5,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getViewList, deleteView, getElfkViewProjects } from '../../../services/elfk/view';
 import { getDictDetail } from '../../../services/system/dict';
+import { confirm } from '../../../components/ConfirmModal';
 import type { ViewListItem } from '../../../services/elfk/view';
 import ViewForm from './components/ViewForm';
 import ViewDetail from './components/ViewDetail';
@@ -147,7 +148,7 @@ const ElfkView = () => {
 
   // 删除
   const handleDelete = async (view: ViewListItem) => {
-    if (!confirm(`确定要删除视图「${view.name}」吗？`)) return;
+    if (!await confirm({ content: `确定要删除视图「${view.name}」吗？`, type: 'danger' })) return;
     try {
       const res = await deleteView(view.id);
       if (res.code === 200) {

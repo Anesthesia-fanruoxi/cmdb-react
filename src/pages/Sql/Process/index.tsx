@@ -9,6 +9,7 @@ import {
 } from '../../../services/sql/process';
 import { getDictDetail } from '../../../services/system/dict';
 import { toast } from '../../../components/AppNotification';
+import { confirm } from '../../../components/ConfirmModal';
 import './style.css';
 
 interface ProjectOption {
@@ -111,7 +112,7 @@ const SqlProcess = () => {
 
   // 删除流程
   const handleDelete = async (row: ProcessItem) => {
-    if (!confirm(`确定要删除该流程吗？`)) return;
+    if (!await confirm({ content: `确定要删除该流程吗？`, type: 'danger' })) return;
     try {
       const res = await deleteProcess(row.id);
       if (res.code === 200) {

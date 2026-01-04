@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { getProjectList, deleteProject, quickUpdateProject, type Project } from '../../../services/system/project';
+import { confirm } from '../../../components/ConfirmModal';
 import ProjectForm from './components/ProjectForm';
 import './style.css';
 
@@ -48,7 +49,7 @@ const ProjectManagement = () => {
 
   // 删除
   const handleDelete = async (row: Project) => {
-    if (!confirm(`确定要删除项目 "${row.project_name}" 吗？`)) return;
+    if (!await confirm({ content: `确定要删除项目 "${row.project_name}" 吗？`, type: 'danger' })) return;
     // 乐观更新：先从列表移除
     setProjects(prev => prev.filter(p => p.project !== row.project));
     try {

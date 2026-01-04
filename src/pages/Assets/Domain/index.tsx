@@ -7,6 +7,7 @@ import { Search, Plus, RefreshCw, FileText } from 'lucide-react';
 import { getDomainList, addDomain, updateDomain, updateDomainStatus, deleteDomain } from '../../../services/assets/domain';
 import type { DomainRecord, DomainFormData } from '../../../services/assets/domain';
 import toast from '../../../components/Toast';
+import { confirm } from '../../../components/ConfirmModal';
 import './index.css';
 
 const typeOptions = [
@@ -96,7 +97,7 @@ const DomainPage = () => {
   const handleToggleStatus = async (row: DomainRecord) => {
     const newStatus = row.status === 'ENABLE' ? 'Disable' : 'Enable';
     const actionText = newStatus === 'Enable' ? '启用' : '停用';
-    if (!confirm(`确定要${actionText}该域名记录吗？`)) return;
+    if (!await confirm({ content: `确定要${actionText}该域名记录吗？`, type: 'warning' })) return;
     try {
       const res = await updateDomainStatus({ record_id: row.recordId, status: newStatus });
       if (res.code === 200) { toast.success(`${actionText}成功`); fetchList(); }
@@ -105,7 +106,7 @@ const DomainPage = () => {
   };
 
   const handleDelete = async (row: DomainRecord) => {
-    if (!confirm('确定要删除该域名记录吗？')) return;
+    if (!await confirm({ content: '确定要删除该域名记录吗？', type: 'danger' })) return;
     try {
       const res = await deleteDomain({ record_id: row.recordId });
       if (res.code === 200) { toast.success('删除成功'); fetchList(); }

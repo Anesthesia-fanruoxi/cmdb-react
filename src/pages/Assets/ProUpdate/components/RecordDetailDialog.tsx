@@ -7,6 +7,7 @@ import { X, Loader2, Square, FileText } from 'lucide-react';
 import { cancelTask } from '../../../../services/assets/proUpdate';
 import type { ReleaseRecord } from '../../../../services/assets/proUpdate';
 import LogViewerDialog from './LogViewerDialog';
+import { confirm } from '../../../../components/ConfirmModal';
 
 interface StepDetail {
   step: number;
@@ -99,7 +100,14 @@ const RecordDetailDialog = ({ visible, record, projectDetail, onClose, onRefresh
   const handleCancel = async () => {
     if (!detail) return;
     const taskId = detail.task_id || String(detail.id);
-    if (!taskId || !confirm('确定要停止当前任务吗？')) return;
+    if (!taskId) return;
+    
+    const confirmed = await confirm({
+      title: '停止任务',
+      content: '确定要停止当前任务吗？',
+      type: 'danger'
+    });
+    if (!confirmed) return;
 
     setCancelLoading(true);
     try {

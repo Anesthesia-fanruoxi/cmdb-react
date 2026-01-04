@@ -9,6 +9,7 @@ import type { DictItem } from '../../../services/system/dict';
 import MarkdownView from '../../../components/Markdown';
 import DocTocNav from './DocTocNav';
 import toast from '../../../components/Toast';
+import { confirm } from '../../../components/ConfirmModal';
 import './DocView.css';
 
 interface DocViewProps {
@@ -51,7 +52,7 @@ const DocView = ({ doc, onEdit, onRefresh, onShare, categoryOptions = [], showHe
   };
 
   const handleRestore = async (item: DocHistoryItem) => {
-    if (!confirm('确定要恢复到该版本吗？')) return;
+    if (!await confirm({ content: '确定要恢复到该版本吗？', type: 'warning' })) return;
     try {
       const res = await restoreDocumentHistory(item.id);
       if (res.code === 200) { toast.success('恢复成功'); setShowHistory(false); onRefresh?.(); }

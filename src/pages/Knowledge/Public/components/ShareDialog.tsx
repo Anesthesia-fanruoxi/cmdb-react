@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { X, Copy } from 'lucide-react';
 import { sharePublicDoc, closePublicShare, DocItem } from '../../../../services/knowledge';
 import toast from '../../../../components/Toast';
+import { confirm } from '../../../../components/ConfirmModal';
 
 interface Props {
   visible: boolean;
@@ -57,7 +58,13 @@ const ShareDialog = ({ visible, doc, onClose, onSuccess }: Props) => {
   };
 
   const handleCloseShare = async () => {
-    if (!shareInfo?.share_code || !confirm('确定要取消分享吗？')) return;
+    if (!shareInfo?.share_code) return;
+    const confirmed = await confirm({
+      title: '取消分享',
+      content: '确定要取消分享吗？',
+      type: 'warning'
+    });
+    if (!confirmed) return;
     setLoading(true);
     try {
       const res = await closePublicShare(shareInfo.share_code);

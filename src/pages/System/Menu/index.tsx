@@ -5,6 +5,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getMenuTree, createMenu, updateMenu, deleteMenu } from '../../../services/system/menu';
 import { toast } from '../../../components/AppNotification';
+import { confirm } from '../../../components/ConfirmModal';
 import type { MenuItem, CreateMenuRequest } from '../../../types/menu';
 import Icon from '../../../components/Icon';
 import IconSelect from '../../../components/IconSelect';
@@ -123,7 +124,7 @@ const MenuManagement = () => {
       toast.warning('该菜单下有子菜单，无法删除');
       return;
     }
-    if (!confirm(`确定要删除菜单 "${menu.meta?.title || menu.name}" 吗？`)) return;
+    if (!await confirm({ content: `确定要删除菜单 "${menu.meta?.title || menu.name}" 吗？`, type: 'danger' })) return;
     try {
       const res = await deleteMenu(menu.id!);
       if (res.code === 200) fetchMenus();
