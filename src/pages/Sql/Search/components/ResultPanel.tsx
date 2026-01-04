@@ -14,6 +14,8 @@ interface Props {
   total: number;
   took: number;
   loading: boolean;
+  isExecuting?: boolean;
+  elapsedTime?: number;
   dbName?: string;
   allResults?: ResultSet[];
   currentResultIndex?: number;
@@ -59,25 +61,8 @@ const copyCellValue = async (value: unknown) => {
   }
 };
 
-interface Props {
-  columns: string[];
-  results: unknown[][];
-  total: number;
-  took: number;
-  loading: boolean;
-  dbName?: string;
-  allResults?: ResultSet[];
-  currentResultIndex?: number;
-  onResultChange?: (index: number) => void;
-  currentPage?: number;
-  onPageChange?: (page: number, size: number) => void;
-  exportLoading?: boolean;
-  onExport?: () => void;
-  queryId?: string;
-}
-
 const ResultPanel = ({
-  columns, results, total, took, loading, dbName,
+  columns, results, total, took, loading, isExecuting = false, elapsedTime = 0, dbName,
   allResults = [], currentResultIndex = 0, onResultChange,
   currentPage: externalPage, onPageChange,
   exportLoading = false, onExport, queryId
@@ -148,8 +133,12 @@ const ResultPanel = ({
       <div className="result-header">
         <div className="header-left">
           <span className="header-title">
-            {hasResults ? '查询结果' : '暂无结果'}
+            {isExecuting ? '执行中' : hasResults ? '查询结果' : '暂无结果'}
           </span>
+          {/* 计时器：执行中实时更新，执行结束后定格 */}
+          {(isExecuting || elapsedTime > 0) && (
+            <span className="elapsed-timer">{elapsedTime.toFixed(1)}s</span>
+          )}
           {showResultSelector && (
             <div className="result-selector">
               {allResults.map((rs, idx) => (

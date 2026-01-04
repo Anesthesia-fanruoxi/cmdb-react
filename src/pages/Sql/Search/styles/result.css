@@ -23,6 +23,12 @@
 
 .result-header .header-left { display: flex; align-items: center; gap: 12px; }
 .result-header .header-title { font-size: 13px; font-weight: 500; color: var(--text-color); }
+.result-header .elapsed-timer {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary-color);
+}
 .result-header .header-right { display: flex; align-items: center; gap: 8px; }
 
 .result-selector { display: flex; gap: 4px; }

@@ -14,7 +14,7 @@ import TableTree from './components/TableTree';
 import SqlWorkspace from './components/SqlWorkspace';
 import DraggableTabs from './components/DraggableTabs';
 import ShortcutSettings from './components/ShortcutSettings';
-import SqlHistoryPanel, { saveSqlLocalHistory } from './components/SqlHistoryPanel';
+import SqlHistoryPanel from './components/SqlHistoryPanel';
 import SaveSqlSharedDialog from './components/SaveSqlSharedDialog';
 import { handleQueryData } from './utils/handleQueryData';
 import './styles/index.css';
@@ -355,9 +355,6 @@ const SqlSearch = () => {
       return;
     }
 
-    // 保存到本地历史
-    saveSqlLocalHistory(sql.trim(), tabProject, tabDbName);
-
     updateTab(activeTabId, { 
       queryLoading: true, 
       results: [], 
@@ -697,12 +694,11 @@ const SqlSearch = () => {
 
       <ShortcutSettings visible={settingsVisible} onClose={() => setSettingsVisible(false)} />
 
-      {/* SQL 历史记录面板（本地+共享） */}
+      {/* SQL 历史记录面板（个人+共享） */}
       <SqlHistoryPanel
         visible={sqlHistoryPanelVisible}
         project={currentTab.project}
         projectName={projects.find(p => p.value === currentTab.project)?.label || currentTab.project}
-        dbName={currentTab.dbName}
         onClose={() => setSqlHistoryPanelVisible(false)}
         onSelect={(sql) => { updateTab(activeTabId, { sqlQuery: sql }); setSqlHistoryPanelVisible(false); }}
         onAppend={(sql) => { updateTab(activeTabId, { sqlQuery: currentTab.sqlQuery ? `${currentTab.sqlQuery}\n\n${sql}` : sql }); setSqlHistoryPanelVisible(false); }}

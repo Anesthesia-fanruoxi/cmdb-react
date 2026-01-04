@@ -27,6 +27,14 @@ export interface Message {
   content: string;
 }
 
+/** 格式化执行时间 */
+const formatElapsedTime = (seconds: number): string => {
+  if (seconds < 60) return `${seconds}秒`;
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return secs > 0 ? `${mins}分${secs}秒` : `${mins}分钟`;
+};
+
 interface Props {
   sql: string;
   onSqlChange: (sql: string) => void;
@@ -87,6 +95,33 @@ const SqlWorkspace = ({
   const [editorHeight, setEditorHeight] = useState(200);
   // 是否正在拖动
   const [isDragging, setIsDragging] = useState(false);
+  // 执行计时器
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [isExecuting, setIsExecuting] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // 执行计时（0.1秒更新一次），只在执行查询时计时，翻页不计时
+  useEffect(() => {
+    if (isExecuting) {
+      setElapsedTime(0);
+      timerRef.current = setInterval(() => {
+        setElapsedTime(t => t + 0.1);
+      }, 100);
+    }
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [isExecuting]);
+
+  // 当 loading 结束且正在执行时，停止计时
+  useEffect(() => {
+    if (!loading && isExecuting) {
+      setIsExecuting(false);
+    }
+  }, [loading, isExecuting]);
 
   // hydration 完成后同步高度
   useEffect(() => {
@@ -150,6 +185,7 @@ const SqlWorkspace = ({
     const selectedText = sqlEditorRef.current?.getSelectedText()?.trim();
     const isSelection = !!selectedText;
     const sqlToExecute = selectedText || sql;
+    setIsExecuting(true);  // 开始执行，启动计时器
     onExecute(sqlToExecute, isSelection);
   }, [sql, onExecute]);
 
@@ -289,6 +325,8 @@ const SqlWorkspace = ({
         total={total}
         took={took}
         loading={loading}
+        isExecuting={isExecuting}
+        elapsedTime={elapsedTime}
         dbName={dbName}
         allResults={allResults}
         currentResultIndex={currentResultIndex}

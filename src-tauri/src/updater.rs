@@ -156,9 +156,6 @@ pub async fn check_github_update(app: AppHandle, owner: String, repo: String, to
     
     let result = async {
         let url = format!("https://api.github.com/repos/{}/{}/releases/latest", owner, repo);
-        eprintln!("[更新检查] URL: {}", url);
-        eprintln!("[更新检查] Token: {}", if token.is_some() { "已配置" } else { "未配置" });
-        
         let client = reqwest::Client::builder()
             .timeout(Duration::from_secs(15))
             .user_agent("CMDB-Desktop-Updater")
@@ -175,8 +172,6 @@ pub async fn check_github_update(app: AppHandle, owner: String, repo: String, to
             .await
             .map_err(|e| format!("请求 GitHub 失败: {}", e))?;
         
-        eprintln!("[更新检查] 响应状态: {}", resp.status());
-        
         if resp.status() == 404 {
             emit_status(&app, UpdateStatus::NotAvailable);
             return Ok(None);
@@ -191,15 +186,12 @@ pub async fn check_github_update(app: AppHandle, owner: String, repo: String, to
             .map_err(|e| format!("解析 Release 信息失败: {}", e))?;
         
         let current = get_current_version();
-        eprintln!("[更新检查] 本地版本: {}, 远程版本: {}", current, release.tag_name);
         
         if !is_newer_version(&current, &release.tag_name) {
             eprintln!("[更新检查] 无需更新");
             emit_status(&app, UpdateStatus::NotAvailable);
             return Ok(None);
         }
-        
-        eprintln!("[更新检查] 发现新版本!");
         
         // 从 assets 中匹配各平台安装包
         let find_asset = |keyword: &str| -> Option<PlatformAsset> {
