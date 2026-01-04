@@ -56,7 +56,6 @@ const UpdateNotification = () => {
   };
 
   const handleClose = () => {
-    if (versionInfo?.mandatory) return; // 强制更新不能关闭
     setVisible(false);
   };
 
@@ -67,9 +66,7 @@ const UpdateNotification = () => {
       <div className="update-notification">
         <div className="update-header">
           <h3>🎉 发现新版本</h3>
-          {!versionInfo?.mandatory && (
-            <button className="close-btn" onClick={handleClose}>×</button>
-          )}
+          <button className="close-btn" onClick={handleClose}>×</button>
         </div>
 
         <div className="update-body">
@@ -122,9 +119,7 @@ const UpdateNotification = () => {
         <div className="update-footer">
           {status.type === 'Available' && (
             <>
-              {!versionInfo?.mandatory && (
-                <button className="btn-later" onClick={handleClose}>稍后提醒</button>
-              )}
+              <button className="btn-later" onClick={handleClose}>稍后提醒</button>
               <button className="btn-download" onClick={handleDownload}>
                 立即下载
               </button>

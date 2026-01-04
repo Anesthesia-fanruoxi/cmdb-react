@@ -120,12 +120,21 @@ jobs:
           path: artifacts
           merge-multiple: true
 
+      - name: Upload to server via HTTP
+        run: |
+          for file in artifacts/*; do
+            echo "Uploading $file..."
+            curl -X POST -F "file=@$file" https://api.hzbxhd.com/api/app/upload
+          done
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           draft: false
           files: artifacts/*
           body: |
+            ## v1.0.4 更新说明
+            - 优化更新逻辑
             ## v1.0.3 更新说明
             - ES 搜索框修复
             ## v1.0.2更新说明

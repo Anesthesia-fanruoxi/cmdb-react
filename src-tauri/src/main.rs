@@ -45,7 +45,6 @@ fn main() {
             clear_device_credentials,
             has_device_credentials,
             export_elfk_logs,
-            updater::check_update,
             updater::check_github_update,
             updater::download_update,
             updater::install_update,

@@ -11,23 +11,11 @@ const GITHUB_REPO = 'cmdb-react';
 // GitHub Personal Access Token（只读权限，用于私有仓库和提高 API 限额）
 const GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN || '';
 
-/** 平台资源 */
-export interface PlatformAsset {
-  url: string;
-  api_url: string;
-  size: number;
-  sha256: string;
-}
-
 /** 版本信息 */
 export interface VersionInfo {
   version: string;
   release_date: string;
   changelog: string;
-  mandatory: boolean;
-  windows?: PlatformAsset;
-  macos_intel?: PlatformAsset;
-  macos_arm?: PlatformAsset;
 }
 
 /** 更新状态 */
@@ -61,7 +49,7 @@ export const checkUpdate = (): Promise<VersionInfo | null> => {
 
 /** 下载更新 */
 export const downloadUpdate = (info: VersionInfo): Promise<string> => {
-  return invoke('download_update', { info, token: GITHUB_TOKEN || null });
+  return invoke('download_update', { info });
 };
 
 /** 安装更新 */
