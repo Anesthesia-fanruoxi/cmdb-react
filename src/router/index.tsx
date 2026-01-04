@@ -5,8 +5,6 @@
 
 import { createBrowserRouter } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
-import Login from '../pages/Login';
-import Home from '../pages/Home';
 import AuthGuard from './AuthGuard';
 
 // 懒加载组件包装器
@@ -18,6 +16,10 @@ const LazyComponent = ({ component: Component }: { component: React.LazyExoticCo
 
 // 动态导入页面组件
 const pageModules = import.meta.glob('../pages/**/index.tsx');
+
+// 懒加载 Login 和 Home
+const Login = lazy(() => import('../pages/Login'));
+const Home = lazy(() => import('../pages/Home'));
 
 // 强制双因子认证页面（独立页面，不在主布局内）
 const ForceTwoFactor = lazy(() => import('../pages/ForceTwoFactor'));
@@ -51,7 +53,7 @@ export const createAppRouter = (isAuthenticated: boolean) => {
   return createBrowserRouter([
     {
       path: '/login',
-      element: <Login />,
+      element: <LazyComponent component={Login} />,
     },
     {
       path: '/force-two-factor',
@@ -65,7 +67,7 @@ export const createAppRouter = (isAuthenticated: boolean) => {
       path: '/*',
       element: (
         <AuthGuard isAuthenticated={isAuthenticated}>
-          <Home />
+          <LazyComponent component={Home} />
         </AuthGuard>
       ),
     },

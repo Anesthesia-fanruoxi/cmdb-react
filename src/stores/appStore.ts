@@ -4,6 +4,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { invoke } from '@tauri-apps/api/core';
 import type { SystemSetting } from '../types/system';
 import { getSystemSetting } from '../services/system';
 
@@ -104,9 +105,7 @@ export const useAppStore = create<AppState>()(
         }
         
         // 更新所有窗口标题栏主题
-        import('@tauri-apps/api/core').then(({ invoke }) => {
-          invoke('set_window_theme', { dark: theme === 'dark' }).catch(() => {});
-        }).catch(() => {});
+        invoke('set_window_theme', { dark: theme === 'dark' }).catch(() => {});
       },
 
       // 切换主题
@@ -126,9 +125,7 @@ export const useAppStore = create<AppState>()(
         }
         
         // 更新窗口标题栏主题
-        import('@tauri-apps/api/core').then(({ invoke }) => {
-          invoke('set_window_theme', { dark: theme === 'dark' }).catch(() => {});
-        }).catch(() => {});
+        invoke('set_window_theme', { dark: theme === 'dark' }).catch(() => {});
       },
 
       // 设置加载状态

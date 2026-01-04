@@ -25,7 +25,7 @@ const formatBytes = (bytes: number): string => {
 
 const SystemInfoPage = () => {
   const { initTheme } = useAppStore();
-  const { hasUpdate, versionInfo: storeVersionInfo, checkForUpdate, clearUpdate } = useUpdateStore();
+  const { hasUpdate, versionInfo: storeVersionInfo, checkForUpdate } = useUpdateStore();
   const [sysInfo, setSysInfo] = useState<SystemInfo | null>(null);
   const [newVersion, setNewVersion] = useState<VersionInfo | null>(null);
   const [showUpdateDialog, setShowUpdateDialog] = useState(false);

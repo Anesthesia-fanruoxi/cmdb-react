@@ -24,6 +24,7 @@ import { initSecurity } from './utils/security';
 import { cleanupLegacyStorage, encryptedStorage } from './utils/persistStorage';
 import { StatusModalContainer } from './components/StatusModal';
 import { startAutoCheck } from './services/updater';
+import { useUpdateStore } from './stores/updateStore';
 import { isTauriEnv } from './services/machine';
 import './App.css';
 
@@ -152,7 +153,7 @@ function App() {
       
       // Tauri 环境下启动自动更新检查
       if (isTauriEnv()) {
-        startAutoCheck(5); // 5分钟检查一次
+        startAutoCheck(5, () => useUpdateStore.getState().checkForUpdate());
       }
       
       // 等待存储初始化完成
