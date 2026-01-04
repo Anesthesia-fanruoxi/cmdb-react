@@ -6,7 +6,7 @@
 import { StateStorage } from 'zustand/middleware'
 import { invoke } from '@tauri-apps/api/core'
 import { load, Store } from '@tauri-apps/plugin-store'
-import { getUserName } from './storage'
+import { getUserName, waitForStorageInit } from './storage'
 
 const STORE_FILE = 'app-state.dat'
 let storeInstance: Store | null = null
@@ -40,16 +40,17 @@ async function decryptData(encrypted: string): Promise<string> {
 }
 
 /**
- * 获取带用户名前缀的存储 key
+ * 获取带用户名前缀的存储 key（异步版本）
  * 格式: {userName}:{originalKey}
  * 如果没有用户名，返回 null（不读取/保存）
  */
-function getUserKey(name: string): string | null {
+async function getUserKeyAsync(name: string): Promise<string | null> {
+  // 等待 storage 初始化完成
+  await waitForStorageInit()
   const userName = getUserName()
   if (userName) {
     return `${userName}:${name}`
   }
-  // 没有用户名时不操作存储
   return null
 }
 /**
@@ -58,7 +59,7 @@ function getUserKey(name: string): string | null {
 export const encryptedStorage: StateStorage = {
   getItem: async (name: string): Promise<string | null> => {
     try {
-      const userKey = getUserKey(name)
+      const userKey = await getUserKeyAsync(name)
       if (!userKey) return null
       
       if (isTauriEnv()) {
@@ -80,7 +81,7 @@ export const encryptedStorage: StateStorage = {
 
   setItem: async (name: string, value: string): Promise<void> => {
     try {
-      const userKey = getUserKey(name)
+      const userKey = await getUserKeyAsync(name)
       if (!userKey) return
       
       const encrypted = await encryptData(value)
@@ -100,7 +101,7 @@ export const encryptedStorage: StateStorage = {
 
   removeItem: async (name: string): Promise<void> => {
     try {
-      const userKey = getUserKey(name)
+      const userKey = await getUserKeyAsync(name)
       if (!userKey) return
       
       if (isTauriEnv()) {

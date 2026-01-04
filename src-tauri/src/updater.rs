@@ -209,6 +209,7 @@ pub async fn install_update(app: AppHandle, file_path: String) -> Result<(), Str
         let script = format!(
             r#"@echo off
 msiexec /i "{}" /passive /norestart
+timeout /t 2 /nobreak >nul
 start "" "{}"
 "#,
             file_path, exe_path
@@ -223,7 +224,8 @@ start "" "{}"
             .spawn()
             .map_err(|e| format!("启动安装程序失败: {}", e))?;
         
-        std::process::exit(0);
+        // 优雅退出，让前端有机会保存状态
+        app.exit(0);
     }
     
     #[cfg(target_os = "macos")]

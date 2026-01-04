@@ -133,6 +133,8 @@ jobs:
           draft: false
           files: artifacts/*
           body: |
+            ## v1.0.5 更新说明
+            - 修复更新后内容丢失问题
             ## v1.0.4 更新说明
             - 优化更新逻辑
             ## v1.0.3 更新说明

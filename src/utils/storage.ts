@@ -27,6 +27,20 @@ const memoryCache: Map<string, string> = new Map();
 // 是否已初始化
 let isInitialized = false;
 
+// 初始化完成的 Promise（供外部等待）
+let initPromiseResolve: (() => void) | null = null;
+const initPromise = new Promise<void>((resolve) => {
+  initPromiseResolve = resolve;
+});
+
+/**
+ * 等待存储初始化完成
+ */
+export function waitForStorageInit(): Promise<void> {
+  if (isInitialized) return Promise.resolve();
+  return initPromise;
+}
+
 /**
  * 检测是否在 Tauri 环境中运行
  */
@@ -105,6 +119,10 @@ export async function initStorage(): Promise<void> {
   }
 
   isInitialized = true;
+  // 通知等待者初始化完成
+  if (initPromiseResolve) {
+    initPromiseResolve();
+  }
 }
 
 /**
