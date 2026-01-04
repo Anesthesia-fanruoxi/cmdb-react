@@ -23,12 +23,12 @@ jobs:
           - platform: windows-latest
             target: x86_64-pc-windows-msvc
             name: windows-x64
-          - platform: macos-latest
-            target: x86_64-apple-darwin
-            name: macos-intel
-          - platform: macos-latest
-            target: aarch64-apple-darwin
-            name: macos-arm64
+          # - platform: macos-latest
+          #   target: x86_64-apple-darwin
+          #   name: macos-intel
+          # - platform: macos-latest
+          #   target: aarch64-apple-darwin
+          #   name: macos-arm64
 
     runs-on: ${{ matrix.platform == 'windows-latest' && 'self-hosted' || matrix.platform }}
     
@@ -47,7 +47,7 @@ jobs:
           $VERSION_NUM = $VERSION -replace '^v', ''
           echo "version=$VERSION" >> $env:GITHUB_OUTPUT
           echo "version_num=$VERSION_NUM" >> $env:GITHUB_OUTPUT
-        shell: pwsh
+        shell: powershell
 
       - name: Update version in files
         run: |
@@ -55,17 +55,7 @@ jobs:
           (Get-Content src-tauri/Cargo.toml) -replace '^version = ".*"', "version = `"${{ steps.version.outputs.version_num }}`"" | Set-Content src-tauri/Cargo.toml
           (Get-Content src-tauri/tauri.conf.json) -replace '"version": ".*"', "`"version`": `"${{ steps.version.outputs.version_num }}`"" | Set-Content src-tauri/tauri.conf.json
           (Get-Content package.json) -replace '"version": ".*"', "`"version`": `"${{ steps.version.outputs.version_num }}`"" | Set-Content package.json
-        shell: pwsh
-        if: matrix.platform == 'windows-latest'
-
-      - name: Update version in files (Unix)
-        run: |
-          sed -i.bak "s/VITE_APP_VERSION=.*/VITE_APP_VERSION=${{ steps.version.outputs.version }}/" .env || true
-          sed -i.bak 's/^version = ".*"/version = "${{ steps.version.outputs.version_num }}"/' src-tauri/Cargo.toml
-          sed -i.bak 's/"version": ".*"/"version": "${{ steps.version.outputs.version_num }}"/' src-tauri/tauri.conf.json
-          sed -i.bak 's/"version": ".*"/"version": "${{ steps.version.outputs.version_num }}"/' package.json
-        shell: bash
-        if: matrix.platform != 'windows-latest'
+        shell: powershell
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -107,13 +97,13 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path release
           Get-ChildItem -Path "src-tauri/target/${{ matrix.target }}/release/bundle" -Recurse -Filter "*.msi" | Copy-Item -Destination "release/CMDB-Desktop-${{ matrix.name }}.msi"
-        shell: pwsh
+        shell: powershell
 
-      - name: Prepare macOS artifacts
-        if: matrix.platform == 'macos-latest'
-        run: |
-          mkdir -p release
-          find src-tauri/target/${{ matrix.target }}/release/bundle -name "*.dmg" -type f -exec cp {} "release/CMDB-Desktop-${{ matrix.name }}.dmg" \;
+      # - name: Prepare macOS artifacts
+      #   if: matrix.platform == 'macos-latest'
+      #   run: |
+      #     mkdir -p release
+      #     find src-tauri/target/${{ matrix.target }}/release/bundle -name "*.dmg" -type f -exec cp {} "release/CMDB-Desktop-${{ matrix.name }}.dmg" \;
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
