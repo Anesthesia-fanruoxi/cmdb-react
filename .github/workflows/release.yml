@@ -126,10 +126,15 @@ jobs:
           draft: false
           files: artifacts/*
           body: |
+            ## v1.0.3 更新说明
+            - ES 搜索框修复
             ## v1.0.2更新说明
             - SQL 修复个人记录不显示问题
             - SQL 修复共享记录逻辑显示问题
             - SQL 查询执行时显示实时计时器
+            ## v1.0.1更新说明
+            - SQL 查询结果支持复制列数据
+            - SQL 查询结果支持双击单元格复制值
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

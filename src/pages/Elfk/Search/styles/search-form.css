@@ -21,23 +21,14 @@
   color: var(--text-color, #333);
 }
 
-.search-input:focus-within {
+.search-form-bar .search-input:focus-within {
   border-color: var(--primary-color, #1890ff);
 }
 
-.search-icon {
+.search-form-bar .search-icon {
   margin-right: 8px;
   font-size: 14px;
   color: var(--text-secondary, #999);
-}
-
-.search-input input {
-  flex: 1;
-  border: none;
-  outline: none;
-  font-size: 13px;
-  background: transparent;
-  color: var(--text-color, #333);
 }
 
 .form-btns {
@@ -249,13 +240,13 @@
 
 
 /* 搜索历史下拉 */
-.search-input-wrapper {
+.search-form-bar .search-input-wrapper {
   position: relative;
   flex: 1;
   min-width: 200px;
 }
 
-.search-input {
+.search-form-bar .search-input {
   display: flex;
   align-items: center;
   height: 32px;
@@ -263,18 +254,28 @@
   border-radius: 6px;
   background: var(--bg-color, #fff);
   padding: 0 10px;
+  width: 100%;
 }
 
-.search-icon {
+.search-form-bar .search-icon {
   cursor: pointer;
   transition: color 0.2s;
 }
 
-.search-icon:hover {
+.search-form-bar .search-icon:hover {
   color: var(--primary-color, #1890ff);
 }
 
-.search-history-dropdown {
+.search-form-bar .search-input input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 13px;
+  background: transparent;
+  color: var(--text-color, #333);
+}
+
+.search-form-bar .search-history-dropdown {
   position: absolute;
   top: 100%;
   left: 0;
