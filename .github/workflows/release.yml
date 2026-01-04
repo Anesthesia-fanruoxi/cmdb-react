@@ -10,6 +10,11 @@ permissions:
   contents: write
   actions: write
 
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  RUSTUP_MAX_RETRIES: 10
+
 jobs:
   build:
     strategy:
@@ -26,7 +31,7 @@ jobs:
             target: aarch64-apple-darwin
             name: macos-arm64
 
-    runs-on: ${{ matrix.platform }}
+    runs-on: ${{ matrix.platform == 'windows-latest' && 'self-hosted' || matrix.platform }}
     
     steps:
       - name: Checkout
@@ -59,6 +64,12 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      # Windows: 禁用 Defender 实时扫描（加速编译）
+      - name: Disable Windows Defender
+        if: matrix.platform == 'windows-latest'
+        run: Set-MpPreference -DisableRealtimeMonitoring $true
+        shell: powershell
+
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -68,10 +79,9 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
-          # 只缓存依赖，不缓存构建产物（减少缓存大小）
-          cache-targets: false
-          # 使用更快的缓存 key
           shared-key: ${{ matrix.target }}
+          # 缓存依赖编译结果
+          cache-on-failure: true
 
       - name: Install dependencies
         run: npm ci
@@ -133,19 +143,8 @@ jobs:
           draft: false
           files: artifacts/*
           body: |
-            ## v1.0.5 更新说明
-            - 修复更新后内容丢失问题
-            ## v1.0.4 更新说明
-            - 优化更新逻辑
-            ## v1.0.3 更新说明
-            - ES 搜索框修复
-            ## v1.0.2更新说明
-            - SQL 修复个人记录不显示问题
-            - SQL 修复共享记录逻辑显示问题
-            - SQL 查询执行时显示实时计时器
-            ## v1.0.1更新说明
-            - SQL 查询结果支持复制列数据
-            - SQL 查询结果支持双击单元格复制值
+            ## v1.0.6 更新说明
+            - 修复更新后页面状态丢失问题（优雅退出+时序修复）
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
