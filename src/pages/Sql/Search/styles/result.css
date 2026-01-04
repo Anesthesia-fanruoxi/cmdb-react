@@ -147,3 +147,42 @@
 }
 
 .result-pagination .page-size-select:focus { outline: none; border-color: var(--primary-color); }
+
+
+/* 列头复制按钮 */
+.column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.copy-col-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  opacity: 0.5;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: all 0.15s;
+}
+
+.copy-col-btn:hover {
+  opacity: 1;
+  background: var(--bg-hover);
+}
+
+/* 可复制单元格 */
+.cell-copyable {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.cell-copyable:hover {
+  background: var(--bg-hover);
+}
+
+.cell-copyable:active {
+  background: var(--primary-color-light, rgba(24, 144, 255, 0.1));
+}

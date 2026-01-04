@@ -68,6 +68,10 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
+          # 只缓存依赖，不缓存构建产物（减少缓存大小）
+          cache-targets: false
+          # 使用更快的缓存 key
+          shared-key: ${{ matrix.target }}
 
       - name: Install dependencies
         run: npm ci
@@ -122,7 +126,9 @@ jobs:
           draft: false
           files: artifacts/*
           body: |
-            性能优化与问题修复
+            ## v1.0.1 更新说明
+            - SQL 查询结果支持复制列数据（点击列头 📋 按钮）
+            - SQL 查询结果支持双击单元格复制值
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

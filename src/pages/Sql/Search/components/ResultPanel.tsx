@@ -5,7 +5,59 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useAuthStore } from '../../../../stores/authStore';
+import toast from '../../../../components/Toast';
 import type { ResultSet } from './SqlWorkspace';
+
+interface Props {
+  columns: string[];
+  results: unknown[][];
+  total: number;
+  took: number;
+  loading: boolean;
+  dbName?: string;
+  allResults?: ResultSet[];
+  currentResultIndex?: number;
+  onResultChange?: (index: number) => void;
+  currentPage?: number;
+  onPageChange?: (page: number, size: number) => void;
+  exportLoading?: boolean;
+  onExport?: () => void;
+  queryId?: string;
+}
+
+/** 格式化单元格值用于复制 */
+const formatValueForCopy = (value: unknown): string => {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'object') return JSON.stringify(value);
+  return String(value);
+};
+
+/** 复制列数据 */
+const copyColumnData = async (results: unknown[][], colIndex: number, colName: string) => {
+  try {
+    const columnData = results.map(row => {
+      if (!Array.isArray(row)) return '';
+      return formatValueForCopy(row[colIndex]);
+    });
+    const text = columnData.join('\n');
+    await navigator.clipboard.writeText(text);
+    toast.success(`已复制 ${colName} 列 (${results.length} 行)`);
+  } catch {
+    toast.error('复制失败');
+  }
+};
+
+/** 复制单元格值 */
+const copyCellValue = async (value: unknown) => {
+  try {
+    const text = formatValueForCopy(value);
+    await navigator.clipboard.writeText(text);
+    const display = text.length > 20 ? text.substring(0, 20) + '...' : text;
+    toast.success(`已复制: ${display}`);
+  } catch {
+    toast.error('复制失败');
+  }
+};
 
 interface Props {
   columns: string[];
@@ -83,6 +135,11 @@ const ResultPanel = ({
     if (onExport && queryId) onExport();
   };
 
+  // 复制列数据（使用全部结果，不只是当前页）
+  const handleCopyColumn = (colIndex: number, colName: string) => {
+    copyColumnData(results, colIndex, colName);
+  };
+
   const rowNumberStart = (currentPage - 1) * pageSize;
 
   return (
@@ -132,7 +189,20 @@ const ResultPanel = ({
             <thead>
               <tr>
                 <th className="row-num">#</th>
-                {columns.map(col => <th key={col}>{col}</th>)}
+                {columns.map((col, colIdx) => (
+                  <th key={col}>
+                    <div className="column-header">
+                      <span>{col}</span>
+                      <button 
+                        className="copy-col-btn" 
+                        title="复制此列数据"
+                        onClick={() => handleCopyColumn(colIdx, col)}
+                      >
+                        📋
+                      </button>
+                    </div>
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -140,7 +210,14 @@ const ResultPanel = ({
                 <tr key={idx}>
                   <td className="row-num">{rowNumberStart + idx + 1}</td>
                   {row.map((val, colIdx) => (
-                    <td key={colIdx} title={formatValue(val)}>{formatValue(val)}</td>
+                    <td 
+                      key={colIdx} 
+                      title={`双击复制: ${formatValue(val)}`}
+                      onDoubleClick={() => copyCellValue(val)}
+                      className="cell-copyable"
+                    >
+                      {formatValue(val)}
+                    </td>
                   ))}
                 </tr>
               ))}
