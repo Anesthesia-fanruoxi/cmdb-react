@@ -70,12 +70,14 @@ jobs:
         shell: powershell
         continue-on-error: true
 
+      # 仅 GitHub Runner 需要安装 Rust，本地已装好
       - name: Setup Rust
+        if: matrix.platform != 'windows-latest'
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
 
-      # 仅 GitHub Runner 使用远程缓存，本地 Runner 用本地磁盘缓存
+      # 仅 GitHub Runner 使用远程缓存
       - name: Rust cache
         if: matrix.platform != 'windows-latest'
         uses: swatinem/rust-cache@v2
