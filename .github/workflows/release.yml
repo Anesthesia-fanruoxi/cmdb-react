@@ -10,33 +10,14 @@ permissions:
   contents: write
   actions: write
 
-env:
-  CARGO_NET_RETRY: 10
-  RUSTUP_MAX_RETRIES: 10
-
 jobs:
-  build:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: windows-latest
-            target: x86_64-pc-windows-msvc
-            name: windows-x64
-          # - platform: macos-latest
-          #   target: x86_64-apple-darwin
-          #   name: macos-intel
-          # - platform: macos-latest
-          #   target: aarch64-apple-darwin
-          #   name: macos-arm64
-
-    runs-on: ${{ matrix.platform == 'windows-latest' && 'self-hosted' || matrix.platform }}
-    
+  build-windows:
+    runs-on: self-hosted
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Get version from tag
+      - name: Get version
         id: version
         run: |
           if ("${{ github.ref_type }}" -eq "tag") {
@@ -49,7 +30,7 @@ jobs:
           echo "version_num=$VERSION_NUM" >> $env:GITHUB_OUTPUT
         shell: powershell
 
-      - name: Update version in files
+      - name: Update version
         run: |
           (Get-Content .env) -replace 'VITE_APP_VERSION=.*', "VITE_APP_VERSION=${{ steps.version.outputs.version }}" | Set-Content .env
           (Get-Content src-tauri/Cargo.toml) -replace '^version = ".*"', "version = `"${{ steps.version.outputs.version_num }}`"" | Set-Content src-tauri/Cargo.toml
@@ -57,69 +38,64 @@ jobs:
           (Get-Content package.json) -replace '"version": ".*"', "`"version`": `"${{ steps.version.outputs.version_num }}`"" | Set-Content package.json
         shell: powershell
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      # Windows: 禁用 Defender 实时扫描（仅 GitHub Runner）
-      - name: Disable Windows Defender
-        if: matrix.platform == 'windows-latest' && !contains(runner.name, 'self-hosted')
-        run: Set-MpPreference -DisableRealtimeMonitoring $true
-        shell: powershell
-        continue-on-error: true
-
-      # 仅 GitHub Runner 需要安装 Rust，本地已装好
-      - name: Setup Rust
-        if: matrix.platform != 'windows-latest'
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
-
-      # 仅 GitHub Runner 使用远程缓存
-      - name: Rust cache
-        if: matrix.platform != 'windows-latest'
-        uses: swatinem/rust-cache@v2
-        with:
-          workspaces: './src-tauri -> target'
-          shared-key: ${{ matrix.target }}
-          cache-on-failure: true
-
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Tauri App
-        run: npm run tauri build -- --target ${{ matrix.target }}
+      - name: Build
+        run: npm run tauri build -- --target x86_64-pc-windows-msvc
         env:
           VITE_APP_VERSION: ${{ steps.version.outputs.version }}
 
-      - name: Prepare Windows artifacts
-        if: matrix.platform == 'windows-latest'
+      - name: Prepare artifacts
         run: |
           New-Item -ItemType Directory -Force -Path release
-          Get-ChildItem -Path "src-tauri/target/${{ matrix.target }}/release/bundle" -Recurse -Filter "*.msi" | Copy-Item -Destination "release/CMDB-Desktop-${{ matrix.name }}.msi"
+          Get-ChildItem -Path "src-tauri/target/x86_64-pc-windows-msvc/release/bundle" -Recurse -Filter "*.msi" | Copy-Item -Destination "release/CMDB-Desktop-windows-x64.msi"
         shell: powershell
-
-      # - name: Prepare macOS artifacts
-      #   if: matrix.platform == 'macos-latest'
-      #   run: |
-      #     mkdir -p release
-      #     find src-tauri/target/${{ matrix.target }}/release/bundle -name "*.dmg" -type f -exec cp {} "release/CMDB-Desktop-${{ matrix.name }}.dmg" \;
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: CMDB-Desktop-${{ matrix.name }}
+          name: CMDB-Desktop-windows-x64
           path: release/*
 
+  # build-macos:
+  #   runs-on: macos-latest
+  #   strategy:
+  #     matrix:
+  #       include:
+  #         - target: x86_64-apple-darwin
+  #           name: macos-intel
+  #         - target: aarch64-apple-darwin
+  #           name: macos-arm64
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: '20'
+  #         cache: 'npm'
+  #     - uses: dtolnay/rust-toolchain@stable
+  #       with:
+  #         targets: ${{ matrix.target }}
+  #     - uses: swatinem/rust-cache@v2
+  #       with:
+  #         workspaces: './src-tauri -> target'
+  #         shared-key: ${{ matrix.target }}
+  #     - run: npm ci
+  #     - run: npm run tauri build -- --target ${{ matrix.target }}
+  #     - run: |
+  #         mkdir -p release
+  #         find src-tauri/target/${{ matrix.target }}/release/bundle -name "*.dmg" -type f -exec cp {} "release/CMDB-Desktop-${{ matrix.name }}.dmg" \;
+  #     - uses: actions/upload-artifact@v4
+  #       with:
+  #         name: CMDB-Desktop-${{ matrix.name }}
+  #         path: release/*
+
   release:
-    needs: build
+    needs: [build-windows]  # 加上 build-macos 当启用时
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
-    
     steps:
-      - name: Delete old releases (keep latest 3)
+      - name: Delete old releases
         uses: dev-drprasad/delete-older-releases@v0.3.4
         with:
           keep_latest: 3
@@ -127,13 +103,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Download all artifacts
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
           merge-multiple: true
 
-      - name: Upload to server via HTTP
+      - name: Upload to server
         run: |
           for file in artifacts/*; do
             echo "Uploading $file..."
@@ -147,11 +123,11 @@ jobs:
           files: artifacts/*
           body: |
             ## v1.0.6 更新说明
-            - 修复更新后页面状态丢失问题（优雅退出+时序修复）
+            - 修复更新后页面状态丢失问题
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Delete old workflow runs
+      - name: Cleanup workflow runs
         uses: Mattraks/delete-workflow-runs@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}

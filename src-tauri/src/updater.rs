@@ -226,6 +226,7 @@ start "" "{}"
         
         // 优雅退出，让前端有机会保存状态
         app.exit(0);
+        Ok(())
     }
     
     #[cfg(target_os = "macos")]
