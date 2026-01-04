@@ -11,7 +11,6 @@ permissions:
   actions: write
 
 env:
-  CARGO_INCREMENTAL: 0
   CARGO_NET_RETRY: 10
   RUSTUP_MAX_RETRIES: 10
 
@@ -40,23 +39,33 @@ jobs:
       - name: Get version from tag
         id: version
         run: |
-          if [ "${{ github.ref_type }}" = "tag" ]; then
-            VERSION="${{ github.ref_name }}"
-          else
-            VERSION="v0.0.0-dev"
-          fi
-          VERSION_NUM="${VERSION#v}"
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "version_num=$VERSION_NUM" >> $GITHUB_OUTPUT
-        shell: bash
+          if ("${{ github.ref_type }}" -eq "tag") {
+            $VERSION = "${{ github.ref_name }}"
+          } else {
+            $VERSION = "v0.0.0-dev"
+          }
+          $VERSION_NUM = $VERSION -replace '^v', ''
+          echo "version=$VERSION" >> $env:GITHUB_OUTPUT
+          echo "version_num=$VERSION_NUM" >> $env:GITHUB_OUTPUT
+        shell: pwsh
 
       - name: Update version in files
+        run: |
+          (Get-Content .env) -replace 'VITE_APP_VERSION=.*', "VITE_APP_VERSION=${{ steps.version.outputs.version }}" | Set-Content .env
+          (Get-Content src-tauri/Cargo.toml) -replace '^version = ".*"', "version = `"${{ steps.version.outputs.version_num }}`"" | Set-Content src-tauri/Cargo.toml
+          (Get-Content src-tauri/tauri.conf.json) -replace '"version": ".*"', "`"version`": `"${{ steps.version.outputs.version_num }}`"" | Set-Content src-tauri/tauri.conf.json
+          (Get-Content package.json) -replace '"version": ".*"', "`"version`": `"${{ steps.version.outputs.version_num }}`"" | Set-Content package.json
+        shell: pwsh
+        if: matrix.platform == 'windows-latest'
+
+      - name: Update version in files (Unix)
         run: |
           sed -i.bak "s/VITE_APP_VERSION=.*/VITE_APP_VERSION=${{ steps.version.outputs.version }}/" .env || true
           sed -i.bak 's/^version = ".*"/version = "${{ steps.version.outputs.version_num }}"/' src-tauri/Cargo.toml
           sed -i.bak 's/"version": ".*"/"version": "${{ steps.version.outputs.version_num }}"/' src-tauri/tauri.conf.json
           sed -i.bak 's/"version": ".*"/"version": "${{ steps.version.outputs.version_num }}"/' package.json
         shell: bash
+        if: matrix.platform != 'windows-latest'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -64,23 +73,25 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      # Windows: 禁用 Defender 实时扫描（加速编译）
+      # Windows: 禁用 Defender 实时扫描（仅 GitHub Runner）
       - name: Disable Windows Defender
-        if: matrix.platform == 'windows-latest'
+        if: matrix.platform == 'windows-latest' && !contains(runner.name, 'self-hosted')
         run: Set-MpPreference -DisableRealtimeMonitoring $true
         shell: powershell
+        continue-on-error: true
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
 
+      # 仅 GitHub Runner 使用远程缓存，本地 Runner 用本地磁盘缓存
       - name: Rust cache
+        if: matrix.platform != 'windows-latest'
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
           shared-key: ${{ matrix.target }}
-          # 缓存依赖编译结果
           cache-on-failure: true
 
       - name: Install dependencies
@@ -94,9 +105,9 @@ jobs:
       - name: Prepare Windows artifacts
         if: matrix.platform == 'windows-latest'
         run: |
-          mkdir -p release
-          find src-tauri/target/${{ matrix.target }}/release/bundle -name "*.msi" -type f -exec cp {} "release/CMDB-Desktop-${{ matrix.name }}.msi" \;
-        shell: bash
+          New-Item -ItemType Directory -Force -Path release
+          Get-ChildItem -Path "src-tauri/target/${{ matrix.target }}/release/bundle" -Recurse -Filter "*.msi" | Copy-Item -Destination "release/CMDB-Desktop-${{ matrix.name }}.msi"
+        shell: pwsh
 
       - name: Prepare macOS artifacts
         if: matrix.platform == 'macos-latest'
