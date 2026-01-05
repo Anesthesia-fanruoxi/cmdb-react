@@ -1,45 +1,7 @@
 /**
  * 用户表单样式 - 水平布局
+ * 通用样式已移至 src/styles/common.css
  */
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: var(--bg-color);
-  border-radius: 8px;
-  width: 480px;
-  max-width: 90vw;
-  max-height: 80vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--border-color);
-  flex-shrink: 0;
-}
-
-.modal-header h3 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-color);
-}
 
 .modal-close {
   background: none;
@@ -51,25 +13,7 @@
   line-height: 1;
 }
 
-.modal-close:hover {
-  color: var(--text-color);
-}
-
-.modal-body {
-  padding: 20px;
-  overflow-y: auto;
-  flex: 1;
-  min-height: 0;
-}
-
-.modal-footer {
-  padding: 12px 20px;
-  border-top: 1px solid var(--border-color);
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  flex-shrink: 0;
-}
+.modal-close:hover { color: var(--text-color); }
 
 /* 单列布局 */
 .form-row {
@@ -79,9 +23,7 @@
   margin-bottom: 0;
 }
 
-.form-row .form-group {
-  margin-bottom: 12px;
-}
+.form-row .form-group { margin-bottom: 12px; }
 
 /* 表单项 - 水平布局 */
 .form-group {
@@ -98,10 +40,6 @@
   color: var(--text-color);
   text-align: right;
   white-space: nowrap;
-}
-
-.form-group .required {
-  color: var(--danger-color);
 }
 
 .form-group input,
@@ -132,7 +70,7 @@
   color: var(--text-secondary);
 }
 
-.form-tip {
+.user-form .form-tip {
   margin-left: 66px;
   margin-top: -4px;
   margin-bottom: 8px;

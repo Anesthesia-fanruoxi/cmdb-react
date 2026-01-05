@@ -282,5 +282,4 @@
 .share-detail .share-item span { font-size: 14px; color: var(--text-color, #e0e0e0); }
 .share-detail .share-url { display: flex; gap: 8px; }
 .share-detail .share-url input { flex: 1; padding: 8px; border: 1px solid var(--border-color, #3a3a3a); border-radius: 4px; background: var(--bg-secondary, #2a2a2a); color: var(--text-color, #e0e0e0); }
-.btn-copy { display: flex; align-items: center; gap: 4px; padding: 8px 12px; background: var(--primary-color, #1890ff); color: #fff; border: none; border-radius: 4px; cursor: pointer; }
-.btn-danger { padding: 8px 16px; background: #ff4d4f; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+.share-dialog .btn-copy { display: flex; align-items: center; gap: 4px; padding: 8px 12px; background: var(--primary-color, #1890ff); color: #fff; border: none; border-radius: 4px; cursor: pointer; }

@@ -1,5 +1,6 @@
 /**
- * SQL变更申请页面样式 - 基础样式
+ * SQL变更申请页面样式
+ * 通用样式已移至 src/styles/common.css
  */
 
 /* 页面容器 */
@@ -34,28 +35,7 @@
 .apply-card .card-actions { display: flex; gap: 12px; }
 .apply-card .card-body { flex: 1; padding: 16px; overflow: auto; }
 
-/* 按钮 */
-.btn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-primary { background: var(--primary-color); color: #fff; }
-.btn-primary:hover { background: var(--primary-hover); }
-.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-
-.btn-default {
-  background: var(--bg-color);
-  color: var(--text-color);
-  border: 1px solid var(--border-color);
-}
-.btn-default:hover { color: var(--primary-color); border-color: var(--primary-color); }
-.btn-default:disabled { opacity: 0.6; cursor: not-allowed; }
-
+/* 链接按钮 */
 .link-btn {
   background: transparent;
   border: none;
@@ -66,7 +46,7 @@
 }
 .link-btn:hover { color: var(--primary-hover); }
 
-/* 表格 */
+/* 申请表格 */
 .apply-table {
   width: 100%;
   border-collapse: collapse;
@@ -82,11 +62,19 @@
   white-space: nowrap;
 }
 
-.apply-table th { background: var(--bg-secondary); font-weight: 500; color: var(--text-secondary); position: sticky; top: 0; z-index: 1; }
+.apply-table th {
+  background: var(--bg-secondary);
+  font-weight: 500;
+  color: var(--text-secondary);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
 .apply-table tbody tr:hover { background: var(--bg-hover); }
 .apply-table .empty-row { text-align: center; color: var(--text-muted); padding: 60px 14px; }
 
-/* 状态标签 */
+/* 状态标签（页面特有） */
 .status-tag { display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 12px; }
 .status-warning { background: rgba(250, 173, 20, 0.1); color: #faad14; }
 .status-success { background: rgba(82, 196, 26, 0.1); color: #52c41a; }
@@ -102,14 +90,3 @@
   height: 200px;
   color: var(--text-muted);
 }
-
-/* 标签 */
-.tag { display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 13px; }
-.tag-warning { background: rgba(250, 173, 20, 0.1); color: #faad14; }
-.tag-success { background: rgba(82, 196, 26, 0.1); color: #52c41a; }
-.tag-danger { background: rgba(255, 77, 79, 0.1); color: #ff4d4f; }
-.tag-info { background: var(--bg-secondary); color: var(--text-secondary); }
-.tag-primary { background: rgba(102, 126, 234, 0.1); color: var(--primary-color); }
-.tag-lg { padding: 6px 14px; font-size: 14px; }
-.tag-plain { background: transparent; border: 1px solid var(--border-color); color: var(--text-color); }
-.tag-plain.tag-info { border-color: var(--text-muted); color: var(--text-muted); }

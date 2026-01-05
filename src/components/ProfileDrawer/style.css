@@ -415,7 +415,7 @@
 }
 
 /* 底部操作区 */
-.form-actions {
+.profile-drawer .form-actions {
   display: flex;
   gap: 12px;
   padding: 20px 24px;
@@ -425,8 +425,8 @@
   bottom: 0;
 }
 
-.btn-primary,
-.btn-default {
+.profile-drawer .btn-primary,
+.profile-drawer .btn-default {
   flex: 1;
   display: flex;
   align-items: center;
@@ -440,42 +440,42 @@
   transition: all 0.2s ease;
 }
 
-.btn-primary {
+.profile-drawer .btn-primary {
   background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
   border: none;
   color: white;
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
-.btn-primary:hover:not(:disabled) {
+.profile-drawer .btn-primary:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
 }
 
-.btn-primary:active:not(:disabled) {
+.profile-drawer .btn-primary:active:not(:disabled) {
   transform: translateY(0);
 }
 
-.btn-primary:disabled {
+.profile-drawer .btn-primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
 }
 
-.btn-default {
+.profile-drawer .btn-default {
   background: var(--bg-color);
   border: 1px solid var(--border-color);
   color: var(--text-color);
 }
 
-.btn-default:hover {
+.profile-drawer .btn-default:hover {
   border-color: var(--primary-color);
   color: var(--primary-color);
   background: rgba(102, 126, 234, 0.05);
 }
 
 /* 关闭按钮 */
-.close-btn {
+.profile-drawer .close-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -489,7 +489,7 @@
   transition: all 0.2s;
 }
 
-.close-btn:hover {
+.profile-drawer .close-btn:hover {
   background: var(--bg-hover);
   color: var(--text-color);
 }

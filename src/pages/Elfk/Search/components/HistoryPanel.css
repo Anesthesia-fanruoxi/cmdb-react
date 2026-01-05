@@ -263,7 +263,7 @@
 }
 
 /* 分页 */
-.pagination {
+.history-panel .pagination {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -273,7 +273,7 @@
   border-top: 1px solid var(--border-color);
 }
 
-.pagination button {
+.history-panel .pagination button {
   padding: 6px 12px;
   background: var(--bg-color);
   border: 1px solid var(--border-color);
@@ -282,17 +282,17 @@
   cursor: pointer;
 }
 
-.pagination button:disabled {
+.history-panel .pagination button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.pagination button:not(:disabled):hover {
+.history-panel .pagination button:not(:disabled):hover {
   border-color: var(--primary-color);
   color: var(--primary-color);
 }
 
-.pagination span {
+.history-panel .pagination span {
   font-size: 13px;
   color: var(--text-secondary);
 }

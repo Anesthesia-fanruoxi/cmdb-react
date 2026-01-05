@@ -1,0 +1,231 @@
+/**
+ * 全局公共组件样式 - 标签、表格、状态等
+ */
+
+/* ==================== 标签 ==================== */
+.tag {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.tag-sm { padding: 2px 8px; font-size: 12px; }
+.tag-lg { padding: 6px 14px; font-size: 14px; }
+
+.tag-primary {
+  background: rgba(102, 126, 234, 0.1);
+  color: var(--primary-color);
+}
+
+.tag-success {
+  background: rgba(82, 196, 26, 0.1);
+  color: #52c41a;
+}
+
+.tag-warning {
+  background: rgba(250, 173, 20, 0.1);
+  color: #d48806;
+}
+
+.tag-danger {
+  background: rgba(255, 77, 79, 0.1);
+  color: #ff4d4f;
+}
+
+.tag-info {
+  background: rgba(24, 144, 255, 0.1);
+  color: #1890ff;
+}
+
+.tag-default {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+.tag-plain {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+}
+
+
+/* ==================== 表格 ==================== */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  background: var(--bg-color);
+}
+
+.data-table th,
+.data-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-color);
+}
+
+.data-table th {
+  background: var(--bg-secondary);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.data-table tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.action-cell { white-space: nowrap; }
+.empty-cell {
+  text-align: center !important;
+  color: var(--text-muted);
+  padding: 60px 20px !important;
+}
+
+
+/* ==================== 加载状态 ==================== */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.loading-sm { height: 100px; }
+.loading-lg { height: 300px; }
+
+.empty-tip {
+  padding: 40px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+
+/* ==================== 卡片 ==================== */
+.detail-card {
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.detail-card .card-header,
+.detail-card h5 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.detail-card .card-body {
+  padding: 16px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px 24px;
+}
+
+.detail-grid div {
+  font-size: 14px;
+  color: var(--text-color);
+}
+
+.detail-grid span {
+  color: var(--text-secondary);
+  margin-right: 8px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px 24px;
+  padding: 16px;
+}
+
+.info-item {
+  display: flex;
+  font-size: 14px;
+}
+
+.info-item .label {
+  color: var(--text-secondary);
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.info-item .value {
+  color: var(--text-color);
+}
+
+.info-item.full-width {
+  grid-column: 1 / -1;
+}
+
+
+/* ==================== 页面头部 ==================== */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.page-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+
+/* ==================== 操作按钮组 ==================== */
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+
+/* ==================== 提示文本 ==================== */
+.tip-text {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.error-text {
+  color: var(--danger-color);
+}
+
+.highlight-text {
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.highlight-cell {
+  color: var(--primary-color);
+  font-weight: 500;
+}

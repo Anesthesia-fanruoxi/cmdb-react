@@ -183,7 +183,7 @@ const ApplyDetailDrawer = ({ detail, onClose, onRefresh, onResubmit }: Props) =>
   return (
     <>
       <div className="drawer-overlay" onClick={onClose}>
-        <div className="drawer drawer-wide" onClick={e => e.stopPropagation()}>
+        <div className="drawer drawer-wide apply-detail" onClick={e => e.stopPropagation()}>
           <div className="drawer-header">
             <h4>变更申请详情 #{detail.id}</h4>
             <button className="close-btn" onClick={onClose}>×</button>

@@ -4,7 +4,7 @@
   padding: 20px;
 }
 
-.page-card {
+.kube-pod-page .page-card {
   height: 100%;
   background: var(--bg-color, #fff);
   border-radius: 8px;
@@ -13,7 +13,7 @@
   overflow: hidden;
 }
 
-.card-header {
+.kube-pod-page .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -30,24 +30,7 @@
 .title-section svg { color: var(--primary-color, #1890ff); }
 .title-section h2 { margin: 0; font-size: 18px; }
 
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  height: 32px;
-  padding: 0 14px;
-  background: var(--primary-color, #1890ff);
-  border: none;
-  border-radius: 4px;
-  color: #fff;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.btn-primary:hover { opacity: 0.9; }
-.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-
-.filter-section {
+.kube-pod-page .filter-section {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -76,7 +59,7 @@
   gap: 8px;
 }
 
-.radio-item {
+.kube-pod-page .radio-item {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -89,9 +72,9 @@
   white-space: nowrap;
 }
 
-.radio-item input { display: none; }
-.radio-item:hover { border-color: var(--primary-color, #1890ff); }
-.radio-item.active { 
+.kube-pod-page .radio-item input { display: none; }
+.kube-pod-page .radio-item:hover { border-color: var(--primary-color, #1890ff); }
+.kube-pod-page .radio-item.active { 
   border-color: var(--primary-color, #1890ff); 
   background: var(--primary-color, #1890ff); 
   color: #fff; 
@@ -137,21 +120,8 @@
   padding: 0 20px 20px;
 }
 
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.data-table th, .data-table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--border-color, #e8e8e8);
-  text-align: left;
-}
-
-.data-table th {
-  background: var(--bg-secondary, #fafafa);
-  font-weight: 600;
+/* 使用全局 .data-table，仅覆盖特殊样式 */
+.kube-pod-page .data-table th {
   position: sticky;
   top: 0;
   z-index: 1;

@@ -1,11 +1,11 @@
-/* 数据分析弹框 */
+/**
+ * 数据分析弹框样式
+ * 通用样式已移至 src/styles/common.css
+ */
 
 .analysis-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0, 0, 0, 0.4);
   z-index: 1000;
   display: flex;
@@ -23,7 +23,7 @@
   flex-direction: column;
 }
 
-.drawer-header {
+.analysis-drawer .drawer-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -31,14 +31,14 @@
   border-bottom: 1px solid var(--border-color, #e8e8e8);
 }
 
-.drawer-header h3 {
+.analysis-drawer .drawer-header h3 {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
   color: var(--text-color, #333);
 }
 
-.drawer-header .btn-close {
+.analysis-drawer .btn-close {
   background: none;
   border: none;
   cursor: pointer;
@@ -47,24 +47,20 @@
   border-radius: 4px;
 }
 
-.drawer-header .btn-close:hover {
+.analysis-drawer .btn-close:hover {
   background: var(--bg-hover, #f5f5f5);
   color: var(--text-color, #666);
 }
 
-.drawer-body {
+.analysis-drawer .drawer-body {
   flex: 1;
   padding: 20px;
   overflow-y: auto;
 }
 
-.form-section {
-  margin-bottom: 16px;
-}
-
-.form-section.half {
-  flex: 1;
-}
+/* 表单区块 */
+.form-section { margin-bottom: 16px; }
+.form-section.half { flex: 1; }
 
 .form-section label {
   display: block;
@@ -88,7 +84,7 @@
 .form-section select:focus,
 .form-section input:focus {
   outline: none;
-  border-color: var(--primary-color, #1890ff);
+  border-color: var(--primary-color);
 }
 
 .sample-value {
@@ -113,18 +109,13 @@
   padding-bottom: 8px;
 }
 
-.form-row {
-  display: flex;
-  gap: 16px;
-}
-
 .btn-analyze {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   height: 36px;
   padding: 0 20px;
-  background: var(--primary-color, #1890ff);
+  background: var(--primary-color);
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -133,33 +124,15 @@
   margin-top: 8px;
 }
 
-.btn-analyze:hover:not(:disabled) {
-  background: var(--primary-hover, #40a9ff);
-}
+.btn-analyze:hover:not(:disabled) { background: var(--primary-hover); }
+.btn-analyze:disabled { opacity: 0.6; cursor: not-allowed; }
 
-.btn-analyze:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
 /* 结果区域 */
-.result-section {
-  margin-top: 20px;
-}
-
-.result-grid {
-  display: flex;
-  gap: 16px;
-}
+.result-section { margin-top: 20px; }
+.result-grid { display: flex; gap: 16px; }
 
 .result-column {
   flex: 1;
@@ -195,25 +168,13 @@
   cursor: pointer;
 }
 
-.btn-copy:hover {
-  border-color: var(--primary-color, #1890ff);
-  color: var(--primary-color, #1890ff);
-}
+.btn-copy:hover { border-color: var(--primary-color); color: var(--primary-color); }
 
-.column-body {
-  flex: 1;
-  max-height: 350px;
-  overflow: auto;
-}
+.column-body { flex: 1; max-height: 350px; overflow: auto; }
 
-.column-body table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-}
+.column-body table { width: 100%; border-collapse: collapse; font-size: 12px; }
 
-.column-body th,
-.column-body td {
+.column-body th, .column-body td {
   padding: 8px 12px;
   text-align: left;
   border-bottom: 1px solid var(--border-color, #f0f0f0);
@@ -227,14 +188,8 @@
   top: 0;
 }
 
-.column-body td {
-  color: var(--text-color, #333);
-  word-break: break-all;
-}
-
-.column-body tr:hover td {
-  background: var(--bg-hover, #f5f5f5);
-}
+.column-body td { color: var(--text-color, #333); word-break: break-all; }
+.column-body tr:hover td { background: var(--bg-hover, #f5f5f5); }
 
 .column-footer {
   padding: 8px 12px;
@@ -244,7 +199,6 @@
   color: var(--text-secondary, #666);
   text-align: right;
 }
-
 
 .result-summary {
   margin-top: 12px;

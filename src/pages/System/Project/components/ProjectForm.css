@@ -1,5 +1,6 @@
 /**
  * 项目表单样式
+ * 通用样式已移至 src/styles/common.css
  */
 
 .project-form-modal {
@@ -7,56 +8,8 @@
   max-width: 90vw;
 }
 
-.form-row {
-  display: flex;
-  gap: 20px;
-}
-
-.form-row .form-item {
-  flex: 1;
-}
-
-.form-item.full {
+.project-form-modal .form-item.full {
   width: 100%;
-}
-
-.form-item {
-  margin-bottom: 16px;
-}
-
-.form-item label {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 14px;
-  color: var(--text-secondary);
-}
-
-.form-item .required {
-  color: var(--danger-color);
-  margin-right: 4px;
-}
-
-.form-item input,
-.form-item select {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid var(--border-color-dark);
-  border-radius: 6px;
-  font-size: 14px;
-  background: var(--bg-color);
-  color: var(--text-color);
-  box-sizing: border-box;
-}
-
-.form-item input:focus,
-.form-item select:focus {
-  outline: none;
-  border-color: var(--primary-color);
-}
-
-.form-item input:disabled {
-  background: var(--bg-secondary);
-  cursor: not-allowed;
 }
 
 .logo-input-wrapper {
@@ -65,9 +18,7 @@
   gap: 12px;
 }
 
-.logo-input-wrapper input {
-  flex: 1;
-}
+.logo-input-wrapper input { flex: 1; }
 
 .logo-preview {
   width: 36px;

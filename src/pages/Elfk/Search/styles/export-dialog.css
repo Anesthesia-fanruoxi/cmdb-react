@@ -94,7 +94,7 @@
   border-radius: 4px;
 }
 
-.empty-tip {
+.export-dialog .empty-tip {
   text-align: center;
   padding: 40px;
   color: var(--text-secondary, #999);

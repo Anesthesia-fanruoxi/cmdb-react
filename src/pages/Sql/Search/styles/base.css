@@ -1,5 +1,6 @@
 /**
  * SQL查询页面 - 基础样式
+ * 通用样式已移至 src/styles/common.css
  */
 
 .sql-search {
@@ -51,17 +52,7 @@
   overflow: hidden;
 }
 
-/* 按钮 */
-.btn { padding: 6px 14px; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; transition: all 0.2s; }
-.btn-primary { background: var(--primary-color); color: #fff; }
-.btn-primary:hover { background: var(--primary-hover); }
-.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-.btn-default { background: var(--bg-secondary); color: var(--text-color); border: 1px solid var(--border-color); }
-.btn-default:hover { border-color: var(--primary-color); color: var(--primary-color); }
-.btn-default:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn-link { background: transparent; color: var(--primary-color); padding: 4px 8px; }
-.btn-link:hover { color: var(--primary-hover); }
-
+/* 页面特有按钮样式 */
 .btn-sm {
   padding: 4px 10px;
   font-size: 12px;

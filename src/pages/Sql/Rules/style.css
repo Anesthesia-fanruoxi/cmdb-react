@@ -1,5 +1,6 @@
 /**
  * SQL规则管理页面样式
+ * 通用样式已移至 src/styles/common.css
  */
 
 .sql-rules {
@@ -60,12 +61,7 @@
   box-shadow: var(--shadow-sm);
 }
 
-.filter-tags {
-  flex: 1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
+.filter-tags { flex: 1; display: flex; flex-wrap: wrap; gap: 10px; }
 
 .filter-tag {
   padding: 6px 14px;
@@ -82,16 +78,10 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.filter-tag.active {
-  background: var(--primary-color);
-  color: #fff;
-}
-
+.filter-tag.active { background: var(--primary-color); color: #fff; }
 .filter-tag.tag-success.active { background: #52c41a; }
 .filter-tag.tag-warning.active { background: #faad14; }
 .filter-tag.tag-danger.active { background: #ff4d4f; }
-.filter-tag.tag-primary.active { background: var(--primary-color); }
-.filter-tag.tag-info.active { background: #1890ff; }
 
 .search-input {
   width: 280px;
@@ -103,12 +93,9 @@
   color: var(--text-color);
 }
 
-.search-input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-}
+.search-input:focus { outline: none; border-color: var(--primary-color); }
 
-/* 表格 */
+/* 表格容器 */
 .table-container {
   flex: 1;
   overflow: auto;
@@ -117,41 +104,9 @@
   box-shadow: var(--shadow-sm);
 }
 
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.data-table th,
-.data-table td {
-  padding: 12px 10px;
-  text-align: left;
-  border-bottom: 1px solid var(--border-color);
-  color: var(--text-color);
-}
-
-.data-table th {
-  background: var(--bg-secondary);
-  font-weight: 500;
-  color: var(--text-secondary);
-  position: sticky;
-  top: 0;
-  z-index: 1;
-}
-
-.data-table tbody tr:hover { background: var(--bg-hover); }
 .data-table tbody tr.expanded { background: var(--bg-hover); }
-
-.expand-btn {
-  cursor: pointer;
-  color: var(--text-muted);
-  font-size: 10px;
-}
-
-.rule-name {
-  font-weight: 500;
-}
+.expand-btn { cursor: pointer; color: var(--text-muted); font-size: 10px; }
+.rule-name { font-weight: 500; }
 
 .desc-cell, .error-cell {
   max-width: 200px;
@@ -161,28 +116,6 @@
 }
 
 .error-cell { color: var(--danger-color); }
-
-.empty-cell {
-  text-align: center !important;
-  color: var(--text-muted);
-  padding: 60px !important;
-}
-
-/* 标签 */
-.tag {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.tag-success { background: rgba(82, 196, 26, 0.1); color: #52c41a; }
-.tag-warning { background: rgba(250, 173, 20, 0.1); color: #d48806; }
-.tag-danger { background: rgba(255, 77, 79, 0.1); color: #ff4d4f; }
-.tag-primary { background: rgba(102, 126, 234, 0.1); color: var(--primary-color); }
-.tag-info { background: rgba(24, 144, 255, 0.1); color: #1890ff; }
-.tag-default { background: var(--bg-secondary); color: var(--text-secondary); }
 
 /* 开关 */
 .switch {
@@ -220,19 +153,11 @@ input:checked + .slider { background: var(--primary-color); }
 input:checked + .slider:before { transform: translateX(16px); }
 
 /* 详情行 */
-.detail-row td {
-  padding: 0 !important;
-  background: var(--bg-secondary);
-}
+.detail-row td { padding: 0 !important; background: var(--bg-secondary); }
 
-.rule-detail {
-  padding: 20px;
-}
+.rule-detail { padding: 20px; }
 
-.detail-section {
-  margin-bottom: 16px;
-}
-
+.detail-section { margin-bottom: 16px; }
 .detail-section:last-child { margin-bottom: 0; }
 
 .detail-section h4 {
@@ -242,22 +167,6 @@ input:checked + .slider:before { transform: translateX(16px); }
   color: var(--text-color);
   padding-left: 8px;
   border-left: 3px solid var(--primary-color);
-}
-
-.detail-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-.detail-grid div {
-  font-size: 13px;
-  color: var(--text-color);
-}
-
-.detail-grid span {
-  color: var(--text-secondary);
-  margin-right: 8px;
 }
 
 .rule-content {
@@ -270,15 +179,6 @@ input:checked + .slider:before { transform: translateX(16px); }
   overflow-x: auto;
   white-space: pre-wrap;
   color: var(--text-color);
-}
-
-/* 加载状态 */
-.loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 200px;
-  color: var(--text-muted);
 }
 
 /* 响应式 */

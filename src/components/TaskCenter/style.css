@@ -32,7 +32,7 @@
   to { transform: translateX(0); }
 }
 
-.drawer-header {
+.task-drawer .drawer-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -40,7 +40,7 @@
   border-bottom: 1px solid var(--border-color);
 }
 
-.drawer-header h3 {
+.task-drawer .drawer-header h3 {
   margin: 0;
   font-size: 16px;
   color: var(--text-color);
@@ -242,7 +242,7 @@
   color: white;
 }
 
-.close-btn {
+.task-drawer .close-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -256,7 +256,7 @@
   transition: all 0.2s;
 }
 
-.close-btn:hover {
+.task-drawer .close-btn:hover {
   background: var(--bg-hover);
   color: var(--text-color);
 }

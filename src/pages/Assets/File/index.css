@@ -41,7 +41,7 @@
 .drop-content p { font-size: 20px; font-weight: 600; color: var(--primary-color, #1890ff); margin: 0 0 8px; }
 .drop-content span { font-size: 14px; color: var(--text-secondary, #666); }
 
-.page-card {
+.file-page .page-card {
   height: 100%;
   background: var(--bg-color, #fff);
   border-radius: 8px;
@@ -50,7 +50,7 @@
   overflow: hidden;
 }
 
-.card-header {
+.file-page .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -58,10 +58,10 @@
   border-bottom: 1px solid var(--border-color, #e8e8e8);
 }
 
-.card-header .title { font-size: 18px; font-weight: 600; }
+.file-page .card-header .title { font-size: 18px; font-weight: 600; }
 .upload-tip { font-size: 13px; color: var(--primary-color, #1890ff); background: rgba(24, 144, 255, 0.1); padding: 6px 12px; border-radius: 4px; }
 
-.filter-section {
+.file-page .filter-section {
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
@@ -87,23 +87,6 @@
   min-width: 160px;
 }
 
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  height: 32px;
-  padding: 0 14px;
-  background: var(--primary-color, #1890ff);
-  border: none;
-  border-radius: 4px;
-  color: #fff;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.btn-primary:hover { opacity: 0.9; }
-.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-
 .path-nav {
   display: flex;
   align-items: center;
@@ -111,19 +94,6 @@
   padding: 10px 20px;
   border-bottom: 1px solid var(--border-color, #e8e8e8);
 }
-
-.btn-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: none;
-  border: none;
-  color: var(--primary-color, #1890ff);
-  cursor: pointer;
-  font-size: 13px;
-}
-
-.btn-link:disabled { color: var(--text-secondary, #999); cursor: not-allowed; }
 
 .divider { color: var(--border-color, #d9d9d9); }
 
@@ -143,29 +113,25 @@
   overflow: auto;
 }
 
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.data-table th, .data-table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--border-color, #e8e8e8);
-  text-align: left;
-}
-
-.data-table th:nth-child(2), .data-table td:nth-child(2) {
+/* 使用全局 .data-table，仅覆盖特殊样式 */
+.file-page .data-table th:nth-child(2),
+.file-page .data-table td:nth-child(2) {
   width: 120px;
 }
 
-.data-table th:nth-child(3), .data-table td:nth-child(3) {
+.file-page .data-table th:nth-child(3),
+.file-page .data-table td:nth-child(3) {
   width: 180px;
 }
 
-.data-table th { font-weight: 600; background: var(--bg-secondary, #fafafa); position: sticky; top: 0; z-index: 1; }
-.data-table tr.clickable { cursor: pointer; }
-.data-table tr.clickable:hover { background: var(--bg-hover, #f5f5f5); }
+.file-page .data-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.file-page .data-table tr.clickable { cursor: pointer; }
+.file-page .data-table tr.clickable:hover { background: var(--bg-hover, #f5f5f5); }
 
 .name-cell {
   display: flex;
@@ -191,7 +157,7 @@
   color: var(--text-secondary, #999);
 }
 
-.pagination {
+.file-page .pagination {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -199,7 +165,7 @@
   border-top: 1px solid var(--border-color, #e8e8e8);
 }
 
-.pagination span { font-size: 13px; color: var(--text-secondary, #666); }
+.file-page .pagination span { font-size: 13px; color: var(--text-secondary, #666); }
 
 .page-btns {
   display: flex;

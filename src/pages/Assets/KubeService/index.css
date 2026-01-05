@@ -4,7 +4,7 @@
   padding: 20px;
 }
 
-.page-card {
+.kube-service-page .page-card {
   height: 100%;
   background: var(--bg-color, #fff);
   border-radius: 8px;
@@ -13,7 +13,7 @@
   overflow: hidden;
 }
 
-.card-header {
+.kube-service-page .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -21,15 +21,15 @@
   border-bottom: 1px solid var(--border-color, #e8e8e8);
 }
 
-.card-header .title { font-size: 18px; font-weight: 600; }
+.kube-service-page .card-header .title { font-size: 18px; font-weight: 600; }
 
-.card-body {
+.kube-service-page .card-body {
   flex: 1;
   overflow: auto;
   padding: 20px;
 }
 
-.filter-section {
+.kube-service-page .filter-section {
   margin-bottom: 20px;
 }
 
@@ -52,7 +52,7 @@
   gap: 8px;
 }
 
-.radio-item {
+.kube-service-page .radio-item {
   padding: 6px 14px;
   border: 1px solid var(--border-color, #d9d9d9);
   border-radius: 4px;
@@ -63,12 +63,12 @@
   transition: all 0.2s;
 }
 
-.radio-item:hover {
+.kube-service-page .radio-item:hover {
   border-color: var(--primary-color, #1890ff);
   color: var(--primary-color, #1890ff);
 }
 
-.radio-item.active {
+.kube-service-page .radio-item.active {
   background: var(--primary-color, #1890ff);
   border-color: var(--primary-color, #1890ff);
   color: #fff;
@@ -91,22 +91,14 @@
   overflow: auto;
 }
 
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.data-table th, .data-table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--border-color, #e8e8e8);
+/* 使用全局 .data-table，仅覆盖特殊样式 */
+.kube-service-page .data-table th,
+.kube-service-page .data-table td {
   text-align: center;
   white-space: nowrap;
 }
 
-.data-table th {
-  background: var(--bg-secondary, #fafafa);
-  font-weight: 600;
+.kube-service-page .data-table th {
   position: sticky;
   top: 0;
   z-index: 1;

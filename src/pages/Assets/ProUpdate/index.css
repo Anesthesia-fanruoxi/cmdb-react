@@ -1,7 +1,11 @@
-/* 发版管理页面样式 */
+/**
+ * 发版管理页面样式
+ * 通用样式已移至 src/styles/common.css
+ */
+
 .pro-update-page { height: 100%; padding: 20px; }
 
-.page-card {
+.pro-update-page .page-card {
   height: 100%;
   background: var(--bg-color, #fff);
   border-radius: 8px;
@@ -10,7 +14,7 @@
   overflow: hidden;
 }
 
-.card-header {
+.pro-update-page .page-card .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -18,9 +22,7 @@
   border-bottom: 1px solid var(--border-color, #e8e8e8);
 }
 
-.card-header .title { font-size: 18px; font-weight: 600; }
-
-.header-actions { display: flex; gap: 12px; align-items: center; }
+.pro-update-page .page-card .card-header .title { font-size: 18px; font-weight: 600; }
 
 .type-switch {
   display: flex;
@@ -37,9 +39,9 @@
   font-size: 13px;
 }
 
-.type-switch button.active { background: var(--primary-color, #1890ff); color: #fff; }
+.type-switch button.active { background: var(--primary-color); color: #fff; }
 
-.btn-edit, .btn-default {
+.btn-edit {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -51,26 +53,12 @@
   border: 1px solid;
 }
 
-.btn-edit.primary { background: var(--primary-color, #1890ff); border-color: var(--primary-color, #1890ff); color: #fff; }
+.btn-edit.primary { background: var(--primary-color); border-color: var(--primary-color); color: #fff; }
 .btn-edit.warning { background: #faad14; border-color: #faad14; color: #fff; }
-.btn-default { background: var(--bg-color, #fff); border-color: var(--border-color, #d9d9d9); color: var(--text-color, #333); }
 
 .table-container { flex: 1; overflow: auto; padding: 0 20px 20px; }
 
-.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-
-.data-table th, .data-table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--border-color, #e8e8e8);
-  text-align: center;
-  vertical-align: middle;
-}
-
-.data-table th { background: var(--bg-secondary, #fafafa); font-weight: 600; position: sticky; top: 0; z-index: 1; white-space: nowrap; }
-
-.data-table td.editable-cell {
-  position: relative;
-}
+.data-table td.editable-cell { position: relative; }
 
 .editable-cell .cell-content {
   display: inline-flex;
@@ -87,57 +75,13 @@
 }
 
 .cell-text.feishu { font-family: monospace; font-size: 12px; color: #52c41a; }
+.edit-icon { color: var(--primary-color); cursor: pointer; flex-shrink: 0; }
 
-.edit-icon { color: var(--primary-color, #1890ff); cursor: pointer; flex-shrink: 0; }
-
-.data-table select {
-  height: 28px;
-  padding: 0 8px;
-  border: 1px solid var(--border-color, #d9d9d9);
-  border-radius: 4px;
-  font-size: 12px;
-}
-
-.data-table select:disabled { background: var(--bg-secondary, #f5f5f5); }
-
-.status-tag {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-}
-
+/* 状态标签 */
+.status-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
 .status-tag.success { background: #f6ffed; color: #52c41a; }
 .status-tag.danger { background: #fff2f0; color: #ff4d4f; }
 .status-tag.warning { background: #fff7e6; color: #fa8c16; }
 .status-tag.default { background: #f0f0f0; color: #666; }
 
-.btn-link { background: none; border: none; color: var(--primary-color, #1890ff); cursor: pointer; font-size: 13px; }
-.btn-link:hover { text-decoration: underline; }
-
-.loading-cell, .empty-cell { text-align: center; padding: 40px !important; color: var(--text-secondary, #999); }
-
-/* 弹窗 */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: var(--bg-color, #fff);
-  border-radius: 8px;
-  width: 500px;
-  max-width: 90%;
-}
-
-.modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border-color, #e8e8e8); }
-.modal-header h3 { margin: 0; font-size: 16px; }
-.modal-body { padding: 20px; }
-.modal-body textarea, .modal-body select { width: 100%; padding: 10px; border: 1px solid var(--border-color, #d9d9d9); border-radius: 4px; font-size: 13px; }
-.modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--border-color, #e8e8e8); }
-.btn-primary { background: var(--primary-color, #1890ff); border: none; color: #fff; height: 32px; padding: 0 14px; border-radius: 4px; cursor: pointer; }
+.loading-cell { text-align: center; padding: 40px !important; color: var(--text-secondary, #999); }

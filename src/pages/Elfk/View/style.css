@@ -60,19 +60,19 @@
   border-bottom: 1px solid var(--border-color);
 }
 
-.header-left {
+.elfk-view-page .header-left {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.header-left .title {
+.elfk-view-page .header-left .title {
   font-size: 16px;
   font-weight: 600;
   color: var(--text-color);
 }
 
-.header-left .count {
+.elfk-view-page .header-left .count {
   font-size: 13px;
   color: var(--text-secondary);
   background: var(--bg-secondary);
@@ -80,57 +80,17 @@
   border-radius: 4px;
 }
 
-.btn-primary {
-  height: 36px;
-  padding: 0 16px;
-  background: var(--primary-color);
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.btn-primary:hover {
-  opacity: 0.9;
-}
-
-/* 表格 */
+/* 表格 - 使用全局 .data-table */
 .table-wrapper {
   flex: 1;
   overflow: auto;
   padding: 0 16px;
 }
 
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-}
-
-.data-table th,
-.data-table td {
-  padding: 12px 8px;
-  text-align: left;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.data-table th {
-  font-weight: 500;
-  color: var(--text-secondary);
-  background: var(--bg-secondary);
+.elfk-view-page .data-table th {
   position: sticky;
   top: 0;
   z-index: 1;
-}
-
-.data-table td {
-  color: var(--text-color);
-}
-
-.data-table tbody tr:hover {
-  background: var(--bg-hover);
 }
 
 .name-cell {
@@ -188,7 +148,7 @@
 }
 
 /* 分页 */
-.pagination {
+.elfk-view-page .pagination {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -197,7 +157,7 @@
   border-top: 1px solid var(--border-color);
 }
 
-.pagination button {
+.elfk-view-page .pagination button {
   height: 32px;
   padding: 0 12px;
   border: 1px solid var(--border-color);
@@ -208,12 +168,12 @@
   font-size: 14px;
 }
 
-.pagination button:hover:not(:disabled) {
+.elfk-view-page .pagination button:hover:not(:disabled) {
   border-color: var(--primary-color);
   color: var(--primary-color);
 }
 
-.pagination button:disabled {
+.elfk-view-page .pagination button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

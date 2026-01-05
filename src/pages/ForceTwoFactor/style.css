@@ -27,7 +27,7 @@
   padding: 40px;
 }
 
-.card-header {
+.two-factor-card .card-header {
   text-align: center;
   margin-bottom: 30px;
 }
@@ -44,7 +44,7 @@
   font-size: 28px;
 }
 
-.card-header h2 {
+.two-factor-card .card-header h2 {
   margin: 0 0 8px;
   color: #1f2f3d;
   font-size: 24px;

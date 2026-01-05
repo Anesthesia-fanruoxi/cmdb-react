@@ -1,0 +1,10 @@
+/**
+ * 全局样式入口
+ * 
+ * 导入顺序很重要：
+ * 1. common.css - 基础组件样式（按钮、弹窗、抽屉、表单）
+ * 2. components.css - 扩展组件样式（标签、表格、卡片等）
+ */
+
+@import './common.css';
+@import './components.css';

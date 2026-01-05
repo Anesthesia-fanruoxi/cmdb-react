@@ -1,5 +1,6 @@
 /**
  * 系统设置页面样式
+ * 通用样式已移至 src/styles/common.css
  */
 
 .setting-container {
@@ -30,7 +31,7 @@
   overflow: hidden;
 }
 
-.card-header {
+.setting-card .card-header {
   padding: 16px 20px;
   border-bottom: 1px solid var(--border-color);
   background: linear-gradient(to right, rgba(24, 144, 255, 0.05), var(--bg-color));
@@ -68,17 +69,11 @@
   color: var(--warning-color);
 }
 
-.card-body { padding: 20px; }
+.setting-page .card-body { padding: 20px; }
 
 /* Logo 上传 */
 .logo-upload-item { margin-bottom: 16px; }
-
-.logo-upload-item > label {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 14px;
-  color: var(--text-secondary);
-}
+.logo-upload-item > label { display: block; margin-bottom: 6px; font-size: 14px; color: var(--text-secondary); }
 
 .logo-upload-box {
   width: 180px;
@@ -107,8 +102,6 @@
   font-size: 12px;
 }
 
-.upload-placeholder svg { width: 20px; height: 20px; }
-
 .logo-url-input {
   width: 100%;
   max-width: 350px;
@@ -122,43 +115,9 @@
 
 .logo-url-input:focus { outline: none; border-color: var(--primary-color); }
 
-/* 表单 */
-.form-item { margin-bottom: 14px; }
-
-.form-item > label {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 14px;
-  color: var(--text-secondary);
-}
-
-.form-item input[type="text"],
-.form-item input[type="password"],
-.form-item input[type="number"] {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid var(--border-color-dark);
-  border-radius: 4px;
-  font-size: 14px;
-  background: var(--bg-color);
-  color: var(--text-color);
-  box-sizing: border-box;
-}
-
-.form-item input:focus { outline: none; border-color: var(--primary-color); }
-.form-tip { margin-top: 4px; font-size: 12px; color: var(--text-muted); }
-
 /* 密码输入框 */
-.password-input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.password-input-wrapper input {
-  flex: 1;
-  padding-right: 40px;
-}
+.password-input-wrapper { position: relative; display: flex; align-items: center; }
+.password-input-wrapper input { flex: 1; padding-right: 40px; }
 
 .password-toggle {
   position: absolute;
@@ -173,9 +132,7 @@
   justify-content: center;
 }
 
-.password-toggle:hover {
-  color: var(--text-color);
-}
+.password-toggle:hover { color: var(--text-color); }
 
 /* 区块 */
 .section-block {
@@ -302,27 +259,6 @@ input:checked + .slider:before { transform: translateX(20px); }
   from { opacity: 0; transform: translateY(100%); }
   to { opacity: 1; transform: translateY(0); }
 }
-
-/* 按钮 */
-.btn {
-  padding: 8px 20px;
-  border: none;
-  border-radius: 4px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-primary { background: var(--primary-color); color: #fff; }
-.btn-primary:hover { background: var(--primary-hover); }
-.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-
-.btn-default {
-  background: var(--bg-color);
-  color: var(--text-color);
-  border: 1px solid var(--border-color-dark);
-}
-.btn-default:hover { color: var(--primary-color); border-color: var(--primary-color); }
 
 /* 响应式 */
 @media (max-width: 900px) {

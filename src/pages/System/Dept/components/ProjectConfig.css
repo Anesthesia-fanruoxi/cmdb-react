@@ -1,5 +1,6 @@
 /**
  * 项目配置组件样式
+ * 通用样式已移至 src/styles/common.css
  */
 
 .project-config-container {
@@ -18,10 +19,7 @@
   border-bottom: 1px solid var(--border-color);
 }
 
-.config-header h4 {
-  margin: 0;
-  font-size: 16px;
-}
+.config-header h4 { margin: 0; font-size: 16px; }
 
 .config-body {
   flex: 1;
@@ -40,13 +38,7 @@
   color: var(--text-muted);
 }
 
-.config-section {}
-
-.section-title {
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 12px;
-}
+.section-title { font-size: 14px; font-weight: 500; margin-bottom: 12px; }
 
 .project-list {
   display: flex;
@@ -56,11 +48,6 @@
   padding: 12px;
   background: var(--bg-secondary);
   border-radius: 6px;
-}
-
-.empty-tip {
-  color: var(--text-muted);
-  font-size: 13px;
 }
 
 .project-tag {
@@ -80,9 +67,7 @@
   color: var(--success-color, #67c23a);
 }
 
-.project-tag.bound:hover {
-  background: var(--success-bg-hover, #e1f3d8);
-}
+.project-tag.bound:hover { background: var(--success-bg-hover, #e1f3d8); }
 
 .project-tag.unbound {
   background: var(--bg-color);
@@ -90,10 +75,7 @@
   color: var(--text-secondary);
 }
 
-.project-tag.unbound:hover {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-}
+.project-tag.unbound:hover { border-color: var(--primary-color); color: var(--primary-color); }
 
 .tag-remove {
   background: none;
@@ -105,14 +87,8 @@
   line-height: 1;
 }
 
-.tag-remove:hover {
-  color: var(--success-hover, #529b2e);
-}
-
-.tag-add {
-  color: var(--text-muted);
-  font-size: 14px;
-}
+.tag-remove:hover { color: var(--success-hover, #529b2e); }
+.tag-add { color: var(--text-muted); font-size: 14px; }
 
 .config-footer {
   display: flex;
@@ -120,52 +96,4 @@
   gap: 12px;
   padding: 16px 20px;
   border-top: 1px solid var(--border-color);
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: var(--text-muted);
-  line-height: 1;
-  padding: 0;
-}
-
-.close-btn:hover {
-  color: var(--text-color);
-}
-
-.btn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-primary {
-  background: var(--primary-color);
-  color: #fff;
-}
-
-.btn-primary:hover {
-  background: var(--primary-hover);
-}
-
-.btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-default {
-  background: var(--bg-secondary);
-  color: var(--text-color);
-  border: 1px solid var(--border-color);
-}
-
-.btn-default:hover {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
 }

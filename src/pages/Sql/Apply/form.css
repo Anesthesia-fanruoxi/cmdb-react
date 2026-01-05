@@ -1,5 +1,6 @@
 /**
- * 表单样式
+ * SQL变更申请 - 表单样式
+ * 通用样式已移至 src/styles/common.css
  */
 
 /* 创建表单布局 */
@@ -30,21 +31,7 @@
 
 .create-form .sql-header .hint { font-size: 12px; color: var(--text-muted); }
 
-.create-form .sql-editor {
-  flex: 1;
-  min-height: 300px;
-  padding: 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  font-family: 'Consolas', 'Monaco', monospace;
-  font-size: 13px;
-  resize: none;
-  background: var(--bg-color);
-  color: var(--text-color);
-}
-
 /* 表单项 - 行内布局 */
-.form-item { margin-bottom: 20px; }
 .form-item-inline { display: flex; align-items: flex-start; }
 
 .form-item-inline > label {
@@ -101,14 +88,6 @@
 }
 
 .form-item-inline .switch-row { flex: 1; height: 40px; }
-
-.form-actions {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  padding-top: 20px;
-  border-top: 1px solid var(--border-color);
-}
 
 /* Switch 开关样式 */
 .switch-row { display: flex; align-items: center; gap: 12px; }

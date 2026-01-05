@@ -93,12 +93,19 @@ const MetricChart = memo(({
     chartInstance.current.off('legendselectchanged');
     chartInstance.current.on('legendselectchanged', handleLegendClick);
 
-    // 窗口大小变化时调整图表
+    // 使用 ResizeObserver 监听容器大小变化（比 window resize 更可靠）
+    const resizeObserver = new ResizeObserver(() => {
+      chartInstance.current?.resize();
+    });
+    resizeObserver.observe(chartRef.current);
+
+    // 窗口大小变化时也调整图表
     const handleResize = () => chartInstance.current?.resize();
     window.addEventListener('resize', handleResize);
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      resizeObserver.disconnect();
     };
   }, [metric, isDetailed]);
 
