@@ -17,6 +17,7 @@ const USER_NAME_KEY = 'user_name';
 const USER_ID_KEY = 'userId';
 const THEME_KEY = 'app-theme';
 const LAST_LOGIN_KEY = 'lastLoginUsername';
+const AVATAR_KEY = 'user_avatar';
 
 // Store 实例
 let storeInstance: Store | null = null;
@@ -283,4 +284,19 @@ export function clearUserData(): void {
   removeUserInfo();
   removeUserName();
   removeUserId();
+}
+
+// ==================== 用户头像 ====================
+
+export function getAvatar(): string | null {
+  return getFromCache(AVATAR_KEY);
+}
+
+export async function setAvatar(avatarBase64: string): Promise<void> {
+  memoryCache.set(AVATAR_KEY, avatarBase64);
+  await setEncryptedAsync(AVATAR_KEY, avatarBase64);
+}
+
+export function removeAvatar(): void {
+  removeKey(AVATAR_KEY);
 }

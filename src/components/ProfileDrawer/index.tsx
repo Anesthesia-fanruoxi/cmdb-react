@@ -1,12 +1,13 @@
 /**
- * 个人信息抽屉组件
+ * 个人信息抽屉组件 - 现代科技风格
  */
 
-import { useState, useEffect } from 'react';
-import { X, Loader2, Smartphone } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Loader2, Smartphone, Shield, Zap, Database, Camera } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { updateProfile, getProfile } from '../../services/auth';
 import { isTauriEnv, hasDeviceCredentials, clearDeviceCredentials } from '../../services/machine';
+import { getAvatar, setAvatar } from '../../utils/storage';
 import { toast } from '../Toast';
 import BindDeviceModal from '../BindDeviceModal';
 import './style.css';
@@ -23,18 +24,25 @@ const ProfileDrawer = ({ visible, onClose }: ProfileDrawerProps) => {
   const [bindModalVisible, setBindModalVisible] = useState(false);
   const [deviceBound, setDeviceBound] = useState(false);
   const [checkingDevice, setCheckingDevice] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [isClosing, setIsClosing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
-  const [formData, setFormData] = useState({
-    nick_name: '',
-    phone: '',
-    email: '',
-  });
+  // 原始表单数据（用于比较是否修改）
+  const [originalData, setOriginalData] = useState({ nick_name: '', phone: '', email: '' });
+  const [formData, setFormData] = useState({ nick_name: '', phone: '', email: '' });
 
-  // 加载用户信息和设备绑定状态
+  // 检查是否有修改
+  const hasChanges = formData.nick_name !== originalData.nick_name ||
+    formData.phone !== originalData.phone ||
+    formData.email !== originalData.email;
+
   useEffect(() => {
     if (visible) {
+      setIsClosing(false);
       loadProfile();
       checkDeviceStatus();
+      loadAvatar();
     }
   }, [visible]);
 
@@ -43,11 +51,13 @@ const ProfileDrawer = ({ visible, onClose }: ProfileDrawerProps) => {
     try {
       const res = await getProfile();
       if (res.code === 200 && res.data) {
-        setFormData({
+        const data = {
           nick_name: res.data.nick_name || '',
           phone: res.data.phone || '',
           email: res.data.email || '',
-        });
+        };
+        setFormData(data);
+        setOriginalData(data);
       }
     } catch {
       toast.error('获取个人信息失败');
@@ -56,10 +66,13 @@ const ProfileDrawer = ({ visible, onClose }: ProfileDrawerProps) => {
     }
   };
 
-  // 检查当前设备绑定状态
+  const loadAvatar = () => {
+    const saved = getAvatar();
+    if (saved) setAvatarUrl(saved);
+  };
+
   const checkDeviceStatus = async () => {
     if (!isTauriEnv() || !userName) return;
-    
     setCheckingDevice(true);
     try {
       const bound = await hasDeviceCredentials(userName);
@@ -81,8 +94,9 @@ const ProfileDrawer = ({ visible, onClose }: ProfileDrawerProps) => {
       const res = await updateProfile(formData);
       if (res.code === 200) {
         toast.success('保存成功');
+        setOriginalData(formData);
         await fetchProfile();
-        onClose();
+        handleClose();
       } else {
         toast.error(res.message || '保存失败');
       }
@@ -93,28 +107,22 @@ const ProfileDrawer = ({ visible, onClose }: ProfileDrawerProps) => {
     }
   };
 
-  const handleCancel = () => {
-    if (user) {
-      setFormData({
-        nick_name: user.nick_name || '',
-        phone: user.phone || '',
-        email: user.email || '',
-      });
-    }
-    onClose();
+  // 关闭抽屉（带动画）
+  const handleClose = () => {
+    setIsClosing(true);
+    setTimeout(() => {
+      setFormData(originalData);
+      onClose();
+    }, 280);
   };
 
-  // 解绑设备（直接清除本地凭证，调用后端接口）
   const handleUnbindDevice = async () => {
     if (!userName) return;
-    
     try {
-      // 调用后端解绑接口
       await useAuthStore.getState().unbindDevice('');
       setDeviceBound(false);
       toast.success('设备已解绑');
     } catch (err) {
-      // 如果后端接口失败，仍然清除本地凭证
       await clearDeviceCredentials(userName);
       setDeviceBound(false);
       toast.success('设备已解绑');
@@ -122,102 +130,225 @@ const ProfileDrawer = ({ visible, onClose }: ProfileDrawerProps) => {
     }
   };
 
-  // 绑定成功回调
   const handleBindSuccess = () => {
     setDeviceBound(true);
     toast.success('设备绑定成功');
+  };
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('请选择图片文件');
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('图片大小不能超过 2MB');
+      return;
+    }
+
+    try {
+      const base64 = await fileToBase64(file);
+      const compressed = await compressImage(base64, 200, 200);
+      setAvatarUrl(compressed);
+      await setAvatar(compressed);
+      toast.success('头像已更新');
+    } catch {
+      toast.error('头像上传失败');
+    }
+
+    e.target.value = '';
+  };
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const compressImage = (base64: string, maxWidth: number, maxHeight: number): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let { width, height } = img;
+
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width = width * ratio;
+          height = height * ratio;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.8));
+      };
+      img.src = base64;
+    });
+  };
+
+  const getAvatarText = () => {
+    const name = user?.nick_name || user?.user_name || '';
+    return name.charAt(0).toUpperCase();
   };
 
   if (!visible) return null;
 
   return (
     <>
-      <div className="profile-drawer-overlay" onClick={onClose} />
-      <div className="profile-drawer">
+      <div 
+        className={`profile-drawer-overlay ${isClosing ? 'closing' : ''}`} 
+        onClick={handleClose} 
+      />
+      <div className={`profile-drawer ${isClosing ? 'closing' : ''}`}>
         <div className="drawer-header">
           <h3>个人信息</h3>
-          <button className="close-btn" onClick={onClose}><X size={18} /></button>
         </div>
         
         <div className="drawer-content">
           {loading ? (
             <div className="profile-loading">
-              <Loader2 size={32} className="spin" />
+              <Loader2 size={40} className="spin" />
               <p>加载中...</p>
             </div>
           ) : (
-            <div className="profile-form">
-              <div className="form-item readonly">
-                <label>用户名</label>
-                <span className="form-value">{user?.user_name || '-'}</span>
+            <>
+              {/* 头像区域 */}
+              <div className="profile-avatar-section">
+                <div className="profile-avatar-wrapper" onClick={handleAvatarClick}>
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="头像" className="profile-avatar-img" />
+                  ) : (
+                    <div className="profile-avatar">{getAvatarText()}</div>
+                  )}
+                  <div className="avatar-overlay">
+                    <Camera size={20} />
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    style={{ display: 'none' }}
+                  />
+                </div>
+                <div className="profile-username">{user?.nick_name || user?.user_name || '-'}</div>
+                <div className="profile-dept">{user?.dept_name || '暂无部门'}</div>
               </div>
-              
-              <div className="form-item readonly">
-                <label>部门</label>
-                <span className="form-value">{user?.dept_name || '-'}</span>
-              </div>
-              
-              <div className="form-item">
-                <label>昵称</label>
-                <input
-                  type="text"
-                  value={formData.nick_name}
-                  onChange={e => handleChange('nick_name', e.target.value)}
-                  placeholder="请输入昵称"
-                />
-              </div>
-              
-              <div className="form-item">
-                <label>手机号</label>
-                <input
-                  type="text"
-                  value={formData.phone}
-                  onChange={e => handleChange('phone', e.target.value)}
-                  placeholder="请输入手机号"
-                />
-              </div>
-              
-              <div className="form-item">
-                <label>邮箱</label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={e => handleChange('email', e.target.value)}
-                  placeholder="请输入邮箱"
-                />
-              </div>
-              
-              {/* 设备绑定（仅桌面端显示） */}
-              {isTauriEnv() && (
-                <div className="form-item device-bind">
-                  <label>设备绑定</label>
-                  <div className="device-status">
-                    {checkingDevice ? (
-                      <span className="checking"><Loader2 size={14} className="spin" /> 检测中...</span>
-                    ) : deviceBound ? (
-                      <>
-                        <span className="bound"><Smartphone size={14} /> 已绑定</span>
-                        <button className="link-btn danger" onClick={handleUnbindDevice}>解绑设备</button>
-                      </>
-                    ) : (
-                      <>
-                        <span className="unbound">未绑定</span>
-                        <button className="link-btn" onClick={() => setBindModalVisible(true)}>绑定设备</button>
-                      </>
-                    )}
+
+              <div className="profile-form">
+                {/* 基本信息 */}
+                <div className="form-section">
+                  <div className="form-section-title">基本信息</div>
+                  
+                  <div className="form-item">
+                    <label>昵称</label>
+                    <input
+                      type="text"
+                      value={formData.nick_name}
+                      onChange={e => handleChange('nick_name', e.target.value)}
+                      placeholder="请输入昵称"
+                    />
+                  </div>
+                  
+                  <div className="form-item">
+                    <label>手机号</label>
+                    <input
+                      type="text"
+                      value={formData.phone}
+                      onChange={e => handleChange('phone', e.target.value)}
+                      placeholder="请输入手机号"
+                    />
+                  </div>
+                  
+                  <div className="form-item">
+                    <label>邮箱</label>
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={e => handleChange('email', e.target.value)}
+                      placeholder="请输入邮箱"
+                    />
                   </div>
                 </div>
-              )}
-              
-              <div className="form-actions">
-                <button className="btn-primary" onClick={handleSave} disabled={saving}>
-                  {saving ? <><Loader2 size={14} className="spin" /> 保存中...</> : '保存修改'}
-                </button>
-                <button className="btn-default" onClick={handleCancel}>取消</button>
+                
+                {/* 设备绑定 */}
+                {isTauriEnv() && (
+                  <div className="form-section">
+                    <div className="form-section-title">安全设置</div>
+                    <div className="form-item device-bind">
+                      <label><Smartphone size={16} /> 设备绑定</label>
+                      <div className="device-status">
+                        {checkingDevice ? (
+                          <span className="checking"><Loader2 size={14} className="spin" /> 检测中...</span>
+                        ) : deviceBound ? (
+                          <>
+                            <span className="bound"><Shield size={14} /> 已绑定当前设备</span>
+                            <button className="link-btn danger" onClick={handleUnbindDevice}>解绑</button>
+                          </>
+                        ) : (
+                          <>
+                            <span className="unbound">未绑定设备</span>
+                            <button className="link-btn" onClick={() => setBindModalVisible(true)}>立即绑定</button>
+                          </>
+                        )}
+                      </div>
+                      <div className="device-bind-tips">
+                        <p>绑定设备后可享受以下功能：</p>
+                        <div className="device-tip-item">
+                          <div className="device-tip-icon auto-login"><Zap size={16} color="#fff" /></div>
+                          <div className="device-tip-content">
+                            <div className="device-tip-title">自动登录</div>
+                            <div className="device-tip-desc">无需每次输入密码，启动即登录</div>
+                          </div>
+                        </div>
+                        <div className="device-tip-item">
+                          <div className="device-tip-icon encrypt"><Shield size={16} color="#fff" /></div>
+                          <div className="device-tip-content">
+                            <div className="device-tip-title">数据加密</div>
+                            <div className="device-tip-desc">登录凭证使用设备唯一标识加密存储</div>
+                          </div>
+                        </div>
+                        <div className="device-tip-item">
+                          <div className="device-tip-icon persist"><Database size={16} color="#fff" /></div>
+                          <div className="device-tip-content">
+                            <div className="device-tip-title">状态保持</div>
+                            <div className="device-tip-desc">应用更新后自动恢复登录状态</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
+            </>
           )}
         </div>
+
+        {/* 底部操作按钮 - 只在有修改时显示保存 */}
+        {!loading && (
+          <div className="form-actions">
+            <button className="btn-default" onClick={handleClose}>
+              {hasChanges ? '取消' : '关闭'}
+            </button>
+            {hasChanges && (
+              <button className="btn-primary" onClick={handleSave} disabled={saving}>
+                {saving ? <><Loader2 size={14} className="spin" /> 保存中...</> : '保存修改'}
+              </button>
+            )}
+          </div>
+        )}
       </div>
       
       <BindDeviceModal 

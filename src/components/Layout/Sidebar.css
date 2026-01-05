@@ -8,7 +8,7 @@
   top: 0;
   width: 220px;
   height: 100vh;
-  background: #001529;
+  background: #001529 !important;
   display: flex;
   flex-direction: column;
   transition: width 0.3s ease;
@@ -22,17 +22,17 @@
 
 /* Logo 区域 */
 .sidebar-logo {
-  height: 60px;
+  height: 48px;
   padding: 0 16px;
   display: flex;
   align-items: center;
-  background: #002140;
+  background: #283c63;
   cursor: pointer;
   transition: background-color 0.3s;
 }
 
 .sidebar-logo:hover {
-  background: #003154;
+  background: #5a587a;
 }
 
 .logo-icon {
@@ -104,11 +104,11 @@
 
 .menu-item.active {
   color: #fff;
-  background: #1890ff;
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .menu-item.active:hover {
-  background: #40a9ff;
+  background: rgba(255, 255, 255, 0.2);
 }
 
 /* 菜单图标 */

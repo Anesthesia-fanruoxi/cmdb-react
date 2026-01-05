@@ -8,6 +8,7 @@ import { subscribeProjectDetail, startRelease, cancelTask } from '../../../../se
 import { confirm } from '../../../../components/ConfirmModal';
 import type { ProjectUpdate, ReleaseRecord, ProjectDetailResponse } from '../../../../services/assets/proUpdate';
 import RecordDetailDialog from './RecordDetailDialog';
+import CategorySelectDialog from './CategorySelectDialog';
 
 interface Props {
   visible: boolean;
@@ -26,6 +27,10 @@ const ProjectDetailDrawer = ({ visible, project, onClose, onRefresh }: Props) =>
   // 记录详情弹框
   const [recordDialogVisible, setRecordDialogVisible] = useState(false);
   const [currentRecord, setCurrentRecord] = useState<ReleaseRecord | null>(null);
+  
+  // 服务选择弹框
+  const [categoryDialogVisible, setCategoryDialogVisible] = useState(false);
+  const [categoryDialogType, setCategoryDialogType] = useState<'web' | 'backend'>('web');
 
   useEffect(() => {
     if (visible && project) {
@@ -71,11 +76,45 @@ const ProjectDetailDrawer = ({ visible, project, onClose, onRefresh }: Props) =>
 
   const handleStartRelease = async () => {
     if (!project || !detail) return;
+    
+    const projectId = project.project;
+    
+    // 检查是否需要选择发布端
+    // SCFQ 前端项目
+    if (projectId === 'scfq' && project.type === 'web') {
+      setCategoryDialogType('web');
+      setCategoryDialogVisible(true);
+      return;
+    }
+    
+    // Risk 后端项目
+    if (projectId?.includes('risk') && project.type !== 'web') {
+      setCategoryDialogType('backend');
+      setCategoryDialogVisible(true);
+      return;
+    }
+    
+    // 普通项目直接确认发版
     if (!await confirm({ content: `确定要开始发版项目 "${detail.project_name}" 吗？`, type: 'warning' })) return;
+    
+    await doStartRelease(null);
+  };
+
+  const handleCategorySelect = async (category: string) => {
+    setCategoryDialogVisible(false);
+    await doStartRelease(category === 'all' ? null : category);
+  };
+
+  const doStartRelease = async (category: string | null) => {
+    if (!project) return;
     
     setReleaseLoading(true);
     try {
-      const res = await startRelease({ project: project.project, type: project.type });
+      const params: { project: string; type?: string; category?: string } = { project: project.project };
+      if (project.type === 'web') params.type = 'web';
+      if (category) params.category = category;
+      
+      const res = await startRelease(params);
       if (res.code === 200) {
         connectSSE();
         onRefresh?.();
@@ -222,6 +261,14 @@ const ProjectDetailDrawer = ({ visible, project, onClose, onRefresh }: Props) =>
         projectDetail={detail}
         onClose={() => setRecordDialogVisible(false)}
         onRefresh={() => connectSSE()}
+      />
+
+      <CategorySelectDialog
+        visible={categoryDialogVisible}
+        type={categoryDialogType}
+        projectName={detail?.project_name || ''}
+        onSelect={handleCategorySelect}
+        onClose={() => setCategoryDialogVisible(false)}
       />
     </>
   );
