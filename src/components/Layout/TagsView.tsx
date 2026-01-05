@@ -173,9 +173,31 @@ const TagsView = ({ collapsed, onToggleCollapse }: TagsViewProps) => {
 
   // 滚动到当前标签
   useEffect(() => {
-    const el = scrollRef.current?.querySelector('.tag-item.active');
-    el?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    const scrollToActive = () => {
+      const el = scrollRef.current?.querySelector('.tag-item.active');
+      el?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    };
+    scrollToActive();
   }, [location.pathname]);
+
+  // 窗口大小变化时也滚动到当前标签
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    const scrollToActive = () => {
+      const el = container.querySelector('.tag-item.active');
+      el?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    };
+
+    // 使用 ResizeObserver 监听容器大小变化
+    const resizeObserver = new ResizeObserver(() => {
+      scrollToActive();
+    });
+    resizeObserver.observe(container);
+
+    return () => resizeObserver.disconnect();
+  }, []);
 
   // 鼠标滚轮横向滚动
   useEffect(() => {
