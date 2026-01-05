@@ -44,14 +44,14 @@ jobs:
         run: npm ci
 
       - name: Build
-        run: npm run tauri build -- --target x86_64-pc-windows-msvc
+        run: npm run tauri build
         env:
           VITE_APP_VERSION: ${{ steps.version.outputs.version }}
 
       - name: Prepare artifacts
         run: |
           New-Item -ItemType Directory -Force -Path release
-          Get-ChildItem -Path "src-tauri/target/x86_64-pc-windows-msvc/release/bundle" -Recurse -Filter "*.msi" | Copy-Item -Destination "release/CMDB-Desktop-windows-x64.msi"
+          Get-ChildItem -Path "src-tauri/target/release/bundle" -Recurse -Filter "*.msi" | Copy-Item -Destination "release/CMDB-Desktop-windows-x64.msi"
         shell: powershell
 
       - name: Upload artifacts
