@@ -407,13 +407,13 @@
 
 .verification-code-container {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   gap: 12px;
   margin: 10px 0;
 }
 
 .verification-code-input {
-  flex: 1;
+  width: 48px;
   height: 60px;
   font-size: 24px;
   text-align: center;
@@ -424,6 +424,7 @@
   transition: all 0.3s;
   outline: none;
   font-weight: 600;
+  flex-shrink: 0;
 }
 
 .verification-code-input:focus {
