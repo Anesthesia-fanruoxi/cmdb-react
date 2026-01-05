@@ -125,7 +125,12 @@ jobs:
           files: artifacts/*
           body: |
             ## v1.0.5 更新说明
-            - 修复更新后页面状态丢失问题
+            - 美化了个人信息页面，现在可以自定义头像
+            - 添加了设备绑定说明
+            - 菜单的图标展示效果更好
+            - 修复了一些小问题
+            - 优化了一些性能
+            - 修复了一些已知的 bug
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
