@@ -6,6 +6,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '../../stores/authStore';
+import { useAppStore } from '../../stores/appStore';
 import { isTauriEnv, hasDeviceCredentials } from '../../services/machine';
 import './style.css';
 
@@ -28,8 +29,21 @@ const saveLoginHistory = (username: string) => {
   localStorage.setItem('loginHistory', JSON.stringify(history.slice(0, 10)));
 };
 
+const LOGIN_THEME_KEY = 'login-theme';
+
+// 获取登录页本地主题
+const getLoginTheme = (): 'light' | 'dark' => {
+  return (localStorage.getItem(LOGIN_THEME_KEY) as 'light' | 'dark') || 'dark';
+};
+
+// 保存登录页本地主题
+const setLoginTheme = (theme: 'light' | 'dark') => {
+  localStorage.setItem(LOGIN_THEME_KEY, theme);
+};
+
 const Login = () => {
   const { login, autoLogin, bindDevice } = useAuthStore();
+  const { setTheme: setGlobalTheme } = useAppStore();
   
   const [loginType, setLoginType] = useState<LoginType>('totp');
   const [username, setUsername] = useState('');
@@ -37,8 +51,9 @@ const Login = () => {
   const [totpInputs, setTotpInputs] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<'light' | 'dark'>(getLoginTheme);
   const [canAutoLogin, setCanAutoLogin] = useState(false);
+  const [checkingAutoLogin, setCheckingAutoLogin] = useState(true);
   const [loginHistory, setLoginHistory] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   
@@ -51,11 +66,18 @@ const Login = () => {
   const usernameRef = useRef<HTMLInputElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
 
-  // 加载登录历史
+  // 加载登录历史 & 初始化标题栏颜色
   useEffect(() => {
     setLoginHistory(getLoginHistory());
     const lastUsername = localStorage.getItem('lastLoginUsername');
     if (lastUsername) setUsername(lastUsername);
+    
+    // 初始化窗口标题栏颜色
+    if (isTauriEnv()) {
+      import('@tauri-apps/api/core').then(({ invoke }) => {
+        invoke('set_window_theme', { dark: theme === 'dark' }).catch(() => {});
+      });
+    }
   }, []);
 
   // 点击外部关闭下拉框
@@ -73,14 +95,17 @@ const Login = () => {
   useEffect(() => {
     const checkAutoLogin = async () => {
       if (isTauriEnv() && username.trim()) {
+        setCheckingAutoLogin(true);
         try {
           const has = await hasDeviceCredentials(username.trim());
           setCanAutoLogin(has);
         } catch {
           setCanAutoLogin(false);
         }
+        setCheckingAutoLogin(false);
       } else {
         setCanAutoLogin(false);
+        setCheckingAutoLogin(false);
       }
     };
     
@@ -88,11 +113,18 @@ const Login = () => {
     return () => clearTimeout(timer);
   }, [username]);
 
-  // 切换主题
-  const toggleTheme = () => {
+  // 切换主题 - 本地状态
+  const toggleTheme = async () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
+    setLoginTheme(newTheme);
     document.documentElement.classList.toggle('dark', newTheme === 'dark');
+    
+    // 同步更新窗口标题栏颜色
+    if (isTauriEnv()) {
+      const { invoke } = await import('@tauri-apps/api/core');
+      invoke('set_window_theme', { dark: newTheme === 'dark' }).catch(() => {});
+    }
   };
 
   // 切换登录方式（保持焦点）
@@ -162,6 +194,8 @@ const Login = () => {
 
   // 登录成功后跳转
   const onLoginSuccess = () => {
+    // 将登录页主题同步到全局状态
+    setGlobalTheme(theme);
     window.location.href = '/dashboard?from=login';
   };
 
@@ -365,7 +399,14 @@ const Login = () => {
             </div>
 
             {/* 有设备凭证：简化界面，只显示自动登录 */}
-            {canAutoLogin ? (
+            {checkingAutoLogin ? (
+              <div className="auto-login-section">
+                <div className="auto-login-hint">
+                  <span>🔍</span>
+                  <span>正在检测登录方式...</span>
+                </div>
+              </div>
+            ) : canAutoLogin ? (
               <div className="auto-login-section">
                 <div className="auto-login-hint">
                   <span>🔐</span>

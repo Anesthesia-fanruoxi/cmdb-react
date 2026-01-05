@@ -93,7 +93,7 @@ jobs:
           path: release/*
 
   release:
-    needs: [build-windows, build-macos]  # 加上 build-macos 当启用时
+    needs: [build-windows, build-macos]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
@@ -124,13 +124,10 @@ jobs:
           draft: false
           files: artifacts/*
           body: |
-            ## v1.0.5 更新说明
-            - 美化了个人信息页面，现在可以自定义头像
-            - 添加了设备绑定说明
-            - 菜单的图标展示效果更好
-            - 修复了一些小问题
-            - 优化了一些性能
-            - 修复了一些已知的 bug
+            ## v1.0.6 更新说明
+            - 优化登录流程，修复了卡顿问题
+            - 美化登录页和加载动画
+            - 支持菜单标签页拖拽
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

@@ -21,6 +21,9 @@ const pageModules = import.meta.glob('../pages/**/index.tsx');
 const Login = lazy(() => import('../pages/Login'));
 const Home = lazy(() => import('../pages/Home'));
 
+// 预加载 Home 组件（供启动流程调用）
+export const preloadHome = () => import('../pages/Home');
+
 // 强制双因子认证页面（独立页面，不在主布局内）
 const ForceTwoFactor = lazy(() => import('../pages/ForceTwoFactor'));
 

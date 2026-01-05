@@ -17,7 +17,6 @@ const USER_NAME_KEY = 'user_name';
 const USER_ID_KEY = 'userId';
 const THEME_KEY = 'app-theme';
 const LAST_LOGIN_KEY = 'lastLoginUsername';
-const AVATAR_KEY = 'user_avatar';
 
 // Store 实例
 let storeInstance: Store | null = null;
@@ -148,6 +147,33 @@ async function setEncryptedAsync(key: string, value: unknown): Promise<void> {
  */
 function getFromCache(key: string): string | null {
   return memoryCache.get(key) || null;
+}
+
+/**
+ * 异步读取加密数据（从存储读取并解密）
+ */
+async function getEncryptedAsync(key: string): Promise<string | null> {
+  // 先检查内存缓存
+  const cached = memoryCache.get(key);
+  if (cached) return cached;
+  
+  try {
+    let encrypted: string | null = null;
+    
+    if (isTauriEnv() && storeInstance) {
+      encrypted = await storeInstance.get<string>(key) || null;
+    } else {
+      encrypted = localStorage.getItem(key);
+    }
+    
+    if (!encrypted) return null;
+    
+    const decrypted = await decryptWithDevice(encrypted);
+    memoryCache.set(key, decrypted);
+    return decrypted;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -288,15 +314,40 @@ export function clearUserData(): void {
 
 // ==================== 用户头像 ====================
 
+// 获取当前用户的头像 key
+function getAvatarKey(): string {
+  const userName = getUserName();
+  return userName ? `user_avatar_${userName}` : 'user_avatar';
+}
+
 export function getAvatar(): string | null {
-  return getFromCache(AVATAR_KEY);
+  return getFromCache(getAvatarKey());
+}
+
+// 异步加载头像到内存缓存
+export async function loadAvatar(): Promise<string | null> {
+  const key = getAvatarKey();
+  const cached = memoryCache.get(key);
+  if (cached) return cached;
+  
+  try {
+    const value = await getEncryptedAsync(key);
+    if (value) {
+      memoryCache.set(key, value);
+      return value;
+    }
+  } catch {
+    // 忽略错误
+  }
+  return null;
 }
 
 export async function setAvatar(avatarBase64: string): Promise<void> {
-  memoryCache.set(AVATAR_KEY, avatarBase64);
-  await setEncryptedAsync(AVATAR_KEY, avatarBase64);
+  const key = getAvatarKey();
+  memoryCache.set(key, avatarBase64);
+  await setEncryptedAsync(key, avatarBase64);
 }
 
 export function removeAvatar(): void {
-  removeKey(AVATAR_KEY);
+  removeKey(getAvatarKey());
 }

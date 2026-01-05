@@ -134,14 +134,13 @@ const Sidebar = ({ collapsed = false }: SidebarProps) => {
     setOpenKeys(latestOpenKey ? [latestOpenKey] : []);
   };
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     setDropdownVisible(false);
-    try {
-      await logout();
-      window.location.href = '/login?from=logout';
-    } catch (err) {
-      console.error('登出失败:', err);
-    }
+    // 将用户主题保存到登录页本地状态
+    localStorage.setItem('login-theme', theme);
+    // 先跳转，再异步调用登出接口
+    window.location.href = '/login?from=logout';
+    logout().catch(() => {});
   };
 
   const handleRefreshPermissions = async () => {
