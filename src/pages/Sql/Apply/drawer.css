@@ -95,7 +95,7 @@
   border-bottom: 1px solid var(--border-color);
 }
 
-.modal-header h4 { margin: 0; font-size: 16px; font-weight: 500; }
+.modal-header h4 { margin: 0; font-size: 16px; font-weight: 500; color: var(--text-color); }
 
 .modal-footer {
   display: flex;
@@ -103,4 +103,40 @@
   gap: 12px;
   padding: 16px 20px;
   border-top: 1px solid var(--border-color);
+}
+
+
+/* 分离式 footer 布局 */
+.drawer-footer-split {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.drawer-footer-split .footer-left,
+.drawer-footer-split .footer-right {
+  display: flex;
+  gap: 12px;
+}
+
+/* SQL 只读编辑器 - 铺满剩余空间 */
+.sql-editor-readonly {
+  flex: 1;
+  min-height: 200px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border-color-light);
+}
+
+/* 详情内容布局 */
+.detail-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-content .detail-card:last-of-type {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }

@@ -43,6 +43,7 @@
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
+  color: var(--text-color);
   transition: all 0.2s;
 }
 

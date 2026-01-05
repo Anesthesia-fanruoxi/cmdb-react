@@ -1,6 +1,6 @@
 :root {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 
-    'Helvetica Neue', Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text',
+    'Inter', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -26,6 +26,7 @@
   --color-info: #1890ff;         /* 信息状态 */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);   /* 小阴影 */
   --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.15);  /* 中阴影 */
+  --border-radius: 8px;          /* 圆角 */
 
   color: var(--text-color);
   background-color: var(--bg-page);
@@ -199,8 +200,8 @@ button:focus-visible {
 
 /* 全局滚动条美化 */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -209,23 +210,65 @@ button:focus-visible {
 
 ::-webkit-scrollbar-thumb {
   background: var(--border-color-dark, #d9d9d9);
-  border-radius: 3px;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary, #666);
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
 /* 暗色模式滚动条 */
 :root.dark ::-webkit-scrollbar-thumb {
   background: var(--border-color, #333);
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
 :root.dark ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted, #666);
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
 /* 滚动条角落 */
 ::-webkit-scrollbar-corner {
   background: transparent;
+}
+
+/* macOS 样式优化 */
+@supports (-webkit-backdrop-filter: blur(10px)) {
+  /* macOS 毛玻璃效果支持 */
+  .glass-effect {
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+}
+
+/* 输入框样式统一 */
+input, textarea, select {
+  font-family: inherit;
+  font-size: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: var(--border-radius, 8px);
+}
+
+/* 按钮点击效果 */
+button:active {
+  transform: scale(0.98);
+}
+
+/* 禁用拖拽选中 */
+.no-select {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* 平滑滚动 */
+html {
+  scroll-behavior: smooth;
 }

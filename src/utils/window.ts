@@ -5,6 +5,7 @@
 
 import { WebviewWindow, getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit, listen, type UnlistenFn } from '@tauri-apps/api/event';
+import { invoke } from '@tauri-apps/api/core';
 
 interface DetachWindowOptions {
   /** 窗口唯一标识 */
@@ -28,10 +29,19 @@ interface DetachWindowOptions {
 /** 已创建的窗口缓存 */
 const windowCache = new Map<string, WebviewWindow>();
 
+/** 窗口更新事件数据 */
+export interface WindowUpdateEvent {
+  [key: string]: unknown;
+}
+
 /**
  * 创建独立窗口
+ * @param updateData 如果窗口已存在，发送此数据通知窗口更新
  */
-export async function createDetachedWindow(options: DetachWindowOptions): Promise<WebviewWindow | null> {
+export async function createDetachedWindow(
+  options: DetachWindowOptions, 
+  updateData?: WindowUpdateEvent
+): Promise<WebviewWindow | null> {
   const {
     label,
     title,
@@ -43,22 +53,31 @@ export async function createDetachedWindow(options: DetachWindowOptions): Promis
     center = true
   } = options;
 
-  // 检查窗口是否已存在
-  const existing = windowCache.get(label);
-  if (existing) {
-    try {
-      await existing.setFocus();
+  const fullLabel = `detached-${label}`;
+
+  // 使用 Rust 命令将已存在的窗口带到前台
+  try {
+    const exists = await invoke<boolean>('bring_window_to_front', { label: fullLabel });
+    if (exists) {
+      // 窗口已存在并已带到前台，发送更新事件
+      if (updateData) {
+        await emit(`window-update-${fullLabel}`, updateData);
+      }
+      const existing = await WebviewWindow.getByLabel(fullLabel);
       return existing;
-    } catch {
-      windowCache.delete(label);
     }
+  } catch {
+    // 命令失败，继续创建新窗口
   }
+
+  // 清理缓存中可能失效的引用
+  windowCache.delete(label);
 
   // 获取当前主题
   const isDark = document.documentElement.classList.contains('dark');
 
   try {
-    const webview = new WebviewWindow(`detached-${label}`, {
+    const webview = new WebviewWindow(fullLabel, {
       url,
       title,
       width,
@@ -122,6 +141,21 @@ export function openComponentWindow(options: ComponentWindowOptions) {
     url: `/detached?type=${type}&data=${data}`,
     width,
     height,
+  }, props); // 传递 props 作为更新数据
+}
+
+/**
+ * 监听窗口更新事件
+ * @param label 窗口标识（不含 detached- 前缀）
+ * @param callback 回调函数
+ */
+export function onWindowUpdate<T = WindowUpdateEvent>(
+  label: string, 
+  callback: (data: T) => void
+): Promise<UnlistenFn> {
+  const fullLabel = `detached-${label}`;
+  return listen<T>(`window-update-${fullLabel}`, (event) => {
+    callback(event.payload);
   });
 }
 

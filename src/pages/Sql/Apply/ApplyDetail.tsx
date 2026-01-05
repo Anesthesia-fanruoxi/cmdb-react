@@ -2,7 +2,7 @@
  * SQL变更申请详情抽屉
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   updateApply, checkSql, APPLY_STATUS_MAP, FINISHED_STATUS,
   type ApplyDetail as ApplyDetailType, type ApplyItem, type SqlCheckResult
@@ -11,6 +11,10 @@ import { useAuthStore } from '../../../stores/authStore';
 import { toast } from '../../../components/AppNotification';
 import { confirm } from '../../../components/ConfirmModal';
 import SqlAnalysisDialog from './SqlAnalysisDialog';
+import ace from 'ace-builds';
+import 'ace-builds/src-noconflict/mode-sql';
+import 'ace-builds/src-noconflict/theme-xcode';
+import 'ace-builds/src-noconflict/theme-twilight';
 
 interface Props {
   detail: ApplyDetailType;
@@ -24,6 +28,52 @@ const ApplyDetailDrawer = ({ detail, onClose, onRefresh, onResubmit }: Props) =>
   const [executing, setExecuting] = useState(false);
   const [analysisVisible, setAnalysisVisible] = useState(false);
   const [analysisResults, setAnalysisResults] = useState<SqlCheckResult[]>([]);
+  const editorRef = useRef<HTMLDivElement>(null);
+  const aceEditorRef = useRef<ace.Ace.Editor | null>(null);
+
+  // 初始化 SQL 编辑器（只读）
+  useEffect(() => {
+    if (!editorRef.current || aceEditorRef.current) return;
+    
+    const editor = ace.edit(editorRef.current);
+    aceEditorRef.current = editor;
+    
+    const isDark = document.documentElement.classList.contains('dark');
+    editor.setTheme(isDark ? 'ace/theme/twilight' : 'ace/theme/xcode');
+    editor.session.setMode('ace/mode/sql');
+    editor.setReadOnly(true);
+    editor.setOptions({
+      fontSize: '13px',
+      showLineNumbers: true,
+      showGutter: true,
+      highlightActiveLine: false,
+      showPrintMargin: false,
+      wrap: true,
+      maxLines: Infinity,
+      minLines: 5
+    });
+    
+    editor.setValue(detail.sql_content || '', -1);
+    
+    // 隐藏光标
+    const cursorLayer = (editor.renderer as any).$cursorLayer;
+    if (cursorLayer?.element) {
+      cursorLayer.element.style.display = 'none';
+    }
+    
+    // 监听主题变化
+    const observer = new MutationObserver(() => {
+      const isDarkNow = document.documentElement.classList.contains('dark');
+      editor.setTheme(isDarkNow ? 'ace/theme/twilight' : 'ace/theme/xcode');
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    
+    return () => {
+      observer.disconnect();
+      editor.destroy();
+      aceEditorRef.current = null;
+    };
+  }, [detail.sql_content]);
 
   // 判断当前用户角色
   const currentUserId = Number(userId);
@@ -187,7 +237,7 @@ const ApplyDetailDrawer = ({ detail, onClose, onRefresh, onResubmit }: Props) =>
               <div className="card-header">
                 <span>SQL内容</span>
               </div>
-              <pre className="sql-content">{detail.sql_content}</pre>
+              <div ref={editorRef} className="sql-editor-readonly" />
             </div>
 
             {/* 检查结果摘要 */}
@@ -208,43 +258,42 @@ const ApplyDetailDrawer = ({ detail, onClose, onRefresh, onResubmit }: Props) =>
           </div>
 
           {/* 操作按钮 */}
-          <div className="drawer-footer">
-            <button className="btn btn-default" onClick={onClose}>关闭</button>
-            
-            {/* 审批人 - 待审批状态 */}
-            {isApprover && isPending && (
-              <>
-                <button className="btn btn-danger" onClick={handleReject}>驳回</button>
-                <button className="btn btn-primary" onClick={handleApprove}>审批通过</button>
-                <button className="btn btn-default" onClick={handleViewAnalysis}>查看分析结果</button>
-              </>
-            )}
+          <div className="drawer-footer drawer-footer-split">
+            <div className="footer-left">
+              {/* 审批人 - 待审批状态 */}
+              {isApprover && isPending && (
+                <>
+                  <button className="btn btn-danger" onClick={handleReject}>驳回</button>
+                  <button className="btn btn-primary" onClick={handleApprove}>审批通过</button>
+                </>
+              )}
 
-            {/* 创建人 - 待审批或待执行状态 */}
-            {isCreator && (isPending || isWaitExecute) && (
-              <>
+              {/* 创建人 - 待审批或待执行状态 */}
+              {isCreator && (isPending || isWaitExecute) && (
                 <button className="btn btn-warning" onClick={handleCancel}>撤销申请</button>
-                <button className="btn btn-default" onClick={handleViewAnalysis}>查看分析结果</button>
-              </>
-            )}
+              )}
 
-            {/* 执行人 - 待执行状态 */}
-            {isExecutor && isWaitExecute && (
-              <>
-                <button className="btn btn-danger" onClick={handleReject}>驳回</button>
-                <button className="btn btn-primary" disabled={executing} onClick={handleExecute}>
-                  {executing ? '执行中...' : '执行'}
-                </button>
-              </>
-            )}
+              {/* 执行人 - 待执行状态 */}
+              {isExecutor && isWaitExecute && (
+                <>
+                  <button className="btn btn-danger" onClick={handleReject}>驳回</button>
+                  <button className="btn btn-primary" disabled={executing} onClick={handleExecute}>
+                    {executing ? '执行中...' : '执行'}
+                  </button>
+                </>
+              )}
 
-            {/* 创建人 - 流程完成后可再次提交 */}
-            {isCreator && isFlowFinished && (
-              <>
+              {/* 创建人 - 流程完成后可再次提交 */}
+              {isCreator && isFlowFinished && (
                 <button className="btn btn-primary" onClick={handleResubmit}>再次提交</button>
-                <button className="btn btn-default" onClick={handleViewAnalysis}>查看分析结果</button>
-              </>
-            )}
+              )}
+
+              <button className="btn btn-default" onClick={handleViewAnalysis}>查看分析结果</button>
+            </div>
+            
+            <div className="footer-right">
+              <button className="btn btn-default" onClick={onClose}>关闭</button>
+            </div>
           </div>
         </div>
       </div>

@@ -2,7 +2,7 @@
  * SQL分析结果对话框
  */
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import ace from 'ace-builds'
 import 'ace-builds/src-noconflict/mode-sql'
 import 'ace-builds/src-noconflict/theme-xcode'
@@ -33,8 +33,7 @@ const SqlAnalysisDialog = ({
 }: Props) => {
   const [activeTab, setActiveTab] = useState(0)
   const [activeResultTab, setActiveResultTab] = useState<'analysis' | 'rules'>('analysis')
-  const editorRefs = useRef<Record<number, any>>({})
-  const containerRefs = useRef<Record<number, HTMLDivElement | null>>({})
+  const editorRefs = useRef<Record<number, ace.Ace.Editor>>({})
 
   const currentSql = sqlList[activeTab] || null
 
@@ -44,46 +43,48 @@ const SqlAnalysisDialog = ({
     return rules.some(r => r.rule_type === 'syntax_check' && !r.passed)
   }
 
-  // 初始化 Ace 编辑器
-  useEffect(() => {
-    sqlList.forEach((_, index) => {
-      const container = containerRefs.current[index]
-      if (container && !editorRefs.current[index]) {
-        const editor = ace.edit(container)
-        const isDark = document.documentElement.classList.contains('dark')
-        
-        editor.setTheme(isDark ? 'ace/theme/twilight' : 'ace/theme/xcode')
-        editor.session.setMode('ace/mode/sql')
-        editor.setReadOnly(true)
-        editor.setOptions({
-          fontSize: '13px',
-          showLineNumbers: true,
-          showGutter: true,
-          highlightActiveLine: false,
-          showPrintMargin: false,
-          wrap: true,
-          maxLines: Infinity,
-          minLines: 5
-        })
-        
-        if (sqlList[index]) {
-          editor.setValue(sqlList[index].sql || '', -1)
-        }
-        
-        // 隐藏光标
-        const cursorLayer = (editor.renderer as any).$cursorLayer
-        if (cursorLayer?.element) {
-          cursorLayer.element.style.display = 'none'
-        }
-        editorRefs.current[index] = editor
-      }
+  // 初始化单个编辑器
+  const initEditor = useCallback((index: number, container: HTMLDivElement | null) => {
+    if (!container || editorRefs.current[index]) return
+    
+    const editor = ace.edit(container)
+    const isDark = document.documentElement.classList.contains('dark')
+    
+    editor.setTheme(isDark ? 'ace/theme/twilight' : 'ace/theme/xcode')
+    editor.session.setMode('ace/mode/sql')
+    editor.setReadOnly(true)
+    editor.setOptions({
+      fontSize: '13px',
+      showLineNumbers: true,
+      showGutter: true,
+      highlightActiveLine: false,
+      showPrintMargin: false,
+      wrap: true,
+      maxLines: Infinity,
+      minLines: 5
     })
+    
+    // 设置对应的 SQL 内容
+    if (sqlList[index]) {
+      editor.setValue(sqlList[index].sql || '', -1)
+    }
+    
+    // 隐藏光标
+    const cursorLayer = (editor.renderer as any).$cursorLayer
+    if (cursorLayer?.element) {
+      cursorLayer.element.style.display = 'none'
+    }
+    
+    editorRefs.current[index] = editor
+  }, [sqlList])
 
+  // 清理编辑器
+  useEffect(() => {
     return () => {
       Object.values(editorRefs.current).forEach(editor => editor?.destroy())
       editorRefs.current = {}
     }
-  }, [sqlList])
+  }, [])
 
   const currentHasSyntaxError = currentSql && hasSyntaxError(currentSql)
   const currentRules = currentSql?.rule_infos || currentSql?.rule_results || []
@@ -112,10 +113,15 @@ const SqlAnalysisDialog = ({
                 </button>
               ))}
             </div>
-            <div 
-              className={`sql-editor-box ${currentHasSyntaxError ? 'has-error' : ''}`}
-              ref={el => containerRefs.current[activeTab] = el}
-            />
+            {/* 为每个 SQL 创建独立的编辑器容器 */}
+            {sqlList.map((sql, index) => (
+              <div 
+                key={index}
+                className={`sql-editor-box ${hasSyntaxError(sql) ? 'has-error' : ''}`}
+                style={{ display: activeTab === index ? 'block' : 'none' }}
+                ref={el => initEditor(index, el)}
+              />
+            ))}
           </div>
 
           {/* 右侧：分析结果 */}

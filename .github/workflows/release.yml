@@ -82,8 +82,31 @@ jobs:
         with:
           workspaces: './src-tauri -> target'
           shared-key: ${{ matrix.target }}
+
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            VERSION="${{ github.ref_name }}"
+          else
+            VERSION="v0.0.0"
+          fi
+          VERSION_NUM="${VERSION#v}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version_num=$VERSION_NUM" >> $GITHUB_OUTPUT
+
+      - name: Update version
+        run: |
+          sed -i '' "s/VITE_APP_VERSION=.*/VITE_APP_VERSION=${{ steps.version.outputs.version }}/" .env
+          sed -i '' "s/^version = \".*\"/version = \"${{ steps.version.outputs.version_num }}\"/" src-tauri/Cargo.toml
+          sed -i '' "s/\"version\": \".*\"/\"version\": \"${{ steps.version.outputs.version_num }}\"/" src-tauri/tauri.conf.json
+          sed -i '' "s/\"version\": \".*\"/\"version\": \"${{ steps.version.outputs.version_num }}\"/" package.json
+
       - run: npm ci
-      - run: npm run tauri build -- --target ${{ matrix.target }}
+      - name: Build
+        run: npm run tauri build -- --target ${{ matrix.target }}
+        env:
+          VITE_APP_VERSION: ${{ steps.version.outputs.version }}
       - run: |
           mkdir -p release
           find src-tauri/target/${{ matrix.target }}/release/bundle -name "*.dmg" -type f -exec cp {} "release/CMDB-Desktop-${{ matrix.name }}.dmg" \;
@@ -123,11 +146,7 @@ jobs:
         with:
           draft: false
           files: artifacts/*
-          body: |
-            ## v1.0.6 更新说明
-            - 优化登录流程，修复了卡顿问题
-            - 美化登录页和加载动画
-            - 支持菜单标签页拖拽
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

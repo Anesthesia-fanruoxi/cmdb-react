@@ -6,6 +6,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { closeCurrentWindow } from '../../utils/window';
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import '../../index.css';
 
 const DetachedWindow = () => {
@@ -13,6 +14,13 @@ const DetachedWindow = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [Component, setComponent] = useState<React.ComponentType<any> | null>(null);
   const [props, setProps] = useState<Record<string, unknown>>({});
+  const [windowLabel, setWindowLabel] = useState('');
+
+  // 获取当前窗口 label
+  useEffect(() => {
+    const label = getCurrentWebviewWindow().label.replace('detached-', '');
+    setWindowLabel(label);
+  }, []);
 
   // ESC 键关闭窗口
   useEffect(() => {
@@ -92,7 +100,7 @@ const DetachedWindow = () => {
     return <div className="detached-loading">加载中...</div>;
   }
 
-  return <Component {...props} />;
+  return <Component {...props} windowLabel={windowLabel} />;
 };
 
 export default DetachedWindow;

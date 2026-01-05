@@ -5,6 +5,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getTableStructure } from '../../../../services/sql/search';
 import { toast } from '../../../../components/AppNotification';
+import { onWindowUpdate } from '../../../../utils/window';
 import '../styles/index.css';
 
 type TabType = 'fields' | 'preview' | 'indexes' | 'ddl';
@@ -51,6 +52,7 @@ interface Props {
   dbName: string;
   tableName: string;
   initialTab?: TabType;
+  windowLabel?: string; // 窗口标识，用于监听更新事件
 }
 
 const TAB_CONFIG = [
@@ -61,8 +63,21 @@ const TAB_CONFIG = [
 ] as const;
 
 
-const TableDetailContent = ({ agent, dbName, tableName, initialTab = 'fields' }: Props) => {
+const TableDetailContent = ({ agent, dbName, tableName, initialTab = 'fields', windowLabel }: Props) => {
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
+
+  // 监听窗口更新事件，切换 Tab
+  useEffect(() => {
+    if (!windowLabel) return;
+    
+    const unlisten = onWindowUpdate<{ initialTab?: TabType }>(windowLabel, (data) => {
+      if (data.initialTab) {
+        setActiveTab(data.initialTab);
+      }
+    });
+
+    return () => { unlisten.then(fn => fn()); };
+  }, [windowLabel]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [tableInfo, setTableInfo] = useState<TableInfo | null>(null);

@@ -3,6 +3,7 @@
 //! 功能：
 //! - 任务栏图标高亮（有消息时闪烁）
 //! - 窗口主题切换
+//! - 窗口置顶
 
 use tauri::{AppHandle, Manager, UserAttentionType, Theme};
 
@@ -43,4 +44,20 @@ pub async fn set_window_theme(app: AppHandle, dark: bool) -> Result<(), String> 
         let _ = window.set_theme(Some(theme));
     }
     Ok(())
+}
+
+/// 将指定窗口带到前台
+#[tauri::command]
+pub async fn bring_window_to_front(app: AppHandle, label: String) -> Result<bool, String> {
+    if let Some(window) = app.get_webview_window(&label) {
+        // 显示窗口
+        window.show().map_err(|e| e.to_string())?;
+        // 取消最小化
+        window.unminimize().map_err(|e| e.to_string())?;
+        // 获取焦点
+        window.set_focus().map_err(|e| e.to_string())?;
+        Ok(true)
+    } else {
+        Ok(false)
+    }
 }

@@ -291,6 +291,9 @@ const ApplyCreateDrawer = ({ prefillData, onClose, onSuccess }: Props) => {
     if (!formData.project || !formData.database || !formData.sqlContent || !formData.remark) {
       toast.warning('请填写完整信息'); return;
     }
+    if (!formData.applyId || !formData.executorId) {
+      toast.warning('未匹配到审批人或执行人，请联系管理员配置流程'); return;
+    }
     setSubmitting(true);
     try {
       const res = await checkSql({ 
