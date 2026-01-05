@@ -1,5 +1,5 @@
 /**
- * 侧边栏样式
+ * 侧边栏样式 - 使用 Ant Design Menu
  */
 
 .app-sidebar {
@@ -39,6 +39,7 @@
   font-size: 24px;
   min-width: 32px;
   text-align: center;
+  color: #fff;
 }
 
 .logo-text {
@@ -47,6 +48,10 @@
   font-weight: 600;
   margin-left: 12px;
   white-space: nowrap;
+}
+
+.app-sidebar.collapsed .logo-text {
+  display: none;
 }
 
 /* 导航区域 */
@@ -69,129 +74,105 @@
   background: transparent;
 }
 
-/* 菜单列表 */
-.menu-list {
-  list-style: none;
-  margin: 0;
-  padding: 8px 0;
+/* Ant Design Menu 自定义样式 */
+.sidebar-nav .ant-menu {
+  background: transparent !important;
 }
 
-.menu-item-wrapper {
-  margin: 0;
-  padding: 0;
+.sidebar-nav .ant-menu-item,
+.sidebar-nav .ant-menu-submenu-title {
+  margin: 4px 8px !important;
+  border-radius: 6px !important;
+  transition: all 0.3s ease !important;
 }
 
-/* 菜单项 */
-.menu-item {
-  position: relative;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  border: none;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.65);
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.3s;
-  text-align: left;
+.sidebar-nav .ant-menu-item:hover,
+.sidebar-nav .ant-menu-submenu-title:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
 }
 
-.menu-item:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.1);
+/* 选中菜单样式 - 不用蓝色背景 */
+.sidebar-nav .ant-menu-item-selected {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #fff !important;
 }
 
-.menu-item.active {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.15);
+.sidebar-nav .ant-menu-item-selected::after {
+  display: none !important;
 }
 
-.menu-item.active:hover {
-  background: rgba(255, 255, 255, 0.2);
+/* 子菜单样式 */
+.sidebar-nav .ant-menu-sub {
+  background: rgba(0, 0, 0, 0.2) !important;
 }
 
-/* 菜单图标 */
-.menu-icon {
-  font-size: 16px;
-  min-width: 24px;
-  margin-right: 10px;
-  text-align: center;
-  color: rgba(255, 255, 255, 0.65);
+.sidebar-nav .ant-menu-sub .ant-menu-item {
+  padding-left: 48px !important;
 }
 
-.menu-item:hover .menu-icon,
-.menu-item.active .menu-icon {
-  color: #fff;
+/* 箭头对齐修复 */
+.sidebar-nav .ant-menu-submenu-title {
+  display: flex !important;
+  align-items: center !important;
 }
 
-.app-sidebar.collapsed .menu-icon {
-  margin-right: 0;
+.sidebar-nav .ant-menu-submenu-arrow {
+  right: 16px !important;
+  position: absolute !important;
 }
 
-/* 菜单文字 */
-.menu-label {
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+/* 箭头方向：默认向右 >，展开后向下 */
+.sidebar-nav .ant-menu-submenu .ant-menu-submenu-arrow::before,
+.sidebar-nav .ant-menu-submenu .ant-menu-submenu-arrow::after {
+  transition: transform 0.3s ease !important;
 }
 
-/* 展开箭头 */
-.menu-arrow {
-  font-size: 10px;
-  transition: transform 0.3s;
-  margin-left: 8px;
+.sidebar-nav .ant-menu-submenu:not(.ant-menu-submenu-open) .ant-menu-submenu-arrow::before {
+  transform: rotate(-45deg) translateX(2.5px) !important;
 }
 
-.menu-arrow.expanded {
-  transform: rotate(90deg);
+.sidebar-nav .ant-menu-submenu:not(.ant-menu-submenu-open) .ant-menu-submenu-arrow::after {
+  transform: rotate(45deg) translateX(-2.5px) !important;
 }
 
-/* 子菜单 */
-.sub-menu {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  background: rgba(0, 0, 0, 0.2);
+/* 子菜单展开动画 */
+.sidebar-nav .ant-menu-inline-collapsed > .ant-menu-submenu > .ant-menu-submenu-title,
+.sidebar-nav .ant-menu-inline > .ant-menu-submenu > .ant-menu-submenu-title {
+  transition: all 0.3s ease !important;
 }
 
-.sub-menu .menu-item {
-  padding-left: 48px;
-  font-size: 13px;
+/* 收起状态下的弹出菜单样式 */
+.ant-menu-submenu-popup {
+  z-index: 1050 !important;
 }
 
-.sub-menu .menu-item.active {
-  background: transparent;
-  color: #1890ff;
+.ant-menu-submenu-popup .ant-menu {
+  background: #001529 !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  min-width: 160px !important;
 }
 
-.sub-menu .menu-item.active::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: #1890ff;
+.ant-menu-submenu-popup .ant-menu-item {
+  color: rgba(255, 255, 255, 0.65) !important;
+  margin: 4px 8px !important;
+  border-radius: 4px !important;
+  padding-left: 16px !important;
 }
 
-/* 折叠状态 */
-.app-sidebar.collapsed .menu-label,
-.app-sidebar.collapsed .menu-arrow,
-.app-sidebar.collapsed .logo-text {
-  display: none;
+.ant-menu-submenu-popup .ant-menu-item .ant-menu-item-icon {
+  margin-right: 8px !important;
 }
 
-.app-sidebar.collapsed .menu-item {
-  justify-content: center;
-  padding: 12px 0;
+.ant-menu-submenu-popup .ant-menu-item:hover {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.1) !important;
 }
 
-.app-sidebar.collapsed .sub-menu {
-  display: none;
+.ant-menu-submenu-popup .ant-menu-item-selected {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.15) !important;
 }
-
 
 /* 底部用户区域 */
 .sidebar-footer {
@@ -226,12 +207,6 @@
 
 .footer-icon-btn:hover {
   background: rgba(255, 255, 255, 0.25);
-}
-
-.footer-icon-btn svg {
-  width: 22px;
-  height: 22px;
-  stroke-width: 2;
 }
 
 .footer-icon-btn .badge {
@@ -278,6 +253,14 @@
   font-weight: 600;
   cursor: pointer;
   transition: transform 0.2s;
+  overflow: hidden;
+  position: relative;
+}
+
+.footer-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .footer-avatar:hover {
@@ -343,6 +326,22 @@
   background: #333;
 }
 
+/* NEW 徽章 */
+.new-badge {
+  font-size: 10px;
+  padding: 1px 5px;
+  background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
+  color: #fff;
+  border-radius: 4px;
+  margin-left: auto;
+  font-weight: 600;
+  animation: pulse-badge 2s infinite;
+}
+
+@keyframes pulse-badge {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
 
 /* 铃铛按钮特殊样式 */
 .footer-icon-btn.bell-btn {
@@ -354,33 +353,14 @@
   background: rgba(250, 173, 20, 0.45);
 }
 
-
-/* NEW 标记 */
-.new-badge {
-  margin-left: auto;
-  padding: 2px 6px;
-  background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 600;
-  border-radius: 4px;
+/* 更新按钮 */
+.update-btn {
   animation: pulse 2s infinite;
+  background: rgba(64, 169, 255, 0.25) !important;
 }
 
-.avatar-new-dot {
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  width: 10px;
-  height: 10px;
-  background: #ff4d4f;
-  border-radius: 50%;
-  border: 2px solid #001529;
-  animation: pulse 2s infinite;
-}
-
-.footer-avatar {
-  position: relative;
+.update-btn:hover {
+  background: rgba(64, 169, 255, 0.4) !important;
 }
 
 @keyframes pulse {

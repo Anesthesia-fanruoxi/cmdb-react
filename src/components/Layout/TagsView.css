@@ -308,3 +308,22 @@
 .tags-context-menu li:hover {
   background: var(--bg-hover);
 }
+
+/* 拖拽样式 */
+.tag-item.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+.tag-item.drag-over {
+  border-color: var(--primary-color) !important;
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.tag-item {
+  cursor: grab;
+}
+
+.tag-item:active {
+  cursor: grabbing;
+}

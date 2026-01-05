@@ -154,7 +154,7 @@ const TaskForm = ({ visible, task, onClose, onSuccess }: Props) => {
       )}
       <style>{`
         .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1100; }
-        .task-form-drawer { position: fixed; top: 0; right: 0; width: 500px; height: 100%; background: var(--bg-color); z-index: 1101; display: flex; flex-direction: column; }
+        .task-form-drawer { position: fixed; top: 0; right: 0; width: 420px; height: 100%; background: var(--bg-color); z-index: 1101; display: flex; flex-direction: column; }
         .drawer-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
         .drawer-header h3 { margin: 0; font-size: 16px; color: var(--text-color); }
         .drawer-close { background: none; border: none; cursor: pointer; color: var(--text-secondary); }

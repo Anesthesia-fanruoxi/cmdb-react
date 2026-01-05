@@ -123,6 +123,13 @@
   font-weight: 600;
 }
 
+.user-avatar-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 .user-name {
   font-size: 14px;
   color: var(--text-color);

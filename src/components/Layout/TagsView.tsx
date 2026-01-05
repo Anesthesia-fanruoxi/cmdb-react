@@ -1,6 +1,6 @@
 /**
  * 标签页导航组件
- * 只包含折叠按钮和标签页
+ * 支持拖拽排序
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -18,8 +18,12 @@ interface TagsViewProps {
 const TagsView = ({ collapsed, onToggleCollapse }: TagsViewProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { visitedViews, delVisitedView, delOtherViews, delAllViews, addVisitedView, menuList } = useMenuStore();
+  const { visitedViews, delVisitedView, delOtherViews, delAllViews, addVisitedView, menuList, reorderViews } = useMenuStore();
   const scrollRef = useRef<HTMLDivElement>(null);
+  
+  // 拖拽状态
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   
   const [contextMenu, setContextMenu] = useState<{
     visible: boolean;
@@ -62,6 +66,43 @@ const TagsView = ({ collapsed, onToggleCollapse }: TagsViewProps) => {
       meta: { title, affix: path === '/dashboard' },
     });
   }, [location.pathname, menuList, addVisitedView, visitedViews]);
+
+  // 拖拽开始
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDragIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(index));
+  };
+
+  // 拖拽经过
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragIndex !== null && index !== dragIndex) {
+      setDragOverIndex(index);
+    }
+  };
+
+  // 拖拽离开
+  const handleDragLeave = () => {
+    setDragOverIndex(null);
+  };
+
+  // 放置
+  const handleDrop = (e: React.DragEvent, toIndex: number) => {
+    e.preventDefault();
+    if (dragIndex !== null && dragIndex !== toIndex) {
+      reorderViews(dragIndex, toIndex);
+    }
+    setDragIndex(null);
+    setDragOverIndex(null);
+  };
+
+  // 拖拽结束
+  const handleDragEnd = () => {
+    setDragIndex(null);
+    setDragOverIndex(null);
+  };
 
   // 点击标签
   const handleClick = (tag: TagView) => {
@@ -163,10 +204,16 @@ const TagsView = ({ collapsed, onToggleCollapse }: TagsViewProps) => {
 
       {/* 标签页 */}
       <div className="tags-scroll" ref={scrollRef}>
-        {visitedViews.map(tag => (
+        {visitedViews.map((tag, index) => (
           <div
             key={tag.path}
-            className={`tag-item ${tag.path === location.pathname ? 'active' : ''}`}
+            draggable
+            onDragStart={e => handleDragStart(e, index)}
+            onDragOver={e => handleDragOver(e, index)}
+            onDragLeave={handleDragLeave}
+            onDrop={e => handleDrop(e, index)}
+            onDragEnd={handleDragEnd}
+            className={`tag-item ${tag.path === location.pathname ? 'active' : ''} ${dragIndex === index ? 'dragging' : ''} ${dragOverIndex === index ? 'drag-over' : ''}`}
             onClick={() => handleClick(tag)}
             onContextMenu={e => handleContextMenu(e, tag)}
           >

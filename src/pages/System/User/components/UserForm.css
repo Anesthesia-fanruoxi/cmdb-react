@@ -18,7 +18,7 @@
 .modal-content {
   background: var(--bg-color);
   border-radius: 8px;
-  width: 680px;
+  width: 480px;
   max-width: 90vw;
   max-height: 80vh;
   display: flex;
@@ -71,16 +71,16 @@
   flex-shrink: 0;
 }
 
-/* 两列布局 */
+/* 单列布局 */
 .form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px 24px;
-  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 0;
 }
 
 .form-row .form-group {
-  margin-bottom: 0;
+  margin-bottom: 12px;
 }
 
 /* 表单项 - 水平布局 */

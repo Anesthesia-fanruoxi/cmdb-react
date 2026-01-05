@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { RefreshCw, Plus, Shield } from 'lucide-react';
 import { getRoleList, createRole, updateRole, deleteRole, type Role } from '../../../services/system/role';
 import { openComponentWindow } from '../../../utils/window';
 import { toast } from '../../../components/AppNotification';
@@ -29,7 +30,6 @@ const RoleManagement = () => {
 
   useEffect(() => { fetchRoles(); }, [fetchRoles]);
 
-  // ESC 关闭弹窗
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setFormVisible(false);
@@ -57,15 +57,13 @@ const RoleManagement = () => {
     }
   };
 
-  // 权限设置 - 打开独立窗口
   const handlePermission = (role: Role) => {
     openComponentWindow({
       type: 'role-permission',
       label: `role-permission-${role.id}`,
       title: `${role.name} - 权限设置`,
       props: { roleId: role.id, roleName: role.name },
-      width: 700,
-      height: 600,
+      width: 700, height: 600,
     });
   };
 
@@ -97,52 +95,68 @@ const RoleManagement = () => {
     return dateStr.replace('T', ' ').substring(0, 19);
   };
 
+  // 获取角色等级标签样式
+  const getLevelClass = (level: number) => {
+    if (level === 0) return 'level-tag super';
+    if (level === 1) return 'level-tag admin';
+    return 'level-tag normal';
+  };
+
   return (
     <div className="role-management">
-      <div className="page-header">
-        <h3>角色管理</h3>
+      <div className="search-bar">
+        <h3 className="page-title">角色管理</h3>
         <div className="header-actions">
-          <button className="btn btn-default" onClick={fetchRoles}>↻ 刷新</button>
-          <button className="btn btn-primary" onClick={handleAdd}>+ 新增角色</button>
+          <button className="btn btn-default" onClick={fetchRoles}>
+            <RefreshCw size={14} className={loading ? 'spin' : ''} /> 刷新
+          </button>
+          <button className="btn btn-primary" onClick={handleAdd}>
+            <Plus size={14} /> 新增角色
+          </button>
         </div>
       </div>
 
       <div className="table-container">
         {loading ? (
-          <div className="loading">加载中...</div>
+          <div className="loading"><RefreshCw size={24} className="spin" /> 加载中...</div>
         ) : (
           <table className="data-table">
             <thead>
               <tr>
-                <th style={{ width: 60, textAlign: 'center' }}>序号</th>
+                <th style={{ width: 50, textAlign: 'center' }}>#</th>
                 <th>角色名称</th>
                 <th>角色编码</th>
                 <th>角色描述</th>
-                <th style={{ width: 100, textAlign: 'center' }}>角色级别</th>
-                <th style={{ width: 180 }}>创建时间</th>
-                <th style={{ width: 200 }}>操作</th>
+                <th style={{ width: 100, textAlign: 'center' }}>级别</th>
+                <th style={{ width: 160 }}>创建时间</th>
+                <th style={{ width: 180 }}>操作</th>
               </tr>
             </thead>
             <tbody>
               {roles.length === 0 ? (
                 <tr><td colSpan={7} className="empty-cell">暂无数据</td></tr>
-              ) : (
-                roles.map((role, index) => (
-                  <tr key={role.id}>
-                    <td style={{ textAlign: 'center' }}>{index + 1}</td>
-                    <td>{role.name}</td>
-                    <td>{role.code || '-'}</td>
-                    <td className="desc-cell">{role.description || '-'}</td>
-                    <td style={{ textAlign: 'center' }}>{role.level}</td>
-                    <td>{formatDate(role.created_at)}</td>
-                    <td className="action-cell">
-                      <button className="btn btn-link" onClick={() => handleEdit(role)} disabled={role.level === 0}>编辑</button>
-                      <button className="btn btn-link" onClick={() => handlePermission(role)}>权限设置</button>
-                      <button className="btn btn-link btn-danger" onClick={() => handleDelete(role)} disabled={role.level === 0}>删除</button>
-                    </td>
-                  </tr>
-                ))
-              )}
+              ) : roles.map((role, index) => (
+                <tr key={role.id}>
+                  <td style={{ textAlign: 'center' }}>{index + 1}</td>
+                  <td>
+                    <div className="role-cell">
+                      <div className="role-icon"><Shield size={14} /></div>
+                      <span>{role.name}</span>
+                    </div>
+                  </td>
+                  <td><code className="code-tag">{role.code || '-'}</code></td>
+                  <td className="desc-cell">{role.description || '-'}</td>
+                  <td style={{ textAlign: 'center' }}>
+                    <span className={getLevelClass(role.level)}>{role.level === 0 ? '超管' : `L${role.level}`}</span>
+                  </td>
+                  <td className="time-cell">{formatDate(role.created_at)}</td>
+                  <td className="action-cell">
+                    <button className="btn-link" onClick={() => handleEdit(role)} disabled={role.level === 0}>编辑</button>
+                    <button className="btn-link" onClick={() => handlePermission(role)}>权限</button>
+                    <button className="btn-link danger" onClick={() => handleDelete(role)} disabled={role.level === 0}>删除</button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         )}

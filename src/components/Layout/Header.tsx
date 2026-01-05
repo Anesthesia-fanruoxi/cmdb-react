@@ -7,6 +7,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '../../stores/authStore';
 import { useAppStore } from '../../stores/appStore';
 import { Sun, Moon, LogOut, ChevronLeft, ChevronRight, User, ListTodo } from 'lucide-react';
+import { getAvatar } from '../../utils/storage';
 import MessageCenter from '../MessageCenter';
 import TaskCenter from '../TaskCenter';
 import ProfileDrawer from '../ProfileDrawer';
@@ -18,12 +19,24 @@ interface HeaderProps {
 }
 
 const Header = ({ collapsed, onToggleCollapse }: HeaderProps) => {
-  const { userName, logout } = useAuthStore();
+  const { user, userName, logout } = useAuthStore();
   const { theme, toggleTheme } = useAppStore();
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [taskCenterVisible, setTaskCenterVisible] = useState(false);
   const [profileVisible, setProfileVisible] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // 加载头像
+  useEffect(() => {
+    setAvatarUrl(getAvatar());
+  }, []);
+
+  // ProfileDrawer 关闭时刷新头像
+  const handleProfileClose = () => {
+    setProfileVisible(false);
+    setAvatarUrl(getAvatar());
+  };
 
   // 点击外部关闭下拉菜单
   useEffect(() => {
@@ -56,9 +69,15 @@ const Header = ({ collapsed, onToggleCollapse }: HeaderProps) => {
     setTaskCenterVisible(true);
   };
 
-  const getInitial = (name?: string | null) => {
-    return name ? name.charAt(0).toUpperCase() : 'U';
+  const getInitial = () => {
+    // 优先使用 nick_name，没有则用 userName
+    const nickName = user?.nick_name;
+    const name = nickName || userName || '';
+    return name.charAt(0) || 'U';
   };
+
+  // 显示名称
+  const displayName = user?.nick_name || userName || '用户';
 
   return (
     <header className="app-header">
@@ -79,8 +98,12 @@ const Header = ({ collapsed, onToggleCollapse }: HeaderProps) => {
         
         <div className="user-dropdown" ref={dropdownRef}>
           <div className="user-info" onClick={() => setDropdownVisible(!dropdownVisible)}>
-            <div className="user-avatar">{getInitial(userName)}</div>
-            <span className="user-name">{userName || '用户'}</span>
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="头像" className="user-avatar-img" />
+            ) : (
+              <div className="user-avatar">{getInitial()}</div>
+            )}
+            <span className="user-name">{displayName}</span>
           </div>
           
           {dropdownVisible && (
@@ -104,7 +127,7 @@ const Header = ({ collapsed, onToggleCollapse }: HeaderProps) => {
       </div>
       
       <TaskCenter visible={taskCenterVisible} onClose={() => setTaskCenterVisible(false)} />
-      <ProfileDrawer visible={profileVisible} onClose={() => setProfileVisible(false)} />
+      <ProfileDrawer visible={profileVisible} onClose={handleProfileClose} />
     </header>
   );
 };

@@ -200,7 +200,7 @@ const ProfileDrawer = ({ visible, onClose }: ProfileDrawerProps) => {
 
   const getAvatarText = () => {
     const name = user?.nick_name || user?.user_name || '';
-    return name.charAt(0).toUpperCase();
+    return name.charAt(0) || 'U';
   };
 
   if (!visible) return null;

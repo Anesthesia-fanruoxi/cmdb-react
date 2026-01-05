@@ -24,6 +24,7 @@ import {
   setLastLoginUsername,
   clearUserData,
   initStorage,
+  setAvatar,
 } from '../utils/storage';
 import { useMenuStore } from './menuStore';
 
@@ -250,6 +251,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       const res = await getProfile();
       if (res.code === 200 && res.data) {
         await get().setUser(res.data);
+        // 保存头像到本地存储
+        if (res.data.avatar) {
+          await setAvatar(res.data.avatar);
+        }
       }
     } catch (error) {
       console.error('获取用户信息失败:', error);

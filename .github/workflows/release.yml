@@ -60,37 +60,37 @@ jobs:
           name: CMDB-Desktop-windows-x64
           path: release/*
 
-  # build-macos:
-  #   runs-on: macos-latest
-  #   strategy:
-  #     matrix:
-  #       include:
-  #         - target: x86_64-apple-darwin
-  #           name: macos-intel
-  #         - target: aarch64-apple-darwin
-  #           name: macos-arm64
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-node@v4
-  #       with:
-  #         node-version: '20'
-  #         cache: 'npm'
-  #     - uses: dtolnay/rust-toolchain@stable
-  #       with:
-  #         targets: ${{ matrix.target }}
-  #     - uses: swatinem/rust-cache@v2
-  #       with:
-  #         workspaces: './src-tauri -> target'
-  #         shared-key: ${{ matrix.target }}
-  #     - run: npm ci
-  #     - run: npm run tauri build -- --target ${{ matrix.target }}
-  #     - run: |
-  #         mkdir -p release
-  #         find src-tauri/target/${{ matrix.target }}/release/bundle -name "*.dmg" -type f -exec cp {} "release/CMDB-Desktop-${{ matrix.name }}.dmg" \;
-  #     - uses: actions/upload-artifact@v4
-  #       with:
-  #         name: CMDB-Desktop-${{ matrix.name }}
-  #         path: release/*
+  build-macos:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-apple-darwin
+            name: macos-intel
+          - target: aarch64-apple-darwin
+            name: macos-arm64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+          shared-key: ${{ matrix.target }}
+      - run: npm ci
+      - run: npm run tauri build -- --target ${{ matrix.target }}
+      - run: |
+          mkdir -p release
+          find src-tauri/target/${{ matrix.target }}/release/bundle -name "*.dmg" -type f -exec cp {} "release/CMDB-Desktop-${{ matrix.name }}.dmg" \;
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CMDB-Desktop-${{ matrix.name }}
+          path: release/*
 
   release:
     needs: [build-windows]  # 加上 build-macos 当启用时
@@ -124,7 +124,7 @@ jobs:
           draft: false
           files: artifacts/*
           body: |
-            ## v1.0.6 更新说明
+            ## v1.0.5 更新说明
             - 修复更新后页面状态丢失问题
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

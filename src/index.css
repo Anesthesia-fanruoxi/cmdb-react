@@ -73,6 +73,11 @@
   box-sizing: border-box;
 }
 
+/* 全局按钮样式 - 防止换行 */
+.btn {
+  white-space: nowrap;
+}
+
 a {
   font-weight: 500;
   color: #667eea;

@@ -50,6 +50,7 @@ interface MenuState {
   delAllViews: () => void;
   addCachedView: (name: string) => void;
   delCachedView: (name: string) => void;
+  reorderViews: (fromIndex: number, toIndex: number) => void;
 }
 
 export const useMenuStore = create<MenuState>()(
@@ -233,6 +234,16 @@ export const useMenuStore = create<MenuState>()(
     set((state) => ({
       cachedViews: state.cachedViews.filter((v) => v !== name),
     }));
+  },
+
+  // 重新排序标签页
+  reorderViews: (fromIndex: number, toIndex: number) => {
+    set((state) => {
+      const views = [...state.visitedViews];
+      const [moved] = views.splice(fromIndex, 1);
+      views.splice(toIndex, 0, moved);
+      return { visitedViews: views };
+    });
   },
     }),
     {

@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { RefreshCw, Plus, ChevronRight, ChevronDown, Building2 } from 'lucide-react';
 import { getDeptList, deleteDept, type Dept } from '../../../services/system/dept';
 import { openComponentWindow } from '../../../utils/window';
 import { toast } from '../../../components/AppNotification';
@@ -55,10 +56,7 @@ const DeptManagement = () => {
     setFormVisible(true); 
   };
 
-  const handleEdit = (dept: Dept) => { 
-    setEditData(dept); 
-    setFormVisible(true); 
-  };
+  const handleEdit = (dept: Dept) => { setEditData(dept); setFormVisible(true); };
 
   const handleDelete = async (dept: Dept) => {
     if (dept.children?.length) { toast.warning('该部门下有子部门，无法删除'); return; }
@@ -71,15 +69,13 @@ const DeptManagement = () => {
     }
   };
 
-  // 项目配置 - 直接打开独立窗口
   const handleProject = (dept: Dept) => {
     openComponentWindow({
       type: 'dept-project',
       label: `dept-project-${dept.id}`,
       title: `${dept.name} - 项目配置`,
       props: { deptId: dept.id, deptName: dept.name },
-      width: 560,
-      height: 500,
+      width: 560, height: 500,
     });
   };
 
@@ -89,23 +85,26 @@ const DeptManagement = () => {
       const hasChildren = dept.children && dept.children.length > 0;
       const isExpanded = expandedKeys.has(dept.id);
       rows.push(
-        <tr key={dept.id}>
-          <td style={{ paddingLeft: 16 + level * 24 }}>
-            {hasChildren ? (
-              <span className="expand-icon" onClick={() => toggleExpand(dept.id)}>
-                {isExpanded ? '▼' : '▶'}
-              </span>
-            ) : <span className="expand-placeholder" />}
-            {dept.name}
+        <tr key={dept.id} className={hasChildren ? 'parent-row' : ''}>
+          <td style={{ paddingLeft: 16 + level * 20 }}>
+            <div className="dept-cell">
+              {hasChildren ? (
+                <span className="expand-icon" onClick={() => toggleExpand(dept.id)}>
+                  {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                </span>
+              ) : <span className="expand-placeholder" />}
+              <div className="dept-icon"><Building2 size={14} /></div>
+              <span className="dept-name">{dept.name}</span>
+            </div>
           </td>
-          <td>{dept.code || '-'}</td>
-          <td style={{ textAlign: 'center' }}>{dept.sort ?? 0}</td>
-          <td>{dept.description || '-'}</td>
+          <td><code className="code-tag">{dept.code || '-'}</code></td>
+          <td style={{ textAlign: 'center' }}><span className="sort-badge">{dept.sort ?? 0}</span></td>
+          <td className="desc-cell">{dept.description || '-'}</td>
           <td className="action-cell">
-            <button className="btn btn-link" onClick={() => handleAdd(dept.id)}>新增子部门</button>
-            <button className="btn btn-link" onClick={() => handleEdit(dept)}>编辑</button>
-            <button className="btn btn-link" onClick={() => handleProject(dept)}>项目配置</button>
-            <button className="btn btn-link btn-danger" onClick={() => handleDelete(dept)}>删除</button>
+            <button className="btn-link" onClick={() => handleAdd(dept.id)}>新增</button>
+            <button className="btn-link" onClick={() => handleEdit(dept)}>编辑</button>
+            <button className="btn-link" onClick={() => handleProject(dept)}>项目</button>
+            <button className="btn-link danger" onClick={() => handleDelete(dept)}>删除</button>
           </td>
         </tr>
       );
@@ -116,24 +115,30 @@ const DeptManagement = () => {
 
   return (
     <div className="dept-management">
-      <div className="page-header">
-        <h3>部门管理</h3>
+      <div className="search-bar">
+        <h3 className="page-title">部门管理</h3>
         <div className="header-actions">
-          <button className="btn btn-default" onClick={fetchDepts}>↻ 刷新</button>
-          <button className="btn btn-primary" onClick={() => handleAdd()}>+ 新增部门</button>
+          <button className="btn btn-default" onClick={fetchDepts}>
+            <RefreshCw size={14} className={loading ? 'spin' : ''} /> 刷新
+          </button>
+          <button className="btn btn-primary" onClick={() => handleAdd()}>
+            <Plus size={14} /> 新增部门
+          </button>
         </div>
       </div>
 
       <div className="table-container">
-        {loading ? <div className="loading">加载中...</div> : (
-          <table className="data-table tree-table">
+        {loading ? (
+          <div className="loading"><RefreshCw size={24} className="spin" /> 加载中...</div>
+        ) : (
+          <table className="data-table">
             <thead>
               <tr>
                 <th style={{ minWidth: 200 }}>部门名称</th>
                 <th style={{ width: 120 }}>部门编码</th>
                 <th style={{ width: 80, textAlign: 'center' }}>排序</th>
                 <th>描述</th>
-                <th style={{ width: 280 }}>操作</th>
+                <th style={{ width: 200 }}>操作</th>
               </tr>
             </thead>
             <tbody>
@@ -149,13 +154,12 @@ const DeptManagement = () => {
         <DraggableModal
           visible={formVisible}
           title={editData.id ? '编辑部门' : '新增部门'}
-          width={480}
+          width={400}
           onClose={() => setFormVisible(false)}
           detachConfig={{
             label: `dept-form-${editData.id || 'new'}`,
             url: `/detached?type=dept-form&data=${encodeURIComponent(JSON.stringify({ deptId: editData.id, parentId: editData.parent_id }))}`,
-            width: 480,
-            height: 450,
+            width: 400, height: 420,
           }}
         >
           <DeptForm
