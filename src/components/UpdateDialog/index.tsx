@@ -13,6 +13,37 @@ interface Props {
   onClose: () => void;
 }
 
+// 简单的 Markdown 渲染
+const renderMarkdown = (text: string): string => {
+  if (!text) return '<p>性能优化与问题修复</p>';
+  
+  return text
+    // 标题
+    .replace(/^### (.+)$/gm, '<h5>$1</h5>')
+    .replace(/^## (.+)$/gm, '<h4>$1</h4>')
+    .replace(/^# (.+)$/gm, '<h3>$1</h3>')
+    // 加粗和斜体
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    // 行内代码
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    // 链接
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+    // 无序列表
+    .replace(/^[*-] (.+)$/gm, '<li>$1</li>')
+    // 换行处理
+    .replace(/(<li>.*<\/li>)\n(?=<li>)/g, '$1')
+    .replace(/(<li>.*<\/li>)+/g, '<ul>$&</ul>')
+    // 段落
+    .replace(/\n\n+/g, '</p><p>')
+    .replace(/^(?!<[hul])/gm, '<p>')
+    .replace(/(?<![>])$/gm, '</p>')
+    // 清理多余标签
+    .replace(/<p><\/p>/g, '')
+    .replace(/<p>(<[hul])/g, '$1')
+    .replace(/(<\/[hul]\w*>)<\/p>/g, '$1');
+};
+
 const UpdateDialog = ({ visible, versionInfo, onClose }: Props) => {
   const [downloading, setDownloading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -88,17 +119,10 @@ const UpdateDialog = ({ visible, versionInfo, onClose }: Props) => {
         <div className="dialog-body">
           <div className="changelog-section">
             <h4>更新内容</h4>
-            <div className="changelog-content">
-              {versionInfo.changelog 
-                ? versionInfo.changelog
-                    .replace(/^##\s*/gm, '')  // 去掉 ## 标题
-                    .replace(/```\w*\n?/g, '')  // 去掉代码块标记，保留内容
-                    .replace(/`([^`]+)`/g, '$1')  // 去掉行内代码标记
-                    .replace(/\*\*([^*]+)\*\*/g, '$1')  // 去掉加粗
-                    .replace(/\n{3,}/g, '\n\n')  // 多个换行合并
-                    .trim()
-                : '性能优化与问题修复'}
-            </div>
+            <div 
+              className="changelog-content markdown-body"
+              dangerouslySetInnerHTML={{ __html: renderMarkdown(versionInfo.changelog) }}
+            />
           </div>
         </div>
 

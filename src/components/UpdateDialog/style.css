@@ -119,7 +119,7 @@
 }
 
 .changelog-content {
-  max-height: 150px;
+  max-height: 200px;
   overflow-y: auto;
   padding: 16px;
   background: rgba(255, 255, 255, 0.05);
@@ -128,9 +128,26 @@
   font-size: 14px;
   line-height: 1.6;
   color: rgba(255, 255, 255, 0.8);
-  white-space: pre-wrap;
-  word-break: break-word;
 }
+
+/* Markdown 样式 */
+.changelog-content.markdown-body h3 { font-size: 16px; margin: 0 0 12px; color: #fff; }
+.changelog-content.markdown-body h4 { font-size: 14px; margin: 16px 0 8px; color: rgba(255, 255, 255, 0.9); }
+.changelog-content.markdown-body h5 { font-size: 13px; margin: 12px 0 6px; color: rgba(255, 255, 255, 0.85); }
+.changelog-content.markdown-body p { margin: 0 0 8px; }
+.changelog-content.markdown-body ul { margin: 8px 0; padding-left: 20px; }
+.changelog-content.markdown-body li { margin: 4px 0; }
+.changelog-content.markdown-body code {
+  padding: 2px 6px;
+  background: rgba(99, 102, 241, 0.2);
+  border-radius: 4px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 13px;
+  color: #a5b4fc;
+}
+.changelog-content.markdown-body strong { color: #fff; }
+.changelog-content.markdown-body a { color: #818cf8; text-decoration: none; }
+.changelog-content.markdown-body a:hover { text-decoration: underline; }
 
 .dialog-footer {
   display: flex;
