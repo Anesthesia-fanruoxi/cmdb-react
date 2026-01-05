@@ -93,7 +93,7 @@ jobs:
           path: release/*
 
   release:
-    needs: [build-windows]  # 加上 build-macos 当启用时
+    needs: [build-windows, build-macos]  # 加上 build-macos 当启用时
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
