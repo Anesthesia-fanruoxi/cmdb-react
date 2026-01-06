@@ -108,15 +108,42 @@ export const formatSize = (bytes: number): string => {
 
 /** 启动定时检查（前端控制） */
 let checkInterval: ReturnType<typeof setInterval> | null = null;
+let isUpdating = false;
 
-export const startAutoCheck = (intervalMinutes = 5, checkFn: () => void): void => {
+/** 静默更新：检查 → 下载 → 等待重启 */
+export const silentUpdate = async (): Promise<void> => {
+  if (isUpdating) return;
+  
+  try {
+    const info = await checkUpdate();
+    if (!info) return;
+    
+    isUpdating = true;
+    console.log(`[更新] 发现新版本 ${info.version}，开始下载...`);
+    
+    // 静默下载
+    const filePath = await downloadUpdate(info);
+    console.log(`[更新] 下载完成: ${filePath}`);
+    
+    // 标记待安装（存储到本地，下次启动时安装）
+    await invoke('mark_pending_update', { filePath, version: info.version });
+    console.log(`[更新] 已标记待安装，重启后生效`);
+    
+  } catch (err) {
+    console.error('[更新] 静默更新失败:', err);
+  } finally {
+    isUpdating = false;
+  }
+};
+
+export const startAutoCheck = (intervalMinutes = 5): void => {
   if (checkInterval) return;
   
   // 启动后延迟 30 秒首次检查
-  setTimeout(checkFn, 30 * 1000);
+  setTimeout(silentUpdate, 30 * 1000);
   
   // 定时检查（分钟）
-  checkInterval = setInterval(checkFn, intervalMinutes * 60 * 1000);
+  checkInterval = setInterval(silentUpdate, intervalMinutes * 60 * 1000);
 };
 
 export const stopAutoCheck = (): void => {

@@ -170,7 +170,7 @@ function App() {
       
       // Tauri 环境下启动自动更新检查
       if (isTauriEnv()) {
-        startAutoCheck(5, () => useUpdateStore.getState().checkForUpdate());
+        startAutoCheck(5);
       }
       
       // 等待存储初始化完成

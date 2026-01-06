@@ -1,29 +1,25 @@
 //! 应用在线更新模块
 //! 
 //! 功能：
-//! - 检查 GitHub Release 版本更新
 //! - 从自建服务器下载更新包
-//! - 触发安装（Windows: MSI, Mac: DMG）
+//! - 静默安装（Windows: MSI, Mac: DMG）
+//! - 启动时检查待安装更新
 
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::{AppHandle, Emitter};
-use std::time::Duration;
-
-static CHECKING: AtomicBool = AtomicBool::new(false);
 
 /// 下载服务器基础地址
 const DOWNLOAD_BASE_URL: &str = "https://ops.hzbxhd.com/client";
+/// 待安装更新标记文件
+const PENDING_UPDATE_FILE: &str = "pending_update.json";
 
-/// GitHub Release 响应结构
-#[derive(Debug, Deserialize)]
-struct GitHubRelease {
-    tag_name: String,
-    name: Option<String>,
-    body: Option<String>,
-    published_at: Option<String>,
+/// 待安装更新信息
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct PendingUpdate {
+    file_path: String,
+    version: String,
 }
 
 /// 版本信息
@@ -52,26 +48,6 @@ fn get_current_version() -> String {
     env!("CARGO_PKG_VERSION").to_string()
 }
 
-/// 比较版本号 (返回 true 表示 remote > local)
-fn is_newer_version(local: &str, remote: &str) -> bool {
-    let parse = |v: &str| -> Vec<u32> {
-        v.trim_start_matches('v')
-            .split('.')
-            .filter_map(|s| s.parse().ok())
-            .collect()
-    };
-    let local_parts = parse(local);
-    let remote_parts = parse(remote);
-    
-    for i in 0..3 {
-        let l = local_parts.get(i).unwrap_or(&0);
-        let r = remote_parts.get(i).unwrap_or(&0);
-        if r > l { return true; }
-        if r < l { return false; }
-    }
-    false
-}
-
 /// 获取下载目录
 fn get_download_dir() -> PathBuf {
     dirs::download_dir()
@@ -79,65 +55,91 @@ fn get_download_dir() -> PathBuf {
         .join("cmdb-updates")
 }
 
+/// 获取待安装标记文件路径
+fn get_pending_file_path() -> PathBuf {
+    get_download_dir().join(PENDING_UPDATE_FILE)
+}
+
 /// 发送更新状态到前端
 fn emit_status(app: &AppHandle, status: UpdateStatus) {
     let _ = app.emit("update-status", &status);
 }
 
-/// 从 GitHub Release 检查更新
+/// 标记待安装更新（下载完成后调用）
 #[tauri::command]
-pub async fn check_github_update(app: AppHandle, owner: String, repo: String, token: Option<String>) -> Result<Option<VersionInfo>, String> {
-    if CHECKING.swap(true, Ordering::SeqCst) {
-        return Err("正在检查更新中".to_string());
+pub fn mark_pending_update(file_path: String, version: String) -> Result<(), String> {
+    let pending = PendingUpdate { file_path, version };
+    let json = serde_json::to_string(&pending).map_err(|e| e.to_string())?;
+    
+    let pending_path = get_pending_file_path();
+    fs::create_dir_all(pending_path.parent().unwrap()).ok();
+    fs::write(&pending_path, json).map_err(|e| e.to_string())?;
+    
+    Ok(())
+}
+
+/// 检查并执行待安装更新（启动时调用）
+/// 返回 true 表示有更新需要安装，主程序应该等待
+pub fn check_and_install_pending_update() -> bool {
+    let pending_path = get_pending_file_path();
+    
+    if !pending_path.exists() {
+        return false;
     }
     
-    emit_status(&app, UpdateStatus::Checking);
+    // 读取待安装信息
+    let content = match fs::read_to_string(&pending_path) {
+        Ok(c) => c,
+        Err(_) => return false,
+    };
     
-    let result = async {
-        let url = format!("https://api.github.com/repos/{}/{}/releases/latest", owner, repo);
-        let client = reqwest::Client::builder()
-            .timeout(Duration::from_secs(15))
-            .user_agent("CMDB-Desktop-Updater")
-            .build()
-            .map_err(|e| e.to_string())?;
-        
-        let mut req = client.get(&url);
-        if let Some(t) = &token {
-            req = req.header("Authorization", format!("Bearer {}", t));
-        }
-        
-        let resp = req.send().await.map_err(|e| format!("请求失败: {}", e))?;
-        
-        if resp.status() == 404 {
-            emit_status(&app, UpdateStatus::NotAvailable);
-            return Ok(None);
-        }
-        
-        if !resp.status().is_success() {
-            return Err(format!("GitHub 返回错误: {}", resp.status()));
-        }
-        
-        let release: GitHubRelease = resp.json().await
-            .map_err(|e| format!("解析失败: {}", e))?;
-        
-        let current = get_current_version();
-        if !is_newer_version(&current, &release.tag_name) {
-            emit_status(&app, UpdateStatus::NotAvailable);
-            return Ok(None);
-        }
-        
-        let info = VersionInfo {
-            version: release.tag_name.clone(),
-            release_date: release.published_at.unwrap_or_default(),
-            changelog: release.body.unwrap_or_else(|| release.name.unwrap_or_default()),
-        };
-        
-        emit_status(&app, UpdateStatus::Available { info: info.clone() });
-        Ok(Some(info))
-    }.await;
+    let pending: PendingUpdate = match serde_json::from_str(&content) {
+        Ok(p) => p,
+        Err(_) => return false,
+    };
     
-    CHECKING.store(false, Ordering::SeqCst);
-    result
+    // 检查安装包是否存在
+    if !std::path::Path::new(&pending.file_path).exists() {
+        let _ = fs::remove_file(&pending_path);
+        return false;
+    }
+    
+    // 删除标记文件
+    let _ = fs::remove_file(&pending_path);
+    
+    // 执行静默安装
+    #[cfg(target_os = "windows")]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+        
+        let exe_path = std::env::current_exe()
+            .map(|p| p.to_string_lossy().to_string())
+            .unwrap_or_default();
+        
+        // 创建安装脚本：安装完成后重启应用
+        let script = format!(
+            r#"@echo off
+msiexec /i "{}" /quiet /norestart
+timeout /t 1 /nobreak >nul
+start "" "{}"
+"#,
+            pending.file_path, exe_path
+        );
+        
+        let script_path = std::env::temp_dir().join("cmdb_update.bat");
+        if fs::write(&script_path, script).is_ok() {
+            let _ = std::process::Command::new("cmd")
+                .args(["/c", &script_path.to_string_lossy()])
+                .creation_flags(CREATE_NO_WINDOW)
+                .spawn();
+        }
+        
+        return true;
+    }
+    
+    #[cfg(not(target_os = "windows"))]
+    false
 }
 
 /// 下载更新（从自建服务器）
@@ -208,7 +210,7 @@ pub async fn install_update(app: AppHandle, file_path: String) -> Result<(), Str
         
         let script = format!(
             r#"@echo off
-msiexec /i "{}" /passive /norestart
+msiexec /i "{}" /quiet /norestart
 timeout /t 2 /nobreak >nul
 start "" "{}"
 "#,
