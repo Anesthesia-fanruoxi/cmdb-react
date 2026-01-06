@@ -17,7 +17,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          clean: false
+          clean: true
+
+      - name: Clean old build
+        run: |
+          if (Test-Path "src-tauri\target") { Remove-Item -Recurse -Force "src-tauri\target" }
+          if (Test-Path "dist") { Remove-Item -Recurse -Force "dist" }
+        shell: powershell
 
       - name: Get version
         id: version
