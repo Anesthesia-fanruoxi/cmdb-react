@@ -120,14 +120,6 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
-      - name: Delete old releases
-        uses: dev-drprasad/delete-older-releases@v0.3.4
-        with:
-          keep_latest: 3
-          delete_tags: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
@@ -141,21 +133,18 @@ jobs:
             curl -X POST -F "file=@$file" https://api.hzbxhd.com/api/app/upload
           done
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          draft: false
-          files: artifacts/*
-          body: |
-            ## 更新内容
-
-            1、优化已知问题
-            2、新增了发版的时候添加了备注
-            3、修复了sql导出审批的相关问题
-            4、优化了监控的折线图
-            
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Update version to CMDB
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION_NUM="${VERSION#v}"
+          DESCRIPTION="1、优化已知问题
+          2、新增了发版的时候添加了备注
+          3、修复了sql导出审批的相关问题
+          4、优化了监控的折线图"
+          DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
+          curl -X POST https://api.hzbxhd.com/api/app/version/update \
+            -H "Content-Type: application/json" \
+            -d "{\"version\": \"$VERSION_NUM\", \"description\": $DESCRIPTION_JSON}"
 
       - name: Cleanup workflow runs
         uses: Mattraks/delete-workflow-runs@v2
@@ -163,4 +152,4 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
           retain_days: 0
-          keep_minimum_runs: 3
+          keep_minimum_runs: 1

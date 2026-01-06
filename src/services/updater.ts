@@ -5,17 +5,24 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 
-// GitHub 仓库配置
-const GITHUB_OWNER = 'Anesthesia-fanruoxi';
-const GITHUB_REPO = 'cmdb-react';
-// GitHub Personal Access Token（只读权限，用于私有仓库和提高 API 限额）
-const GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN || '';
+// CMDB 版本接口
+const VERSION_API = 'https://api.hzbxhd.com/api/app/version/list';
 
 /** 版本信息 */
 export interface VersionInfo {
   version: string;
   release_date: string;
   changelog: string;
+}
+
+/** CMDB 版本接口响应 */
+interface VersionResponse {
+  code: number;
+  message: string;
+  data: {
+    version: string;
+    description: string;
+  };
 }
 
 /** 更新状态 */
@@ -33,18 +40,46 @@ export const getAppVersion = (): Promise<string> => {
   return invoke('get_app_version');
 };
 
-/** 从 GitHub Release 检查更新 */
-export const checkGitHubUpdate = (): Promise<VersionInfo | null> => {
-  return invoke('check_github_update', { 
-    owner: GITHUB_OWNER, 
-    repo: GITHUB_REPO,
-    token: GITHUB_TOKEN || null
-  });
+/** 比较版本号 (返回 true 表示 remote > local) */
+const isNewerVersion = (local: string, remote: string): boolean => {
+  const parse = (v: string) => v.replace(/^v/, '').split('.').map(n => parseInt(n) || 0);
+  const localParts = parse(local);
+  const remoteParts = parse(remote);
+  
+  for (let i = 0; i < 3; i++) {
+    const l = localParts[i] || 0;
+    const r = remoteParts[i] || 0;
+    if (r > l) return true;
+    if (r < l) return false;
+  }
+  return false;
 };
 
-/** 检查更新（兼容旧接口，现在默认使用 GitHub） */
-export const checkUpdate = (): Promise<VersionInfo | null> => {
-  return checkGitHubUpdate();
+/** 从 CMDB 检查更新 */
+export const checkUpdate = async (): Promise<VersionInfo | null> => {
+  try {
+    const response = await fetch(VERSION_API);
+    const result: VersionResponse = await response.json();
+    
+    if (result.code !== 200 || !result.data) {
+      return null;
+    }
+    
+    const currentVersion = await getAppVersion();
+    const remoteVersion = result.data.version;
+    
+    if (!isNewerVersion(currentVersion, remoteVersion)) {
+      return null;
+    }
+    
+    return {
+      version: remoteVersion,
+      release_date: new Date().toISOString(),
+      changelog: result.data.description || '新版本可用',
+    };
+  } catch {
+    return null;
+  }
 };
 
 /** 下载更新 */
@@ -74,7 +109,7 @@ export const formatSize = (bytes: number): string => {
 /** 启动定时检查（前端控制） */
 let checkInterval: ReturnType<typeof setInterval> | null = null;
 
-export const startAutoCheck = (intervalMinutes = 5, checkFn: () => void): void => {
+export const startAutoCheck = (intervalMinutes = 360, checkFn: () => void): void => {
   if (checkInterval) return;
   
   // 启动后延迟 30 秒首次检查
