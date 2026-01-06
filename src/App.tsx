@@ -25,7 +25,6 @@ import { cleanupLegacyStorage, encryptedStorage } from './utils/persistStorage';
 import { getUserName, loadAvatar } from './utils/storage';
 import { StatusModalContainer } from './components/StatusModal';
 import { startAutoCheck } from './services/updater';
-import { useUpdateStore } from './stores/updateStore';
 import { isTauriEnv } from './services/machine';
 import './App.css';
 
