@@ -5,13 +5,12 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { 
-  getExportDetail, updateExport, resendEmail,
+  getExportDetail, updateExport, resendEmail, getDatabases,
   EXPORT_STATUS_MAP, type ExportDetail 
-} from '../../../services/sql/export';
-import { getDatabases } from '../../../services/sql/search';
-import { getUserInfo } from '../../../utils/storage';
-import { toast } from '../../../components/AppNotification';
-import { confirm } from '../../../components/ConfirmModal';
+} from '@/services/sql';
+import { useAuthStore } from '@/stores';
+import { toast } from '@/components/AppNotification';
+import { confirm } from '@/components/ConfirmModal';
 
 interface Props {
   visible: boolean;
@@ -21,6 +20,7 @@ interface Props {
 }
 
 const ExportDetailDrawer = ({ visible, exportId, onClose, onRefresh }: Props) => {
+  const { userId } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [detail, setDetail] = useState<ExportDetail | null>(null);
   const [databases, setDatabases] = useState<string[]>([]);
@@ -31,14 +31,7 @@ const ExportDetailDrawer = ({ visible, exportId, onClose, onRefresh }: Props) =>
   const [reviewForm, setReviewForm] = useState({ rule_check_result: '' });
 
   // 获取当前用户ID
-  const currentUserId = useMemo(() => {
-    try {
-      const info = JSON.parse(getUserInfo() || '{}');
-      return Number(info.id) || 0;
-    } catch {
-      return 0;
-    }
-  }, []);
+  const currentUserId = Number(userId) || 0;
 
   // 角色判断
   const isSubmitterActionable = useMemo(() => {
@@ -48,7 +41,9 @@ const ExportDetailDrawer = ({ visible, exportId, onClose, onRefresh }: Props) =>
 
   const isApproverActionable = useMemo(() => {
     if (!detail) return false;
-    return currentUserId === Number(detail.apply_id) && detail.apply_status === 1;
+    const applyId = Number(detail.apply_id) || 0;
+    const applyStatus = Number(detail.apply_status) || 0;
+    return currentUserId === applyId && applyStatus === 1;
   }, [detail, currentUserId]);
 
   const isReviewerActionable = useMemo(() => {
@@ -58,7 +53,9 @@ const ExportDetailDrawer = ({ visible, exportId, onClose, onRefresh }: Props) =>
 
   const isExecutorActionable = useMemo(() => {
     if (!detail) return false;
-    return currentUserId === Number(detail.executor_id) && detail.executor_status === 1;
+    const executorId = Number(detail.executor_id) || 0;
+    const executorStatus = Number(detail.executor_status) || 0;
+    return currentUserId === executorId && executorStatus === 1;
   }, [detail, currentUserId]);
 
   const isResendEmailActionable = useMemo(() => {
@@ -97,6 +94,7 @@ const ExportDetailDrawer = ({ visible, exportId, onClose, onRefresh }: Props) =>
     if (visible && exportId) {
       fetchDetail();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, exportId]);
 
   // 撤回申请
@@ -114,7 +112,7 @@ const ExportDetailDrawer = ({ visible, exportId, onClose, onRefresh }: Props) =>
       toast.success('申请已撤回');
       onRefresh();
       onClose();
-    } catch (error) {
+    } catch {
       toast.error('操作失败');
     } finally {
       setLoading(false);
@@ -130,7 +128,7 @@ const ExportDetailDrawer = ({ visible, exportId, onClose, onRefresh }: Props) =>
       toast.success('审批通过');
       onRefresh();
       onClose();
-    } catch (error) {
+    } catch {
       toast.error('操作失败');
     } finally {
       setLoading(false);
@@ -154,7 +152,7 @@ const ExportDetailDrawer = ({ visible, exportId, onClose, onRefresh }: Props) =>
       toast.success('审批通过');
       onRefresh();
       onClose();
-    } catch (error) {
+    } catch {
       toast.error('操作失败');
     } finally {
       setLoading(false);
@@ -176,7 +174,7 @@ const ExportDetailDrawer = ({ visible, exportId, onClose, onRefresh }: Props) =>
       toast.success('已拒绝该申请');
       onRefresh();
       onClose();
-    } catch (error) {
+    } catch {
       toast.error('操作失败');
     } finally {
       setLoading(false);
@@ -192,7 +190,7 @@ const ExportDetailDrawer = ({ visible, exportId, onClose, onRefresh }: Props) =>
       toast.success('审核通过');
       onRefresh();
       onClose();
-    } catch (error) {
+    } catch {
       toast.error('操作失败');
     } finally {
       setLoading(false);
@@ -214,7 +212,7 @@ const ExportDetailDrawer = ({ visible, exportId, onClose, onRefresh }: Props) =>
       toast.success('审核不通过');
       onRefresh();
       onClose();
-    } catch (error) {
+    } catch {
       toast.error('操作失败');
     } finally {
       setLoading(false);
@@ -230,7 +228,7 @@ const ExportDetailDrawer = ({ visible, exportId, onClose, onRefresh }: Props) =>
       toast.success('执行完成');
       onRefresh();
       onClose();
-    } catch (error) {
+    } catch {
       toast.error('操作失败');
     } finally {
       setLoading(false);
@@ -246,7 +244,7 @@ const ExportDetailDrawer = ({ visible, exportId, onClose, onRefresh }: Props) =>
       toast.success('邮件重新发送请求已提交');
       onRefresh();
       onClose();
-    } catch (error) {
+    } catch {
       toast.error('操作失败');
     } finally {
       setLoading(false);

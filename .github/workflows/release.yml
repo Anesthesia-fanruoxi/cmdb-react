@@ -150,6 +150,10 @@ jobs:
             ## 更新内容
 
             1、优化已知问题
+            2、新增了发版的时候添加了备注
+            3、修复了sql导出审批的相关问题
+            4、优化了监控的折线图
+            
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

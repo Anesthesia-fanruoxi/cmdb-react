@@ -2,13 +2,36 @@
  * 图表工具函数
  */
 
-import type { DataStandard } from '../../../types/monitor';
+import type { DataStandard } from '@/types/monitor';
 
 /** 配色方案 */
 const colorPalette = [
   '#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de',
   '#3ba272', '#fc8452', '#9a60b4', '#ea7ccc', '#48b0f7',
 ];
+
+/** 根据图表名称获取颜色 */
+const chartColorMap: Record<string, string> = {
+  'QPS': '#409eff',
+  '成功': '#67c23a',
+  '错误': '#f56c6c',
+  '延迟': '#e6a23c',
+  '连接': '#909399',
+  '内存': '#b37feb',
+  'Goroutine': '#36cfc9',
+  'GC': '#ff85c0',
+  '请求': '#409eff',
+  '响应': '#67c23a',
+  '超时': '#f56c6c',
+};
+
+/** 根据图表名称获取颜色 */
+export function getChartColorByName(viewName: string): string {
+  for (const [key, color] of Object.entries(chartColorMap)) {
+    if (viewName.includes(key)) return color;
+  }
+  return '#409eff'; // 默认蓝色
+}
 
 /** 获取系列颜色 */
 export function getSeriesColor(index: number): string {
@@ -19,12 +42,20 @@ export function getSeriesColor(index: number): string {
 export function parseHostName(metric: Record<string, string> | undefined, idx: number): string {
   if (!metric) return `实例${idx + 1}`;
   
-  return metric.container || 
-         metric.container_name || 
-         metric.hostName || 
-         metric.instance?.replace(/^.*?([^:]+)$/, '$1') || 
-         metric.job || 
-         `实例${idx + 1}`;
+  // 优先使用有意义的字段
+  if (metric.container) return metric.container;
+  if (metric.container_name) return metric.container_name;
+  if (metric.hostName) return metric.hostName;
+  if (metric.service) return metric.service;
+  if (metric.job && metric.job !== 'agent') return metric.job;
+  
+  // instance 字段：去掉端口号，只保留主机名
+  if (metric.instance) {
+    const host = metric.instance.replace(/:\d+$/, '');
+    if (host) return host;
+  }
+  
+  return `实例${idx + 1}`;
 }
 
 /** 根据标准格式化数值 */

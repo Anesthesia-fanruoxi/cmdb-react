@@ -4,12 +4,18 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, Lock, Unlock, Edit2 } from 'lucide-react';
-import { getProjectUpdateList, updateProjectConfig } from '../../../services/assets/proUpdate';
-import type { ProjectUpdate } from '../../../services/assets/proUpdate';
-import { useAuthStore } from '../../../stores/authStore';
+import { getProjectUpdateList, updateProjectConfig } from '@/services/assets';
+import type { ProjectUpdate } from '@/services/assets';
+import { useAuthStore } from '@/stores';
 import ProjectDetailDrawer from './components/ProjectDetailDrawer';
-import toast from '../../../components/Toast';
+import Switch from '@/components/Switch';
+import toast from '@/components/Toast';
 import './index.css';
+
+interface UserWithRole {
+  role?: { level?: number };
+  role_id?: string | number;
+}
 
 const ProUpdatePage = () => {
   const [loading, setLoading] = useState(false);
@@ -26,8 +32,9 @@ const ProUpdatePage = () => {
   const [editDialog, setEditDialog] = useState({ visible: false, row: null as ProjectUpdate | null, field: '', label: '', value: '' });
 
   const { user, hasPermission } = useAuthStore();
-  const roleLevel = (user as any)?.role?.level;
-  const roleId = user?.role_id;
+  const userWithRole = user as UserWithRole | null;
+  const roleLevel = userWithRole?.role?.level;
+  const roleId = userWithRole?.role_id;
   const canShowBackend = roleLevel === 0 || roleLevel === 1 || roleId === '1' || roleId === '2' || Number(roleId) <= 2;
   const hasWritePermission = hasPermission('assets:proUpdate:w') && canShowBackend;
 
@@ -43,8 +50,8 @@ const ProUpdatePage = () => {
         const items = res.data.items || res.data || [];
         setTableData(Array.isArray(items) ? items.map(item => ({ ...item, type: currentType })) : []);
       }
-    } catch (err) {
-      console.error('获取列表失败:', err);
+    } catch {
+      // 错误已在控制台记录
     } finally {
       setLoading(false);
     }
@@ -62,7 +69,7 @@ const ProUpdatePage = () => {
     if (field === 'tool') {
       value = currentType === 'web' ? row.frontend_tool : row.backend_tool;
     } else {
-      value = (row as any)[field] || '';
+      value = (row as unknown as Record<string, string>)[field] || '';
     }
     setEditDialog({ visible: true, row, field, label, value });
   };
@@ -83,22 +90,19 @@ const ProUpdatePage = () => {
       } else {
         toast.error(res.message || '更新失败');
       }
-    } catch (err) {
+    } catch {
       toast.error('更新失败');
     }
   };
 
-  const handleSwitchChange = async (row: ProjectUpdate, field: string, value: boolean) => {
+  const handleSwitchChange = async (row: ProjectUpdate, field: keyof ProjectUpdate, value: boolean) => {
     try {
       const res = await updateProjectConfig({ project: row.project, [field]: value });
       if (res.code === 200) {
         toast.success('更新成功');
         fetchData();
-      } else {
-        (row as any)[field] = !value;
       }
-    } catch (err) {
-      (row as any)[field] = !value;
+    } catch {
       toast.error('更新失败');
     }
   };
@@ -111,7 +115,7 @@ const ProUpdatePage = () => {
         toast.success('更新成功');
         fetchData();
       }
-    } catch (err) {
+    } catch {
       toast.error('更新失败');
     }
   };
@@ -179,7 +183,7 @@ const ProUpdatePage = () => {
                       {cellHover[`${row.project}-feishu_url`] && <Edit2 size={12} className="edit-icon" onClick={() => handleCellEdit(row, 'feishu_url', '飞书通知')} />}
                     </div>
                   </td>
-                  <td><input type="checkbox" checked={!!row.enable_skywalking} disabled={!editMode} onChange={e => handleSwitchChange(row, 'enable_skywalking', e.target.checked)} /></td>
+                  <td><Switch checked={row.enable_skywalking} disabled={!editMode} onChange={checked => handleSwitchChange(row, 'enable_skywalking', checked)} /></td>
                   <td>
                     <select value={currentType === 'web' ? (row.frontend_tool || '') : (row.backend_tool || '')} disabled={!editMode} onChange={e => handleToolChange(row, e.target.value)}>
                       {currentType === 'web' ? (

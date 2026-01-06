@@ -4,14 +4,14 @@
 
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { RefreshCw, HelpCircle, User, Globe, Shuffle, Monitor } from 'lucide-react';
-import { getMonitorMetricsList } from '../../../services/monitor';
-import type { MonitorMetric } from '../../../services/monitor';
-import type { TimeRangeType } from '../../../types/monitor';
-import { ProjectSelector, TimeRangeSelector, AutoRefresh, MetricChart } from '../components';
+import { getMonitorMetricsList } from '@/services/monitor';
+import type { MonitorMetric } from '@/services/monitor';
+import type { TimeRangeType } from '@/types/monitor';
+import { ProjectSelector, TimeRangeSelector, AutoRefresh, MetricChart, ChartZoomDialog } from '../components';
 import { TIME_RANGE_OPTIONS } from '../hooks/useTimeRange';
 import { formatTimestamp } from '../utils/format';
 import { StatSection } from './components';
-import toast from '../../../components/Toast';
+import toast from '@/components/Toast';
 import '../styles/common.css';
 import './index.css';
 
@@ -29,6 +29,7 @@ const TrafficSwitching = () => {
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [refreshInterval, setRefreshInterval] = useState(60);
   const [countdown, setCountdown] = useState(60);
+  const [zoomMetric, setZoomMetric] = useState<MonitorMetric | null>(null);
   
   // 用 ref 存储最新的 timeRange，避免闭包问题
   const timeRangeRef = useRef(timeRange);
@@ -68,7 +69,7 @@ const TrafficSwitching = () => {
         }));
         setMetrics(processed);
       }
-    } catch (err) {
+    } catch {
       toast.error('获取监控数据失败');
     } finally {
       setLoading(false);
@@ -78,6 +79,7 @@ const TrafficSwitching = () => {
   // 项目变化时刷新
   useEffect(() => {
     if (selectedProject) refreshData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedProject, selectedService]);
 
   // 时间范围变化处理
@@ -99,6 +101,7 @@ const TrafficSwitching = () => {
       setCountdown(refreshInterval);
     }, refreshInterval * 1000);
     return () => { clearInterval(countdownTimer); clearInterval(refreshTimer); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoRefresh, refreshInterval, selectedProject]);
 
   // 按类型分组指标
@@ -169,7 +172,10 @@ const TrafficSwitching = () => {
                 <div className="charts-grid">
                   {groupedMetrics.lineMetrics.map(m => (
                     <div key={m.view_id} className="chart-card">
-                      <div className="chart-header">{m.view_name}</div>
+                      <div className="chart-header" onClick={() => setZoomMetric(m)}>
+                        <span>{m.view_name}</span>
+                        <span className="chart-zoom-hint">点击放大</span>
+                      </div>
                       <MetricChart metric={m} height={250} />
                     </div>
                   ))}
@@ -183,6 +189,8 @@ const TrafficSwitching = () => {
           </div>
         )}
       </div>
+
+      <ChartZoomDialog metric={zoomMetric} onClose={() => setZoomMetric(null)} />
     </div>
   );
 };

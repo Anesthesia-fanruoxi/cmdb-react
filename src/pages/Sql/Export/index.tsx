@@ -4,11 +4,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { 
-  getExportList, getSqlExportProjects, submitExport,
-  EXPORT_STATUS_MAP, type ExportItem, type ExportProject
-} from '../../../services/sql/export';
-import { getDatabases } from '../../../services/sql/search';
-import { toast } from '../../../components/AppNotification';
+  getExportList, getSqlExportProjects, submitExport, getProcessList, getDatabases,
+  EXPORT_STATUS_MAP, type ExportItem, type ExportProject, type ProcessInfo
+} from '@/services/sql';
+import { toast } from '@/components/AppNotification';
 import ExportDetailDrawer from './ExportDetail';
 import './style.css';
 
@@ -23,15 +22,28 @@ const SqlExport = () => {
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   
+  // 流程数据
+  const [processList, setProcessList] = useState<ProcessInfo[]>([]);
+  const [databases, setDatabases] = useState<string[]>([]);
+  
   // 表单数据
   const [formData, setFormData] = useState({
     project: '',
+    submitSql: false,
     database_name: '',
     sql_content: '',
-    export_reason: '',
-    recipient_email: ''
+    submitter_remark: ''
   });
-  const [databases, setDatabases] = useState<string[]>([]);
+  
+  // 流程人员
+  const [flowPersons, setFlowPersons] = useState({
+    approver: '',
+    reviewer: '系统管理员',
+    executor: '',
+    applyId: null as number | null,
+    reviewerId: 1,
+    executorId: null as number | null
+  });
 
   // 获取导出列表
   const fetchExportList = useCallback(async () => {
@@ -53,7 +65,6 @@ const SqlExport = () => {
     try {
       const res = await getSqlExportProjects();
       if (res.code === 200) {
-        // 兼容 items 或直接数组
         const items = (res.data as { items?: ExportProject[] })?.items || res.data || [];
         setProjects(Array.isArray(items) ? items : []);
       }
@@ -62,32 +73,98 @@ const SqlExport = () => {
     }
   }, []);
 
+  // 获取流程列表
+  const fetchProcessList = useCallback(async () => {
+    try {
+      const res = await getProcessList();
+      if (res.code === 200 && res.data?.list) {
+        setProcessList(res.data.list);
+      }
+    } catch (error) {
+      console.error('获取流程列表失败:', error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchExportList();
     fetchProjects();
-  }, [fetchExportList, fetchProjects]);
+    fetchProcessList();
+  }, [fetchExportList, fetchProjects, fetchProcessList]);
 
-  // 项目变更时加载数据库
-  const handleProjectChange = async (project: string) => {
-    setFormData(prev => ({ ...prev, project, database_name: '' }));
-    if (project) {
+  // 项目变更时加载数据库和流程人员
+  const handleProjectChange = async (projectId: string) => {
+    setFormData(prev => ({ ...prev, project: projectId, database_name: '' }));
+    setDatabases([]);
+    
+    if (!projectId) {
+      setFlowPersons(prev => ({ ...prev, approver: '', executor: '', applyId: null, executorId: null }));
+      return;
+    }
+
+    // 查找流程配置
+    const selectedProject = projects.find(p => p.project === projectId);
+    const processData = processList.find(p => 
+      String(p.agent) === String(projectId) || 
+      p.projectName === selectedProject?.project_name
+    );
+    
+    if (processData) {
+      setFlowPersons(prev => ({
+        ...prev,
+        approver: processData.applyName || '未指定审批人',
+        executor: processData.executorName || '未指定执行人',
+        applyId: processData.applyId || null,
+        executorId: processData.executorId || null
+      }));
+    } else {
+      setFlowPersons(prev => ({
+        ...prev,
+        approver: '未配置审批人',
+        executor: '未配置执行人',
+        applyId: null,
+        executorId: null
+      }));
+      toast.warning('该项目未配置审批流程');
+    }
+
+    // 如果开启了提交SQL，加载数据库列表
+    if (formData.submitSql && selectedProject) {
       try {
-        const selectedProject = projects.find(p => p.project === project);
-        const res = await getDatabases({ agent: selectedProject?.agent || project });
+        const res = await getDatabases({ agent: selectedProject.agent || projectId });
         if (res.code === 200 && res.data?.databases) {
-          setDatabases(res.data.databases);
+          const dbs = res.data.databases;
+          setDatabases(Array.isArray(dbs) ? dbs : Object.keys(dbs));
         }
       } catch (error) {
         console.error('获取数据库列表失败:', error);
       }
-    } else {
-      setDatabases([]);
+    }
+  };
+
+  // 提交SQL开关变更
+  const handleSubmitSqlChange = async (checked: boolean) => {
+    setFormData(prev => ({ ...prev, submitSql: checked, database_name: '', sql_content: '' }));
+    
+    if (checked && formData.project) {
+      const selectedProject = projects.find(p => p.project === formData.project);
+      if (selectedProject) {
+        try {
+          const res = await getDatabases({ agent: selectedProject.agent || formData.project });
+          if (res.code === 200 && res.data?.databases) {
+            const dbs = res.data.databases;
+            setDatabases(Array.isArray(dbs) ? dbs : Object.keys(dbs));
+          }
+        } catch (error) {
+          console.error('获取数据库列表失败:', error);
+        }
+      }
     }
   };
 
   // 打开创建抽屉
   const handleCreate = () => {
-    setFormData({ project: '', database_name: '', sql_content: '', export_reason: '', recipient_email: '' });
+    setFormData({ project: '', submitSql: false, database_name: '', sql_content: '', submitter_remark: '' });
+    setFlowPersons({ approver: '', reviewer: '系统管理员', executor: '', applyId: null, reviewerId: 1, executorId: null });
     setDatabases([]);
     setDrawerVisible(true);
   };
@@ -101,18 +178,56 @@ const SqlExport = () => {
   // 提交表单
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.project || !formData.database_name || !formData.sql_content || !formData.recipient_email) {
-      toast.warning('请填写完整信息');
+    
+    if (!formData.project) {
+      toast.warning('请选择项目');
       return;
+    }
+    if (!formData.submitter_remark) {
+      toast.warning('请输入申请说明');
+      return;
+    }
+    if (!flowPersons.applyId || !flowPersons.executorId) {
+      toast.error('当前项目未配置完整审批流程，无法提交');
+      return;
+    }
+    if (formData.submitSql) {
+      if (!formData.database_name) {
+        toast.warning('请选择数据库');
+        return;
+      }
+      if (!formData.sql_content) {
+        toast.warning('请输入导出SQL');
+        return;
+      }
     }
 
     setSubmitting(true);
     try {
-      await submitExport(formData);
-      setDrawerVisible(false);
-      fetchExportList();
+      const submitData = {
+        project: formData.project,
+        apply_id: flowPersons.applyId!,
+        reviewer_id: flowPersons.reviewerId,
+        executor_id: flowPersons.executorId!,
+        submitter_remark: formData.submitter_remark,
+        has_sql: formData.submitSql,
+        ...(formData.submitSql ? {
+          database_name: formData.database_name,
+          sql_content: formData.sql_content
+        } : {})
+      };
+      
+      const res = await submitExport(submitData);
+      if (res.code === 200) {
+        toast.success('申请提交成功');
+        setDrawerVisible(false);
+        fetchExportList();
+      } else {
+        toast.error(res.message || '提交失败');
+      }
     } catch (error) {
       console.error('提交申请失败:', error);
+      toast.error('提交失败');
     } finally {
       setSubmitting(false);
     }
@@ -162,9 +277,7 @@ const SqlExport = () => {
                       <td>{item.apply_name || '-'}</td>
                       <td>{item.created_at?.replace('T', ' ').substring(0, 19)}</td>
                       <td className={item.current_operator ? 'highlight-cell' : ''}>{item.current_operator || '-'}</td>
-                      <td>
-                        <span className={`tag tag-${statusInfo.type}`}>{statusInfo.text}</span>
-                      </td>
+                      <td><span className={`tag tag-${statusInfo.type}`}>{statusInfo.text}</span></td>
                       <td className="action-cell">
                         <button className="btn btn-link" onClick={() => handleViewDetail(item)}>详情</button>
                       </td>
@@ -180,56 +293,77 @@ const SqlExport = () => {
       {/* 创建抽屉 */}
       {drawerVisible && (
         <div className="drawer-overlay" onClick={() => setDrawerVisible(false)}>
-          <div className="drawer" onClick={e => e.stopPropagation()}>
+          <div className="drawer drawer-wide" onClick={e => e.stopPropagation()}>
             <div className="drawer-header">
               <h4>创建数据导出申请</h4>
               <button className="close-btn" onClick={() => setDrawerVisible(false)}>×</button>
             </div>
-            <form className="drawer-body" onSubmit={handleSubmit}>
+            <form className="drawer-body export-form" onSubmit={handleSubmit}>
               <div className="form-item">
-                <label>项目 <span className="required">*</span></label>
+                <label><span className="required">*</span> 所属项目</label>
                 <select value={formData.project} onChange={e => handleProjectChange(e.target.value)} required>
                   <option value="">请选择项目</option>
                   {projects.map(p => <option key={p.project} value={p.project}>{p.project_name}</option>)}
                 </select>
               </div>
+              
+              <div className="form-item form-item-switch">
+                <label>提交SQL</label>
+                <label className="switch">
+                  <input type="checkbox" checked={formData.submitSql} onChange={e => handleSubmitSqlChange(e.target.checked)} />
+                  <span className="slider"></span>
+                </label>
+              </div>
+
+              {formData.submitSql && (
+                <>
+                  <div className="form-item">
+                    <label><span className="required">*</span> 数据库</label>
+                    <select 
+                      value={formData.database_name} 
+                      onChange={e => setFormData(p => ({ ...p, database_name: e.target.value }))} 
+                      disabled={!formData.project}
+                    >
+                      <option value="">请选择数据库</option>
+                      {databases.map(db => <option key={db} value={db}>{db}</option>)}
+                    </select>
+                  </div>
+                  <div className="form-item">
+                    <label><span className="required">*</span> 导出SQL</label>
+                    <textarea 
+                      value={formData.sql_content} 
+                      onChange={e => setFormData(p => ({ ...p, sql_content: e.target.value }))}
+                      placeholder="请输入导出SQL语句"
+                      rows={6}
+                    />
+                  </div>
+                </>
+              )}
+
               <div className="form-item">
-                <label>数据库 <span className="required">*</span></label>
-                <select value={formData.database_name} onChange={e => setFormData(p => ({ ...p, database_name: e.target.value }))} required disabled={!formData.project}>
-                  <option value="">请选择数据库</option>
-                  {databases.map(db => <option key={db} value={db}>{db}</option>)}
-                </select>
+                <label>审批人</label>
+                <input type="text" value={flowPersons.approver} disabled placeholder="选择项目后自动显示" />
               </div>
               <div className="form-item">
-                <label>接收邮箱 <span className="required">*</span></label>
-                <input 
-                  type="email"
-                  value={formData.recipient_email} 
-                  onChange={e => setFormData(p => ({ ...p, recipient_email: e.target.value }))}
-                  placeholder="请输入接收导出结果的邮箱"
-                  required
-                />
+                <label>审核人</label>
+                <input type="text" value={flowPersons.reviewer} disabled />
               </div>
               <div className="form-item">
-                <label>SQL内容 <span className="required">*</span></label>
+                <label>执行人</label>
+                <input type="text" value={flowPersons.executor} disabled placeholder="选择项目后自动显示" />
+              </div>
+              
+              <div className="form-item">
+                <label><span className="required">*</span> 申请说明</label>
                 <textarea 
-                  value={formData.sql_content} 
-                  onChange={e => setFormData(p => ({ ...p, sql_content: e.target.value }))}
-                  placeholder="请输入SQL查询语句"
-                  rows={10}
+                  value={formData.submitter_remark} 
+                  onChange={e => setFormData(p => ({ ...p, submitter_remark: e.target.value }))}
+                  placeholder="请详细描述您需要导出的数据内容, 用途和时间要求等, 明文不允许提取, 若存在敏感信息,请详细说明字段及非明文的处理方式"
+                  rows={6}
                   required
                 />
               </div>
-              <div className="form-item">
-                <label>导出原因 <span className="required">*</span></label>
-                <textarea 
-                  value={formData.export_reason} 
-                  onChange={e => setFormData(p => ({ ...p, export_reason: e.target.value }))}
-                  placeholder="请输入导出原因"
-                  rows={3}
-                  required
-                />
-              </div>
+
               <div className="form-actions">
                 <button type="button" className="btn btn-default" onClick={() => setDrawerVisible(false)}>取消</button>
                 <button type="submit" className="btn btn-primary" disabled={submitting}>

@@ -47,10 +47,13 @@ export interface ExportDetail extends ExportItem {
 
 export interface CreateExportData {
   project: string;
-  database_name: string;
-  sql_content: string;
-  export_reason: string;
-  recipient_email: string;
+  apply_id: number;
+  reviewer_id: number;
+  executor_id: number;
+  submitter_remark: string;
+  has_sql?: boolean;
+  database_name?: string;
+  sql_content?: string;
 }
 
 export interface UpdateExportData {

@@ -3,7 +3,7 @@
  */
 
 import { create } from 'zustand';
-import type { UserInfo, LoginRequest } from '../types/auth';
+import type { UserInfo, LoginRequest } from '@/types';
 import { login as loginApi, logout as logoutApi, getProfile } from '../services/auth';
 import { 
   isTauriEnv, 
@@ -73,7 +73,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     if (res.code === 200 && res.data) {
       const { token, user_id, user_name, is_default_pass } = res.data;
 
-      // 等待所有存储操作完成
+      // 存储新用户数据
       await setToken(token);
       if (user_id) await setUserId(user_id);
       if (user_name) await setUserName(user_name);
@@ -103,7 +103,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       const result = await rustAutoLogin(API_BASE, userName, version);
       
       if (result.success && result.token) {
-        // 等待所有存储操作完成
+        // 存储新用户数据
         await setToken(result.token);
         if (result.user_id) await setUserId(result.user_id);
         if (result.user_name) await setUserName(result.user_name);
@@ -194,6 +194,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   },
 
   // 登出
+  // 清除：token、用户信息、用户权限、用户菜单
+  // 保留：主题偏好、设备凭证（用于下次自动登录）、页面缓存状态
   logout: async () => {
     try {
       await logoutApi();
@@ -201,12 +203,13 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       console.error('登出请求失败:', error);
     }
 
-    // 注意：退出登录时不清除设备凭证，保留用于下次自动登录
-    // 只有用户主动解绑设备时才清除
-
+    // 清除用户数据（token、userInfo、userId、userName）
     clearUserData();
+    
+    // 清除菜单和权限（但保留 visitedViews、cachedViews、collapsed 等缓存状态）
     useMenuStore.getState().clearMenus();
 
+    // 重置内存状态
     set({
       token: null,
       user: null,

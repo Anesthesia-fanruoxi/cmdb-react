@@ -34,6 +34,7 @@ export interface ReleaseRecord {
   completed_at: string;
   start_time?: string;
   end_time?: string;
+  description?: string;
   steps: ReleaseStep[];
 }
 
@@ -115,7 +116,7 @@ export function cancelTask(taskId: string) {
 }
 
 // 开始发版
-export function startRelease(data: { project: string; type?: string; branch?: string; category?: string }) {
+export function startRelease(data: { project: string; type?: string; branch?: string; category?: string; description?: string }) {
   return apiClient.post<{ task_id: string }>('/assets/proUpdate/create', data);
 }
 

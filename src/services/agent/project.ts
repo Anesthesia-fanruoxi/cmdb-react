@@ -13,7 +13,13 @@ export const getProjectPluginDetail = (project: string) =>
 
 // 操作插件（启动/停止/重启/卸载/更新/编辑）
 export const operatePlugin = (data: PluginOperateData) => 
-  apiClient.post('/agent/project/operate', data);
+  apiClient.post('/agent/project/operate', {
+    project: data.project,
+    plugin_name: data.name,
+    action: data.action,
+    ...(data.container_port && { container_port: data.container_port }),
+    ...(data.config && { config: data.config }),
+  });
 
 // 类型定义
 export interface Project {

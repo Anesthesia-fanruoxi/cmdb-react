@@ -4,9 +4,9 @@
 
 import { useEffect, useRef, memo } from 'react';
 import * as echarts from 'echarts';
-import type { MonitorMetric } from '../../../services/monitor';
-import type { DataStandard } from '../../../types/monitor';
-import { formatYAxisLabel, parseHostName, getSeriesColor, formatValueByStandard } from '../utils/chartUtils';
+import type { MonitorMetric } from '@/services/monitor';
+import type { DataStandard } from '@/types/monitor';
+import { formatYAxisLabel, parseHostName, getSeriesColor, getChartColorByName, formatValueByStandard } from '@/pages/Monitor/utils/chartUtils';
 import './MetricChart.css';
 
 interface MetricChartProps {
@@ -37,6 +37,9 @@ const areEqual = (prev: MetricChartProps, next: MetricChartProps) => {
   if (prev.metric.view_id !== next.metric.view_id) return false;
   if (prev.height !== next.height) return false;
   if (prev.isDetailed !== next.isDetailed) return false;
+  
+  // 比较 updated_at 字段（切换项目时会更新）
+  if ((prev.metric as MonitorMetric & { updated_at?: string }).updated_at !== (next.metric as MonitorMetric & { updated_at?: string }).updated_at) return false;
   
   // 比较数据的第一个和最后一个时间戳，判断数据范围是否变化
   const prevData = prev.metric.data?.result?.[0]?.values;
@@ -89,9 +92,32 @@ const MetricChart = memo(({
     // 重置模式
     currentMode.current = 'all';
 
+    // 处理图例点击
+    const onLegendClick = (params: { name: string }) => {
+      const { name } = params;
+      const chart = chartInstance.current;
+      if (!chart || !allLegends.current.length) return;
+
+      if (currentMode.current === 'all') {
+        showOnlyOneLegend(name);
+        currentMode.current = name;
+        return;
+      }
+
+      if (currentMode.current === name) {
+        showAllLegends();
+        currentMode.current = 'all';
+        return;
+      }
+
+      showOnlyOneLegend(name);
+      currentMode.current = name;
+    };
+
     // 监听图例点击事件
     chartInstance.current.off('legendselectchanged');
-    chartInstance.current.on('legendselectchanged', handleLegendClick);
+    // @ts-expect-error echarts 类型定义不完整
+    chartInstance.current.on('legendselectchanged', onLegendClick);
 
     // 使用 ResizeObserver 监听容器大小变化（比 window resize 更可靠）
     const resizeObserver = new ResizeObserver(() => {
@@ -108,31 +134,6 @@ const MetricChart = memo(({
       resizeObserver.disconnect();
     };
   }, [metric, isDetailed]);
-
-  // 处理图例点击
-  const handleLegendClick = (params: any) => {
-    const { name } = params;
-    const chart = chartInstance.current;
-    if (!chart || !allLegends.current.length) return;
-
-    // 如果当前是全选模式，点击某个图例时切换到单选模式
-    if (currentMode.current === 'all') {
-      showOnlyOneLegend(name);
-      currentMode.current = name;
-      return;
-    }
-
-    // 如果当前是单选模式，且点击的是当前选中的图例，则切换到全选模式
-    if (currentMode.current === name) {
-      showAllLegends();
-      currentMode.current = 'all';
-      return;
-    }
-
-    // 如果当前是单选模式，且点击的是其他图例，则切换到新的图例
-    showOnlyOneLegend(name);
-    currentMode.current = name;
-  };
 
   // 只显示一个图例
   const showOnlyOneLegend = (legendName: string) => {
@@ -180,49 +181,57 @@ const MetricChart = memo(({
 
 MetricChart.displayName = 'MetricChart';
 
-/** 判断时间跨度是否超过一天 */
-function isTimeSpanOverOneDay(metric: MonitorMetric): boolean {
-  if (!metric.data?.result?.length) return false;
-  
-  let minTime = Infinity;
-  let maxTime = -Infinity;
-  
-  metric.data.result.forEach(result => {
-    result.values?.forEach(([timestamp]) => {
-      minTime = Math.min(minTime, timestamp);
-      maxTime = Math.max(maxTime, timestamp);
-    });
-  });
-  
-  // 超过24小时（86400秒）
-  return (maxTime - minTime) > 86400;
-}
-
 /** 格式化时间戳 */
 function formatTimestamp(timestamp: number, showDate: boolean): string {
   const date = new Date(timestamp * 1000);
+  const hour = String(date.getHours()).padStart(2, '0');
+  const minute = String(date.getMinutes()).padStart(2, '0');
+  const second = String(date.getSeconds()).padStart(2, '0');
+  
   if (showDate) {
-    // 显示日期+时间: MM-DD HH:mm
+    // 跨天时显示完整日期+时间: MM-DD HH:mm:ss
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
-    const hour = String(date.getHours()).padStart(2, '0');
-    const minute = String(date.getMinutes()).padStart(2, '0');
-    return `${month}-${day} ${hour}:${minute}`;
+    return `${month}-${day} ${hour}:${minute}:${second}`;
   }
-  // 只显示时间: HH:mm:ss
-  return date.toLocaleTimeString('zh-CN', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
+  
+  // 显示时分秒，与 Vue 版本一致
+  return `${hour}:${minute}:${second}`;
+}
+
+/** 检查数据是否跨天 */
+function isDataCrossingMidnight(metric: MonitorMetric): boolean {
+  if (!metric.data?.result?.length) return false;
+  
+  let firstDate: number | null = null;
+  
+  for (const result of metric.data.result) {
+    if (!result.values?.length) continue;
+    
+    for (const [timestamp] of result.values) {
+      const date = new Date(timestamp * 1000);
+      const currentDate = date.getDate();
+      
+      if (firstDate === null) {
+        firstDate = currentDate;
+      } else if (currentDate !== firstDate) {
+        // 发现不同日期，说明跨天了
+        return true;
+      }
+    }
+  }
+  
+  return false;
 }
 
 /** 创建图表配置 */
 function createChartOption(metric: MonitorMetric, isDetailed: boolean) {
   const series: echarts.SeriesOption[] = [];
   const standard = (metric.standard || 'default') as DataStandard;
-  const showDate = isTimeSpanOverOneDay(metric);
   const colors = getThemeColors();
+  
+  // 检查是否跨天，跨天时所有时间都显示日期
+  const showDate = isDataCrossingMidnight(metric);
   
   // 收集所有时间戳并排序
   const allTimestamps = new Set<number>();
@@ -238,13 +247,19 @@ function createChartOption(metric: MonitorMetric, isDetailed: boolean) {
     
     // 排序时间戳
     const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b);
+    
+    // 格式化 X 轴数据
     const xAxisData = sortedTimestamps.map(ts => formatTimestamp(ts, showDate));
     
-    // 创建时间戳到索引的映射
+    // 创建时间戳到格式化时间的映射
     const timestampToTime = new Map<number, string>();
     sortedTimestamps.forEach((ts, i) => {
       timestampToTime.set(ts, xAxisData[i]);
     });
+
+    // 单系列时根据图表名称获取颜色，多系列时使用调色板
+    const isSingleSeries = metric.data.result.length === 1;
+    const chartColor = isSingleSeries ? getChartColorByName(metric.view_name) : '';
 
     metric.data.result.forEach((result, idx) => {
       if (!result.values?.length) return;
@@ -258,14 +273,21 @@ function createChartOption(metric: MonitorMetric, isDetailed: boolean) {
         seriesData.push([time, numericValue]);
       });
 
+      // 单系列使用基于名称的颜色，多系列使用调色板
+      const seriesColor = isSingleSeries ? chartColor : getSeriesColor(idx);
+
       series.push({
         name: seriesName,
         type: 'line',
-        showSymbol: false,
+        showSymbol: isDetailed, // 详细模式显示数据点
+        symbolSize: isDetailed ? 6 : 4,
         smooth: true,
         connectNulls: false,
         data: seriesData,
-        itemStyle: { color: getSeriesColor(idx) },
+        itemStyle: { color: seriesColor },
+        lineStyle: { color: seriesColor },
+        // 始终显示区域填充
+        areaStyle: { opacity: isDetailed ? 0.15 : 0.3 },
       });
     });
 
@@ -290,6 +312,8 @@ function createChartConfig(
   isDetailed: boolean,
   colors: ReturnType<typeof getThemeColors>
 ) {
+  // 只有一个系列时隐藏图例
+  const showLegend = series.length > 1;
 
   return {
     backgroundColor: 'transparent',
@@ -301,8 +325,8 @@ function createChartConfig(
     grid: {
       left: '3%',
       right: '3%',
-      bottom: isDetailed ? '15%' : '18%',
-      top: '10%',
+      bottom: showLegend ? '22%' : '12%', // 增加底部空间适应旋转标签
+      top: isDetailed ? '12%' : '10%',
       containLabel: true,
     },
     tooltip: {
@@ -312,11 +336,11 @@ function createChartConfig(
       borderColor: colors.tooltipBorder,
       borderWidth: 1,
       textStyle: { color: colors.tooltipText },
-      formatter: (params: any) => {
-        const time = params[0]?.data?.[0] || '';
+      formatter: (params: { data: unknown; color: string; seriesName: string }[]) => {
+        const time = (params[0]?.data as [string, number])?.[0] || '';
         let content = `<div style="font-weight:bold;margin-bottom:4px;">${time}</div>`;
-        params.forEach((p: any) => {
-          const val = formatYAxisLabel(p.data[1], standard);
+        params.forEach((p) => {
+          const val = formatYAxisLabel((p.data as [string, number])[1], standard);
           content += `<div style="display:flex;justify-content:space-between;align-items:center;margin:3px 0;">
             <span style="display:flex;align-items:center;">
               <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${p.color};margin-right:5px;"></span>
@@ -329,6 +353,7 @@ function createChartConfig(
       },
     },
     legend: {
+      show: showLegend,
       data: series.map(s => s.name as string),
       type: 'scroll',
       bottom: 0,
@@ -344,8 +369,28 @@ function createChartConfig(
       axisLine: { lineStyle: { color: colors.borderColor } },
       axisLabel: {
         color: colors.textMuted,
+        fontSize: 10,
+        rotate: 30, // 旋转标签，与 Vue 版本一致
         formatter: (val: string) => val,
+        // 普通模式30个，详细模式60个
+        interval: isDetailed ? (index: number) => {
+          const len = xAxisData.length;
+          if (len <= 60) return true;
+          if (index === 0 || index === len - 1) return true;
+          const step = Math.floor(len / 60);
+          return index % step === 0;
+        } : (index: number) => {
+          const len = xAxisData.length;
+          if (len <= 30) return true;
+          if (index === 0 || index === len - 1) return true;
+          const step = Math.floor(len / 30);
+          return index % step === 0;
+        },
       },
+      // 详细模式显示分割线
+      ...(isDetailed && {
+        splitLine: { show: true, lineStyle: { color: colors.borderColor, type: 'dashed' } },
+      }),
     },
     yAxis: {
       type: 'value',
@@ -357,8 +402,22 @@ function createChartConfig(
       },
     },
     series,
+    // 详细模式添加更多交互功能
     ...(isDetailed && {
-      dataZoom: [{ type: 'inside', start: 0, end: 100 }],
+      dataZoom: [
+        { type: 'inside', start: 0, end: 100 }, // 鼠标滚轮缩放
+      ],
+      toolbox: {
+        show: true,
+        right: 20,
+        top: 0,
+        feature: {
+          dataZoom: { yAxisIndex: 'none', title: { zoom: '区域缩放', back: '还原' } },
+          restore: { title: '重置' },
+          saveAsImage: { title: '保存图片', pixelRatio: 2 },
+        },
+        iconStyle: { borderColor: colors.textMuted },
+      },
     }),
   };
 }

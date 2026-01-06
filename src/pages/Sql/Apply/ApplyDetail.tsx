@@ -6,10 +6,10 @@ import { useState, useEffect, useRef } from 'react';
 import { 
   updateApply, checkSql, APPLY_STATUS_MAP, FINISHED_STATUS,
   type ApplyDetail as ApplyDetailType, type ApplyItem, type SqlCheckResult
-} from '../../../services/sql/apply';
-import { useAuthStore } from '../../../stores/authStore';
-import { toast } from '../../../components/AppNotification';
-import { confirm } from '../../../components/ConfirmModal';
+} from '@/services/sql';
+import { useAuthStore } from '@/stores';
+import { toast } from '@/components/AppNotification';
+import { confirm } from '@/components/ConfirmModal';
 import SqlAnalysisDialog from './SqlAnalysisDialog';
 import ace from 'ace-builds';
 import 'ace-builds/src-noconflict/mode-sql';
@@ -76,10 +76,11 @@ const ApplyDetailDrawer = ({ detail, onClose, onRefresh, onResubmit }: Props) =>
   }, [detail.sql_content]);
 
   // 判断当前用户角色
-  const currentUserId = Number(userId);
+  const currentUserId = Number(userId) || 0;
+  
   const isCreator = detail.submitter_id === currentUserId || detail.apply_role === 'submit';
-  const isApprover = !isCreator && (detail.apply_id === currentUserId || detail.apply_role === 'apply');
-  const isExecutor = detail.executor_id === currentUserId || detail.apply_role === 'executor';
+  const isApprover = !isCreator && (Number(detail.apply_id) === currentUserId || detail.apply_role === 'apply');
+  const isExecutor = Number(detail.executor_id) === currentUserId || detail.apply_role === 'executor';
   const isFlowFinished = FINISHED_STATUS.includes(detail.status);
 
   // 状态判断

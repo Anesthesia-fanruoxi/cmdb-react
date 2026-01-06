@@ -4,9 +4,10 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { X, Loader2, Play } from 'lucide-react';
-import { subscribeProjectDetail, startRelease, cancelTask } from '../../../../services/assets/proUpdate';
-import { confirm } from '../../../../components/ConfirmModal';
-import type { ProjectUpdate, ReleaseRecord, ProjectDetailResponse } from '../../../../services/assets/proUpdate';
+import { subscribeProjectDetail, startRelease, cancelTask } from '@/services/assets';
+import toast from '@/components/Toast';
+import { confirm } from '@/components/ConfirmModal';
+import type { ProjectUpdate, ReleaseRecord, ProjectDetailResponse } from '@/services/assets';
 import RecordDetailDialog from './RecordDetailDialog';
 import CategorySelectDialog from './CategorySelectDialog';
 
@@ -31,6 +32,11 @@ const ProjectDetailDrawer = ({ visible, project, onClose, onRefresh }: Props) =>
   // 服务选择弹框
   const [categoryDialogVisible, setCategoryDialogVisible] = useState(false);
   const [categoryDialogType, setCategoryDialogType] = useState<'web' | 'backend'>('web');
+  
+  // 发版描述弹框
+  const [descDialogVisible, setDescDialogVisible] = useState(false);
+  const [releaseDesc, setReleaseDesc] = useState('');
+  const [pendingCategory, setPendingCategory] = useState<string | null>(null);
 
   useEffect(() => {
     if (visible && project) {
@@ -39,6 +45,7 @@ const ProjectDetailDrawer = ({ visible, project, onClose, onRefresh }: Props) =>
       closeSSE();
     }
     return () => closeSSE();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, project]);
 
   const closeSSE = () => {
@@ -94,33 +101,46 @@ const ProjectDetailDrawer = ({ visible, project, onClose, onRefresh }: Props) =>
       return;
     }
     
-    // 普通项目直接确认发版
-    if (!await confirm({ content: `确定要开始发版项目 "${detail.project_name}" 吗？`, type: 'warning' })) return;
-    
-    await doStartRelease(null);
+    // 普通项目显示描述输入弹框
+    setPendingCategory(null);
+    setReleaseDesc('');
+    setDescDialogVisible(true);
   };
 
   const handleCategorySelect = async (category: string) => {
     setCategoryDialogVisible(false);
-    await doStartRelease(category === 'all' ? null : category);
+    // 选择分类后显示描述输入弹框
+    setPendingCategory(category === 'all' ? null : category);
+    setReleaseDesc('');
+    setDescDialogVisible(true);
   };
 
-  const doStartRelease = async (category: string | null) => {
+  const handleDescConfirm = async () => {
+    setDescDialogVisible(false);
+    await doStartRelease(pendingCategory, releaseDesc);
+  };
+
+  const doStartRelease = async (category: string | null, description?: string) => {
     if (!project) return;
     
     setReleaseLoading(true);
     try {
-      const params: { project: string; type?: string; category?: string } = { project: project.project };
+      const params: { project: string; type?: string; category?: string; description?: string } = { project: project.project };
       if (project.type === 'web') params.type = 'web';
       if (category) params.category = category;
+      if (description?.trim()) params.description = description.trim();
       
       const res = await startRelease(params);
       if (res.code === 200) {
+        toast.success('发版任务已创建');
         connectSSE();
         onRefresh?.();
+      } else {
+        toast.error(res.message || '发版失败');
       }
-    } catch (err) {
-      console.error('发版失败:', err);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : '发版失败，请稍后重试';
+      toast.error(message);
     } finally {
       setReleaseLoading(false);
     }
@@ -130,9 +150,11 @@ const ProjectDetailDrawer = ({ visible, project, onClose, onRefresh }: Props) =>
     if (!await confirm({ content: '确定要取消该任务吗？', type: 'warning' })) return;
     try {
       await cancelTask(taskId);
+      toast.success('任务已取消');
       connectSSE();
-    } catch (err) {
-      console.error('取消失败:', err);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : '取消失败';
+      toast.error(message);
     }
   };
 
@@ -193,12 +215,13 @@ const ProjectDetailDrawer = ({ visible, project, onClose, onRefresh }: Props) =>
                 ) : (
                   <div className="records-table">
                     <table>
-                      <thead><tr><th>ID</th><th>任务ID</th><th>开始时间</th><th>完成时间</th><th>状态</th><th>操作</th></tr></thead>
+                      <thead><tr><th>ID</th><th>任务ID</th><th>备注</th><th>开始时间</th><th>完成时间</th><th>状态</th><th>操作</th></tr></thead>
                       <tbody>
                         {records.map((r, i) => (
                           <tr key={r.id || i}>
                             <td>{r.id || i + 1}</td>
-                            <td className="task-id" title={r.task_id}>{r.task_id?.slice(0, 12) || '-'}</td>
+                            <td className="task-id">{r.task_id || '-'}</td>
+                            <td className="description" title={r.description}>{r.description || '-'}</td>
                             <td>{r.started_at || r.start_time || '-'}</td>
                             <td>{r.completed_at || r.end_time || '-'}</td>
                             <td><span className={`status-tag ${getStatusClass(r.status)}`}>{getStatusText(r.status)}</span></td>
@@ -242,7 +265,8 @@ const ProjectDetailDrawer = ({ visible, project, onClose, onRefresh }: Props) =>
         .records-table table { width: 100%; border-collapse: collapse; font-size: 13px; }
         .records-table th, .records-table td { padding: 10px 8px; border-bottom: 1px solid var(--border-color, #e8e8e8); text-align: center; }
         .records-table th { background: var(--bg-secondary, #fafafa); font-weight: 600; position: sticky; top: 0; z-index: 1; }
-        .records-table .task-id { max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: monospace; }
+        .records-table .task-id { font-family: monospace; white-space: nowrap; }
+        .records-table .description { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
         .status-tag { display: inline-block; padding: 2px 8px; font-size: 12px; border: none; background: none; }
         .status-tag.success { color: #73d13d; }
         .status-tag.danger { color: #ff7875; }
@@ -253,6 +277,15 @@ const ProjectDetailDrawer = ({ visible, project, onClose, onRefresh }: Props) =>
         .btn-detail:hover { color: var(--primary-color, #1890ff); border-color: var(--primary-color, #1890ff); }
         .spin { animation: spin 1s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1100; display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: var(--bg-color); border-radius: 8px; width: 400px; max-width: 90%; }
+        .modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
+        .modal-header h3 { margin: 0; font-size: 16px; }
+        .modal-body { padding: 20px; }
+        .modal-footer { padding: 12px 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 12px; }
+        .btn-default { padding: 6px 16px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-color); border-radius: 4px; cursor: pointer; }
+        .btn-primary { padding: 6px 16px; border: none; background: var(--primary-color); color: #fff; border-radius: 4px; cursor: pointer; }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
       `}</style>
 
       <RecordDetailDialog
@@ -270,6 +303,33 @@ const ProjectDetailDrawer = ({ visible, project, onClose, onRefresh }: Props) =>
         onSelect={handleCategorySelect}
         onClose={() => setCategoryDialogVisible(false)}
       />
+
+      {/* 发版描述弹框 */}
+      {descDialogVisible && (
+        <div className="modal-overlay" onClick={() => setDescDialogVisible(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header"><h3>发版说明</h3></div>
+            <div className="modal-body">
+              <p style={{ margin: '0 0 12px', color: 'var(--text-secondary)', fontSize: 13 }}>
+                请输入本次迭代包含的内容（可选）
+              </p>
+              <textarea
+                rows={4}
+                value={releaseDesc}
+                onChange={e => setReleaseDesc(e.target.value)}
+                placeholder="例如：修复登录问题、新增XX功能..."
+                style={{ width: '100%', padding: 10, borderRadius: 4, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-color)', resize: 'vertical' }}
+              />
+            </div>
+            <div className="modal-footer">
+              <button className="btn-default" onClick={() => setDescDialogVisible(false)}>取消</button>
+              <button className="btn-primary" onClick={handleDescConfirm} disabled={releaseLoading}>
+                {releaseLoading ? '发版中...' : '确认发版'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

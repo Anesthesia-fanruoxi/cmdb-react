@@ -4,10 +4,10 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { X, Loader2, Square, FileText } from 'lucide-react';
-import { cancelTask } from '../../../../services/assets/proUpdate';
-import type { ReleaseRecord } from '../../../../services/assets/proUpdate';
+import { cancelTask } from '@/services/assets';
+import type { ReleaseRecord } from '@/services/assets';
 import LogViewerDialog from './LogViewerDialog';
-import { confirm } from '../../../../components/ConfirmModal';
+import { confirm } from '@/components/ConfirmModal';
 
 interface StepDetail {
   step: number;
@@ -53,7 +53,17 @@ const RecordDetailDialog = ({ visible, record, projectDetail, onClose, onRefresh
       closeSSE();
     }
     return () => closeSSE();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, record]);
+
+  // ESC 关闭
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && visible) onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [visible, onClose]);
 
   const closeSSE = () => {
     if (sseRef.current) {
@@ -114,8 +124,8 @@ const RecordDetailDialog = ({ visible, record, projectDetail, onClose, onRefresh
       await cancelTask(taskId);
       connectSSE();
       onRefresh?.();
-    } catch (err) {
-      console.error('取消失败:', err);
+    } catch {
+      console.error('取消失败');
     } finally {
       setCancelLoading(false);
     }
@@ -162,6 +172,13 @@ const RecordDetailDialog = ({ visible, record, projectDetail, onClose, onRefresh
                 {detail.type && <div className="detail-item no-bg"><span className="label">发版类型</span><span className="tag warning">{detail.type === 'web' ? '前端' : '后端'}</span></div>}
                 {detail.category && <div className="detail-item"><span className="label">额外参数</span><span className="tag info">{detail.category}</span></div>}
               </div>
+
+              {detail.description && (
+                <div className="description-section">
+                  <h4>备注说明</h4>
+                  <div className="description-content">{detail.description}</div>
+                </div>
+              )}
 
               {detail.step_detail && detail.step_detail.length > 0 && (
                 <div className="step-section">
@@ -218,6 +235,9 @@ const RecordDetailDialog = ({ visible, record, projectDetail, onClose, onRefresh
         .tag.info { color: #40a9ff; }
         .step-section { margin-top: 20px; }
         .step-section h4 { margin: 0 0 12px; font-size: 15px; color: var(--text-color, #e0e0e0); }
+        .description-section { margin-top: 16px; }
+        .description-section h4 { margin: 0 0 8px; font-size: 14px; color: var(--text-color, #e0e0e0); }
+        .description-content { padding: 12px; background: var(--bg-secondary, #fafafa); border: 1px solid var(--border-color, #e8e8e8); border-radius: 6px; font-size: 13px; line-height: 1.6; color: var(--text-color, #333); white-space: pre-wrap; word-break: break-word; }
         .step-table { border: 1px solid var(--border-color, #e8e8e8); border-radius: 4px; overflow: auto; max-height: calc(100vh - 400px); }
         .step-table table { width: 100%; border-collapse: collapse; font-size: 13px; }
         .step-table th, .step-table td { padding: 8px; border-bottom: 1px solid var(--border-color, #e8e8e8); text-align: center; }

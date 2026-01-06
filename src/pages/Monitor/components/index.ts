@@ -9,3 +9,4 @@ export { default as MetricChart } from './MetricChart';
 export { default as MetricCard } from './MetricCard';
 export { default as MetricDetailDialog } from './MetricDetailDialog';
 export { default as GaugeCard } from './GaugeCard';
+export { default as ChartZoomDialog } from './ChartZoomDialog';
