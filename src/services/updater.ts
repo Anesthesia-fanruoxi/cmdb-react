@@ -109,7 +109,7 @@ export const formatSize = (bytes: number): string => {
 /** 启动定时检查（前端控制） */
 let checkInterval: ReturnType<typeof setInterval> | null = null;
 
-export const startAutoCheck = (intervalMinutes = 360, checkFn: () => void): void => {
+export const startAutoCheck = (intervalMinutes = 5, checkFn: () => void): void => {
   if (checkInterval) return;
   
   // 启动后延迟 30 秒首次检查
