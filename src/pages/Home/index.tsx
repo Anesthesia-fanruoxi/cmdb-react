@@ -11,6 +11,7 @@ import TagsView from '../../components/Layout/TagsView';
 import KeepAlive from '../../components/KeepAlive';
 import { useMenuStore } from '../../stores/menuStore';
 import { usePageStateStore } from '../../stores/pageStateStore';
+import { markDirty } from '../../services/storage';
 import Dashboard from './Dashboard';
 import './style.css';
 
@@ -63,6 +64,7 @@ const Home = () => {
   useEffect(() => {
     if (_hasHydrated && location.pathname !== '/') {
       setLastRoute(location.pathname);
+      markDirty(); // 触发自动保存
     }
   }, [_hasHydrated, location.pathname, setLastRoute]);
 

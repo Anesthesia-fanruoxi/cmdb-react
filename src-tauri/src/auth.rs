@@ -10,7 +10,8 @@ use sha2::Sha256;
 use crate::device::get_hardware_fingerprint;
 use crate::crypto::{encrypt, decrypt};
 
-const CREDENTIALS_FILE: &str = "device_credentials.dat";
+const CREDENTIALS_FILE: &str = "credentials.dat";
+const OLD_CREDENTIALS_FILE: &str = "device_credentials.dat";
 
 type HmacSha256 = Hmac<Sha256>;
 
@@ -82,7 +83,7 @@ pub struct AutoLoginResult {
     pub error: Option<String>,
 }
 
-/// 获取凭证文件路径
+/// 获取凭证文件路径（优先 credentials.dat，兼容旧文件 device_credentials.dat）
 fn get_credentials_path(app_handle: &tauri::AppHandle) -> Result<PathBuf, String> {
     let app_dir = app_handle.path()
         .app_data_dir()
@@ -91,7 +92,25 @@ fn get_credentials_path(app_handle: &tauri::AppHandle) -> Result<PathBuf, String
     fs::create_dir_all(&app_dir)
         .map_err(|e| format!("创建目录失败: {}", e))?;
     
-    Ok(app_dir.join(CREDENTIALS_FILE))
+    let new_path = app_dir.join(CREDENTIALS_FILE);
+    let old_path = app_dir.join(OLD_CREDENTIALS_FILE);
+    
+    // 如果新文件存在，直接返回
+    if new_path.exists() {
+        return Ok(new_path);
+    }
+    
+    // 如果旧文件存在，重命名为新文件
+    if old_path.exists() {
+        println!("[Auth] 发现旧凭证文件，正在迁移: {:?} -> {:?}", old_path, new_path);
+        fs::rename(&old_path, &new_path)
+            .map_err(|e| format!("重命名凭证文件失败: {}", e))?;
+        println!("[Auth] 凭证文件迁移完成");
+        return Ok(new_path);
+    }
+    
+    // 都不存在，返回新路径（用于创建）
+    Ok(new_path)
 }
 
 /// 保存设备凭证（加密存储，支持多用户）

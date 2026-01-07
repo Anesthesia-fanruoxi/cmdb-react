@@ -1,14 +1,14 @@
 /**
  * 菜单状态管理
+ * 适配新存储架构 - 状态由 authStore 在初始化时恢复
  */
 
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
 import type { MenuItem, TagView } from '../types/menu';
 import { getUserMenus } from '../services/system/menu';
-import { encryptedStorage } from '../utils/persistStorage';
+import { markDirty } from '../services/storage';
 
-// 首页菜单配置（无子菜单，直接点击跳转）
+// 首页菜单配置
 const HOME_MENU: MenuItem = {
   path: '/dashboard',
   name: 'Dashboard',
@@ -23,15 +23,10 @@ const HOME_MENU: MenuItem = {
 };
 
 interface MenuState {
-  // 菜单列表
   menuList: MenuItem[] | null;
-  // 菜单权限
   menuPermissions: Set<string>;
-  // 已访问的标签页
   visitedViews: TagView[];
-  // 缓存的视图
   cachedViews: string[];
-  // 侧边栏折叠状态
   collapsed: boolean;
 
   // 操作
@@ -41,7 +36,6 @@ interface MenuState {
   hasPermission: (permission: string) => boolean;
   toggleCollapsed: () => void;
   setCollapsed: (collapsed: boolean) => void;
-  rehydrate: () => Promise<void>;
 
   // 标签页操作
   addVisitedView: (view: TagView) => void;
@@ -51,21 +45,21 @@ interface MenuState {
   addCachedView: (name: string) => void;
   delCachedView: (name: string) => void;
   reorderViews: (fromIndex: number, toIndex: number) => void;
+
+  // 状态恢复（由 authStore 调用）
+  restoreState: (state: { visitedViews?: TagView[]; cachedViews?: string[]; collapsed?: boolean }) => void;
 }
 
-export const useMenuStore = create<MenuState>()(
-  persist(
-    (set, get) => ({
-      menuList: null,
-      menuPermissions: new Set(),
-      visitedViews: [],
-      cachedViews: [],
-      collapsed: false,
+export const useMenuStore = create<MenuState>()((set, get) => ({
+  menuList: null,
+  menuPermissions: new Set(),
+  visitedViews: [],
+  cachedViews: [],
+  collapsed: false,
 
   // 获取用户菜单
   fetchUserMenus: async () => {
     try {
-      // 检查是否在强制修改密码页面
       if (window.location.pathname === '/force-change-password') {
         const menus = [HOME_MENU];
         set({ menuList: menus });
@@ -77,13 +71,11 @@ export const useMenuStore = create<MenuState>()(
         const backendMenus = Array.isArray(res.data) ? res.data : [];
         const menus = [HOME_MENU, ...backendMenus];
         
-        // 提取权限
         const permissions = new Set<string>();
         const extractPermissions = (items: MenuItem[]) => {
           items.forEach((menu) => {
             if (menu.permission) {
               permissions.add(menu.permission);
-              // :rw 权限同时包含 :r 和 :w
               if (menu.permission.endsWith(':rw')) {
                 permissions.add(menu.permission.replace(':rw', ':r'));
                 permissions.add(menu.permission.replace(':rw', ':w'));
@@ -96,28 +88,22 @@ export const useMenuStore = create<MenuState>()(
         };
         extractPermissions(backendMenus);
 
-        set({
-          menuList: menus,
-          menuPermissions: permissions,
-        });
+        set({ menuList: menus, menuPermissions: permissions });
         return menus;
       }
       return [];
     } catch (error) {
       console.error('获取用户菜单失败:', error);
-      // 返回最小菜单
       const menus = [HOME_MENU];
       set({ menuList: menus });
       return menus;
     }
   },
 
-  // 设置菜单列表
   setMenuList: (menus) => {
     set({ menuList: menus.length > 0 ? menus : null });
   },
 
-  // 清除菜单数据
   clearMenus: () => {
     set({
       menuList: null,
@@ -127,74 +113,55 @@ export const useMenuStore = create<MenuState>()(
     });
   },
 
-  // 检查权限
   hasPermission: (permission) => {
     if (!permission) return true;
     return get().menuPermissions.has(permission);
   },
 
-  // 切换折叠状态
   toggleCollapsed: () => {
     set((state) => ({ collapsed: !state.collapsed }));
+    markDirty();
   },
 
-  // 设置折叠状态
   setCollapsed: (collapsed) => {
     set({ collapsed });
+    markDirty();
   },
 
-  // 手动触发 rehydrate（登录后调用）
-  rehydrate: async () => {
-    const stored = await encryptedStorage.getItem('menu-state')
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored)
-        if (parsed.state) {
-          const { visitedViews, cachedViews, collapsed } = parsed.state
-          set({
-            visitedViews: visitedViews || [],
-            cachedViews: cachedViews || [],
-            collapsed: collapsed ?? false,
-          })
-          return
-        }
-      } catch (e) {
-        console.error('[MenuStore] rehydrate 解析失败:', e)
-      }
-    }
+  // 状态恢复
+  restoreState: (state) => {
+    set({
+      visitedViews: state.visitedViews || [],
+      cachedViews: state.cachedViews || [],
+      collapsed: state.collapsed ?? false,
+    });
   },
 
-  // 添加已访问视图
   addVisitedView: (view) => {
     set((state) => {
-      // 统一首页路径
       const normalizedPath = view.path === '/' ? '/dashboard' : view.path;
       const normalizedView = { ...view, path: normalizedPath };
       
-      // 检查是否已存在
       if (state.visitedViews.some((v) => v.path === normalizedPath)) {
         return state;
       }
-      return {
-        visitedViews: [...state.visitedViews, normalizedView],
-      };
+      markDirty();
+      return { visitedViews: [...state.visitedViews, normalizedView] };
     });
 
-    // 如果不是 noCache，添加到缓存
     if (!view.meta?.noCache) {
       get().addCachedView(view.name);
     }
   },
 
-  // 删除已访问视图
   delVisitedView: (view) => {
     set((state) => ({
       visitedViews: state.visitedViews.filter((v) => v.path !== view.path),
     }));
     get().delCachedView(view.name);
+    markDirty();
   },
 
-  // 删除其他视图
   delOtherViews: (view) => {
     set((state) => ({
       visitedViews: state.visitedViews.filter(
@@ -202,9 +169,9 @@ export const useMenuStore = create<MenuState>()(
       ),
       cachedViews: view.meta?.noCache ? [] : [view.name],
     }));
+    markDirty();
   },
 
-  // 删除所有视图（只保留一个首页）
   delAllViews: () => {
     set(() => ({
       visitedViews: [{
@@ -215,28 +182,24 @@ export const useMenuStore = create<MenuState>()(
       }],
       cachedViews: [],
     }));
+    markDirty();
   },
 
-  // 添加缓存视图
   addCachedView: (name) => {
     set((state) => {
-      if (state.cachedViews.includes(name)) {
-        return state;
-      }
-      return {
-        cachedViews: [...state.cachedViews, name],
-      };
+      if (state.cachedViews.includes(name)) return state;
+      markDirty();
+      return { cachedViews: [...state.cachedViews, name] };
     });
   },
 
-  // 删除缓存视图
   delCachedView: (name) => {
     set((state) => ({
       cachedViews: state.cachedViews.filter((v) => v !== name),
     }));
+    markDirty();
   },
 
-  // 重新排序标签页
   reorderViews: (fromIndex: number, toIndex: number) => {
     set((state) => {
       const views = [...state.visitedViews];
@@ -244,16 +207,6 @@ export const useMenuStore = create<MenuState>()(
       views.splice(toIndex, 0, moved);
       return { visitedViews: views };
     });
+    markDirty();
   },
-    }),
-    {
-      name: 'menu-state',
-      storage: createJSONStorage(() => encryptedStorage),
-      partialize: (state) => ({
-        visitedViews: state.visitedViews,
-        cachedViews: state.cachedViews,
-        collapsed: state.collapsed,
-      }),
-    }
-  )
-);
+}));

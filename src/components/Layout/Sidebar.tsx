@@ -16,7 +16,7 @@ import Icon from '../Icon';
 import { Circle, LogOut, User, ListTodo, RefreshCw, Trash2, Info } from 'lucide-react';
 import { confirm } from '../ConfirmModal';
 import { showStatus, updateStatus } from '../StatusModal';
-import { getAvatar } from '../../utils/storage';
+import { getUserAvatar } from '../../services/storage';
 import MessageCenter from '../MessageCenter';
 import ProfileDrawer from '../ProfileDrawer';
 import TaskCenter from '../TaskCenter';
@@ -48,13 +48,17 @@ const Sidebar = ({ collapsed = false }: SidebarProps) => {
 
   // 加载头像（监听 user 变化）
   useEffect(() => {
-    setAvatarUrl(getAvatar());
-  }, [user]);
+    if (userName) {
+      setAvatarUrl(getUserAvatar(userName));
+    }
+  }, [user, userName]);
 
   // ProfileDrawer 关闭时刷新头像
   const handleProfileClose = () => {
     setProfileVisible(false);
-    setAvatarUrl(getAvatar());
+    if (userName) {
+      setAvatarUrl(getUserAvatar(userName));
+    }
   };
 
   // 点击外部关闭下拉菜单

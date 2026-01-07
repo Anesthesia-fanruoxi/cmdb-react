@@ -7,7 +7,7 @@ import { Loader2, Smartphone, Shield, Zap, Database, Camera } from 'lucide-react
 import { useAuthStore } from '../../stores/authStore';
 import { updateProfile, getProfile } from '../../services/auth';
 import { isTauriEnv, hasDeviceCredentials, clearDeviceCredentials } from '../../services/machine';
-import { getAvatar, setAvatar } from '../../utils/storage';
+import { getUserAvatar, setUserAvatar } from '../../services/storage';
 import { toast } from '../Toast';
 import BindDeviceModal from '../BindDeviceModal';
 import './style.css';
@@ -67,8 +67,10 @@ const ProfileDrawer = ({ visible, onClose }: ProfileDrawerProps) => {
   };
 
   const loadAvatar = () => {
-    const saved = getAvatar();
-    if (saved) setAvatarUrl(saved);
+    if (userName) {
+      const saved = getUserAvatar(userName);
+      if (saved) setAvatarUrl(saved);
+    }
   };
 
   const checkDeviceStatus = async () => {
@@ -157,7 +159,9 @@ const ProfileDrawer = ({ visible, onClose }: ProfileDrawerProps) => {
       const base64 = await fileToBase64(file);
       const compressed = await compressImage(base64, 200, 200);
       setAvatarUrl(compressed);
-      await setAvatar(compressed);
+      if (userName) {
+        await setUserAvatar(userName, compressed);
+      }
       toast.success('头像已更新');
     } catch {
       toast.error('头像上传失败');

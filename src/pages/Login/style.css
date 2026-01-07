@@ -601,6 +601,85 @@
   font-size: 14px;
 }
 
+/* 保存登录状态 */
+.remember-login {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 16px 0;
+  padding: 0 4px;
+}
+
+.remember-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.remember-checkbox input {
+  display: none;
+}
+
+.remember-checkbox .checkmark {
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.03);
+  position: relative;
+  transition: all 0.2s;
+}
+
+.remember-checkbox input:checked + .checkmark {
+  background: linear-gradient(135deg, #00d4ff 0%, #8a2be2 100%);
+  border-color: transparent;
+}
+
+.remember-checkbox .checkmark::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  color: #fff;
+  font-size: 12px;
+  transition: transform 0.2s;
+}
+
+.remember-checkbox input:checked + .checkmark::after {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.remember-text {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.remember-hint {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* 亮色主题 - 保存登录状态 */
+.login-container.light .remember-checkbox .checkmark {
+  border-color: #e5e7eb;
+  background: #f5f7fa;
+}
+
+.login-container.light .remember-checkbox input:checked + .checkmark {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.login-container.light .remember-text {
+  color: #6b7280;
+}
+
+.login-container.light .remember-hint {
+  color: #9ca3af;
+}
+
 /* 重新绑定提示 */
 .rebind-section {
   margin: 24px 0;

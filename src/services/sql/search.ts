@@ -3,7 +3,7 @@
  */
 
 import { apiClient } from '../request';
-import { getToken } from '../../utils/storage';
+import { getToken } from '../storage';
 
 // 类型定义
 export interface Project {

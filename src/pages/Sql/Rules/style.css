@@ -118,16 +118,16 @@
 .error-cell { color: var(--danger-color); }
 
 /* 开关 */
-.switch {
+.sql-rules .switch {
   position: relative;
   display: inline-block;
   width: 36px;
   height: 20px;
 }
 
-.switch input { opacity: 0; width: 0; height: 0; }
+.sql-rules .switch input { opacity: 0; width: 0; height: 0; }
 
-.slider {
+.sql-rules .slider {
   position: absolute;
   cursor: pointer;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -136,7 +136,7 @@
   transition: all 0.25s;
 }
 
-.slider:before {
+.sql-rules .slider:before {
   position: absolute;
   content: "";
   height: 16px;
@@ -149,8 +149,8 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-input:checked + .slider { background: var(--primary-color); }
-input:checked + .slider:before { transform: translateX(16px); }
+.sql-rules input:checked + .slider { background: var(--primary-color); }
+.sql-rules input:checked + .slider:before { transform: translateX(16px); }
 
 /* 详情行 */
 .detail-row td { padding: 0 !important; background: var(--bg-secondary); }

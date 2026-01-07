@@ -61,20 +61,20 @@
 }
 
 /* 开关样式 */
-.switch {
+.project-management .switch {
   position: relative;
   display: inline-block;
   width: 40px;
   height: 20px;
 }
 
-.switch input {
+.project-management .switch input {
   opacity: 0;
   width: 0;
   height: 0;
 }
 
-.slider {
+.project-management .slider {
   position: absolute;
   cursor: pointer;
   top: 0;
@@ -86,7 +86,7 @@
   border-radius: 20px;
 }
 
-.slider:before {
+.project-management .slider:before {
   position: absolute;
   content: "";
   height: 16px;
@@ -98,11 +98,11 @@
   border-radius: 50%;
 }
 
-input:checked + .slider {
+.project-management input:checked + .slider {
   background-color: var(--primary-color);
 }
 
-input:checked + .slider:before {
+.project-management input:checked + .slider:before {
   transform: translateX(20px);
 }
 

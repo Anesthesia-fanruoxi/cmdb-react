@@ -5,7 +5,7 @@
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Download, X, CheckSquare, Square } from 'lucide-react';
-import { getToken } from '../../../../utils/storage';
+import { getToken } from '../../../../services/storage';
 import toast from '../../../../components/Toast';
 import type { ViewDetail } from '../../../../services/elfk/view';
 import '../styles/export-dialog.css';

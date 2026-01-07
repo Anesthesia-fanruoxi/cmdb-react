@@ -3,11 +3,12 @@
  */
 
 import { useState, useEffect } from 'react';
-import { createUser, updateUser, type User, type CreateUserRequest, type UpdateUserRequest } from '../../../../services/system/user';
-import { getBasicSetting } from '../../../../services/system/setting';
-import { toast } from '../../../../components/AppNotification';
-import type { Role } from '../../../../services/system/role';
-import type { Dept } from '../../../../services/system/dept';
+import { createUser, updateUser, type User, type CreateUserRequest, type UpdateUserRequest } from '@/services/system/user';
+import { getBasicSetting } from '@/services/system/setting';
+import { toast } from '@/components/AppNotification';
+import TreeSelect from '@/components/TreeSelect';
+import type { Role } from '@/services/system/role';
+import type { Dept } from '@/services/system/dept';
 import './UserForm.css';
 
 interface UserFormProps {
@@ -20,7 +21,7 @@ interface UserFormProps {
   onSuccess: () => void;
 }
 
-const UserForm = ({ visible, editData, roleOptions, deptOptions, onClose, onSuccess }: UserFormProps) => {
+const UserForm = ({ visible, editData, roleOptions, deptOptions, isSuperAdmin, onClose, onSuccess }: UserFormProps) => {
   const isEdit = !!editData.id;
   
   const [form, setForm] = useState({
@@ -41,13 +42,14 @@ const UserForm = ({ visible, editData, roleOptions, deptOptions, onClose, onSucc
   useEffect(() => {
     if (visible) {
       if (editData.id) {
+        const deptIdStr = editData.dept_id ? String(editData.dept_id) : undefined;
         setForm({
           user_name: editData.user_name || '',
           nick_name: editData.nick_name || '',
           phone: editData.phone || '',
           email: editData.email || '',
           role_id: editData.role_id,
-          dept_id: editData.dept_id,
+          dept_id: deptIdStr,
           password: '',
           allow_password_login: editData.allow_password_login ?? true,
         });
@@ -96,6 +98,9 @@ const UserForm = ({ visible, editData, roleOptions, deptOptions, onClose, onSucc
 
     setSubmitting(true);
     try {
+      // dept_id 需要转换为数字类型
+      const deptIdValue = form.dept_id ? Number(form.dept_id) : undefined;
+      
       if (isEdit) {
         const data: UpdateUserRequest = {
           id: editData.id!,
@@ -103,7 +108,7 @@ const UserForm = ({ visible, editData, roleOptions, deptOptions, onClose, onSucc
           phone: form.phone || undefined,
           email: form.email || undefined,
           role_id: form.role_id,
-          dept_id: form.dept_id,
+          dept_id: deptIdValue as unknown as string,
           allow_password_login: form.allow_password_login,
         };
         if (form.password) {
@@ -120,7 +125,7 @@ const UserForm = ({ visible, editData, roleOptions, deptOptions, onClose, onSucc
           phone: form.phone || undefined,
           email: form.email || undefined,
           role_id: form.role_id,
-          dept_id: form.dept_id,
+          dept_id: deptIdValue as unknown as string,
           allow_password_login: form.allow_password_login,
         };
         if (form.password) {
@@ -140,9 +145,22 @@ const UserForm = ({ visible, editData, roleOptions, deptOptions, onClose, onSucc
 
   if (!visible) return null;
 
+  // 过滤部门树（排除系统部门 id=1）
+  const filterDeptTree = (depts: Dept[]): Dept[] => {
+    return depts
+      .filter(d => Number(d.id) !== 1)
+      .map(d => ({
+        ...d,
+        children: d.children ? filterDeptTree(d.children) : undefined
+      }));
+  };
+
   // 过滤角色和部门选项
   const filteredRoles = roleOptions.filter(r => r.id !== 1);
-  const filteredDepts = deptOptions.filter(d => d.id !== '1');
+  const filteredDeptTree = filterDeptTree(deptOptions);
+  
+  // 确保 dept_id 能匹配到选项
+  const currentDeptId = form.dept_id ? String(form.dept_id) : '';
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -216,18 +234,17 @@ const UserForm = ({ visible, editData, roleOptions, deptOptions, onClose, onSucc
                 </select>
               </div>
 
-              <div className="form-group">
-                <label>部门</label>
-                <select
-                  value={form.dept_id || ''}
-                  onChange={e => setForm(f => ({ ...f, dept_id: e.target.value || undefined }))}
-                >
-                  <option value="">请选择部门</option>
-                  {filteredDepts.map(dept => (
-                    <option key={dept.id} value={dept.id}>{dept.name}</option>
-                  ))}
-                </select>
-              </div>
+              {isSuperAdmin && (
+                <div className="form-group">
+                  <label>部门</label>
+                  <TreeSelect
+                    value={currentDeptId}
+                    options={filteredDeptTree}
+                    placeholder="请选择部门"
+                    onChange={(val) => setForm(f => ({ ...f, dept_id: val }))}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="form-row">

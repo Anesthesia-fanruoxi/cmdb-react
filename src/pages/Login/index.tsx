@@ -1,48 +1,26 @@
 /**
  * 登录页面
- * - 有设备凭证：只显示用户名 + 自动登录按钮
- * - 无设备凭证：显示用户名 + 密码/双因子切换
+ * 适配新存储架构
  */
 
 import { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '../../stores/authStore';
 import { useAppStore } from '../../stores/appStore';
 import { isTauriEnv, hasDeviceCredentials } from '../../services/machine';
+import {
+  getLoginHistory,
+  getLastUser,
+  getDefaultTheme,
+  setDefaultTheme,
+  waitForStorageInit,
+  getActiveRoute,
+} from '../../services/storage';
 import './style.css';
 
 type LoginType = 'password' | 'totp';
 
-// 获取登录历史记录
-const getLoginHistory = (): string[] => {
-  try {
-    const history = localStorage.getItem('loginHistory');
-    return history ? JSON.parse(history) : [];
-  } catch {
-    return [];
-  }
-};
-
-// 保存登录历史记录（最多保存10个）
-const saveLoginHistory = (username: string) => {
-  const history = getLoginHistory().filter(u => u !== username);
-  history.unshift(username);
-  localStorage.setItem('loginHistory', JSON.stringify(history.slice(0, 10)));
-};
-
-const LOGIN_THEME_KEY = 'login-theme';
-
-// 获取登录页本地主题
-const getLoginTheme = (): 'light' | 'dark' => {
-  return (localStorage.getItem(LOGIN_THEME_KEY) as 'light' | 'dark') || 'dark';
-};
-
-// 保存登录页本地主题
-const setLoginTheme = (theme: 'light' | 'dark') => {
-  localStorage.setItem(LOGIN_THEME_KEY, theme);
-};
-
 const Login = () => {
-  const { login, autoLogin, bindDevice } = useAuthStore();
+  const { login, autoLogin, bindDevice, setSaveLoginState, isAuthenticated, userName } = useAuthStore();
   const { setTheme: setGlobalTheme } = useAppStore();
   
   const [loginType, setLoginType] = useState<LoginType>('totp');
@@ -51,11 +29,12 @@ const Login = () => {
   const [totpInputs, setTotpInputs] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [theme, setTheme] = useState<'light' | 'dark'>(getLoginTheme);
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [canAutoLogin, setCanAutoLogin] = useState(false);
   const [checkingAutoLogin, setCheckingAutoLogin] = useState(true);
   const [loginHistory, setLoginHistory] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [rememberLogin, setRememberLogin] = useState(true);
   
   // 重新绑定相关状态
   const [showRebindPrompt, setShowRebindPrompt] = useState(false);
@@ -66,18 +45,40 @@ const Login = () => {
   const usernameRef = useRef<HTMLInputElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
 
-  // 加载登录历史 & 初始化标题栏颜色
+  // 已登录则跳转到上次访问的路由
   useEffect(() => {
-    setLoginHistory(getLoginHistory());
-    const lastUsername = localStorage.getItem('lastLoginUsername');
-    if (lastUsername) setUsername(lastUsername);
-    
-    // 初始化窗口标题栏颜色
-    if (isTauriEnv()) {
-      import('@tauri-apps/api/core').then(({ invoke }) => {
-        invoke('set_window_theme', { dark: theme === 'dark' }).catch(() => {});
-      });
+    if (isAuthenticated && userName) {
+      const lastRoute = getActiveRoute(userName) || '/dashboard';
+      window.location.href = lastRoute;
     }
+  }, [isAuthenticated, userName]);
+
+  // 初始化
+  useEffect(() => {
+    const init = async () => {
+      // 等待存储初始化完成
+      await waitForStorageInit();
+      
+      // 加载登录历史和最后用户
+      const history = getLoginHistory();
+      setLoginHistory(history);
+      
+      const lastUser = getLastUser();
+      if (lastUser) setUsername(lastUser);
+      
+      // 加载默认主题
+      const defaultTheme = getDefaultTheme();
+      setTheme(defaultTheme);
+      document.documentElement.classList.toggle('dark', defaultTheme === 'dark');
+      
+      // 初始化窗口标题栏颜色
+      if (isTauriEnv()) {
+        import('@tauri-apps/api/core').then(({ invoke }) => {
+          invoke('set_window_theme', { dark: defaultTheme === 'dark' }).catch(() => {});
+        });
+      }
+    };
+    init();
   }, []);
 
   // 点击外部关闭下拉框
@@ -91,7 +92,7 @@ const Login = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // 检查是否可以自动登录（用户名变化时检测）
+  // 检查是否可以自动登录
   useEffect(() => {
     const checkAutoLogin = async () => {
       if (isTauriEnv() && username.trim()) {
@@ -113,21 +114,25 @@ const Login = () => {
     return () => clearTimeout(timer);
   }, [username]);
 
-  // 切换主题 - 本地状态
+  // 同步保存登录状态到 store
+  useEffect(() => {
+    setSaveLoginState(rememberLogin);
+  }, [rememberLogin, setSaveLoginState]);
+
+  // 切换主题
   const toggleTheme = async () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
-    setLoginTheme(newTheme);
+    await setDefaultTheme(newTheme);
     document.documentElement.classList.toggle('dark', newTheme === 'dark');
     
-    // 同步更新窗口标题栏颜色
     if (isTauriEnv()) {
       const { invoke } = await import('@tauri-apps/api/core');
       invoke('set_window_theme', { dark: newTheme === 'dark' }).catch(() => {});
     }
   };
 
-  // 切换登录方式（保持焦点）
+  // 切换登录方式
   const switchLoginType = (e: React.MouseEvent) => {
     e.preventDefault();
     const newType = loginType === 'totp' ? 'password' : 'totp';
@@ -194,7 +199,6 @@ const Login = () => {
 
   // 登录成功后跳转
   const onLoginSuccess = () => {
-    // 将登录页主题同步到全局状态
     setGlobalTheme(theme);
     window.location.href = '/dashboard?from=login';
   };
@@ -223,10 +227,9 @@ const Login = () => {
         password: loginType === 'password' ? password : undefined,
         totp_code: loginType === 'totp' ? totpCode : undefined,
         login_type: loginType,
-      });
+      }, rememberLogin);
       
-      localStorage.setItem('lastLoginUsername', username);
-      saveLoginHistory(username);
+      // 登录成功后更新历史（由 authStore 处理）
       
       if (result?.isDefaultPass) {
         window.location.href = '/force-two-factor';
@@ -256,8 +259,6 @@ const Login = () => {
     try {
       const success = await autoLogin(username.trim());
       if (success) {
-        localStorage.setItem('lastLoginUsername', username);
-        saveLoginHistory(username);
         onLoginSuccess();
       } else {
         setError('自动登录失败');
@@ -265,7 +266,6 @@ const Login = () => {
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : '自动登录失败';
-      // 版本过低时不显示重新绑定，直接切换到手动登录
       if (errorMsg.includes('版本') || errorMsg.includes('version')) {
         setError(errorMsg + '，请使用其他方式登录');
         setCanAutoLogin(false);
@@ -278,7 +278,7 @@ const Login = () => {
     }
   };
 
-  // 重新绑定：先登录再绑定设备
+  // 重新绑定登录
   const handleRebindLogin = async (totpCode: string) => {
     if (!username.trim() || totpCode.length !== 6) return;
     
@@ -286,27 +286,21 @@ const Login = () => {
     setError('');
     
     try {
-      // 1. 先用 TOTP 登录
       const result = await login({
         user_name: username,
         totp_code: totpCode,
         login_type: 'totp',
-      });
-      
-      localStorage.setItem('lastLoginUsername', username);
-      saveLoginHistory(username);
+      }, rememberLogin);
       
       if (result?.isDefaultPass) {
         window.location.href = '/force-two-factor';
         return;
       }
       
-      // 2. 登录成功后自动绑定设备
       try {
         await bindDevice(totpCode);
-        console.log('[Login] 设备重新绑定成功');
       } catch (bindErr) {
-        console.warn('[Login] 设备绑定失败，但登录已成功:', bindErr);
+        console.warn('[Login] 设备绑定失败:', bindErr);
       }
       
       onLoginSuccess();
@@ -359,7 +353,7 @@ const Login = () => {
             <h2 className="login-title">CMDB运维管理系统</h2>
             <p className="login-subtitle">欢迎回来，请登录您的账号</p>
 
-            {/* 用户名输入（带历史下拉） */}
+            {/* 用户名输入 */}
             <div className="form-item" ref={historyRef}>
               <div className="input-wrapper has-dropdown">
                 <span className="input-icon">👤</span>
@@ -398,7 +392,7 @@ const Login = () => {
               </div>
             </div>
 
-            {/* 有设备凭证：简化界面，只显示自动登录 */}
+            {/* 登录内容区 */}
             {checkingAutoLogin ? (
               <div className="auto-login-section">
                 <div className="auto-login-hint">
@@ -414,7 +408,6 @@ const Login = () => {
                 </div>
               </div>
             ) : showRebindPrompt ? (
-              /* 重新绑定：显示错误原因和 TOTP 输入 */
               <div className="rebind-section">
                 <div className="rebind-hint">
                   <span>⚠️</span>
@@ -432,7 +425,6 @@ const Login = () => {
                         value={val}
                         onChange={e => {
                           handleCodeInput(idx, e.target.value);
-                          // 输入完成后自动触发重新绑定登录
                           const newInputs = [...totpInputs];
                           newInputs[idx] = e.target.value.slice(-1);
                           if (newInputs.every(v => v) && newInputs.join('').length === 6) {
@@ -452,14 +444,9 @@ const Login = () => {
                       />
                     ))}
                   </div>
-                  <div className="totp-hint">
-                    <span>⏱️</span>
-                    <span>输入验证码后将自动登录并重新绑定设备</span>
-                  </div>
                 </div>
               </div>
             ) : (
-              /* 无设备凭证：显示密码/双因子登录 */
               <div className="form-content">
                 {loginType === 'totp' ? (
                   <div className="totp-form">
@@ -503,14 +490,31 @@ const Login = () => {
               </div>
             )}
 
+            {/* 保存登录状态开关 */}
+            {!canAutoLogin && (
+              <div className="remember-login">
+                <label className="remember-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={rememberLogin}
+                    onChange={e => setRememberLogin(e.target.checked)}
+                  />
+                  <span className="checkmark"></span>
+                  <span className="remember-text">保存登录状态</span>
+                </label>
+                <span className="remember-hint">
+                  {rememberLogin ? '下次启动自动登录' : '仅本次登录有效'}
+                </span>
+              </div>
+            )}
+
             {error && <div className="error-message">{error}</div>}
 
-            {/* 登录按钮 */}
             <button type="submit" className="login-button" disabled={loading}>
               {loading ? '登录中...' : (canAutoLogin ? '🔐 自动登录' : (showRebindPrompt ? '🔄 重新绑定登录' : '登录'))}
             </button>
 
-            {/* 切换登录方式（仅无设备凭证且非重新绑定时显示） */}
+            {/* 切换登录方式 */}
             {!canAutoLogin && !showRebindPrompt && (
               <div className="login-type-switch">
                 <button type="button" className="switch-button" onClick={switchLoginType}>
@@ -519,20 +523,14 @@ const Login = () => {
               </div>
             )}
 
-            {/* 有设备凭证时，提供切换到其他登录方式的选项 */}
             {canAutoLogin && (
               <div className="login-type-switch">
-                <button 
-                  type="button" 
-                  className="switch-button" 
-                  onClick={() => setCanAutoLogin(false)}
-                >
+                <button type="button" className="switch-button" onClick={() => setCanAutoLogin(false)}>
                   使用其他方式登录
                 </button>
               </div>
             )}
             
-            {/* 重新绑定时，提供取消选项 */}
             {showRebindPrompt && (
               <div className="login-type-switch">
                 <button 

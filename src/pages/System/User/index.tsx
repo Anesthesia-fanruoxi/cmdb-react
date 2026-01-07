@@ -7,7 +7,8 @@ import { Search, RefreshCw, Plus } from 'lucide-react';
 import { getUserList, updateUser, deleteUser, type User } from '../../../services/system/user';
 import { getRoleList, type Role } from '../../../services/system/role';
 import { getDeptList, type Dept } from '../../../services/system/dept';
-import { getUserInfo } from '../../../utils/storage';
+import { getProfile } from '../../../services/storage';
+import { useAuthStore } from '../../../stores/authStore';
 import { openComponentWindow } from '../../../utils/window';
 import { confirm } from '../../../components/ConfirmModal';
 import UserForm from './components/UserForm';
@@ -22,8 +23,9 @@ const UserManagement = () => {
   const [roleFilter, setRoleFilter] = useState<number | ''>('');
   const [pagination, setPagination] = useState({ page: 1, total: 0 });
   
-  const currentUser = getUserInfo<{ role_id?: number }>() || {};
-  const isSuperAdmin = currentUser.role_id === 1;
+  const { userName } = useAuthStore();
+  const profile = userName ? getProfile(userName) : null;
+  const isSuperAdmin = profile?.roleId === 1;
   
   const [formVisible, setFormVisible] = useState(false);
   const [editData, setEditData] = useState<Partial<User>>({});

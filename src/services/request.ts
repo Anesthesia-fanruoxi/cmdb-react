@@ -5,7 +5,7 @@
 
 import { fetch } from '@tauri-apps/plugin-http';
 import type { ApiResponse } from '../types/api';
-import { getToken, removeToken, removeUserInfo } from '../utils/storage';
+import { getToken, removeToken } from './storage';
 
 // API 基础地址
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
@@ -155,7 +155,6 @@ async function request<T>(
       // 处理 401 未授权 - 桌面应用不自动跳转，只清除 token
       if (response.status === 401) {
         removeToken();
-        removeUserInfo();
         // 桌面应用：不自动跳转，让调用方处理
         throw new RequestError(401, errorMessage || '登录已过期，请重新登录');
       }

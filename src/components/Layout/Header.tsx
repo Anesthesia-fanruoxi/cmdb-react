@@ -7,7 +7,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '../../stores/authStore';
 import { useAppStore } from '../../stores/appStore';
 import { Sun, Moon, LogOut, ChevronLeft, ChevronRight, User, ListTodo } from 'lucide-react';
-import { getAvatar } from '../../utils/storage';
+import { getUserAvatar } from '../../services/storage';
 import MessageCenter from '../MessageCenter';
 import TaskCenter from '../TaskCenter';
 import ProfileDrawer from '../ProfileDrawer';
@@ -29,13 +29,17 @@ const Header = ({ collapsed, onToggleCollapse }: HeaderProps) => {
 
   // 加载头像
   useEffect(() => {
-    setAvatarUrl(getAvatar());
-  }, []);
+    if (userName) {
+      setAvatarUrl(getUserAvatar(userName));
+    }
+  }, [userName]);
 
   // ProfileDrawer 关闭时刷新头像
   const handleProfileClose = () => {
     setProfileVisible(false);
-    setAvatarUrl(getAvatar());
+    if (userName) {
+      setAvatarUrl(getUserAvatar(userName));
+    }
   };
 
   // 点击外部关闭下拉菜单

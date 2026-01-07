@@ -5,7 +5,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { generateTwoFactor, verifyTwoFactor as verifyTwoFactorApi } from '../../services/auth';
-import { getToken, clearUserData } from '../../utils/storage';
+import { getToken, removeToken, clearMemoryCache } from '../../services/storage';
 import './style.css';
 
 const ForceTwoFactor = () => {
@@ -119,7 +119,8 @@ const ForceTwoFactor = () => {
 
       if (res.code === 200) {
         // 清除本地数据，返回登录页重新登录
-        clearUserData();
+        removeToken();
+        clearMemoryCache();
         window.location.href = '/login';
       } else {
         setError(res.message || '验证码错误');
