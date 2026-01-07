@@ -42,7 +42,7 @@ function App() {
     if (!ready || !token) return;
 
     // 启动自动保存
-    startAutoSave();
+    void startAutoSave();
 
     return () => {
       // 组件卸载时强制保存并停止

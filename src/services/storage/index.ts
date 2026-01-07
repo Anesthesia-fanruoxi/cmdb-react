@@ -97,4 +97,9 @@ export type {
   PageState,
   PreferencesData,
   WindowBounds,
+  SqlShortcuts,
+  ElfkShortcuts,
+  MonitorDefaults,
+  EsSearchPrefs,
+  UiPrefs,
 } from './types';

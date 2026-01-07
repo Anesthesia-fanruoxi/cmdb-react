@@ -95,11 +95,59 @@ export interface WindowBounds {
   height: number;
 }
 
+/** SQL 编辑器快捷键配置 */
+export interface SqlShortcuts {
+  execute: string;
+  format: string;
+  comment: string;
+  find: string;
+  replace: string;
+  newTab: string;
+  history: string;
+  saveShared: string;
+}
+
+/** ELFK 日志搜索快捷键配置 */
+export interface ElfkShortcuts {
+  search: string;
+  history: string;
+  saveShared: string;
+  newTab: string;
+}
+
+/** 监控默认设置 */
+export interface MonitorDefaults {
+  refreshInterval: number;
+  timeRange: string;
+  chartType: string;
+}
+
+/** ES 搜索设置 */
+export interface EsSearchPrefs {
+  recentSearches: string[];
+  maxRecentSearches: number;
+  defaultPageSize: number;
+}
+
+/** 界面偏好 */
+export interface UiPrefs {
+  sidebarCollapsed: boolean;
+  tablePageSize: number;
+  codeEditorFontSize: number;
+  sqlEditorHeight: number;
+}
+
 export interface PreferencesData {
   avatar: string;              // 用户头像（base64或URL）
   theme: 'light' | 'dark';     // 主题颜色
   windowBounds: WindowBounds;  // 窗口大小位置
   sidebarWidth: number;        // 侧边栏宽度
+  // 用户偏好设置
+  sqlShortcuts?: SqlShortcuts;
+  elfkShortcuts?: ElfkShortcuts;
+  monitorDefaults?: MonitorDefaults;
+  esSearchPrefs?: EsSearchPrefs;
+  uiPrefs?: UiPrefs;
 }
 
 // ==================== 设备凭据 ====================

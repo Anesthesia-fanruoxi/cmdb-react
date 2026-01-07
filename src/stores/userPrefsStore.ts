@@ -101,6 +101,8 @@ interface UserPrefsState {
   clearRecentSearches: () => void;
   setUiPref: (key: keyof UiPrefs, value: boolean | number) => void;
   restorePrefs: (prefs: Partial<UserPrefsState>) => void;
+  reset: () => void;
+  getPrefsForSave: () => Partial<UserPrefsState>;
 }
 
 export const useUserPrefsStore = create<UserPrefsState>()((set) => ({
@@ -168,5 +170,28 @@ export const useUserPrefsStore = create<UserPrefsState>()((set) => ({
       esSearchPrefs: { ...DEFAULT_ES_PREFS, ...prefs.esSearchPrefs },
       uiPrefs: { ...DEFAULT_UI_PREFS, ...prefs.uiPrefs },
     }));
+  },
+
+  // 重置为默认值（登出时调用）
+  reset: () => {
+    set({
+      sqlShortcuts: { ...DEFAULT_SQL_SHORTCUTS },
+      elfkShortcuts: { ...DEFAULT_ELFK_SHORTCUTS },
+      monitorDefaults: { ...DEFAULT_MONITOR },
+      esSearchPrefs: { ...DEFAULT_ES_PREFS },
+      uiPrefs: { ...DEFAULT_UI_PREFS },
+    });
+  },
+
+  // 获取需要保存的偏好数据
+  getPrefsForSave: () => {
+    const state = useUserPrefsStore.getState();
+    return {
+      sqlShortcuts: state.sqlShortcuts,
+      elfkShortcuts: state.elfkShortcuts,
+      monitorDefaults: state.monitorDefaults,
+      esSearchPrefs: state.esSearchPrefs,
+      uiPrefs: state.uiPrefs,
+    };
   },
 }));

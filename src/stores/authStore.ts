@@ -35,6 +35,8 @@ import {
 import { hasDeviceCredentials } from '@/services/machine';
 import { useMenuStore } from './menuStore';
 import { useAppStore } from './appStore';
+import { usePageStateStore } from './pageStateStore';
+import { useUserPrefsStore } from './userPrefsStore';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -229,6 +231,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     // 保存当前状态
     if (userName) {
       const menuStore = useMenuStore.getState();
+      const userPrefsStore = useUserPrefsStore.getState();
+      
       await updateState(userName, {
         visitedViews: menuStore.visitedViews.map(v => ({
           path: v.path,
@@ -239,9 +243,12 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         sidebarCollapsed: menuStore.collapsed,
       });
 
-      // 保存主题到用户偏好和公共存储
+      // 保存主题和用户偏好到存储
       const theme = useAppStore.getState().theme;
-      await updatePreferences(userName, { theme });
+      await updatePreferences(userName, {
+        theme,
+        ...userPrefsStore.getPrefsForSave(),
+      });
       await setDefaultTheme(theme);
     }
 
@@ -258,6 +265,12 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
     // 清除菜单
     useMenuStore.getState().clearMenus();
+
+    // 清除页面状态
+    usePageStateStore.getState().reset();
+
+    // 清除用户偏好（重置为默认值）
+    useUserPrefsStore.getState().reset();
 
     // 清除内存缓存
     clearMemoryCache();
@@ -307,6 +320,17 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           // 恢复主题
           if (prefs?.theme) {
             useAppStore.getState().setTheme(prefs.theme);
+          }
+
+          // 恢复用户偏好设置
+          if (prefs) {
+            useUserPrefsStore.getState().restorePrefs({
+              sqlShortcuts: prefs.sqlShortcuts,
+              elfkShortcuts: prefs.elfkShortcuts,
+              monitorDefaults: prefs.monitorDefaults,
+              esSearchPrefs: prefs.esSearchPrefs,
+              uiPrefs: prefs.uiPrefs,
+            });
           }
 
           // 恢复菜单状态

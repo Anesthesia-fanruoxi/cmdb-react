@@ -32,11 +32,23 @@ export interface TabData {
   keyword: string;
   lastParams: Record<string, unknown>;
   selectedFields: string[];
+  timeRange: { start: string; end: string; label: string } | null;
 }
+
+// 获取今日时间范围
+const getTodayRange = () => {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  const formatLocalDateTime = (date: Date) => 
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  return { start: formatLocalDateTime(start), end: formatLocalDateTime(now), label: '今日' };
+};
 
 const createDefaultTab = (id: string, name: string): TabData => ({
   id, name, initialized: false, projectInfo: null, loading: false,
-  currentView: null, logs: [], total: 0, keyword: '', lastParams: {}, selectedFields: []
+  currentView: null, logs: [], total: 0, keyword: '', lastParams: {}, selectedFields: [],
+  timeRange: null
 });
 
 // 序列化标签页（保存完整状态，包括搜索结果）
@@ -51,6 +63,7 @@ const serializeTab = (tab: TabData) => ({
   total: tab.total,
   lastParams: tab.lastParams,
   selectedFields: tab.selectedFields,
+  timeRange: tab.timeRange,
 });
 
 const ElfkSearch = () => {
@@ -203,7 +216,7 @@ const ElfkSearch = () => {
 
   const handleViewChange = (view: ViewDetail) => {
     if (!activeTab) return;
-    updateTab(activeTab.id, { currentView: view, name: activeTab.projectInfo ? `${activeTab.projectInfo.projectName} - ${view.name}` : view.name, logs: [], total: 0, lastParams: {}, selectedFields: [] });
+    updateTab(activeTab.id, { currentView: view, name: activeTab.projectInfo ? `${activeTab.projectInfo.projectName} - ${view.name}` : view.name, logs: [], total: 0, lastParams: {}, selectedFields: [], timeRange: getTodayRange() });
   };
 
   const handleSearch = async (params: Record<string, unknown>) => {
@@ -216,6 +229,11 @@ const ElfkSearch = () => {
       }
     } catch (err) { console.error('搜索失败:', err); }
     finally { updateTab(activeTab.id, { loading: false }); }
+  };
+
+  const handleTimeRangeChange = (range: { start: string; end: string; label: string }) => {
+    if (!activeTab) return;
+    updateTab(activeTab.id, { timeRange: range });
   };
 
   const handleSortChange = async (sortOrder: string) => {
@@ -265,11 +283,13 @@ const ElfkSearch = () => {
               currentView={activeTab.currentView}
               loading={activeTab.loading}
               initialKeyword={activeTab.keyword}
+              initialTimeRange={activeTab.timeRange || getTodayRange()}
               onViewChange={handleViewChange}
               onSearch={handleSearch}
-              onReset={() => activeTab && updateTab(activeTab.id, { logs: [], total: 0, keyword: '', lastParams: {} })}
+              onReset={() => activeTab && updateTab(activeTab.id, { logs: [], total: 0, keyword: '', lastParams: {}, timeRange: getTodayRange() })}
               onAddTab={handleAddTab}
               onKeywordChange={(keyword) => updateTab(activeTab.id, { keyword })}
+              onTimeRangeChange={handleTimeRangeChange}
             />
             {/* 下方：左侧字段 + 右侧结果 */}
             <div className="main-layout">

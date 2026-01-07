@@ -1,12 +1,16 @@
 /**
  * 自动保存服务
- * 类似 IDE 的保存策略：变更检测 + 防抖 + 定时 + 失焦
+ * 类似 IDE 的保存策略：变更检测 + 防抖 + 定时 + 失焦 + 窗口关闭
  */
 
 import { useAuthStore } from '@/stores/authStore';
 import { useMenuStore } from '@/stores/menuStore';
 import { usePageStateStore } from '@/stores/pageStateStore';
+import { useUserPrefsStore } from '@/stores/userPrefsStore';
 import { updateState } from './stateStorage';
+import { updatePreferences } from './preferencesStorage';
+import { getCurrentWindow } from '@tauri-apps/api/window';
+import type { UnlistenFn } from '@tauri-apps/api/event';
 
 // 配置
 const DEBOUNCE_DELAY = 2000;  // 防抖延迟 2 秒
@@ -17,6 +21,7 @@ let isDirty = false;
 let debounceTimer: number | null = null;
 let intervalTimer: number | null = null;
 let isInitialized = false;
+let unlistenCloseRequested: UnlistenFn | null = null;
 
 /**
  * 标记数据已变更
@@ -45,6 +50,7 @@ async function saveIfDirty(): Promise<void> {
   try {
     const menuState = useMenuStore.getState();
     const pageState = usePageStateStore.getState();
+    const userPrefs = useUserPrefsStore.getState();
     
     // 获取当前路由（排除登录页等）
     const currentPath = window.location.pathname;
@@ -52,6 +58,7 @@ async function saveIfDirty(): Promise<void> {
       ? '/dashboard' 
       : currentPath;
     
+    // 保存使用状态
     await updateState(userName, {
       visitedViews: menuState.visitedViews.map(v => ({
         path: v.path,
@@ -62,6 +69,15 @@ async function saveIfDirty(): Promise<void> {
       sidebarCollapsed: menuState.collapsed,
       activeRoute,
       pageStates: pageState.pages as Record<string, import('./types').PageState>,
+    });
+    
+    // 保存用户偏好
+    await updatePreferences(userName, {
+      sqlShortcuts: userPrefs.sqlShortcuts,
+      elfkShortcuts: userPrefs.elfkShortcuts,
+      monitorDefaults: userPrefs.monitorDefaults,
+      esSearchPrefs: userPrefs.esSearchPrefs,
+      uiPrefs: userPrefs.uiPrefs,
     });
     
     isDirty = false;
@@ -94,23 +110,9 @@ function handleVisibilityChange(): void {
 }
 
 /**
- * 窗口关闭前处理
- */
-function handleBeforeUnload(): void {
-  // 同步保存（尽力而为）
-  if (isDirty) {
-    const { token, userName } = useAuthStore.getState();
-    if (token && userName) {
-      // 使用 sendBeacon 触发保存信号
-      navigator.sendBeacon?.('/api/noop', '');
-    }
-  }
-}
-
-/**
  * 启动自动保存
  */
-export function startAutoSave(): void {
+export async function startAutoSave(): Promise<void> {
   if (isInitialized) return;
   isInitialized = true;
   
@@ -122,8 +124,19 @@ export function startAutoSave(): void {
   // 失焦保存
   document.addEventListener('visibilitychange', handleVisibilityChange);
   
-  // 退出保存
-  window.addEventListener('beforeunload', handleBeforeUnload);
+  // Tauri 窗口关闭前保存
+  try {
+    const appWindow = getCurrentWindow();
+    unlistenCloseRequested = await appWindow.onCloseRequested(async (event) => {
+      if (isDirty) {
+        event.preventDefault();
+        await saveIfDirty();
+        await appWindow.close();
+      }
+    });
+  } catch (e) {
+    console.warn('[AutoSave] 注册窗口关闭事件失败:', e);
+  }
   
   console.log('[AutoSave] 自动保存已启动');
 }
@@ -145,7 +158,12 @@ export function stopAutoSave(): void {
   }
   
   document.removeEventListener('visibilitychange', handleVisibilityChange);
-  window.removeEventListener('beforeunload', handleBeforeUnload);
+  
+  // 取消 Tauri 窗口关闭监听
+  if (unlistenCloseRequested) {
+    unlistenCloseRequested();
+    unlistenCloseRequested = null;
+  }
   
   isInitialized = false;
   console.log('[AutoSave] 自动保存已停止');

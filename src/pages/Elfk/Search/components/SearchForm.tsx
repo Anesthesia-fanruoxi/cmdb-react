@@ -23,11 +23,13 @@ interface Props {
   currentView: ViewDetail | null;
   loading: boolean;
   initialKeyword?: string;
+  initialTimeRange?: { start: string; end: string; label: string };
   onViewChange: (view: ViewDetail) => void;
   onSearch: (params: Record<string, unknown>) => void;
   onReset: () => void;
   onAddTab?: () => void;
   onKeywordChange?: (keyword: string) => void;
+  onTimeRangeChange?: (range: { start: string; end: string; label: string }) => void;
 }
 
 // 格式化本地时间
@@ -73,10 +75,58 @@ const matchShortcut = (e: KeyboardEvent, shortcut: string) => {
   );
 };
 
-const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, onViewChange, onSearch, onReset, onAddTab, onKeywordChange }: Props) => {
+// 相对时间配置（与 TimeRangePicker 保持一致）
+const relativeTimeConfig: Record<string, { ms?: number; getRange?: () => { start: Date; end: Date } }> = {
+  '过去15分钟': { ms: 15 * 60 * 1000 },
+  '过去30分钟': { ms: 30 * 60 * 1000 },
+  '过去45分钟': { ms: 45 * 60 * 1000 },
+  '近1小时': { ms: 1 * 3600 * 1000 },
+  '近3小时': { ms: 3 * 3600 * 1000 },
+  '近6小时': { ms: 6 * 3600 * 1000 },
+  '近12小时': { ms: 12 * 3600 * 1000 },
+  '今日': { getRange: () => {
+    const now = new Date();
+    return { start: new Date(now.getFullYear(), now.getMonth(), now.getDate()), end: now };
+  }},
+  '近3天': { ms: 3 * 24 * 3600 * 1000 },
+  '近7天': { ms: 7 * 24 * 3600 * 1000 },
+  '本月': { getRange: () => {
+    const now = new Date();
+    return { start: new Date(now.getFullYear(), now.getMonth(), 1), end: now };
+  }},
+  '近1个月': { ms: 30 * 24 * 3600 * 1000 },
+  '近3个月': { ms: 90 * 24 * 3600 * 1000 },
+};
+
+// 根据 label 动态计算时间范围
+const getActualTimeRange = (timeRange: { start: string; end: string; label: string }) => {
+  const config = relativeTimeConfig[timeRange.label];
+  if (!config) {
+    // 自定义时间或固定时间（如"昨日"、"上月"），直接使用保存的值
+    return { start: timeRange.start, end: timeRange.end };
+  }
+  
+  const now = new Date();
+  let start: Date, end: Date;
+  
+  if (config.getRange) {
+    const range = config.getRange();
+    start = range.start;
+    end = range.end;
+  } else if (config.ms) {
+    end = now;
+    start = new Date(now.getTime() - config.ms);
+  } else {
+    return { start: timeRange.start, end: timeRange.end };
+  }
+  
+  return { start: formatLocalDateTime(start), end: formatLocalDateTime(end) };
+};
+
+const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, initialTimeRange, onViewChange, onSearch, onReset, onAddTab, onKeywordChange, onTimeRangeChange }: Props) => {
   const [allViews, setAllViews] = useState<ViewListItem[]>([]);
   const [viewLoading, setViewLoading] = useState(false);
-  const [timeRange, setTimeRange] = useState(getTodayRange);
+  const [timeRange, setTimeRange] = useState(initialTimeRange || getTodayRange);
   const [localKeyword, setLocalKeyword] = useState(initialKeyword || '');
   
   // 弹框状态
@@ -130,13 +180,17 @@ const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, onViewC
   const handleSearch = useCallback(() => {
     if (!currentView || !projectInfo) return;
     if (localKeyword.trim()) saveLocalHistory(localKeyword.trim());
+    
+    // 动态计算实际时间范围
+    const actualRange = getActualTimeRange(timeRange);
+    
     onSearch({
       project: projectInfo.project,
       view_id: currentView.id,
       view_name: currentView.name,
       index_pattern: currentView.index_pattern,
-      start_time: formatSearchTime(timeRange.start),
-      end_time: formatSearchTime(timeRange.end),
+      start_time: formatSearchTime(actualRange.start),
+      end_time: formatSearchTime(actualRange.end),
       time_field: currentView.time_field || '@timestamp',
       time_format: currentView.time_format || 'epoch_millis',
       keyword: localKeyword.trim(),
@@ -144,9 +198,18 @@ const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, onViewC
     });
   }, [currentView, projectInfo, localKeyword, timeRange, onSearch]);
 
+  // 时间范围变化时同步到父组件
+  const handleTimeRangeChange = (range: { start: string; end: string; label?: string }) => {
+    const newRange = { ...range, label: range.label || '自定义' };
+    setTimeRange(newRange);
+    onTimeRangeChange?.(newRange);
+  };
+
   const handleReset = () => {
     setLocalKeyword('');
-    setTimeRange(getTodayRange());
+    const defaultRange = getTodayRange();
+    setTimeRange(defaultRange);
+    onTimeRangeChange?.(defaultRange);
     onReset();
   };
 
@@ -157,13 +220,17 @@ const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, onViewC
     // 直接触发搜索
     if (!currentView || !projectInfo) return;
     if (keyword.trim()) saveLocalHistory(keyword.trim());
+    
+    // 动态计算实际时间范围
+    const actualRange = getActualTimeRange(timeRange);
+    
     onSearch({
       project: projectInfo.project,
       view_id: currentView.id,
       view_name: currentView.name,
       index_pattern: currentView.index_pattern,
-      start_time: formatSearchTime(timeRange.start),
-      end_time: formatSearchTime(timeRange.end),
+      start_time: formatSearchTime(actualRange.start),
+      end_time: formatSearchTime(actualRange.end),
       time_field: currentView.time_field || '@timestamp',
       time_format: currentView.time_format || 'epoch_millis',
       keyword: keyword.trim(),
@@ -248,7 +315,7 @@ const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, onViewC
         </div>
 
         {/* 时间范围选择器 */}
-        <TimeRangePicker value={timeRange} onChange={(range) => setTimeRange({ ...range, label: range.label || '自定义' })} />
+        <TimeRangePicker value={timeRange} onChange={handleTimeRangeChange} />
 
         {/* 按钮 */}
         <div className="form-btns">

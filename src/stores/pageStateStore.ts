@@ -39,6 +39,7 @@ interface PageStateStore {
   clearAllPageStates: () => void;
   setLastRoute: (route: string) => void;
   restoreState: (state: { pages?: PageStates; lastRoute?: string | null }) => void;
+  reset: () => void;
 }
 
 export const usePageStateStore = create<PageStateStore>()((set, get) => ({
@@ -88,6 +89,16 @@ export const usePageStateStore = create<PageStateStore>()((set, get) => ({
       pages: state.pages || {},
       lastRoute: state.lastRoute || null,
       _hasHydrated: true,
+    });
+  },
+
+  // 重置状态（登出时调用）
+  reset: () => {
+    set({
+      pages: {},
+      lastRoute: null,
+      lastSaveTime: null,
+      _hasHydrated: false,
     });
   },
 }));
