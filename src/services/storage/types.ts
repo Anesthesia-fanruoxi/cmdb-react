@@ -9,6 +9,7 @@ export interface AppData {
   defaultTheme: 'light' | 'dark'; // 未登录时的默认主题
   appVersion: string;          // 应用版本号
   lastUpdateCheck: number;     // 最后检查更新时间戳
+  [key: string]: unknown;      // 索引签名
 }
 
 // ==================== Token 存储 ====================
@@ -16,6 +17,7 @@ export interface TokenData {
   token: string;               // JWT token
   username: string;            // token 对应的用户名
   expireAt: number;            // 过期时间戳
+  [key: string]: unknown;      // 索引签名
 }
 
 // ==================== 用户数据 ====================

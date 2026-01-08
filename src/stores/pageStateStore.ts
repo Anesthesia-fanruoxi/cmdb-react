@@ -4,7 +4,19 @@
  */
 
 import { create } from 'zustand';
-import { markDirty } from '../services/storage';
+
+// 延迟导入 markDirty 避免循环依赖
+let markDirtyFn: (() => void) | null = null;
+const callMarkDirty = () => {
+  if (!markDirtyFn) {
+    import('../services/storage/autoSave').then(m => {
+      markDirtyFn = m.markDirty;
+      markDirtyFn?.();
+    });
+  } else {
+    markDirtyFn();
+  }
+};
 
 /** 页面状态数据 */
 interface PageState {
@@ -59,7 +71,7 @@ export const usePageStateStore = create<PageStateStore>()((set, get) => ({
       },
       lastSaveTime: Date.now(),
     }));
-    markDirty();
+    callMarkDirty();
   },
 
   getPageState: <T extends PageState>(pageKey: string) => {
@@ -71,12 +83,12 @@ export const usePageStateStore = create<PageStateStore>()((set, get) => ({
       const { [pageKey]: _, ...rest } = prev.pages;
       return { pages: rest };
     });
-    markDirty();
+    callMarkDirty();
   },
 
   clearAllPageStates: () => {
     set({ pages: {}, lastRoute: null, lastSaveTime: null });
-    markDirty();
+    callMarkDirty();
   },
 
   setLastRoute: (route) => {

@@ -143,10 +143,9 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"
-          DESCRIPTION="1、优化已知问题
-          2、新增了发版的时候添加了备注
-          3、修复了sql导出审批的相关问题
-          4、优化了监控的折线图"
+          DESCRIPTION="1、优化了elfk查询时候的标签切换时间被重置
+          2、修复了elfk查询的时候使用的是旧时间
+          3、重新规划了数据持久化逻辑"
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \
             -H "Content-Type: application/json" \

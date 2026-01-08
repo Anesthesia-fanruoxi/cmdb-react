@@ -91,6 +91,7 @@ interface UserPrefsState {
   monitorDefaults: MonitorDefaults;
   esSearchPrefs: EsSearchPrefs;
   uiPrefs: UiPrefs;
+  _hasHydrated: boolean;
 
   setSqlShortcut: (key: keyof SqlShortcuts, value: string) => void;
   resetSqlShortcuts: () => void;
@@ -111,6 +112,7 @@ export const useUserPrefsStore = create<UserPrefsState>()((set) => ({
   monitorDefaults: { ...DEFAULT_MONITOR },
   esSearchPrefs: { ...DEFAULT_ES_PREFS },
   uiPrefs: { ...DEFAULT_UI_PREFS },
+  _hasHydrated: false,
 
   setSqlShortcut: (key, value) => {
     set((state) => ({
@@ -184,8 +186,8 @@ export const useUserPrefsStore = create<UserPrefsState>()((set) => ({
   },
 
   // 获取需要保存的偏好数据
-  getPrefsForSave: () => {
-    const state = useUserPrefsStore.getState();
+  getPrefsForSave: (): Partial<UserPrefsState> => {
+    const state: UserPrefsState = useUserPrefsStore.getState();
     return {
       sqlShortcuts: state.sqlShortcuts,
       elfkShortcuts: state.elfkShortcuts,

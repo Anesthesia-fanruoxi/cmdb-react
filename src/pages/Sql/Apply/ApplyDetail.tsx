@@ -24,7 +24,7 @@ interface Props {
 }
 
 const ApplyDetailDrawer = ({ detail, onClose, onRefresh, onResubmit }: Props) => {
-  const { userId } = useAuthStore();
+  const { user } = useAuthStore();
   const [executing, setExecuting] = useState(false);
   const [analysisVisible, setAnalysisVisible] = useState(false);
   const [analysisResults, setAnalysisResults] = useState<SqlCheckResult[]>([]);
@@ -76,7 +76,7 @@ const ApplyDetailDrawer = ({ detail, onClose, onRefresh, onResubmit }: Props) =>
   }, [detail.sql_content]);
 
   // 判断当前用户角色
-  const currentUserId = Number(userId) || 0;
+  const currentUserId = Number(user?.id) || 0;
   
   const isCreator = detail.submitter_id === currentUserId || detail.apply_role === 'submit';
   const isApprover = !isCreator && (Number(detail.apply_id) === currentUserId || detail.apply_role === 'apply');

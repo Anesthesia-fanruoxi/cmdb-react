@@ -352,7 +352,6 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
             
             // 恢复页面状态（表单数据等）
             if (state.pageStates) {
-              const { usePageStateStore } = await import('./pageStateStore');
               usePageStateStore.getState().restoreState({
                 pages: state.pageStates,
                 lastRoute: state.activeRoute,

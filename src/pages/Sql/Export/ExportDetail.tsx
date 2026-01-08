@@ -20,7 +20,7 @@ interface Props {
 }
 
 const ExportDetailDrawer = ({ visible, exportId, onClose, onRefresh }: Props) => {
-  const { userId } = useAuthStore();
+  const { user } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [detail, setDetail] = useState<ExportDetail | null>(null);
   const [databases, setDatabases] = useState<string[]>([]);
@@ -31,7 +31,7 @@ const ExportDetailDrawer = ({ visible, exportId, onClose, onRefresh }: Props) =>
   const [reviewForm, setReviewForm] = useState({ rule_check_result: '' });
 
   // 获取当前用户ID
-  const currentUserId = Number(userId) || 0;
+  const currentUserId = Number(user?.id) || 0;
 
   // 角色判断
   const isSubmitterActionable = useMemo(() => {
