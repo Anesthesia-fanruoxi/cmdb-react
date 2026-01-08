@@ -8,7 +8,7 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 
 /// 下载服务器基础地址
 const DOWNLOAD_BASE_URL: &str = "https://ops.hzbxhd.com/client";
@@ -48,11 +48,9 @@ fn get_current_version() -> String {
     env!("CARGO_PKG_VERSION").to_string()
 }
 
-/// 获取下载目录
+/// 获取下载目录（使用系统临时目录）
 fn get_download_dir() -> PathBuf {
-    dirs::download_dir()
-        .unwrap_or_else(|| dirs::home_dir().unwrap_or_default())
-        .join("cmdb-updates")
+    std::env::temp_dir().join("cmdb-updates")
 }
 
 /// 获取待安装标记文件路径
@@ -208,13 +206,23 @@ pub async fn install_update(app: AppHandle, file_path: String) -> Result<(), Str
             .map(|p| p.to_string_lossy().to_string())
             .unwrap_or_default();
         
+        // 获取当前进程 ID
+        let pid = std::process::id();
+        
+        // 脚本逻辑：等待程序退出 -> 静默安装 -> 重启
         let script = format!(
             r#"@echo off
+:wait
+tasklist /FI "PID eq {}" 2>NUL | find /I "{}" >NUL
+if not errorlevel 1 (
+    timeout /t 1 /nobreak >nul
+    goto wait
+)
 msiexec /i "{}" /quiet /norestart
-timeout /t 2 /nobreak >nul
 start "" "{}"
+del "%~f0"
 "#,
-            file_path, exe_path
+            pid, pid, file_path, exe_path
         );
         
         let script_path = std::env::temp_dir().join("cmdb_update.bat");
@@ -226,7 +234,13 @@ start "" "{}"
             .spawn()
             .map_err(|e| format!("启动安装程序失败: {}", e))?;
         
-        // 优雅退出，让前端有机会保存状态
+        // 先隐藏窗口，避免退出时出现白框
+        if let Some(window) = app.get_webview_window("main") {
+            let _ = window.hide();
+        }
+        
+        // 给前端一点时间保存，然后退出
+        std::thread::sleep(std::time::Duration::from_millis(300));
         app.exit(0);
         Ok(())
     }
@@ -248,4 +262,20 @@ start "" "{}"
 #[tauri::command]
 pub fn get_app_version() -> String {
     get_current_version()
+}
+
+/// 检查文件是否存在
+#[tauri::command]
+pub fn check_file_exists(path: String) -> bool {
+    std::path::Path::new(&path).exists()
+}
+
+/// 清理更新下载目录
+#[tauri::command]
+pub fn clean_update_dir() -> Result<(), String> {
+    let download_dir = get_download_dir();
+    if download_dir.exists() {
+        fs::remove_dir_all(&download_dir).map_err(|e| e.to_string())?;
+    }
+    Ok(())
 }

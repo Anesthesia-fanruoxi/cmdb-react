@@ -10,7 +10,7 @@ import { useMenuStore } from '../../stores/menuStore';
 import { useAuthStore } from '../../stores/authStore';
 import { useAppStore } from '../../stores/appStore';
 import { useMessageStore } from '../../stores/messageStore';
-import { useUpdateStore } from '../../stores/updateStore';
+import { getUpdateInfo } from '../../services/storage';
 import type { MenuItem as MenuItemType } from '../../types/menu';
 import Icon from '../Icon';
 import { Circle, LogOut, User, ListTodo, RefreshCw, Trash2, Info } from 'lucide-react';
@@ -37,7 +37,10 @@ const Sidebar = ({ collapsed = false }: SidebarProps) => {
   const { user, userName, logout, fetchProfile } = useAuthStore();
   const { theme, toggleTheme } = useAppStore();
   const unreadCount = useMessageStore(state => state.unreadCount);
-  const hasUpdate = useUpdateStore(state => state.hasUpdate);
+  
+  // 检查是否有待安装的更新
+  const updateInfo = getUpdateInfo();
+  const hasUpdate = updateInfo.downloadStatus === 'completed' && !!updateInfo.downloadedVersion;
   
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [profileVisible, setProfileVisible] = useState(false);

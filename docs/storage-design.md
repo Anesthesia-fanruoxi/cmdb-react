@@ -26,7 +26,15 @@
   "lastUser": "admin",
   "defaultTheme": "dark",
   "appVersion": "1.0.0",
-  "lastUpdateCheck": 1704067200000
+  "lastUpdateCheck": 1704067200000,
+  "update": {
+    "latestVersion": "1.1.0",
+    "downloadedVersion": "1.1.0",
+    "downloadedPath": "C:/Users/.../cmdb-desktop-1.1.0.msi",
+    "downloadStatus": "completed",
+    "downloadProgress": 100,
+    "changelog": "1. 新增功能A\n2. 修复问题B"
+  }
 }
 ```
 
@@ -35,10 +43,22 @@
 | loginHistory | string[] | 登录过的用户名（最多10个） |
 | lastUser | string | 最后登录的用户名 |
 | defaultTheme | string | 未登录时的默认主题 |
-| appVersion | string | 应用版本号 |
+| appVersion | string | 当前应用版本号 |
 | lastUpdateCheck | number | 最后检查更新时间 |
+| update | object | 更新信息（见下表） |
 
-**写入时机：** 登录成功、退出登录、检查更新
+**update 字段说明：**
+
+| 字段 | 类型 | 说明 |
+|-----|------|------|
+| latestVersion | string | 服务器最新版本号 |
+| downloadedVersion | string | 已下载的版本号 |
+| downloadedPath | string | 已下载文件的本地路径 |
+| downloadStatus | string | 下载状态：none / downloading / completed / failed |
+| downloadProgress | number | 下载进度 0-100 |
+| changelog | string | 更新日志 |
+
+**写入时机：** 登录成功、退出登录、检查更新、下载更新
 
 ---
 

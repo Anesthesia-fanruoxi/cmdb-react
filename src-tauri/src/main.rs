@@ -149,6 +149,8 @@ fn main() {
             updater::install_update,
             updater::get_app_version,
             updater::mark_pending_update,
+            updater::check_file_exists,
+            updater::clean_update_dir,
             window::request_attention,
             window::cancel_attention,
             window::set_window_theme,

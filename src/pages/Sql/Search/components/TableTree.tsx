@@ -52,11 +52,61 @@ const TableTree = ({
     }
   };
 
-  // 过滤表
+  // 顺序模糊匹配（忽略下划线）
+  // 返回每个字符的匹配位置数组，用于排序
+  const fuzzyMatch = (tableName: string, keyword: string): { match: boolean; positions: number[] } => {
+    const normalizedTable = tableName.toLowerCase().replace(/_/g, '');
+    const normalizedKeyword = keyword.toLowerCase().replace(/_/g, '');
+    
+    if (!normalizedKeyword) return { match: true, positions: [] };
+    
+    const positions: number[] = [];
+    let tableIndex = 0;
+    
+    for (const char of normalizedKeyword) {
+      const foundIndex = normalizedTable.indexOf(char, tableIndex);
+      
+      if (foundIndex === -1) {
+        return { match: false, positions: [] };
+      }
+      
+      positions.push(foundIndex);
+      tableIndex = foundIndex + 1;
+    }
+    
+    return { match: true, positions };
+  };
+
+  // 比较两个位置数组，返回 -1/0/1
+  const comparePositions = (a: number[], b: number[]): number => {
+    const len = Math.max(a.length, b.length);
+    for (let i = 0; i < len; i++) {
+      const posA = a[i] ?? Infinity;
+      const posB = b[i] ?? Infinity;
+      if (posA !== posB) {
+        return posA - posB; // 位置小的排前面
+      }
+    }
+    return 0;
+  };
+
+  // 过滤并排序表
   const filteredTables = useMemo(() => {
     if (!searchKey) return tableList;
-    const kw = searchKey.toLowerCase();
-    return tableList.filter(t => t.toLowerCase().includes(kw));
+    
+    const results: { name: string; positions: number[] }[] = [];
+    
+    for (const t of tableList) {
+      const { match, positions } = fuzzyMatch(t, searchKey);
+      if (match) {
+        results.push({ name: t, positions });
+      }
+    }
+    
+    // 按位置数组排序
+    results.sort((a, b) => comparePositions(a.positions, b.positions));
+    
+    return results.map(r => r.name);
   }, [tableList, searchKey]);
 
   return (

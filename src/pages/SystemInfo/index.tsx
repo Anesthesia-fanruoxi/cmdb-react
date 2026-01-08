@@ -5,10 +5,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { HardDrive, Database, RefreshCw, Download } from 'lucide-react';
 import { isTauriEnv, getSystemInfo, type SystemInfo } from '../../services/machine';
-import { checkUpdate, type VersionInfo } from '../../services/updater';
+import { checkUpdate, installUpdate } from '../../services/updater';
+import { getUpdateInfo, initAllStorage, type UpdateInfo } from '../../services/storage';
 import { useAppStore } from '../../stores/appStore';
-import { useUpdateStore } from '../../stores/updateStore';
-import UpdateDialog from '../../components/UpdateDialog';
+import { UpdateModal } from '../../components/UpdateModal';
 import toast from '../../components/Toast';
 import './style.css';
 
@@ -25,19 +25,28 @@ const formatBytes = (bytes: number): string => {
 
 const SystemInfoPage = () => {
   const { initTheme } = useAppStore();
-  const { hasUpdate, versionInfo: storeVersionInfo, checkForUpdate } = useUpdateStore();
   const [sysInfo, setSysInfo] = useState<SystemInfo | null>(null);
-  const [newVersion, setNewVersion] = useState<VersionInfo | null>(null);
-  const [showUpdateDialog, setShowUpdateDialog] = useState(false);
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [checking, setChecking] = useState(false);
+  const [installing, setInstalling] = useState(false);
   const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    // 独立窗口需要初始化主题
-    initTheme();
+    const init = async () => {
+      // 独立窗口需要先初始化存储
+      await initAllStorage();
+      initTheme();
+      
+      // 检查是否有已下载的更新
+      const info = getUpdateInfo();
+      console.log('[SystemInfo] 更新信息:', info);
+      if (info.downloadedVersion || info.latestVersion) {
+        setUpdateInfo(info);
+      }
+    };
     
-    // 独立窗口打开时检查更新状态
-    checkForUpdate();
+    init();
     
     const fetchSysInfo = async () => {
       if (!isTauriEnv()) return;
@@ -54,47 +63,42 @@ const SystemInfoPage = () => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [initTheme, checkForUpdate]);
-  
-  // 监听 store 中的更新状态变化
-  useEffect(() => {
-    if (hasUpdate && storeVersionInfo) {
-      setNewVersion(storeVersionInfo);
-    }
-  }, [hasUpdate, storeVersionInfo]);
+  }, [initTheme]);
 
   const handleCheckUpdate = async () => {
-    console.log('点击检查更新, isTauri:', isTauriEnv(), 'checking:', checking);
     if (!isTauriEnv() || checking) return;
     setChecking(true);
     try {
-      console.log('开始检查更新，Token:', import.meta.env.VITE_GITHUB_TOKEN ? '已配置' : '未配置');
       const result = await checkUpdate();
-      console.log('检查结果:', result);
       if (result) {
-        setNewVersion(result);
-        setShowUpdateDialog(true);
+        // 有新版本，获取完整的更新信息
+        const info = getUpdateInfo();
+        setUpdateInfo({
+          ...info,
+          latestVersion: result.version,
+          downloadedVersion: info.downloadedVersion || result.version,
+          changelog: result.changelog,
+        });
+        setShowUpdateModal(true);
       } else {
         toast.info('当前已是最新版本');
       }
     } catch (err: any) {
-      console.error('检查更新失败:', err);
-      const msg = typeof err === 'string' ? err : err?.message || '检查更新失败';
-      if (msg.includes('403') || msg.includes('rate limit')) {
-        toast.warning('GitHub API 请求频率限制，请稍后再试');
-      } else if (msg.includes('404')) {
-        toast.info('当前已是最新版本');
-      } else {
-        toast.error(msg);
-      }
+      const msg = err?.message || '检查更新失败';
+      toast.error(msg);
     } finally {
       setChecking(false);
     }
   };
 
-  const handleShowUpdate = () => {
-    if (newVersion) {
-      setShowUpdateDialog(true);
+  const handleInstall = async () => {
+    if (!updateInfo?.downloadedPath) return;
+    setInstalling(true);
+    try {
+      await installUpdate(updateInfo.downloadedPath);
+    } catch (err) {
+      console.error('安装失败:', err);
+      setInstalling(false);
     }
   };
 
@@ -110,8 +114,8 @@ const SystemInfoPage = () => {
           <span className="info-label">当前版本</span>
           <span className="info-value">
             {APP_VERSION}
-            {newVersion ? (
-              <button className="btn-update-now" onClick={handleShowUpdate} title="立即更新">
+            {updateInfo?.downloadedVersion ? (
+              <button className="btn-update-now" onClick={() => setShowUpdateModal(true)} title="立即更新">
                 <Download size={12} />
                 <span>更新</span>
               </button>
@@ -150,10 +154,12 @@ const SystemInfoPage = () => {
         <p>© 2024-2025 CMDB Team. All rights reserved.</p>
       </div>
 
-      <UpdateDialog
-        visible={showUpdateDialog}
-        versionInfo={newVersion}
-        onClose={() => setShowUpdateDialog(false)}
+      <UpdateModal
+        open={showUpdateModal}
+        updateInfo={updateInfo}
+        onInstall={handleInstall}
+        onSkip={() => setShowUpdateModal(false)}
+        installing={installing}
       />
     </div>
   );

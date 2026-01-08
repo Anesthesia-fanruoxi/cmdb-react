@@ -3,12 +3,23 @@
  */
 
 // ==================== App 公共存储 ====================
+export interface UpdateInfo {
+  latestVersion: string;       // 服务器最新版本号
+  downloadedVersion: string;   // 已下载的版本号
+  downloadedPath: string;      // 已下载文件的路径
+  downloadStatus: 'none' | 'downloading' | 'completed' | 'failed';
+  downloadProgress: number;    // 下载进度 0-100
+  changelog: string;           // 更新日志
+  lastCheckTime: number;       // 最后检查时间戳
+}
+
 export interface AppData {
   loginHistory: string[];      // 登录过的用户名（最多10个）
   lastUser: string;            // 最后登录的用户名
   defaultTheme: 'light' | 'dark'; // 未登录时的默认主题
   appVersion: string;          // 应用版本号
   lastUpdateCheck: number;     // 最后检查更新时间戳
+  update: UpdateInfo;          // 更新信息
   [key: string]: unknown;      // 索引签名
 }
 

@@ -22,6 +22,9 @@ export {
   setDefaultTheme,
   updateLastUpdateCheck,
   updateAppVersion,
+  getUpdateInfo,
+  saveUpdateInfo,
+  clearUpdateInfo,
 } from './appStorage';
 
 // Token 存储
@@ -88,6 +91,7 @@ export {
 // 类型导出
 export type {
   AppData,
+  UpdateInfo,
   TokenData,
   ProfileData,
   UserInfo,

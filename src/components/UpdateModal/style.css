@@ -1,0 +1,97 @@
+/**
+ * 更新弹窗样式
+ */
+
+/* 覆盖 Ant Design Modal 默认背景 */
+.update-modal .ant-modal-content {
+  border-radius: 16px;
+  overflow: hidden;
+  padding: 0;
+  background: transparent !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* 暗色模式下的 Modal 背景 */
+.update-modal.dark .ant-modal-content {
+  background: #1f1f1f !important;
+}
+
+.update-modal-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 24px;
+  text-align: center;
+  border-radius: 16px;
+}
+
+.update-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+}
+
+.update-icon .anticon {
+  font-size: 36px;
+  color: white;
+}
+
+.update-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  display: block;
+}
+
+.update-changelog {
+  width: 100%;
+  text-align: left;
+  margin-bottom: 28px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid;
+}
+
+.changelog-label {
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.changelog-text {
+  margin: 0;
+  white-space: pre-wrap;
+  font-size: 14px;
+  line-height: 1.8;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.update-actions {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+}
+
+.update-actions .ant-btn {
+  flex: 1;
+  height: 44px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.install-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  border: none !important;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+}
+
+.install-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%) !important;
+}

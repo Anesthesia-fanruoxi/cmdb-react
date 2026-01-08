@@ -12,8 +12,10 @@ import { usePageStateStore } from './stores/pageStateStore';
 import { useMenuStore } from './stores/menuStore';
 import { initSecurity } from './utils/security';
 import { getUserAvatar, startAutoSave, stopAutoSave, forceSave } from './services/storage';
+import type { UpdateInfo } from './services/storage';
 import { StatusModalContainer } from './components/StatusModal';
-import { startAutoCheck } from './services/updater';
+import { UpdateModal } from './components/UpdateModal';
+import { checkAndDownloadUpdate, installUpdate, cleanupOldUpdate } from './services/updater';
 import { isTauriEnv } from './services/machine';
 import './App.css';
 
@@ -35,6 +37,11 @@ function App() {
   const [flowType, setFlowType] = useState<FlowType>('none');
   const [currentStep, setCurrentStep] = useState(0);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  
+  // 更新弹窗状态
+  const [updateModalOpen, setUpdateModalOpen] = useState(false);
+  const [pendingUpdate, setPendingUpdate] = useState<UpdateInfo | null>(null);
+  const [installing, setInstalling] = useState(false);
 
   // 自动保存管理
   useEffect(() => {
@@ -104,12 +111,28 @@ function App() {
 
       initSecurity();
       
-      // Tauri 环境下启动自动更新检查
+      // 先初始化主题，确保启动画面显示正确的主题
+      initTheme();
+      
+      // Tauri 环境下检查更新
       if (isTauriEnv()) {
-        startAutoCheck(5);
+        try {
+          // 先清理旧更新（如果已下载版本 = 当前版本）
+          await cleanupOldUpdate();
+          
+          // 检查并下载更新
+          const update = await checkAndDownloadUpdate();
+          if (update?.downloadedPath) {
+            console.log('[App] 发现更新，弹出确认框');
+            setPendingUpdate(update);
+            setUpdateModalOpen(true);
+          }
+        } catch (e) {
+          console.error('[App] 检查更新失败:', e);
+        }
       }
       
-      // 初始化存储（会自动恢复主题和状态）
+      // 初始化存储（会自动恢复状态）
       await initFromStorage();
       
       // 加载用户头像
@@ -180,6 +203,27 @@ function App() {
     [isAuthenticated]
   );
 
+  // 处理安装更新
+  const handleInstallUpdate = async () => {
+    if (!pendingUpdate?.downloadedPath) return;
+    setInstalling(true);
+    try {
+      // 1. 先强制保存数据
+      forceSave();
+      
+      // 2. 调用 Rust 启动安装脚本并退出
+      await installUpdate(pendingUpdate.downloadedPath);
+    } catch (e) {
+      console.error('[更新] 安装失败:', e);
+      setInstalling(false);
+    }
+  };
+
+  // 处理跳过更新
+  const handleSkipUpdate = () => {
+    setUpdateModalOpen(false);
+  };
+
   // 启动画面
   if (flowType !== 'none' || !ready) {
     const steps = flowType !== 'none' ? FLOW_STEPS[flowType] : [];
@@ -218,6 +262,13 @@ function App() {
     <>
       <RouterProvider router={router} />
       <StatusModalContainer />
+      <UpdateModal
+        open={updateModalOpen}
+        updateInfo={pendingUpdate}
+        onInstall={handleInstallUpdate}
+        onSkip={handleSkipUpdate}
+        installing={installing}
+      />
     </>
   );
 }

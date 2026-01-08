@@ -72,6 +72,12 @@ const MetricChart = memo(({
   useEffect(() => {
     if (!chartRef.current) return;
 
+    // 检查容器尺寸，避免在尺寸为0时初始化
+    const { clientWidth, clientHeight } = chartRef.current;
+    if (clientWidth === 0 || clientHeight === 0) {
+      return;
+    }
+
     // 初始化或重用图表实例
     if (!chartInstance.current) {
       chartInstance.current = echarts.init(chartRef.current, null, { renderer: 'svg' });
@@ -120,8 +126,11 @@ const MetricChart = memo(({
     chartInstance.current.on('legendselectchanged', onLegendClick);
 
     // 使用 ResizeObserver 监听容器大小变化（比 window resize 更可靠）
-    const resizeObserver = new ResizeObserver(() => {
-      chartInstance.current?.resize();
+    const resizeObserver = new ResizeObserver((entries) => {
+      const { width, height } = entries[0].contentRect;
+      if (width > 0 && height > 0) {
+        chartInstance.current?.resize();
+      }
     });
     resizeObserver.observe(chartRef.current);
 

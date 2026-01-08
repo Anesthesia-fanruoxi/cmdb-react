@@ -11,7 +11,7 @@ import TagsView from '../../components/Layout/TagsView';
 import KeepAlive from '../../components/KeepAlive';
 import { useMenuStore } from '../../stores/menuStore';
 import { usePageStateStore } from '../../stores/pageStateStore';
-import { markDirty } from '../../services/storage/autoSave';
+import { markDirty } from '../../services/storage';
 import Dashboard from './Dashboard';
 import './style.css';
 

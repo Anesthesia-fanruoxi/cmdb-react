@@ -1,13 +1,24 @@
 /**
  * App 公共存储
  * 文件：app.dat
- * 存储：登录历史、最后用户、默认主题等
+ * 存储：登录历史、最后用户、默认主题、更新信息等
  */
 
 import { getStorageData, updateStorageData } from './core';
-import type { AppData } from './types';
+import type { AppData, UpdateInfo } from './types';
 
 const FILE = 'app.dat';
+
+// 默认更新信息
+const defaultUpdateInfo: UpdateInfo = {
+  latestVersion: '',
+  downloadedVersion: '',
+  downloadedPath: '',
+  downloadStatus: 'none',
+  downloadProgress: 0,
+  changelog: '',
+  lastCheckTime: 0,
+};
 
 // 默认值
 const defaultAppData: AppData = {
@@ -16,6 +27,7 @@ const defaultAppData: AppData = {
   defaultTheme: 'dark',
   appVersion: '',
   lastUpdateCheck: 0,
+  update: defaultUpdateInfo,
 };
 
 /**
@@ -23,7 +35,11 @@ const defaultAppData: AppData = {
  */
 export function getAppData(): AppData {
   const data = getStorageData<AppData>(FILE);
-  return { ...defaultAppData, ...data };
+  return { 
+    ...defaultAppData, 
+    ...data,
+    update: { ...defaultUpdateInfo, ...data?.update },
+  };
 }
 
 /**
@@ -47,7 +63,7 @@ export async function addLoginHistory(username: string): Promise<void> {
   const history = getLoginHistory().filter(u => u !== username);
   history.unshift(username);
   await updateAppData({
-    loginHistory: history.slice(0, 10), // 最多保存10个
+    loginHistory: history.slice(0, 10),
     lastUser: username,
   });
 }
@@ -85,4 +101,30 @@ export async function updateLastUpdateCheck(): Promise<void> {
  */
 export async function updateAppVersion(version: string): Promise<void> {
   await updateAppData({ appVersion: version });
+}
+
+// ==================== 更新信息 ====================
+
+/**
+ * 获取更新信息
+ */
+export function getUpdateInfo(): UpdateInfo {
+  return getAppData().update;
+}
+
+/**
+ * 更新更新信息
+ */
+export async function saveUpdateInfo(info: Partial<UpdateInfo>): Promise<void> {
+  const current = getUpdateInfo();
+  await updateAppData({
+    update: { ...current, ...info },
+  });
+}
+
+/**
+ * 清空更新信息
+ */
+export async function clearUpdateInfo(): Promise<void> {
+  await updateAppData({ update: defaultUpdateInfo });
 }

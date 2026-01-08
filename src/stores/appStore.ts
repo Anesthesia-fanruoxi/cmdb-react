@@ -7,6 +7,7 @@ import { create } from 'zustand';
 import { invoke } from '@tauri-apps/api/core';
 import type { SystemSetting } from '../types/system';
 import { getSystemSetting } from '../services/system';
+import { getDefaultTheme } from '../services/storage';
 
 type ThemeMode = 'light' | 'dark';
 
@@ -112,15 +113,18 @@ export const useAppStore = create<AppState>()((set, get) => ({
     get().setTheme(newTheme);
   },
 
-  // 初始化主题
+  // 初始化主题（从存储读取）
   initTheme: () => {
-    const theme = get().theme;
-    if (theme === 'dark') {
+    // 从公共存储读取默认主题
+    const storedTheme = getDefaultTheme();
+    set({ theme: storedTheme });
+    
+    if (storedTheme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-    invoke('set_window_theme', { dark: theme === 'dark' }).catch(() => {});
+    invoke('set_window_theme', { dark: storedTheme === 'dark' }).catch(() => {});
   },
 
   // 设置加载状态
