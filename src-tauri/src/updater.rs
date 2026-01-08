@@ -244,7 +244,7 @@ UAC.ShellExecute "cmd", "/c ""{0}""", "", "runas", 0"#,
     #[cfg(target_os = "macos")]
     {
         // macOS 暂不支持自动重启，只打开安装包
-        let _ = install_path; // 消除未使用警告
+        let _ = _install_path; // 消除未使用警告
         std::process::Command::new("open")
             .arg(&file_path)
             .spawn()
