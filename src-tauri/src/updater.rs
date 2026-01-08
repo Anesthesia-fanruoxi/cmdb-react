@@ -54,6 +54,78 @@ fn get_download_dir() -> PathBuf {
     std::env::temp_dir().join("cmdb-updates")
 }
 
+/// 内部生成更新脚本（下载完成时调用）
+fn generate_script_internal(msi_path: &str) -> Result<(), String> {
+    let download_dir = get_download_dir();
+    fs::create_dir_all(&download_dir).map_err(|e| e.to_string())?;
+    
+    // 从存储文件读取安装路径
+    let exe_path = read_install_path_from_storage()
+        .unwrap_or_else(|| {
+            // 回退到当前 exe 路径
+            std::env::current_exe()
+                .map(|p| p.to_string_lossy().to_string())
+                .unwrap_or_default()
+        });
+    
+    let script = format!(
+        r#"@echo off
+echo ========================================
+echo CMDB Desktop Update
+echo ========================================
+echo.
+echo Installing update...
+echo MSI: {}
+echo.
+msiexec /i "{}" /quiet /norestart
+echo.
+echo Install result: %errorlevel%
+echo.
+echo Starting new version...
+echo Path: {}
+timeout /t 2 /nobreak >nul
+start "" "{}"
+echo.
+echo ========================================
+echo Update complete! Window closes in 10s
+echo ========================================
+timeout /t 10
+"#,
+        msi_path, msi_path, exe_path, exe_path
+    );
+    
+    let script_path = download_dir.join("cmdb_update.bat");
+    fs::write(&script_path, &script).map_err(|e| e.to_string())?;
+    
+    println!("[更新] 脚本已生成: {}", script_path.display());
+    Ok(())
+}
+
+/// 从存储文件读取安装路径
+fn read_install_path_from_storage() -> Option<String> {
+    // 获取存储目录
+    let app_data = dirs::data_dir()?;
+    let store_path = app_data.join("com.cmdb.desktop").join("app.dat");
+    
+    if !store_path.exists() {
+        return None;
+    }
+    
+    // 读取文件内容
+    let content = fs::read_to_string(&store_path).ok()?;
+    
+    // 解析 JSON（tauri-plugin-store 格式）
+    let json: serde_json::Value = serde_json::from_str(&content).ok()?;
+    let encrypted = json.get("data")?.as_str()?;
+    
+    // 解密
+    let decrypted = crate::crypto::decrypt(encrypted).ok()?;
+    let data: serde_json::Value = serde_json::from_str(&decrypted).ok()?;
+    
+    // 获取 installPath
+    data.get("installPath")?.as_str().map(|s| s.to_string())
+}
+
 /// 获取待安装标记文件路径
 fn get_pending_file_path() -> PathBuf {
     get_download_dir().join(PENDING_UPDATE_FILE)
@@ -126,7 +198,7 @@ start "" "{}"
             pending.file_path, exe_path
         );
         
-        let script_path = std::env::temp_dir().join("cmdb_update.bat");
+        let script_path = get_download_dir().join("cmdb_update.bat");
         if fs::write(&script_path, script).is_ok() {
             let _ = std::process::Command::new("cmd")
                 .args(["/c", &script_path.to_string_lossy()])
@@ -189,6 +261,12 @@ pub async fn download_update(app: AppHandle, info: VersionInfo) -> Result<String
     }
     
     let path_str = file_path.to_string_lossy().to_string();
+    
+    // 下载完成后自动生成更新脚本
+    if let Err(e) = generate_script_internal(&path_str) {
+        eprintln!("生成更新脚本失败: {}", e);
+    }
+    
     emit_status(&app, UpdateStatus::Downloaded { path: path_str.clone() });
     Ok(path_str)
 }
@@ -200,44 +278,72 @@ pub async fn install_update(app: AppHandle, file_path: String, install_path: Str
     
     #[cfg(target_os = "windows")]
     {
-        use std::os::windows::process::CommandExt;
-        const CREATE_NO_WINDOW: u32 = 0x08000000;
-        
         // 获取当前进程 ID
         let pid = std::process::id();
         
-        // 使用传入的安装路径，如果为空则使用当前 exe 路径
+        // 解密安装路径，如果为空或解密失败则使用当前 exe 路径
         let exe_path = if install_path.is_empty() {
             std::env::current_exe()
                 .map(|p| p.to_string_lossy().to_string())
                 .unwrap_or_default()
         } else {
-            install_path
+            // 调用解密函数
+            match crate::crypto::decrypt(&install_path) {
+                Ok(decrypted) => decrypted,
+                Err(_) => {
+                    // 解密失败，可能是未加密的路径，直接使用
+                    if std::path::Path::new(&install_path).exists() {
+                        install_path
+                    } else {
+                        std::env::current_exe()
+                            .map(|p| p.to_string_lossy().to_string())
+                            .unwrap_or_default()
+                    }
+                }
+            }
         };
         
         // 脚本逻辑：等待程序退出 -> 静默安装 -> 重启
         let script = format!(
             r#"@echo off
+echo ========================================
+echo CMDB Desktop Update
+echo ========================================
+echo.
+echo Waiting for process to exit...
 :wait
 tasklist /FI "PID eq {}" 2>NUL | find /I "{}" >NUL
 if not errorlevel 1 (
     timeout /t 1 /nobreak >nul
     goto wait
 )
+echo Process exited
+echo.
+echo Installing update...
+echo MSI: {}
+echo.
 msiexec /i "{}" /quiet /norestart
+echo.
+echo Install result: %errorlevel%
+echo.
+echo Starting new version...
+echo Path: {}
 timeout /t 2 /nobreak >nul
 start "" "{}"
-del "%~f0"
+echo.
+echo ========================================
+echo Update complete! Window closes in 10s
+echo ========================================
+timeout /t 10
 "#,
-            pid, pid, file_path, exe_path
+            pid, pid, file_path, file_path, exe_path, exe_path
         );
         
-        let script_path = std::env::temp_dir().join("cmdb_update.bat");
+        let script_path = get_download_dir().join("cmdb_update.bat");
         std::fs::write(&script_path, script).map_err(|e| e.to_string())?;
         
         std::process::Command::new("cmd")
-            .args(["/c", &script_path.to_string_lossy()])
-            .creation_flags(CREATE_NO_WINDOW)
+            .args(["/c", "start", "cmd", "/k", &script_path.to_string_lossy()])
             .spawn()
             .map_err(|e| format!("启动安装程序失败: {}", e))?;
         
@@ -295,4 +401,63 @@ pub fn clean_update_dir() -> Result<(), String> {
         fs::remove_dir_all(&download_dir).map_err(|e| e.to_string())?;
     }
     Ok(())
+}
+
+
+/// 生成更新脚本（用于预览和调试）
+#[tauri::command]
+pub fn generate_update_script(msi_path: String, install_path: String) -> Result<String, String> {
+    let download_dir = get_download_dir();
+    fs::create_dir_all(&download_dir).map_err(|e| e.to_string())?;
+    
+    // 解密安装路径
+    let exe_path = if install_path.is_empty() {
+        std::env::current_exe()
+            .map(|p| p.to_string_lossy().to_string())
+            .unwrap_or_default()
+    } else {
+        match crate::crypto::decrypt(&install_path) {
+            Ok(decrypted) => decrypted,
+            Err(_) => {
+                if std::path::Path::new(&install_path).exists() {
+                    install_path
+                } else {
+                    std::env::current_exe()
+                        .map(|p| p.to_string_lossy().to_string())
+                        .unwrap_or_default()
+                }
+            }
+        }
+    };
+    
+    let script = format!(
+        r#"@echo off
+echo ========================================
+echo CMDB Desktop Update
+echo ========================================
+echo.
+echo Installing update...
+echo MSI: {}
+echo.
+msiexec /i "{}" /quiet /norestart
+echo.
+echo Install result: %errorlevel%
+echo.
+echo Starting new version...
+echo Path: {}
+timeout /t 2 /nobreak >nul
+start "" "{}"
+echo.
+echo ========================================
+echo Update complete! Window closes in 10s
+echo ========================================
+timeout /t 10
+"#,
+        msi_path, msi_path, exe_path, exe_path
+    );
+    
+    let script_path = download_dir.join("cmdb_update.bat");
+    fs::write(&script_path, &script).map_err(|e| e.to_string())?;
+    
+    Ok(script_path.to_string_lossy().to_string())
 }

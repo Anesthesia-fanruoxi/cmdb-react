@@ -204,7 +204,7 @@ export const checkAndDownloadUpdate = async (): Promise<UpdateInfo | null> => {
 /** 安装更新 */
 export const installUpdate = async (filePath: string): Promise<void> => {
   const update = getUpdateInfo();
-  const installPath = getInstallPath();
+  const installPath = getInstallPath(); // 这是加密的路径
   
   await invoke('mark_pending_update', {
     filePath,

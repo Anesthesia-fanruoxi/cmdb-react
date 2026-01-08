@@ -152,6 +152,8 @@ fn main() {
             updater::mark_pending_update,
             updater::check_file_exists,
             updater::clean_update_dir,
+            updater::generate_update_script,
+            updater::clean_update_dir,
             window::request_attention,
             window::cancel_attention,
             window::set_window_theme,
