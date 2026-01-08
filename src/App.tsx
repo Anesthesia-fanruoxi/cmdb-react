@@ -210,6 +210,10 @@ function App() {
   const handleInstallUpdate = async () => {
     if (!pendingUpdate?.downloadedPath) return;
     setInstalling(true);
+    
+    // 先关闭弹窗，避免白框
+    setUpdateModalOpen(false);
+    
     try {
       // 1. 先强制保存数据
       forceSave();
@@ -219,6 +223,7 @@ function App() {
     } catch (e) {
       console.error('[更新] 安装失败:', e);
       setInstalling(false);
+      setUpdateModalOpen(true); // 失败时重新显示弹窗
     }
   };
 

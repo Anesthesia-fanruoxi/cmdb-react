@@ -49,7 +49,7 @@ const isNewerVersion = (local: string, remote: string): boolean => {
 };
 
 /** 检查文件是否存在 */
-const fileExists = async (path: string): Promise<boolean> => {
+export const fileExists = async (path: string): Promise<boolean> => {
   if (!path) return false;
   try {
     return await invoke<boolean>('check_file_exists', { path });
@@ -76,14 +76,15 @@ const fetchLatestVersion = async (): Promise<{ version: string; changelog: strin
   }
 };
 
-/** 下载更新包 */
-const downloadUpdateFile = async (version: string, changelog: string): Promise<string> => {
+/** 下载更新包（或使用已存在的 MSI） */
+const prepareUpdateFile = async (version: string, changelog: string): Promise<string> => {
   const info: VersionInfo = {
     version,
     release_date: new Date().toISOString().split('T')[0],
     changelog,
   };
-  return invoke<string>('download_update', { info });
+  // 后端会检查 MSI 是否存在，存在则只生成脚本，不存在则下载
+  return invoke<string>('prepare_update', { info });
 };
 
 /** 清理更新下载目录 */
@@ -153,23 +154,25 @@ export const checkAndDownloadUpdate = async (): Promise<UpdateInfo | null> => {
       return null;
     }
     
-    // 3. 检查是否已下载
+    // 3. 检查是否已下载（后端会判断 MSI 是否存在）
     const update = getUpdateInfo();
     if (
       update.downloadedVersion === remoteInfo.version &&
-      update.downloadStatus === 'completed' &&
-      await fileExists(update.downloadedPath)
+      update.downloadStatus === 'completed'
     ) {
-      console.log('[更新] 已有安装包，直接显示安装界面');
+      // 调用后端准备更新（会检查 MSI 并生成脚本）
+      const msiPath = await prepareUpdateFile(remoteInfo.version, remoteInfo.changelog);
+      console.log('[更新] 更新准备完成:', msiPath);
       return {
         ...update,
+        downloadedPath: msiPath,
         latestVersion: remoteInfo.version,
         changelog: remoteInfo.changelog,
       };
     }
     
-    // 4. 开始下载
-    console.log(`[更新] 发现新版本 ${remoteInfo.version}，开始下载...`);
+    // 4. 开始下载（或使用已存在的 MSI）
+    console.log(`[更新] 发现新版本 ${remoteInfo.version}，准备更新...`);
     await saveUpdateInfo({
       latestVersion: remoteInfo.version,
       changelog: remoteInfo.changelog,
@@ -178,7 +181,7 @@ export const checkAndDownloadUpdate = async (): Promise<UpdateInfo | null> => {
       lastCheckTime: Date.now(),
     });
     
-    const filePath = await downloadUpdateFile(remoteInfo.version, remoteInfo.changelog);
+    const filePath = await prepareUpdateFile(remoteInfo.version, remoteInfo.changelog);
     
     // 5. 下载完成，保存并返回
     const newUpdate: Partial<UpdateInfo> = {
@@ -203,13 +206,9 @@ export const checkAndDownloadUpdate = async (): Promise<UpdateInfo | null> => {
 
 /** 安装更新 */
 export const installUpdate = async (filePath: string): Promise<void> => {
-  const update = getUpdateInfo();
   const installPath = getInstallPath(); // 这是加密的路径
   
-  await invoke('mark_pending_update', {
-    filePath,
-    version: update.downloadedVersion,
-  });
+  // 不再需要 mark_pending_update，直接调用安装
   await invoke('install_update', { filePath, installPath });
 };
 

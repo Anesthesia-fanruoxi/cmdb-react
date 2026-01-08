@@ -3,25 +3,16 @@
 //! 功能：
 //! - 从自建服务器下载更新包
 //! - 静默安装（Windows: MSI, Mac: DMG）
-//! - 启动时检查待安装更新
 
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 #[allow(unused_imports)]
 use tauri::{AppHandle, Emitter, Manager};
+use crate::updater_script;
 
 /// 下载服务器基础地址
 const DOWNLOAD_BASE_URL: &str = "https://ops.hzbxhd.com/client";
-/// 待安装更新标记文件
-const PENDING_UPDATE_FILE: &str = "pending_update.json";
-
-/// 待安装更新信息
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct PendingUpdate {
-    file_path: String,
-    version: String,
-}
 
 /// 版本信息
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -59,182 +50,17 @@ fn generate_script_internal(msi_path: &str) -> Result<(), String> {
     let download_dir = get_download_dir();
     fs::create_dir_all(&download_dir).map_err(|e| e.to_string())?;
     
-    // 从存储文件读取安装路径
-    let exe_path = read_install_path_from_storage()
-        .unwrap_or_else(|| {
-            std::env::current_exe()
-                .map(|p| p.to_string_lossy().to_string())
-                .unwrap_or_default()
-        });
+    // 固定值（正式安装路径）
+    let exe_name = "cmdb-desktop.exe";
+    let exe_path = r"C:\Program Files\CMDB Desktop\cmdb-desktop.exe";
     
-    // 获取 exe 文件名用于等待进程退出
-    let exe_name = std::path::Path::new(&exe_path)
-        .file_name()
-        .map(|n| n.to_string_lossy().to_string())
-        .unwrap_or_else(|| "cmdb-desktop.exe".to_string());
+    // 获取 MSI 目录
+    let msi_dir = std::path::Path::new(msi_path)
+        .parent()
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_else(|| download_dir.to_string_lossy().to_string());
     
-    let script = format!(
-        r#"@echo off
-setlocal enabledelayedexpansion
-
-echo ============================================================
-echo   CMDB Desktop Auto Update Script
-echo ============================================================
-echo.
-echo [INFO] Script started at: %date% %time%
-echo [INFO] Script path: %~f0
-echo.
-
-echo ============================================================
-echo   STEP 0: Environment Check
-echo ============================================================
-echo.
-echo [CHECK] Current user: %USERNAME%
-echo [CHECK] Current directory: %CD%
-echo [CHECK] Temp directory: %TEMP%
-echo.
-echo [CHECK] MSI file path: {}
-if exist "{}" (
-    echo [OK] MSI file exists
-    for %%A in ("{}") do echo [INFO] MSI file size: %%~zA bytes
-) else (
-    echo [ERROR] MSI file NOT found!
-    echo [HINT] The update package may have been deleted or moved
-    pause
-    exit /b 1
-)
-echo.
-echo [CHECK] Target exe path: {}
-if exist "{}" (
-    echo [OK] Target exe exists
-    for %%A in ("{}") do echo [INFO] Current exe size: %%~zA bytes
-) else (
-    echo [WARN] Target exe not found (first install?)
-)
-echo.
-
-echo ============================================================
-echo   STEP 1: Wait for Application Exit
-echo ============================================================
-echo.
-echo [INFO] Looking for process: {}
-echo [INFO] Checking if application is running...
-set WAIT_COUNT=0
-:wait
-tasklist /FI "IMAGENAME eq {}" 2>NUL | find /I "{}" >NUL
-if not errorlevel 1 (
-    set /a WAIT_COUNT+=1
-    echo [INFO] Process still running, waiting... (attempt !WAIT_COUNT!)
-    timeout /t 1 /nobreak >nul
-    if !WAIT_COUNT! GEQ 60 (
-        echo [ERROR] Timeout waiting for process to exit after 60 seconds
-        echo [HINT] Please close the application manually
-        pause
-        exit /b 1
-    )
-    goto wait
-)
-echo [OK] Application has exited (waited !WAIT_COUNT! seconds)
-echo.
-
-echo ============================================================
-echo   STEP 2: Install Update
-echo ============================================================
-echo.
-echo [INFO] Starting MSI installation...
-echo [INFO] Command: msiexec /i "..." /quiet /norestart
-echo [INFO] Please wait, this may take a few seconds...
-echo.
-msiexec /i "{}" /quiet /norestart
-set INSTALL_RESULT=%errorlevel%
-echo.
-echo [INFO] MSI installation completed
-echo [INFO] Exit code: %INSTALL_RESULT%
-echo.
-if %INSTALL_RESULT%==0 (
-    echo [OK] Installation successful!
-) else if %INSTALL_RESULT%==1603 (
-    echo [ERROR] Fatal error during installation (1603)
-    echo [HINT] Possible causes:
-    echo        1. Application is still running (check Task Manager)
-    echo        2. Insufficient permissions (try Run as Administrator)
-    echo        3. Previous installation corrupted (try uninstall first)
-    echo        4. Antivirus blocking installation
-    echo        5. Disk space insufficient
-) else if %INSTALL_RESULT%==1602 (
-    echo [ERROR] User cancelled installation (1602)
-) else if %INSTALL_RESULT%==1618 (
-    echo [ERROR] Another MSI installation is in progress (1618)
-    echo [HINT] Wait for other installation to complete or restart computer
-) else if %INSTALL_RESULT%==1619 (
-    echo [ERROR] MSI package could not be opened (1619)
-    echo [HINT] The MSI file may be corrupted, try re-downloading
-) else if %INSTALL_RESULT%==1620 (
-    echo [ERROR] MSI package could not be opened (1620)
-    echo [HINT] The MSI file may be corrupted, try re-downloading
-) else if %INSTALL_RESULT%==1638 (
-    echo [ERROR] Another version is already installed (1638)
-    echo [HINT] Uninstall the existing version first
-) else (
-    echo [ERROR] Unknown error code: %INSTALL_RESULT%
-    echo [HINT] Search "MSI error %INSTALL_RESULT%" for more information
-)
-echo.
-
-echo ============================================================
-echo   STEP 3: Verify Installation
-echo ============================================================
-echo.
-echo [CHECK] Verifying installed exe...
-if exist "{}" (
-    echo [OK] Exe file exists after installation
-    for %%A in ("{}") do echo [INFO] New exe size: %%~zA bytes
-) else (
-    echo [ERROR] Exe file not found after installation!
-    echo [HINT] Installation may have failed
-)
-echo.
-
-echo ============================================================
-echo   STEP 4: Start Application
-echo ============================================================
-echo.
-echo [INFO] Starting application: {}
-timeout /t 2 /nobreak >nul
-start "" "{}"
-if errorlevel 1 (
-    echo [ERROR] Failed to start application
-    echo [HINT] Try starting manually from Start Menu
-) else (
-    echo [OK] Application start command sent
-)
-echo.
-
-echo ============================================================
-echo   Update Process Complete
-echo ============================================================
-echo.
-echo [INFO] Finished at: %date% %time%
-echo [INFO] Install result: %INSTALL_RESULT%
-echo.
-if %INSTALL_RESULT%==0 (
-    echo [SUCCESS] Update completed successfully!
-) else (
-    echo [FAILED] Update failed with error code: %INSTALL_RESULT%
-)
-echo.
-echo This window will close in 15 seconds...
-echo Press any key to close immediately.
-timeout /t 15
-endlocal
-"#,
-        msi_path, msi_path, msi_path,
-        exe_path, exe_path, exe_path,
-        exe_name, exe_name, exe_name,
-        msi_path,
-        exe_path, exe_path,
-        exe_path, exe_path
-    );
+    let script = updater_script::get_update_script(exe_name, &msi_dir, exe_path);
     
     let script_path = download_dir.join("cmdb_update.bat");
     fs::write(&script_path, &script).map_err(|e| e.to_string())?;
@@ -243,116 +69,70 @@ endlocal
     Ok(())
 }
 
-/// 从存储文件读取安装路径
-fn read_install_path_from_storage() -> Option<String> {
-    // 获取存储目录
-    let app_data = dirs::data_dir()?;
-    let store_path = app_data.join("com.cmdb.desktop").join("app.dat");
+/// 检查 MSI 文件是否存在，存在则重新生成脚本
+/// 返回 MSI 文件路径（如果存在）
+#[tauri::command]
+pub fn regenerate_script_if_msi_exists() -> Result<Option<String>, String> {
+    let download_dir = get_download_dir();
     
-    if !store_path.exists() {
-        return None;
+    // 查找 MSI 文件
+    let msi_file = fs::read_dir(&download_dir)
+        .ok()
+        .and_then(|entries| {
+            entries
+                .filter_map(|e| e.ok())
+                .find(|e| e.path().extension().map(|ext| ext == "msi").unwrap_or(false))
+                .map(|e| e.path())
+        });
+    
+    match msi_file {
+        Some(path) => {
+            let path_str = path.to_string_lossy().to_string();
+            // 重新生成脚本
+            generate_script_internal(&path_str)?;
+            println!("[更新] MSI 存在，已重新生成脚本: {}", path_str);
+            Ok(Some(path_str))
+        }
+        None => {
+            println!("[更新] MSI 不存在，需要重新下载");
+            Ok(None)
+        }
     }
-    
-    // 读取文件内容
-    let content = fs::read_to_string(&store_path).ok()?;
-    
-    // 解析 JSON（tauri-plugin-store 格式）
-    let json: serde_json::Value = serde_json::from_str(&content).ok()?;
-    let encrypted = json.get("data")?.as_str()?;
-    
-    // 解密
-    let decrypted = crate::crypto::decrypt(encrypted).ok()?;
-    let data: serde_json::Value = serde_json::from_str(&decrypted).ok()?;
-    
-    // 获取 installPath
-    data.get("installPath")?.as_str().map(|s| s.to_string())
 }
 
-/// 获取待安装标记文件路径
-fn get_pending_file_path() -> PathBuf {
-    get_download_dir().join(PENDING_UPDATE_FILE)
+/// 准备更新（检查 MSI 是否存在，存在则生成脚本，不存在则下载）
+/// 前端只需调用这一个命令
+#[tauri::command]
+pub async fn prepare_update(app: AppHandle, info: VersionInfo) -> Result<String, String> {
+    let download_dir = get_download_dir();
+    fs::create_dir_all(&download_dir).map_err(|e| e.to_string())?;
+    
+    // 1. 查找已存在的 MSI 文件
+    let existing_msi = fs::read_dir(&download_dir)
+        .ok()
+        .and_then(|entries| {
+            entries
+                .filter_map(|e| e.ok())
+                .find(|e| e.path().extension().map(|ext| ext == "msi").unwrap_or(false))
+                .map(|e| e.path())
+        });
+    
+    // 2. 如果 MSI 存在，只生成脚本
+    if let Some(msi_path) = existing_msi {
+        let path_str = msi_path.to_string_lossy().to_string();
+        generate_script_internal(&path_str)?;
+        println!("[更新] MSI 已存在，重新生成脚本: {}", path_str);
+        return Ok(path_str);
+    }
+    
+    // 3. MSI 不存在，下载新文件
+    println!("[更新] MSI 不存在，开始下载...");
+    download_update(app, info).await
 }
 
 /// 发送更新状态到前端
 fn emit_status(app: &AppHandle, status: UpdateStatus) {
     let _ = app.emit("update-status", &status);
-}
-
-/// 标记待安装更新（下载完成后调用）
-#[tauri::command]
-pub fn mark_pending_update(file_path: String, version: String) -> Result<(), String> {
-    let pending = PendingUpdate { file_path, version };
-    let json = serde_json::to_string(&pending).map_err(|e| e.to_string())?;
-    
-    let pending_path = get_pending_file_path();
-    fs::create_dir_all(pending_path.parent().unwrap()).ok();
-    fs::write(&pending_path, json).map_err(|e| e.to_string())?;
-    
-    Ok(())
-}
-
-/// 检查并执行待安装更新（启动时调用）
-/// 返回 true 表示有更新需要安装，主程序应该等待
-pub fn check_and_install_pending_update() -> bool {
-    let pending_path = get_pending_file_path();
-    
-    if !pending_path.exists() {
-        return false;
-    }
-    
-    // 读取待安装信息
-    let content = match fs::read_to_string(&pending_path) {
-        Ok(c) => c,
-        Err(_) => return false,
-    };
-    
-    let pending: PendingUpdate = match serde_json::from_str(&content) {
-        Ok(p) => p,
-        Err(_) => return false,
-    };
-    
-    // 检查安装包是否存在
-    if !std::path::Path::new(&pending.file_path).exists() {
-        let _ = fs::remove_file(&pending_path);
-        return false;
-    }
-    
-    // 删除标记文件
-    let _ = fs::remove_file(&pending_path);
-    
-    // 执行静默安装
-    #[cfg(target_os = "windows")]
-    {
-        use std::os::windows::process::CommandExt;
-        const CREATE_NO_WINDOW: u32 = 0x08000000;
-        
-        let exe_path = std::env::current_exe()
-            .map(|p| p.to_string_lossy().to_string())
-            .unwrap_or_default();
-        
-        // 创建安装脚本：安装完成后重启应用
-        let script = format!(
-            r#"@echo off
-msiexec /i "{}" /quiet /norestart
-timeout /t 1 /nobreak >nul
-start "" "{}"
-"#,
-            pending.file_path, exe_path
-        );
-        
-        let script_path = get_download_dir().join("cmdb_update.bat");
-        if fs::write(&script_path, script).is_ok() {
-            let _ = std::process::Command::new("cmd")
-                .args(["/c", &script_path.to_string_lossy()])
-                .creation_flags(CREATE_NO_WINDOW)
-                .spawn();
-        }
-        
-        return true;
-    }
-    
-    #[cfg(not(target_os = "windows"))]
-    false
 }
 
 /// 下载更新（从自建服务器）
@@ -415,87 +195,48 @@ pub async fn download_update(app: AppHandle, info: VersionInfo) -> Result<String
 
 /// 安装更新
 #[tauri::command]
-pub async fn install_update(app: AppHandle, file_path: String, install_path: String) -> Result<(), String> {
+pub async fn install_update(app: AppHandle, file_path: String, _install_path: String) -> Result<(), String> {
     emit_status(&app, UpdateStatus::Installing);
     
     #[cfg(target_os = "windows")]
     {
-        // 获取当前进程 ID
-        let pid = std::process::id();
-        
-        // 解密安装路径，如果为空或解密失败则使用当前 exe 路径
-        let exe_path = if install_path.is_empty() {
-            std::env::current_exe()
-                .map(|p| p.to_string_lossy().to_string())
-                .unwrap_or_default()
-        } else {
-            // 调用解密函数
-            match crate::crypto::decrypt(&install_path) {
-                Ok(decrypted) => decrypted,
-                Err(_) => {
-                    // 解密失败，可能是未加密的路径，直接使用
-                    if std::path::Path::new(&install_path).exists() {
-                        install_path
-                    } else {
-                        std::env::current_exe()
-                            .map(|p| p.to_string_lossy().to_string())
-                            .unwrap_or_default()
-                    }
-                }
-            }
-        };
-        
-        // 脚本逻辑：等待程序退出 -> 静默安装 -> 重启
-        let script = format!(
-            r#"@echo off
-echo ========================================
-echo CMDB Desktop Update
-echo ========================================
-echo.
-echo Waiting for process to exit...
-:wait
-tasklist /FI "PID eq {}" 2>NUL | find /I "{}" >NUL
-if not errorlevel 1 (
-    timeout /t 1 /nobreak >nul
-    goto wait
-)
-echo Process exited
-echo.
-echo Installing update...
-echo MSI: {}
-echo.
-msiexec /i "{}" /quiet /norestart
-echo.
-echo Install result: %errorlevel%
-echo.
-echo Starting new version...
-echo Path: {}
-timeout /t 2 /nobreak >nul
-start "" "{}"
-echo.
-echo ========================================
-echo Update complete! Window closes in 10s
-echo ========================================
-timeout /t 10
-"#,
-            pid, pid, file_path, file_path, exe_path, exe_path
-        );
+        // 确保脚本存在（重新生成一次）
+        generate_script_internal(&file_path)?;
         
         let script_path = get_download_dir().join("cmdb_update.bat");
-        std::fs::write(&script_path, script).map_err(|e| e.to_string())?;
-        
-        std::process::Command::new("cmd")
-            .args(["/c", "start", "cmd", "/k", &script_path.to_string_lossy()])
-            .spawn()
-            .map_err(|e| format!("启动安装程序失败: {}", e))?;
         
         // 先隐藏窗口，避免退出时出现白框
         if let Some(window) = app.get_webview_window("main") {
             let _ = window.hide();
         }
         
-        // 给前端一点时间保存，然后退出
-        std::thread::sleep(std::time::Duration::from_millis(300));
+        // 等待窗口隐藏完成
+        std::thread::sleep(std::time::Duration::from_millis(100));
+        
+        // 使用 VBScript 静默提权运行脚本（避免被安全软件拦截）
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+        
+        // 创建 VBS 脚本来静默提权
+        let script_path_str = script_path.to_string_lossy().to_string();
+        let vbs_content = format!(
+            r#"Set UAC = CreateObject("Shell.Application")
+UAC.ShellExecute "cmd", "/c ""{0}""", "", "runas", 0"#,
+            script_path_str.replace("\"", "\"\"")
+        );
+        
+        let vbs_path = get_download_dir().join("elevate.vbs");
+        fs::write(&vbs_path, &vbs_content).map_err(|e| e.to_string())?;
+        
+        let vbs_path_str = vbs_path.to_string_lossy().to_string();
+        std::process::Command::new("wscript")
+            .arg(&vbs_path_str)
+            .creation_flags(CREATE_NO_WINDOW)
+            .spawn()
+            .map_err(|e| format!("启动安装程序失败: {}", e))?;
+        
+        // 给脚本一点启动时间，然后退出
+        std::thread::sleep(std::time::Duration::from_millis(200));
         app.exit(0);
         Ok(())
     }
@@ -547,59 +288,12 @@ pub fn clean_update_dir() -> Result<(), String> {
 
 
 /// 生成更新脚本（用于预览和调试）
+/// 注意：此函数现在使用统一的 generate_script_internal
 #[tauri::command]
-pub fn generate_update_script(msi_path: String, install_path: String) -> Result<String, String> {
-    let download_dir = get_download_dir();
-    fs::create_dir_all(&download_dir).map_err(|e| e.to_string())?;
+pub fn generate_update_script(msi_path: String, _install_path: String) -> Result<String, String> {
+    // 使用统一的脚本生成函数
+    generate_script_internal(&msi_path)?;
     
-    // 解密安装路径
-    let exe_path = if install_path.is_empty() {
-        std::env::current_exe()
-            .map(|p| p.to_string_lossy().to_string())
-            .unwrap_or_default()
-    } else {
-        match crate::crypto::decrypt(&install_path) {
-            Ok(decrypted) => decrypted,
-            Err(_) => {
-                if std::path::Path::new(&install_path).exists() {
-                    install_path
-                } else {
-                    std::env::current_exe()
-                        .map(|p| p.to_string_lossy().to_string())
-                        .unwrap_or_default()
-                }
-            }
-        }
-    };
-    
-    let script = format!(
-        r#"@echo off
-echo ========================================
-echo CMDB Desktop Update
-echo ========================================
-echo.
-echo Installing update...
-echo MSI: {}
-echo.
-msiexec /i "{}" /quiet /norestart
-echo.
-echo Install result: %errorlevel%
-echo.
-echo Starting new version...
-echo Path: {}
-timeout /t 2 /nobreak >nul
-start "" "{}"
-echo.
-echo ========================================
-echo Update complete! Window closes in 10s
-echo ========================================
-timeout /t 10
-"#,
-        msi_path, msi_path, exe_path, exe_path
-    );
-    
-    let script_path = download_dir.join("cmdb_update.bat");
-    fs::write(&script_path, &script).map_err(|e| e.to_string())?;
-    
+    let script_path = get_download_dir().join("cmdb_update.bat");
     Ok(script_path.to_string_lossy().to_string())
 }
