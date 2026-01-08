@@ -32,8 +32,7 @@ export function UpdateModal({
   // 根据主题设置内联样式
   const bgColor = isDark ? '#1f1f1f' : '#fff';
   const textColor = isDark ? '#e5e5e5' : '#1a1a1a';
-  const secondaryBg = isDark ? '#2a2a2a' : '#f5f5f5';
-  const borderColor = isDark ? '#333' : '#e8e8e8';
+  const secondaryBg = isDark ? '#141414' : '#f5f5f5';
   const labelColor = isDark ? '#a0a0a0' : '#666';
 
   return (
