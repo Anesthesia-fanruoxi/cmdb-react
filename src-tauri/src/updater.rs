@@ -8,6 +8,7 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
+#[allow(unused_imports)]
 use tauri::{AppHandle, Emitter, Manager};
 
 /// 下载服务器基础地址
@@ -253,6 +254,8 @@ del "%~f0"
     
     #[cfg(target_os = "macos")]
     {
+        // macOS 暂不支持自动重启，只打开安装包
+        let _ = install_path; // 消除未使用警告
         std::process::Command::new("open")
             .arg(&file_path)
             .spawn()
