@@ -62,36 +62,178 @@ fn generate_script_internal(msi_path: &str) -> Result<(), String> {
     // 从存储文件读取安装路径
     let exe_path = read_install_path_from_storage()
         .unwrap_or_else(|| {
-            // 回退到当前 exe 路径
             std::env::current_exe()
                 .map(|p| p.to_string_lossy().to_string())
                 .unwrap_or_default()
         });
     
+    // 获取 exe 文件名用于等待进程退出
+    let exe_name = std::path::Path::new(&exe_path)
+        .file_name()
+        .map(|n| n.to_string_lossy().to_string())
+        .unwrap_or_else(|| "cmdb-desktop.exe".to_string());
+    
     let script = format!(
         r#"@echo off
-echo ========================================
-echo CMDB Desktop Update
-echo ========================================
+setlocal enabledelayedexpansion
+
+echo ============================================================
+echo   CMDB Desktop Auto Update Script
+echo ============================================================
 echo.
-echo Installing update...
-echo MSI: {}
+echo [INFO] Script started at: %date% %time%
+echo [INFO] Script path: %~f0
+echo.
+
+echo ============================================================
+echo   STEP 0: Environment Check
+echo ============================================================
+echo.
+echo [CHECK] Current user: %USERNAME%
+echo [CHECK] Current directory: %CD%
+echo [CHECK] Temp directory: %TEMP%
+echo.
+echo [CHECK] MSI file path: {}
+if exist "{}" (
+    echo [OK] MSI file exists
+    for %%A in ("{}") do echo [INFO] MSI file size: %%~zA bytes
+) else (
+    echo [ERROR] MSI file NOT found!
+    echo [HINT] The update package may have been deleted or moved
+    pause
+    exit /b 1
+)
+echo.
+echo [CHECK] Target exe path: {}
+if exist "{}" (
+    echo [OK] Target exe exists
+    for %%A in ("{}") do echo [INFO] Current exe size: %%~zA bytes
+) else (
+    echo [WARN] Target exe not found (first install?)
+)
+echo.
+
+echo ============================================================
+echo   STEP 1: Wait for Application Exit
+echo ============================================================
+echo.
+echo [INFO] Looking for process: {}
+echo [INFO] Checking if application is running...
+set WAIT_COUNT=0
+:wait
+tasklist /FI "IMAGENAME eq {}" 2>NUL | find /I "{}" >NUL
+if not errorlevel 1 (
+    set /a WAIT_COUNT+=1
+    echo [INFO] Process still running, waiting... (attempt !WAIT_COUNT!)
+    timeout /t 1 /nobreak >nul
+    if !WAIT_COUNT! GEQ 60 (
+        echo [ERROR] Timeout waiting for process to exit after 60 seconds
+        echo [HINT] Please close the application manually
+        pause
+        exit /b 1
+    )
+    goto wait
+)
+echo [OK] Application has exited (waited !WAIT_COUNT! seconds)
+echo.
+
+echo ============================================================
+echo   STEP 2: Install Update
+echo ============================================================
+echo.
+echo [INFO] Starting MSI installation...
+echo [INFO] Command: msiexec /i "..." /quiet /norestart
+echo [INFO] Please wait, this may take a few seconds...
 echo.
 msiexec /i "{}" /quiet /norestart
+set INSTALL_RESULT=%errorlevel%
 echo.
-echo Install result: %errorlevel%
+echo [INFO] MSI installation completed
+echo [INFO] Exit code: %INSTALL_RESULT%
 echo.
-echo Starting new version...
-echo Path: {}
+if %INSTALL_RESULT%==0 (
+    echo [OK] Installation successful!
+) else if %INSTALL_RESULT%==1603 (
+    echo [ERROR] Fatal error during installation (1603)
+    echo [HINT] Possible causes:
+    echo        1. Application is still running (check Task Manager)
+    echo        2. Insufficient permissions (try Run as Administrator)
+    echo        3. Previous installation corrupted (try uninstall first)
+    echo        4. Antivirus blocking installation
+    echo        5. Disk space insufficient
+) else if %INSTALL_RESULT%==1602 (
+    echo [ERROR] User cancelled installation (1602)
+) else if %INSTALL_RESULT%==1618 (
+    echo [ERROR] Another MSI installation is in progress (1618)
+    echo [HINT] Wait for other installation to complete or restart computer
+) else if %INSTALL_RESULT%==1619 (
+    echo [ERROR] MSI package could not be opened (1619)
+    echo [HINT] The MSI file may be corrupted, try re-downloading
+) else if %INSTALL_RESULT%==1620 (
+    echo [ERROR] MSI package could not be opened (1620)
+    echo [HINT] The MSI file may be corrupted, try re-downloading
+) else if %INSTALL_RESULT%==1638 (
+    echo [ERROR] Another version is already installed (1638)
+    echo [HINT] Uninstall the existing version first
+) else (
+    echo [ERROR] Unknown error code: %INSTALL_RESULT%
+    echo [HINT] Search "MSI error %INSTALL_RESULT%" for more information
+)
+echo.
+
+echo ============================================================
+echo   STEP 3: Verify Installation
+echo ============================================================
+echo.
+echo [CHECK] Verifying installed exe...
+if exist "{}" (
+    echo [OK] Exe file exists after installation
+    for %%A in ("{}") do echo [INFO] New exe size: %%~zA bytes
+) else (
+    echo [ERROR] Exe file not found after installation!
+    echo [HINT] Installation may have failed
+)
+echo.
+
+echo ============================================================
+echo   STEP 4: Start Application
+echo ============================================================
+echo.
+echo [INFO] Starting application: {}
 timeout /t 2 /nobreak >nul
 start "" "{}"
+if errorlevel 1 (
+    echo [ERROR] Failed to start application
+    echo [HINT] Try starting manually from Start Menu
+) else (
+    echo [OK] Application start command sent
+)
 echo.
-echo ========================================
-echo Update complete! Window closes in 10s
-echo ========================================
-timeout /t 10
+
+echo ============================================================
+echo   Update Process Complete
+echo ============================================================
+echo.
+echo [INFO] Finished at: %date% %time%
+echo [INFO] Install result: %INSTALL_RESULT%
+echo.
+if %INSTALL_RESULT%==0 (
+    echo [SUCCESS] Update completed successfully!
+) else (
+    echo [FAILED] Update failed with error code: %INSTALL_RESULT%
+)
+echo.
+echo This window will close in 15 seconds...
+echo Press any key to close immediately.
+timeout /t 15
+endlocal
 "#,
-        msi_path, msi_path, exe_path, exe_path
+        msi_path, msi_path, msi_path,
+        exe_path, exe_path, exe_path,
+        exe_name, exe_name, exe_name,
+        msi_path,
+        exe_path, exe_path,
+        exe_path, exe_path
     );
     
     let script_path = download_dir.join("cmdb_update.bat");
