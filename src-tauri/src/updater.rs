@@ -194,7 +194,7 @@ pub async fn download_update(app: AppHandle, info: VersionInfo) -> Result<String
 
 /// 安装更新
 #[tauri::command]
-pub async fn install_update(app: AppHandle, file_path: String) -> Result<(), String> {
+pub async fn install_update(app: AppHandle, file_path: String, install_path: String) -> Result<(), String> {
     emit_status(&app, UpdateStatus::Installing);
     
     #[cfg(target_os = "windows")]
@@ -202,12 +202,17 @@ pub async fn install_update(app: AppHandle, file_path: String) -> Result<(), Str
         use std::os::windows::process::CommandExt;
         const CREATE_NO_WINDOW: u32 = 0x08000000;
         
-        let exe_path = std::env::current_exe()
-            .map(|p| p.to_string_lossy().to_string())
-            .unwrap_or_default();
-        
         // 获取当前进程 ID
         let pid = std::process::id();
+        
+        // 使用传入的安装路径，如果为空则使用当前 exe 路径
+        let exe_path = if install_path.is_empty() {
+            std::env::current_exe()
+                .map(|p| p.to_string_lossy().to_string())
+                .unwrap_or_default()
+        } else {
+            install_path
+        };
         
         // 脚本逻辑：等待程序退出 -> 静默安装 -> 重启
         let script = format!(
@@ -219,6 +224,7 @@ if not errorlevel 1 (
     goto wait
 )
 msiexec /i "{}" /quiet /norestart
+timeout /t 2 /nobreak >nul
 start "" "{}"
 del "%~f0"
 "#,
@@ -262,6 +268,14 @@ del "%~f0"
 #[tauri::command]
 pub fn get_app_version() -> String {
     get_current_version()
+}
+
+/// 获取当前 exe 路径
+#[tauri::command]
+pub fn get_exe_path() -> Result<String, String> {
+    std::env::current_exe()
+        .map(|p| p.to_string_lossy().to_string())
+        .map_err(|e| e.to_string())
 }
 
 /// 检查文件是否存在

@@ -22,6 +22,8 @@ export {
   setDefaultTheme,
   updateLastUpdateCheck,
   updateAppVersion,
+  getInstallPath,
+  setInstallPath,
   getUpdateInfo,
   saveUpdateInfo,
   clearUpdateInfo,

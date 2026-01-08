@@ -15,7 +15,7 @@ import { getUserAvatar, startAutoSave, stopAutoSave, forceSave } from './service
 import type { UpdateInfo } from './services/storage';
 import { StatusModalContainer } from './components/StatusModal';
 import { UpdateModal } from './components/UpdateModal';
-import { checkAndDownloadUpdate, installUpdate, cleanupOldUpdate } from './services/updater';
+import { checkAndDownloadUpdate, installUpdate, cleanupOldUpdate, saveInstallPath } from './services/updater';
 import { isTauriEnv } from './services/machine';
 import './App.css';
 
@@ -117,6 +117,9 @@ function App() {
       // Tauri 环境下检查更新
       if (isTauriEnv()) {
         try {
+          // 保存当前安装路径
+          await saveInstallPath();
+          
           // 先清理旧更新（如果已下载版本 = 当前版本）
           await cleanupOldUpdate();
           

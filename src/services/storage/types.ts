@@ -18,6 +18,7 @@ export interface AppData {
   lastUser: string;            // 最后登录的用户名
   defaultTheme: 'light' | 'dark'; // 未登录时的默认主题
   appVersion: string;          // 应用版本号
+  installPath: string;         // 应用安装路径
   lastUpdateCheck: number;     // 最后检查更新时间戳
   update: UpdateInfo;          // 更新信息
   [key: string]: unknown;      // 索引签名

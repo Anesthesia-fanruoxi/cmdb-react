@@ -4,7 +4,7 @@
  */
 
 import { invoke } from '@tauri-apps/api/core';
-import { getUpdateInfo, saveUpdateInfo, clearUpdateInfo } from './storage';
+import { getUpdateInfo, saveUpdateInfo, clearUpdateInfo, getInstallPath, setInstallPath } from './storage';
 import type { UpdateInfo } from './storage';
 
 // 版本接口
@@ -112,6 +112,24 @@ export const cleanupOldUpdate = async (): Promise<void> => {
   }
 };
 
+/** 保存当前安装路径 */
+export const saveInstallPath = async (): Promise<void> => {
+  try {
+    const path = await invoke<string>('get_exe_path');
+    if (path) {
+      await setInstallPath(path);
+      console.log('[更新] 已保存安装路径:', path);
+    }
+  } catch (e) {
+    console.error('[更新] 保存安装路径失败:', e);
+  }
+};
+
+/** 获取已保存的安装路径 */
+export const getSavedInstallPath = (): string => {
+  return getInstallPath();
+};
+
 /**
  * 启动时检查更新
  * 返回待安装的更新信息（已下载或新下载）
@@ -186,11 +204,13 @@ export const checkAndDownloadUpdate = async (): Promise<UpdateInfo | null> => {
 /** 安装更新 */
 export const installUpdate = async (filePath: string): Promise<void> => {
   const update = getUpdateInfo();
+  const installPath = getInstallPath();
+  
   await invoke('mark_pending_update', {
     filePath,
     version: update.downloadedVersion,
   });
-  await invoke('install_update', { filePath });
+  await invoke('install_update', { filePath, installPath });
 };
 
 /** 手动检查更新（用于设置页面） */

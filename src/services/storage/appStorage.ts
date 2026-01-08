@@ -26,6 +26,7 @@ const defaultAppData: AppData = {
   lastUser: '',
   defaultTheme: 'dark',
   appVersion: '',
+  installPath: '',
   lastUpdateCheck: 0,
   update: defaultUpdateInfo,
 };
@@ -101,6 +102,20 @@ export async function updateLastUpdateCheck(): Promise<void> {
  */
 export async function updateAppVersion(version: string): Promise<void> {
   await updateAppData({ appVersion: version });
+}
+
+/**
+ * 获取安装路径
+ */
+export function getInstallPath(): string {
+  return getAppData().installPath;
+}
+
+/**
+ * 设置安装路径
+ */
+export async function setInstallPath(path: string): Promise<void> {
+  await updateAppData({ installPath: path });
 }
 
 // ==================== 更新信息 ====================

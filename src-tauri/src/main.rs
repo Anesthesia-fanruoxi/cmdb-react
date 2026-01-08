@@ -148,6 +148,7 @@ fn main() {
             updater::download_update,
             updater::install_update,
             updater::get_app_version,
+            updater::get_exe_path,
             updater::mark_pending_update,
             updater::check_file_exists,
             updater::clean_update_dir,
