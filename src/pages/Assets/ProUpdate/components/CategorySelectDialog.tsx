@@ -1,7 +1,7 @@
 /**
  * 发版服务选择弹框
  * - SCFQ 前端：管理端 / 店铺端
- * - Risk 后端：管理端 / 计数端 / 全部
+ * - Risk 后端：管理端 / 计数端 / 代理 / 全部
  */
 
 import { X } from 'lucide-react';
@@ -58,7 +58,7 @@ const CategorySelectDialog = ({ visible, type, onSelect, onClose }: Props) => {
               </button>
             </div>
           ) : (
-            // Risk 后端：3个选项
+            // Risk 后端：4个选项
             <div className="category-buttons">
               <div className="category-row">
                 <button className="category-btn" onClick={() => handleSelect('manage', '管理端')}>
@@ -69,6 +69,9 @@ const CategorySelectDialog = ({ visible, type, onSelect, onClose }: Props) => {
                 </button>
               </div>
               <div className="category-row">
+                <button className="category-btn" onClick={() => handleSelect('proxy', '代理')}>
+                  代理 (Proxy)
+                </button>
                 <button className="category-btn primary" onClick={() => handleSelect('all', '全部')}>
                   全部 (All)
                 </button>

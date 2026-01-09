@@ -189,7 +189,7 @@ const ProUpdatePage = () => {
                       {currentType === 'web' ? (
                         <><option value="">请选择</option><option value="node14">node14</option><option value="node16">node16</option></>
                       ) : (
-                        <><option value="">请选择</option><option value="java8">java8</option><option value="java17">java17</option><option value="java21">java21</option></>
+                        <><option value="">请选择</option><option value="java8">java8</option><option value="java17">java17</option><option value="java21">java21</option><option value="proxy">代理</option></>
                       )}
                     </select>
                   </td>
