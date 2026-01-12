@@ -1,18 +1,16 @@
 /**
  * 登录页面
- * 适配新存储架构
+ * 初始化由 App.tsx 完成，此处直接使用数据
  */
 
 import { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '../../stores/authStore';
 import { useAppStore } from '../../stores/appStore';
 import { isTauriEnv, hasDeviceCredentials } from '../../services/machine';
+import { getLoginHistory, getLastUser } from '../../services/loginHistory';
 import {
-  getLoginHistory,
-  getLastUser,
   getDefaultTheme,
   setDefaultTheme,
-  waitForStorageInit,
   getActiveRoute,
 } from '../../services/storage';
 import './style.css';
@@ -21,7 +19,7 @@ type LoginType = 'password' | 'totp';
 
 const Login = () => {
   const { login, autoLogin, bindDevice, setSaveLoginState, isAuthenticated, userName } = useAuthStore();
-  const { setTheme: setGlobalTheme } = useAppStore();
+  const { setTheme: setGlobalTheme, theme: globalTheme } = useAppStore();
   
   const [loginType, setLoginType] = useState<LoginType>('totp');
   const [username, setUsername] = useState('');
@@ -53,33 +51,31 @@ const Login = () => {
     }
   }, [isAuthenticated, userName]);
 
-  // 初始化
+  // 初始化（App.tsx 已完成初始化，这里只加载数据）
   useEffect(() => {
     const init = async () => {
-      // 等待存储初始化完成
-      await waitForStorageInit();
+      // 使用全局主题
+      setTheme(globalTheme);
+      document.documentElement.classList.toggle('dark', globalTheme === 'dark');
       
-      // 加载登录历史和最后用户
-      const history = getLoginHistory();
+      // 加载登录历史和最后用户（从 Rust 后端）
+      const [history, lastUser] = await Promise.all([
+        getLoginHistory(),
+        getLastUser(),
+      ]);
+      
       setLoginHistory(history);
-      
-      const lastUser = getLastUser();
       if (lastUser) setUsername(lastUser);
-      
-      // 加载默认主题
-      const defaultTheme = getDefaultTheme();
-      setTheme(defaultTheme);
-      document.documentElement.classList.toggle('dark', defaultTheme === 'dark');
       
       // 初始化窗口标题栏颜色
       if (isTauriEnv()) {
         import('@tauri-apps/api/core').then(({ invoke }) => {
-          invoke('set_window_theme', { dark: defaultTheme === 'dark' }).catch(() => {});
+          invoke('set_window_theme', { dark: globalTheme === 'dark' }).catch(() => {});
         });
       }
     };
     init();
-  }, []);
+  }, [globalTheme]);
 
   // 点击外部关闭下拉框
   useEffect(() => {

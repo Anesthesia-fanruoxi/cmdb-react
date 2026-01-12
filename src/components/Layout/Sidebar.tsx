@@ -10,7 +10,6 @@ import { useMenuStore } from '../../stores/menuStore';
 import { useAuthStore } from '../../stores/authStore';
 import { useAppStore } from '../../stores/appStore';
 import { useMessageStore } from '../../stores/messageStore';
-import { getUpdateInfo } from '../../services/storage';
 import type { MenuItem as MenuItemType } from '../../types/menu';
 import Icon from '../Icon';
 import { Circle, LogOut, User, ListTodo, RefreshCw, Trash2, Info } from 'lucide-react';
@@ -34,13 +33,9 @@ const Sidebar = ({ collapsed = false }: SidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { menuList, fetchUserMenus } = useMenuStore();
-  const { user, userName, logout, fetchProfile } = useAuthStore();
-  const { theme, toggleTheme } = useAppStore();
+  const { user, userName, fetchProfile } = useAuthStore();
+  const { theme, toggleTheme, hasUpdate } = useAppStore();
   const unreadCount = useMessageStore(state => state.unreadCount);
-  
-  // 检查是否有待安装的更新
-  const updateInfo = getUpdateInfo();
-  const hasUpdate = updateInfo.downloadStatus === 'completed' && !!updateInfo.downloadedVersion;
   
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [profileVisible, setProfileVisible] = useState(false);
@@ -145,9 +140,8 @@ const Sidebar = ({ collapsed = false }: SidebarProps) => {
     setDropdownVisible(false);
     // 将用户主题保存到登录页本地状态
     localStorage.setItem('login-theme', theme);
-    // 先跳转，再异步调用登出接口
+    // 立即跳转，让动画页面处理退出逻辑
     window.location.href = '/login?from=logout';
-    logout().catch(() => {});
   };
 
   const handleRefreshPermissions = async () => {
@@ -266,13 +260,14 @@ const Sidebar = ({ collapsed = false }: SidebarProps) => {
               🔔
               {unreadCount > 0 && <span className="badge">{unreadCount > 99 ? '99+' : unreadCount}</span>}
             </button>
+            {/* 更新图标 */}
             {hasUpdate && isTauriEnv() && (
               <button 
                 className="footer-icon-btn update-btn" 
                 onClick={() => openComponentWindow({ type: 'system-info', label: 'system-info', title: '系统信息', width: 400, height: 600 })}
                 title="有新版本可用"
               >
-                🚀
+                🆙
               </button>
             )}
           </div>

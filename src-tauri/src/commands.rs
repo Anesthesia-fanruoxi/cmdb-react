@@ -10,6 +10,7 @@ use crate::device;
 use crate::crypto;
 use crate::auth::{self, AutoLoginResult};
 use crate::elfk::{self, ExportParams};
+use crate::login_history;
 
 /// 系统信息
 #[derive(Serialize)]
@@ -165,4 +166,31 @@ pub async fn export_elfk_logs(
     params: ExportParams,
 ) -> Result<String, String> {
     elfk::export_logs(&app_handle, &api_base, &token, params).await
+}
+
+
+// ==================== 登录历史 ====================
+
+/// 添加登录历史
+#[tauri::command]
+pub fn add_login_history(app_handle: AppHandle, username: String) -> Result<(), String> {
+    login_history::add_history(&app_handle, &username)
+}
+
+/// 获取登录历史
+#[tauri::command]
+pub fn get_login_history(app_handle: AppHandle) -> Vec<String> {
+    login_history::get_history(&app_handle)
+}
+
+/// 获取最后登录用户
+#[tauri::command]
+pub fn get_last_user(app_handle: AppHandle) -> String {
+    login_history::get_last_user(&app_handle)
+}
+
+/// 清除登录历史
+#[tauri::command]
+pub fn clear_login_history(app_handle: AppHandle) -> Result<(), String> {
+    login_history::clear_history(&app_handle)
 }

@@ -10,6 +10,7 @@ mod updater;
 mod updater_script;
 mod updater_checker;
 mod window;
+mod login_history;
 
 use commands::*;
 use tauri::Manager;
@@ -51,6 +52,10 @@ fn main() {
             clear_device_credentials,
             has_device_credentials,
             export_elfk_logs,
+            add_login_history,
+            get_login_history,
+            get_last_user,
+            clear_login_history,
             updater::download_update,
             updater::install_update,
             updater::get_app_version,

@@ -8,8 +8,8 @@ use tauri::{AppHandle, Emitter};
 const VERSION_API: &str = "https://api.hzbxhd.com/api/app/version/list";
 /// 下载服务器基础地址
 const DOWNLOAD_BASE_URL: &str = "https://ops.hzbxhd.com/client";
-/// 检查间隔（5分钟）
-const CHECK_INTERVAL_SECS: u64 = 5 * 60;
+/// 检查间隔（1分钟，方便调试）
+const CHECK_INTERVAL_SECS: u64 = 60;
 
 /// 版本接口响应
 #[derive(serde::Deserialize)]
@@ -166,13 +166,13 @@ pub fn start_update_checker(app: AppHandle) {
     
     let rt = tokio::runtime::Runtime::new().unwrap();
     
-    // 启动时等待 3 秒后立即检查一次
+    // 启动时等待 3 秒后立即检查一次（弹框提示）
     std::thread::sleep(Duration::from_secs(3));
     println!("[更新检查] 启动时首次检查...");
     
     match rt.block_on(check_and_download()) {
         Some(info) => {
-            println!("[更新检查] 发现新版本 {}，推送给前端", info.version);
+            println!("[更新检查] 发现新版本 {}，弹框提示", info.version);
             let _ = app.emit("update-available", &info);
         }
         None => {
@@ -181,7 +181,7 @@ pub fn start_update_checker(app: AppHandle) {
         }
     }
     
-    // 然后每 5 分钟检查一次
+    // 然后每 5 分钟检查一次（静默提示，只显示图标）
     loop {
         std::thread::sleep(Duration::from_secs(CHECK_INTERVAL_SECS));
         
@@ -189,8 +189,8 @@ pub fn start_update_checker(app: AppHandle) {
         
         match rt.block_on(check_and_download()) {
             Some(info) => {
-                println!("[更新检查] 发现新版本 {}，推送给前端", info.version);
-                let _ = app.emit("update-available", &info);
+                println!("[更新检查] 发现新版本 {}，静默提示", info.version);
+                let _ = app.emit("update-available-silent", &info);
             }
             None => {
                 println!("[更新检查] 无更新，清理目录");

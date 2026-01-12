@@ -15,9 +15,6 @@ export {
 export {
   getAppData,
   updateAppData,
-  getLoginHistory,
-  addLoginHistory,
-  getLastUser,
   getDefaultTheme,
   setDefaultTheme,
   updateLastUpdateCheck,
@@ -28,6 +25,8 @@ export {
   saveUpdateInfo,
   clearUpdateInfo,
 } from './appStorage';
+
+// 登录历史由 Rust 后端管理，见 src/services/loginHistory.ts
 
 // Token 存储
 export {

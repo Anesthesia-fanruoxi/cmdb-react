@@ -1,7 +1,8 @@
 /**
  * App 公共存储
  * 文件：app.dat
- * 存储：登录历史、最后用户、默认主题、更新信息等
+ * 存储：默认主题、更新信息等
+ * 注意：登录历史由 Rust 后端管理，见 src/services/loginHistory.ts
  */
 
 import { getStorageData, updateStorageData } from './core';
@@ -48,32 +49,6 @@ export function getAppData(): AppData {
  */
 export async function updateAppData(updates: Partial<AppData>): Promise<void> {
   await updateStorageData<AppData>(FILE, updates);
-}
-
-/**
- * 获取登录历史
- */
-export function getLoginHistory(): string[] {
-  return getAppData().loginHistory;
-}
-
-/**
- * 添加登录历史
- */
-export async function addLoginHistory(username: string): Promise<void> {
-  const history = getLoginHistory().filter(u => u !== username);
-  history.unshift(username);
-  await updateAppData({
-    loginHistory: history.slice(0, 10),
-    lastUser: username,
-  });
-}
-
-/**
- * 获取最后登录用户
- */
-export function getLastUser(): string {
-  return getAppData().lastUser;
 }
 
 /**

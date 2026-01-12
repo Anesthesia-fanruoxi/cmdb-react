@@ -1,6 +1,6 @@
 /**
  * 应用根组件
- * 适配新存储架构
+ * 使用启动动画组件管理各场景
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -11,33 +11,25 @@ import { useAppStore } from './stores/appStore';
 import { usePageStateStore } from './stores/pageStateStore';
 import { useMenuStore } from './stores/menuStore';
 import { initSecurity } from './utils/security';
-import { getUserAvatar, startAutoSave, stopAutoSave, forceSave } from './services/storage';
+import { startAutoSave, stopAutoSave, forceSave, initAllStorage, getDefaultTheme } from './services/storage';
+import { getLoginHistory, getLastUser } from './services/loginHistory';
 import type { UpdateInfo } from './services/storage';
 import { StatusModalContainer } from './components/StatusModal';
 import { UpdateModal } from './components/UpdateModal';
+import StartupScreen, { type FlowType, FLOW_STEPS } from './components/StartupScreen';
 import { installUpdate, cleanupOldUpdate, saveInstallPath } from './services/updater';
 import { listen } from '@tauri-apps/api/event';
 import { isTauriEnv } from './services/machine';
 import './App.css';
 
-type FlowType = 'none' | 'token' | 'login' | 'clear';
-
-const FLOW_STEPS: Record<FlowType, string[]> = {
-  none: [],
-  token: ['验证登录', '加载菜单', '恢复工作区', '准备就绪'],
-  login: ['登录成功', '加载菜单', '初始化工作区', '准备就绪'],
-  clear: ['开始清除', '清除数据', '清除完成', '启动中'],
-};
-
 function App() {
   const { isAuthenticated, initFromStorage, userName } = useAuthStore();
-  const { initTheme, theme } = useAppStore();
+  const { initTheme, theme, setTheme } = useAppStore();
   const initRef = useRef(false);
   
   const [ready, setReady] = useState(false);
   const [flowType, setFlowType] = useState<FlowType>('none');
   const [currentStep, setCurrentStep] = useState(0);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   
   // 更新弹窗状态
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
@@ -48,10 +40,10 @@ function App() {
   useEffect(() => {
     if (!isTauriEnv()) return;
     
-    let unlisten: (() => void) | undefined;
+    let unlistenModal: (() => void) | undefined;
+    let unlistenSilent: (() => void) | undefined;
     
     listen<{ version: string; changelog: string; msi_path: string }>('update-available', (event) => {
-      console.log('[App] 收到更新事件:', event.payload);
       setPendingUpdate({
         latestVersion: event.payload.version,
         downloadedVersion: event.payload.version,
@@ -62,31 +54,62 @@ function App() {
         lastCheckTime: Date.now(),
       });
       setUpdateModalOpen(true);
-    }).then(fn => { unlisten = fn; });
+      useAppStore.getState().setUpdateInfo({
+        version: event.payload.version,
+        changelog: event.payload.changelog,
+        msiPath: event.payload.msi_path,
+      });
+    }).then(fn => { unlistenModal = fn; });
     
-    return () => { unlisten?.(); };
+    listen<{ version: string; changelog: string; msi_path: string }>('update-available-silent', (event) => {
+      setPendingUpdate({
+        latestVersion: event.payload.version,
+        downloadedVersion: event.payload.version,
+        downloadedPath: event.payload.msi_path,
+        downloadStatus: 'completed',
+        downloadProgress: 100,
+        changelog: event.payload.changelog,
+        lastCheckTime: Date.now(),
+      });
+      useAppStore.getState().setUpdateInfo({
+        version: event.payload.version,
+        changelog: event.payload.changelog,
+        msiPath: event.payload.msi_path,
+      });
+    }).then(fn => { unlistenSilent = fn; });
+    
+    return () => {
+      unlistenModal?.();
+      unlistenSilent?.();
+    };
   }, []);
 
   // 自动保存管理
   useEffect(() => {
     const { token } = useAuthStore.getState();
     if (!ready || !token) return;
-
-    // 启动自动保存
     void startAutoSave();
-
     return () => {
-      // 组件卸载时强制保存并停止
       forceSave();
       stopAutoSave();
     };
   }, [ready]);
 
+  // 定时刷新权限
+  useEffect(() => {
+    const { token } = useAuthStore.getState();
+    if (!ready || !token) return;
+    const timer = setInterval(() => {
+      const { isAuthenticated, fetchProfile } = useAuthStore.getState();
+      if (isAuthenticated) {
+        fetchProfile().catch(() => {});
+      }
+    }, 60 * 1000);
+    return () => clearInterval(timer);
+  }, [ready]);
+
   // 执行流程动画
-  const runFlowWithTasks = async (
-    type: FlowType,
-    tasks: Array<() => Promise<void>>
-  ): Promise<void> => {
+  const runFlow = async (type: FlowType, tasks: Array<() => Promise<void>>) => {
     const steps = FLOW_STEPS[type];
     if (steps.length === 0) return;
     
@@ -94,7 +117,11 @@ function App() {
     for (let i = 0; i < steps.length; i++) {
       setCurrentStep(i);
       if (tasks[i]) {
-        await tasks[i]();
+        try {
+          await tasks[i]();
+        } catch (e) {
+          console.error(`[App] 步骤 ${i} 失败:`, e);
+        }
       }
       await new Promise(r => setTimeout(r, 300));
     }
@@ -116,15 +143,7 @@ function App() {
         window.history.replaceState({}, '', window.location.pathname);
       }
       
-      // 退出登录 - 快速显示登录页，但仍需初始化存储
-      if (from === 'logout') {
-        initTheme();
-        await initFromStorage();
-        setReady(true);
-        return;
-      }
-      
-      // 独立窗口
+      // 独立窗口 - 快速初始化
       if (isDetached) {
         initSecurity();
         initTheme();
@@ -134,71 +153,133 @@ function App() {
       }
 
       initSecurity();
-      
-      // 先初始化主题，确保启动画面显示正确的主题
-      initTheme();
-      
-      // Tauri 环境下初始化更新相关
-      if (isTauriEnv()) {
-        try {
-          // 保存当前安装路径
-          await saveInstallPath();
-          
-          // 清理旧更新（如果已下载版本 = 当前版本）
-          await cleanupOldUpdate();
-        } catch (e) {
-          console.error('[App] 更新初始化失败:', e);
+
+      // ========== 退出登录 - 直接播放 logout 动画（跳过 init）==========
+      if (from === 'logout') {
+        // 先读取主题，确保动画显示正确的主题
+        const savedTheme = localStorage.getItem('login-theme') as 'light' | 'dark' | null;
+        if (savedTheme) {
+          setTheme(savedTheme);
+          localStorage.removeItem('login-theme');
         }
+        
+        const { prepareLogout, executeLogout } = useAuthStore.getState();
+        
+        await runFlow('logout', [
+          async () => {
+            // 保存工作区
+            await prepareLogout();
+          },
+          async () => {
+            // 执行退出登录
+            await executeLogout();
+          },
+          async () => {
+            // 初始化中 - 重新读取公共数据
+            await initAllStorage();
+            const defaultTheme = getDefaultTheme();
+            setTheme(defaultTheme);
+            
+            if (isTauriEnv()) {
+              await getLoginHistory();
+              await getLastUser();
+            }
+          },
+        ]);
+        setReady(true);
+        return;
       }
-      
-      // 初始化存储（会自动恢复状态）
-      await initFromStorage();
-      
-      // 加载用户头像
-      const currentUser = useAuthStore.getState().userName;
-      if (currentUser) {
-        const avatar = getUserAvatar(currentUser);
-        if (avatar) setAvatarUrl(avatar);
+
+      // ========== 登录成功 - 直接播放 login 动画（跳过 init）==========
+      if (from === 'login') {
+        console.log('[App] 检测到 from=login，跳过 init 动画');
+        
+        // 先设置 flowType 为 login，避免显示 init 画面
+        setFlowType('login');
+        setCurrentStep(0);
+        
+        // 初始化存储（不播放动画）
+        await initAllStorage();
+        await initFromStorage();
+        
+        const hasToken = !!useAuthStore.getState().token;
+        console.log('[App] hasToken:', hasToken);
+        if (hasToken) {
+          await runFlow('login', [
+            async () => {},
+            async () => {
+              await Promise.all([
+                useMenuStore.getState().fetchUserMenus(),
+                useAuthStore.getState().fetchProfile(),
+                preloadHome(),
+              ]);
+            },
+            async () => {},
+            async () => {},
+          ]);
+        } else {
+          setFlowType('none');
+        }
+        setReady(true);
+        return;
       }
-      
+
+      // ========== 场景1：初始化（首次启动）==========
+      console.log('[App] 执行 init 动画，from:', from);
+      await runFlow('init', [
+        async () => {
+          // 读取主题
+          await initAllStorage();
+          const defaultTheme = getDefaultTheme();
+          setTheme(defaultTheme);
+          
+          // 读取登录历史（Rust 后端）
+          if (isTauriEnv()) {
+            await getLoginHistory();
+            await getLastUser();
+          }
+          
+          // Tauri 环境初始化更新相关
+          if (isTauriEnv()) {
+            try {
+              await saveInstallPath();
+              await cleanupOldUpdate();
+            } catch (e) {
+              console.error('[App] 更新初始化失败:', e);
+            }
+          }
+        },
+        async () => {
+          // 准备就绪 - 初始化存储
+          await initFromStorage();
+        },
+      ]);
+
       const hasToken = !!useAuthStore.getState().token;
 
       // 清除缓存
       if (clear === '1') {
-        await runFlowWithTasks('clear', [
+        await runFlow('clear', [
           async () => {},
           async () => {
             usePageStateStore.getState().clearAllPageStates();
             useMenuStore.getState().delAllViews();
           },
-          async () => {},
-          async () => {},
-        ]);
-        setReady(true);
-        return;
-      }
-
-      // 登录成功后
-      if (from === 'login' && hasToken) {
-        await runFlowWithTasks('login', [
-          async () => {},
           async () => {
             await Promise.all([
               useMenuStore.getState().fetchUserMenus(),
               useAuthStore.getState().fetchProfile(),
-              preloadHome(),
             ]);
           },
-          async () => {},
           async () => {},
         ]);
         setReady(true);
         return;
       }
 
-      // 正常启动（有 token）
+      // ========== 场景2：Token 自动登录 ==========
       if (hasToken) {
-        await runFlowWithTasks('token', [
+        await runFlow('token', [
           async () => {},
           async () => {
             await Promise.all([
@@ -211,11 +292,12 @@ function App() {
           async () => {},
         ]);
       }
+      
       setReady(true);
     };
 
     startup();
-  }, [initFromStorage, initTheme]);
+  }, [initFromStorage, initTheme, setTheme]);
 
   const router = useMemo(
     () => createAppRouter(isAuthenticated),
@@ -226,59 +308,27 @@ function App() {
   const handleInstallUpdate = async () => {
     if (!pendingUpdate?.downloadedPath) return;
     setInstalling(true);
-    
-    // 先关闭弹窗，避免白框
     setUpdateModalOpen(false);
     
     try {
-      // 1. 先强制保存数据
       forceSave();
-      
-      // 2. 调用 Rust 启动安装脚本并退出
       await installUpdate(pendingUpdate.downloadedPath);
     } catch (e) {
       console.error('[更新] 安装失败:', e);
       setInstalling(false);
-      setUpdateModalOpen(true); // 失败时重新显示弹窗
+      setUpdateModalOpen(true);
     }
-  };
-
-  // 处理跳过更新
-  const handleSkipUpdate = () => {
-    setUpdateModalOpen(false);
   };
 
   // 启动画面
   if (flowType !== 'none' || !ready) {
-    const steps = flowType !== 'none' ? FLOW_STEPS[flowType] : [];
-    const showProgress = flowType !== 'none' && steps.length > 0;
-    
     return (
-      <div className={`startup-container ${theme === 'light' ? 'light' : ''}`}>
-        <div className="startup-content">
-          <div className="startup-logo">CMDB</div>
-          {userName && <div className="startup-username">{userName}</div>}
-          <div className="startup-spinner-wrapper">
-            <div className="startup-spinner" />
-            {avatarUrl && <img src={avatarUrl} alt="头像" className="startup-avatar" />}
-          </div>
-          <p className="startup-message">
-            {showProgress ? `${steps[currentStep]}...` : '启动中...'}
-          </p>
-          {showProgress && (
-            <div className="startup-progress">
-              {steps.map((step, i) => (
-                <div 
-                  key={step} 
-                  className={`progress-step ${i < currentStep ? 'done' : i === currentStep ? 'active' : ''}`}
-                >
-                  {step}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+      <StartupScreen
+        flowType={flowType !== 'none' ? flowType : 'init'}
+        currentStep={currentStep}
+        userName={userName}
+        theme={theme}
+      />
     );
   }
 
@@ -290,7 +340,7 @@ function App() {
         open={updateModalOpen}
         updateInfo={pendingUpdate}
         onInstall={handleInstallUpdate}
-        onSkip={handleSkipUpdate}
+        onSkip={() => setUpdateModalOpen(false)}
         installing={installing}
       />
     </>

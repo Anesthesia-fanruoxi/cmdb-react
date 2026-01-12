@@ -345,25 +345,25 @@
 
 /* 铃铛按钮特殊样式 */
 .footer-icon-btn.bell-btn {
-  background: rgba(250, 173, 20, 0.3);
-  color: #ffc53d;
+  background: transparent;
 }
 
 .footer-icon-btn.bell-btn:hover {
-  background: rgba(250, 173, 20, 0.45);
+  background: rgba(255, 255, 255, 0.1);
 }
 
-/* 更新按钮 */
+/* 更新按钮 - 向上箭头 */
 .update-btn {
-  animation: pulse 2s infinite;
-  background: rgba(64, 169, 255, 0.25) !important;
+  background: transparent !important;
+  animation: update-pulse 2s infinite;
+  font-size: 20px !important;
 }
 
 .update-btn:hover {
-  background: rgba(64, 169, 255, 0.4) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
 }
 
-@keyframes pulse {
+@keyframes update-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
 }

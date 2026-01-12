@@ -19,7 +19,7 @@ interface HeaderProps {
 }
 
 const Header = ({ collapsed, onToggleCollapse }: HeaderProps) => {
-  const { user, userName, logout } = useAuthStore();
+  const { user, userName } = useAuthStore();
   const { theme, toggleTheme } = useAppStore();
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [taskCenterVisible, setTaskCenterVisible] = useState(false);
@@ -57,9 +57,8 @@ const Header = ({ collapsed, onToggleCollapse }: HeaderProps) => {
     setDropdownVisible(false);
     // 将用户主题保存到登录页本地状态
     localStorage.setItem('login-theme', theme);
-    // 先跳转，再异步调用登出接口
+    // 立即跳转，让动画页面处理退出逻辑
     window.location.href = '/login?from=logout';
-    logout().catch(() => {});
   };
 
   const handleProfile = () => {

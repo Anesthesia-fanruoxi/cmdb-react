@@ -20,7 +20,6 @@ import {
   removeToken,
   hasValidToken,
   getTokenUsername,
-  addLoginHistory,
   getDefaultTheme,
   setDefaultTheme,
   saveProfile,
@@ -32,6 +31,7 @@ import {
   setUserAvatar,
   clearMemoryCache,
 } from '@/services/storage';
+import { addLoginHistory } from '@/services/loginHistory';
 import { hasDeviceCredentials } from '@/services/machine';
 import { useMenuStore } from './menuStore';
 import { useAppStore } from './appStore';
@@ -60,6 +60,8 @@ interface AuthState {
   setUser: (user: UserInfo) => Promise<void>;
   setPermissions: (permissions: string[]) => void;
   hasPermission: (permission: string) => boolean;
+  prepareLogout: () => Promise<void>;
+  executeLogout: () => Promise<void>;
   logout: () => Promise<void>;
   initFromStorage: () => Promise<void>;
   fetchProfile: () => Promise<void>;
@@ -224,8 +226,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     return get().permissions.has(permission);
   },
 
-  // 登出
-  logout: async () => {
+  // 登出 - 第一步：保存状态（在动画中调用）
+  prepareLogout: async () => {
     const { userName } = get();
 
     // 保存当前状态
@@ -251,7 +253,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       });
       await setDefaultTheme(theme);
     }
+  },
 
+  // 登出 - 第二步：执行清除（在动画中调用）
+  executeLogout: async () => {
     // 调用登出接口
     try {
       await logoutApi();
@@ -283,6 +288,12 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       isAuthenticated: false,
       permissions: new Set(),
     });
+  },
+
+  // 登出（兼容旧调用，但建议使用 prepareLogout + executeLogout）
+  logout: async () => {
+    await get().prepareLogout();
+    await get().executeLogout();
   },
 
   // 从存储初始化

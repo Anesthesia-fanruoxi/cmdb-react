@@ -11,6 +11,12 @@ import { getDefaultTheme } from '../services/storage';
 
 type ThemeMode = 'light' | 'dark';
 
+interface UpdateInfo {
+  version: string;
+  changelog: string;
+  msiPath: string;
+}
+
 interface AppState {
   // 系统信息
   systemName: string;
@@ -29,6 +35,10 @@ interface AppState {
   // 错误状态
   error: string | null;
 
+  // 更新状态
+  hasUpdate: boolean;
+  updateInfo: UpdateInfo | null;
+
   // 操作
   setSystemInfo: (info: Partial<SystemSetting>) => void;
   fetchSystemInfo: () => Promise<void>;
@@ -38,6 +48,8 @@ interface AppState {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   clearError: () => void;
+  setUpdateInfo: (info: UpdateInfo | null) => void;
+  clearUpdate: () => void;
 }
 
 export const useAppStore = create<AppState>()((set, get) => ({
@@ -51,6 +63,8 @@ export const useAppStore = create<AppState>()((set, get) => ({
   loading: false,
   isLoading: false,
   error: null,
+  hasUpdate: false,
+  updateInfo: null,
 
   // 设置系统信息
   setSystemInfo: (info) => {
@@ -140,5 +154,15 @@ export const useAppStore = create<AppState>()((set, get) => ({
   // 清除错误
   clearError: () => {
     set({ error: null });
+  },
+
+  // 设置更新信息
+  setUpdateInfo: (info) => {
+    set({ hasUpdate: !!info, updateInfo: info });
+  },
+
+  // 清除更新状态
+  clearUpdate: () => {
+    set({ hasUpdate: false, updateInfo: null });
   },
 }));
