@@ -89,6 +89,10 @@ jobs:
           workspaces: './src-tauri -> target'
           shared-key: ${{ matrix.target }}
 
+      - name: Install DMG tools
+        run: |
+          brew install create-dmg || true
+
       - name: Get version
         id: version
         run: |
