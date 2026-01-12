@@ -60,6 +60,8 @@ fn main() {
             updater::generate_update_script,
             updater::regenerate_script_if_msi_exists,
             updater::prepare_update,
+            updater::read_update_log,
+            updater::get_update_dir_info,
             window::request_attention,
             window::cancel_attention,
             window::set_window_theme,

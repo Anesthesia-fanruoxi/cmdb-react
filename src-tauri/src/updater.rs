@@ -50,9 +50,12 @@ fn generate_script_internal(msi_path: &str) -> Result<(), String> {
     let download_dir = get_download_dir();
     fs::create_dir_all(&download_dir).map_err(|e| e.to_string())?;
     
-    // 固定值（正式安装路径）
     let exe_name = "cmdb-desktop.exe";
-    let exe_path = r"C:\Program Files\CMDB Desktop\cmdb-desktop.exe";
+    
+    // 动态获取当前程序路径，如果获取失败则使用默认路径
+    let exe_path = std::env::current_exe()
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_else(|_| r"C:\Program Files\CMDB Desktop\cmdb-desktop.exe".to_string());
     
     // 获取 MSI 目录
     let msi_dir = std::path::Path::new(msi_path)
@@ -60,12 +63,13 @@ fn generate_script_internal(msi_path: &str) -> Result<(), String> {
         .map(|p| p.to_string_lossy().to_string())
         .unwrap_or_else(|| download_dir.to_string_lossy().to_string());
     
-    let script = updater_script::get_update_script(exe_name, &msi_dir, exe_path);
+    let script = updater_script::get_update_script(exe_name, &msi_dir, &exe_path);
     
     let script_path = download_dir.join("cmdb_update.bat");
     fs::write(&script_path, &script).map_err(|e| e.to_string())?;
     
     println!("[更新] 脚本已生成: {}", script_path.display());
+    println!("[更新] 程序路径: {}", exe_path);
     Ok(())
 }
 
@@ -219,14 +223,18 @@ pub async fn install_update(app: AppHandle, file_path: String, _install_path: St
         
         // 创建 VBS 脚本来静默提权
         let script_path_str = script_path.to_string_lossy().to_string();
+        // VBS 中路径不需要额外转义，直接用原始路径
         let vbs_content = format!(
             r#"Set UAC = CreateObject("Shell.Application")
-UAC.ShellExecute "cmd", "/c ""{0}""", "", "runas", 0"#,
-            script_path_str.replace("\"", "\"\"")
+UAC.ShellExecute "cmd.exe", "/c ""{0}""", "", "runas", 0"#,
+            script_path_str
         );
         
         let vbs_path = get_download_dir().join("elevate.vbs");
         fs::write(&vbs_path, &vbs_content).map_err(|e| e.to_string())?;
+        
+        println!("[更新] VBS 路径: {}", vbs_path.display());
+        println!("[更新] 脚本路径: {}", script_path_str);
         
         let vbs_path_str = vbs_path.to_string_lossy().to_string();
         std::process::Command::new("wscript")
@@ -296,4 +304,45 @@ pub fn generate_update_script(msi_path: String, _install_path: String) -> Result
     
     let script_path = get_download_dir().join("cmdb_update.bat");
     Ok(script_path.to_string_lossy().to_string())
+}
+
+
+/// 读取更新日志（用于调试）
+#[tauri::command]
+pub fn read_update_log() -> Result<String, String> {
+    let log_path = get_download_dir().join("update.log");
+    if log_path.exists() {
+        fs::read_to_string(&log_path).map_err(|e| e.to_string())
+    } else {
+        Ok("日志文件不存在".to_string())
+    }
+}
+
+/// 获取更新目录信息（用于调试）
+#[tauri::command]
+pub fn get_update_dir_info() -> Result<String, String> {
+    let download_dir = get_download_dir();
+    let mut info = format!("更新目录: {}\n", download_dir.display());
+    
+    if !download_dir.exists() {
+        info.push_str("目录不存在\n");
+        return Ok(info);
+    }
+    
+    info.push_str("\n文件列表:\n");
+    match fs::read_dir(&download_dir) {
+        Ok(entries) => {
+            for entry in entries.filter_map(|e| e.ok()) {
+                let path = entry.path();
+                let name = path.file_name().unwrap_or_default().to_string_lossy();
+                let size = fs::metadata(&path).map(|m| m.len()).unwrap_or(0);
+                info.push_str(&format!("  - {} ({} bytes)\n", name, size));
+            }
+        }
+        Err(e) => {
+            info.push_str(&format!("读取目录失败: {}\n", e));
+        }
+    }
+    
+    Ok(info)
 }

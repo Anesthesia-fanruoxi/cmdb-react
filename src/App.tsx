@@ -15,7 +15,8 @@ import { getUserAvatar, startAutoSave, stopAutoSave, forceSave } from './service
 import type { UpdateInfo } from './services/storage';
 import { StatusModalContainer } from './components/StatusModal';
 import { UpdateModal } from './components/UpdateModal';
-import { checkAndDownloadUpdate, installUpdate, cleanupOldUpdate, saveInstallPath } from './services/updater';
+import { installUpdate, cleanupOldUpdate, saveInstallPath } from './services/updater';
+import { listen } from '@tauri-apps/api/event';
 import { isTauriEnv } from './services/machine';
 import './App.css';
 
@@ -42,6 +43,29 @@ function App() {
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [pendingUpdate, setPendingUpdate] = useState<UpdateInfo | null>(null);
   const [installing, setInstalling] = useState(false);
+
+  // 监听后端推送的更新事件
+  useEffect(() => {
+    if (!isTauriEnv()) return;
+    
+    let unlisten: (() => void) | undefined;
+    
+    listen<{ version: string; changelog: string; msi_path: string }>('update-available', (event) => {
+      console.log('[App] 收到更新事件:', event.payload);
+      setPendingUpdate({
+        latestVersion: event.payload.version,
+        downloadedVersion: event.payload.version,
+        downloadedPath: event.payload.msi_path,
+        downloadStatus: 'completed',
+        downloadProgress: 100,
+        changelog: event.payload.changelog,
+        lastCheckTime: Date.now(),
+      });
+      setUpdateModalOpen(true);
+    }).then(fn => { unlisten = fn; });
+    
+    return () => { unlisten?.(); };
+  }, []);
 
   // 自动保存管理
   useEffect(() => {
@@ -114,24 +138,16 @@ function App() {
       // 先初始化主题，确保启动画面显示正确的主题
       initTheme();
       
-      // Tauri 环境下检查更新
+      // Tauri 环境下初始化更新相关
       if (isTauriEnv()) {
         try {
           // 保存当前安装路径
           await saveInstallPath();
           
-          // 先清理旧更新（如果已下载版本 = 当前版本）
+          // 清理旧更新（如果已下载版本 = 当前版本）
           await cleanupOldUpdate();
-          
-          // 检查并下载更新
-          const update = await checkAndDownloadUpdate();
-          if (update?.downloadedPath) {
-            console.log('[App] 发现更新，弹出确认框');
-            setPendingUpdate(update);
-            setUpdateModalOpen(true);
-          }
         } catch (e) {
-          console.error('[App] 检查更新失败:', e);
+          console.error('[App] 更新初始化失败:', e);
         }
       }
       

@@ -80,13 +80,18 @@ fn generate_script(msi_path: &str) -> Result<(), String> {
     fs::create_dir_all(&download_dir).map_err(|e| e.to_string())?;
     
     let exe_name = "cmdb-desktop.exe";
-    let exe_path = r"C:\Program Files\CMDB Desktop\cmdb-desktop.exe";
+    
+    // 动态获取当前程序路径
+    let exe_path = std::env::current_exe()
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_else(|_| r"C:\Program Files\CMDB Desktop\cmdb-desktop.exe".to_string());
+    
     let msi_dir = std::path::Path::new(msi_path)
         .parent()
         .map(|p| p.to_string_lossy().to_string())
         .unwrap_or_else(|| download_dir.to_string_lossy().to_string());
     
-    let script = crate::updater_script::get_update_script(exe_name, &msi_dir, exe_path);
+    let script = crate::updater_script::get_update_script(exe_name, &msi_dir, &exe_path);
     let script_path = download_dir.join("cmdb_update.bat");
     fs::write(&script_path, &script).map_err(|e| e.to_string())?;
     
@@ -161,10 +166,25 @@ pub fn start_update_checker(app: AppHandle) {
     
     let rt = tokio::runtime::Runtime::new().unwrap();
     
+    // 启动时等待 3 秒后立即检查一次
+    std::thread::sleep(Duration::from_secs(3));
+    println!("[更新检查] 启动时首次检查...");
+    
+    match rt.block_on(check_and_download()) {
+        Some(info) => {
+            println!("[更新检查] 发现新版本 {}，推送给前端", info.version);
+            let _ = app.emit("update-available", &info);
+        }
+        None => {
+            println!("[更新检查] 无更新");
+        }
+    }
+    
+    // 然后每 5 分钟检查一次
     loop {
         std::thread::sleep(Duration::from_secs(CHECK_INTERVAL_SECS));
         
-        println!("[更新检查] 执行检查...");
+        println!("[更新检查] 定时检查...");
         
         match rt.block_on(check_and_download()) {
             Some(info) => {
