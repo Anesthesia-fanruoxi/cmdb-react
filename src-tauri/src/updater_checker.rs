@@ -176,7 +176,8 @@ pub fn start_update_checker(app: AppHandle) {
             let _ = app.emit("update-available", &info);
         }
         None => {
-            println!("[更新检查] 无更新");
+            println!("[更新检查] 无更新，清理目录");
+            clean_download_dir();
         }
     }
     
