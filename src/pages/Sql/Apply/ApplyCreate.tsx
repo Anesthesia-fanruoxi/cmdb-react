@@ -406,10 +406,14 @@ const ApplyCreateDrawer = ({ prefillData, onClose, onSuccess }: Props) => {
                       <input type="checkbox" checked={isScheduled} onChange={async e => {
                         const checked = e.target.checked;
                         if (checked) {
-                          await confirm({ title: '定时执行', content: '您已开启定时执行，请选择执行时间', type: 'info' });
+                          const confirmed = await confirm({ title: '定时执行', content: '您已开启定时执行，请选择执行时间', type: 'info' });
+                          if (!confirmed) return;
+                          setIsScheduled(true);
+                          updateForm('executeTime', dayjs().add(1, 'hour').format('YYYY-MM-DD HH:mm:ss'));
+                        } else {
+                          setIsScheduled(false);
+                          updateForm('executeTime', '');
                         }
-                        setIsScheduled(checked);
-                        updateForm('executeTime', checked ? dayjs().add(1, 'hour').format('YYYY-MM-DD HH:mm:ss') : '');
                       }} />
                       <span className="slider"></span>
                     </label>
