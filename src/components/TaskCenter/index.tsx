@@ -1,28 +1,30 @@
 /**
- * 任务中心抽屉组件
+ * 任务中心抽屉组件 - 重构版
+ * 支持任务类型切换、搜索、SSE实时更新
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { 
-  X, Clock, CheckCircle, XCircle, Loader2, AlertCircle 
+  X, Search, BarChart3, FileText, Database
 } from 'lucide-react';
-import { getTaskList, getTaskStatus, cancelTask, previewTaskData, exportTaskData, Task, PreviewData } from '../../services/task';
+import { getToken } from '../../services/storage/tokenStorage';
+import { useAuthStore } from '../../stores/authStore';
+import { dialogStackManager } from '../../utils/dialogStack';
+import { previewTaskData } from '../../services/task';
 import { toast } from '../Toast';
-import { useMessageStore } from '../../stores/messageStore';
+import TaskList from './TaskList';
 import PreviewModal from './PreviewModal';
+import type { Task, PreviewData } from '../../services/task';
 import './style.css';
 
-// 状态配置
-const STATUS_CONFIG = {
-  pending: { text: '等待中', icon: Clock, color: 'var(--color-info)' },
-  running: { text: '执行中', icon: Loader2, color: 'var(--color-warning)' },
-  success: { text: '已完成', icon: CheckCircle, color: 'var(--color-success)' },
-  failed: { text: '失败', icon: XCircle, color: 'var(--color-danger)' },
-  canceled: { text: '已取消', icon: AlertCircle, color: 'var(--color-warning)' },
-};
+// 任务类型配置
+const TASK_TABS = [
+  { type: 'analysis', name: '数据分析', icon: BarChart3, color: '#409EFF' },
+  { type: 'es_export', name: '日志导出', icon: FileText, color: '#E6A23C' },
+  { type: 'sql_export', name: 'SQL导出', icon: Database, color: '#F56C6C' },
+] as const;
 
-const TASK_TYPE_MAP: Record<string, string> = { analysis: '数据分析', export: '数据导出' };
-const STEP_NAME_MAP: Record<string, string> = { initialize: '初始化', prepare: '准备', execute: '执行', cleanup: '清理' };
+type TaskType = typeof TASK_TABS[number]['type'];
 
 interface TaskCenterProps {
   visible: boolean;
@@ -30,143 +32,167 @@ interface TaskCenterProps {
 }
 
 const TaskCenter = ({ visible, onClose }: TaskCenterProps) => {
-  const addMessage = useMessageStore(state => state.addMessage);
+  const { user } = useAuthStore();
+  const [activeType, setActiveType] = useState<TaskType>('analysis');
+  const [searchKeyword, setSearchKeyword] = useState('');
   const [taskList, setTaskList] = useState<Task[]>([]);
-  const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
-  const [taskDetails, setTaskDetails] = useState<Record<string, Task>>({});
-  const [loadingDetails, setLoadingDetails] = useState<Record<string, boolean>>({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   
+  // 预览相关
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
-  const [previewData, setPreviewData] = useState<PreviewData | null>(null);
+  const [previewData, setPreviewData] = useState<PreviewData>({
+    items: [],
+    columns: [],
+    rows: [],
+    total: 0,
+    total_rows: 0,
+    cache_total: 0,
+    page: 1,
+    page_size: 20,
+  });
   const [currentPreviewTask, setCurrentPreviewTask] = useState<Task | null>(null);
+  
+  const eventSourceRef = useRef<EventSource | null>(null);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const fetchTaskList = useCallback(async () => {
-    try {
-      setLoading(true);
-      const res = await getTaskList();
-      if (res.code === 200) {
-        const sorted = res.data.items.sort((a, b) => 
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-        setTaskList(sorted);
-      }
-    } catch {
-      toast.error('获取任务列表失败');
-    } finally {
-      setLoading(false);
+  // 是否显示搜索框（管理员或有多个用户的任务）
+  const showSearch = String(user?.role_id) === '1' || taskList.some(t => t.nick_name);
+
+  // 关闭 SSE 连接
+  const closeSSE = useCallback(() => {
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
     }
   }, []);
 
+  // 获取任务列表（SSE）
+  const fetchTaskList = useCallback(() => {
+    closeSSE();
+    setLoading(true);
+
+    const token = getToken();
+    const baseUrl = import.meta.env.VITE_SSE_BASE_URL || import.meta.env.VITE_API_BASE_URL || '';
+    const keyword = searchKeyword ? `&keyword=${encodeURIComponent(searchKeyword)}` : '';
+    const url = `${baseUrl}/tasks/list?type=${activeType}${keyword}&token=${token}`;
+
+    const eventSource = new EventSource(url);
+    eventSourceRef.current = eventSource;
+
+    eventSource.addEventListener('connected', () => {
+      console.log('[TaskCenter] SSE 连接成功');
+    });
+
+    eventSource.addEventListener('data', (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        const tasks = (data.tasks || []).sort((a: Task, b: Task) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        setTaskList(tasks);
+        setLoading(false);
+      } catch (e) {
+        console.error('[TaskCenter] SSE 解析错误:', e);
+      }
+    });
+
+    eventSource.onerror = () => {
+      console.error('[TaskCenter] SSE 错误');
+      closeSSE();
+      setLoading(false);
+    };
+
+    eventSource.addEventListener('complete', () => {
+      closeSSE();
+    });
+  }, [activeType, searchKeyword, closeSSE]);
+
+  // 切换任务类型
+  const handleTabSwitch = (type: TaskType) => {
+    setActiveType(type);
+    setSearchKeyword('');
+  };
+
+  // 搜索防抖
+  const handleSearch = (value: string) => {
+    setSearchKeyword(value);
+    if (searchTimerRef.current) {
+      clearTimeout(searchTimerRef.current);
+    }
+    searchTimerRef.current = setTimeout(() => {
+      fetchTaskList();
+    }, 300);
+  };
+
+  // 打开时获取任务列表
   useEffect(() => {
     if (visible) {
       fetchTaskList();
-      setExpandedTasks(new Set());
-      setTaskDetails({});
-    }
-  }, [visible, fetchTaskList]);
-
-  const fetchTaskDetail = async (taskId: string) => {
-    if (loadingDetails[taskId] || taskDetails[taskId]) return;
-    setLoadingDetails(prev => ({ ...prev, [taskId]: true }));
-    try {
-      const res = await getTaskStatus(taskId);
-      if (res.code === 200) {
-        setTaskDetails(prev => ({ ...prev, [taskId]: res.data }));
-        if (res.data.status === 'running' || res.data.status === 'pending') {
-          pollTaskStatus(taskId);
-        }
-      }
-    } catch {
-      toast.error('获取任务详情失败');
-    } finally {
-      setLoadingDetails(prev => ({ ...prev, [taskId]: false }));
-    }
-  };
-
-  const pollTaskStatus = async (taskId: string) => {
-    if (!expandedTasks.has(taskId)) return;
-    try {
-      const res = await getTaskStatus(taskId);
-      if (res.code === 200) {
-        setTaskDetails(prev => ({ ...prev, [taskId]: res.data }));
-        if ((res.data.status === 'running' || res.data.status === 'pending') && expandedTasks.has(taskId)) {
-          setTimeout(() => pollTaskStatus(taskId), 3000);
-        }
-      }
-    } catch (e) { console.error('轮询失败:', e); }
-  };
-
-  const toggleTaskDetail = (task: Task) => {
-    const newExpanded = new Set(expandedTasks);
-    if (newExpanded.has(task.id)) {
-      newExpanded.delete(task.id);
     } else {
-      newExpanded.add(task.id);
-      fetchTaskDetail(task.id);
+      closeSSE();
     }
-    setExpandedTasks(newExpanded);
-  };
+  }, [visible, activeType, fetchTaskList, closeSSE]);
 
-  const handleCancelTask = async (taskId: string) => {
-    try {
-      const res = await cancelTask(taskId);
-      if (res.code === 200) {
-        toast.success('任务已取消');
-        setTaskDetails(prev => { const n = { ...prev }; delete n[taskId]; return n; });
-        fetchTaskDetail(taskId);
+  // ESC 关闭（只在最顶层时响应）
+  useEffect(() => {
+    const dialogId = 'task-center';
+    
+    if (!visible) {
+      dialogStackManager.pop(dialogId);
+      return;
+    }
+    
+    dialogStackManager.push(dialogId);
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && dialogStackManager.isTop(dialogId)) {
+        onClose();
       }
-    } catch { toast.error('取消任务失败'); }
-  };
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      dialogStackManager.pop(dialogId);
+    };
+  }, [visible, onClose]);
 
+  // 获取预览数据
   const handlePreview = async (task: Task, page = 1) => {
-    setPreviewLoading(true);
     setCurrentPreviewTask(task);
+    setPreviewVisible(true);
+    setPreviewLoading(true);
+    
     try {
       const res = await previewTaskData({ id: task.id, type: task.type, page });
-      if (res.code === 200) { setPreviewData(res.data); setPreviewVisible(true); }
-    } catch { toast.error('获取预览数据失败'); }
-    finally { setPreviewLoading(false); }
-  };
-
-  const handleExport = async (task: Task) => {
-    try {
-      const res = await exportTaskData({ id: task.id, type: task.type });
-      const blob = new Blob([res], { type: 'application/vnd.ms-excel' });
-      const link = document.createElement('a');
-      link.href = window.URL.createObjectURL(blob);
-      const fileName = `${task.type}_${task.id.slice(0, 8)}_${Date.now()}.xlsx`;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(link.href);
-      
-      // 同时显示 toast 和添加到消息中心
-      toast.success('导出成功');
-      addMessage({
-        type: 'success',
-        title: '任务导出成功',
-        content: `文件 ${fileName} 已下载`,
-      });
-    } catch {
-      toast.error('导出失败');
+      if (res.code === 200) {
+        setPreviewData(res.data);
+      } else {
+        toast.error('获取预览数据失败');
+      }
+    } catch (error) {
+      console.error('[TaskCenter] 预览失败:', error);
+      toast.error('获取预览数据失败');
+    } finally {
+      setPreviewLoading(false);
     }
   };
 
-  const formatDuration = (d?: number) => {
-    if (!d) return '0ms';
-    if (d < 1000) return `${d}ms`;
-    const s = Math.floor(d / 1000);
-    return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${s % 60}s`;
+  // 预览分页
+  const handlePreviewPageChange = (task: Task, page: number) => {
+    handlePreview(task, page);
   };
 
-  const renderStatus = (status: Task['status']) => {
-    const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
-    const Icon = cfg.icon;
-    return <span className="task-status" style={{ color: cfg.color }}><Icon size={14} className={status === 'running' ? 'spin' : ''} />{cfg.text}</span>;
-  };
+  // 组件卸载时关闭 SSE
+  useEffect(() => {
+    return () => {
+      closeSSE();
+      if (searchTimerRef.current) {
+        clearTimeout(searchTimerRef.current);
+      }
+    };
+  }, [closeSSE]);
 
   if (!visible) return null;
 
@@ -176,58 +202,80 @@ const TaskCenter = ({ visible, onClose }: TaskCenterProps) => {
       <div className="task-drawer">
         <div className="drawer-header">
           <h3>任务中心</h3>
-          <button className="close-btn" onClick={onClose}><X size={18} /></button>
+          <button className="close-btn" onClick={onClose}>
+            <X size={18} />
+          </button>
         </div>
-        <div className="drawer-content">
-          {loading && taskList.length === 0 ? (
-            <div className="task-empty"><Loader2 size={32} className="spin" /><p>加载中...</p></div>
-          ) : taskList.length === 0 ? (
-            <div className="task-empty"><AlertCircle size={48} /><p>暂无任务</p></div>
-          ) : (
-            <div className="task-list">
-              {taskList.map(task => (
-                <div key={task.id} className={`task-item task-${task.status}`}>
-                  <div className="task-header" onClick={() => toggleTaskDetail(task)}>
-                    <div className="task-info">
-                      <span className="task-id">ID: {task.id.slice(0, 8)}</span>
-                      <span className="task-time">{task.created_at}</span>
-                      <span className="task-type">{TASK_TYPE_MAP[task.type] || task.type}</span>
-                      {renderStatus(task.status)}
-                    </div>
-                    <div className="task-actions">
-                      <button className="link-btn" onClick={(e) => { e.stopPropagation(); handlePreview(task); }}>预览</button>
-                      <button className="link-btn" onClick={(e) => { e.stopPropagation(); handleExport(task); }}>导出</button>
-                    </div>
-                  </div>
-                  {expandedTasks.has(task.id) && (
-                    <div className="task-detail">
-                      {loadingDetails[task.id] ? <div className="detail-loading"><Loader2 size={20} className="spin" /></div> : taskDetails[task.id] ? (
-                        <>
-                          {taskDetails[task.id].progress !== undefined && (
-                            <div className="detail-row"><span className="detail-label">进度：</span><div className="progress-bar"><div className="progress-fill" style={{ width: `${taskDetails[task.id].progress}%` }} /></div><span>{taskDetails[task.id].progress}%</span></div>
-                          )}
-                          {taskDetails[task.id].error_message && <div className="detail-row error"><span className="detail-label">错误：</span><span className="error-msg">{taskDetails[task.id].error_message}</span></div>}
-                          {taskDetails[task.id].setup && (
-                            <div className="detail-row"><span className="detail-label">步骤：</span>
-                              <div className="setup-steps">{Object.entries(taskDetails[task.id].setup!).sort().map(([k, s]) => (
-                                <div key={k} className={`setup-step step-${s.status}`}><span>{STEP_NAME_MAP[k] || k}：{s.status || '未开始'}</span>{s.duration !== undefined && <span className="step-dur">{formatDuration(s.duration)}</span>}</div>
-                              ))}</div>
-                            </div>
-                          )}
-                          {(taskDetails[task.id].status === 'running' || taskDetails[task.id].status === 'pending') && (
-                            <div className="detail-actions"><button className="cancel-btn" onClick={() => handleCancelTask(task.id)}><X size={14} /> 取消</button></div>
-                          )}
-                        </>
-                      ) : null}
-                    </div>
-                  )}
-                </div>
-              ))}
+
+        {/* 任务类型标签 */}
+        <div className="task-tabs">
+          {TASK_TABS.map(tab => {
+            const Icon = tab.icon;
+            return (
+              <div
+                key={tab.type}
+                className={`task-tab-card ${activeType === tab.type ? 'active' : ''}`}
+                onClick={() => handleTabSwitch(tab.type)}
+              >
+                <Icon size={20} style={{ color: activeType === tab.type ? '#fff' : tab.color }} />
+                <span className="tab-name">{tab.name}</span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* 搜索框 */}
+        {showSearch && (
+          <div className="task-search">
+            <div className="search-input">
+              <Search size={16} />
+              <input
+                type="text"
+                placeholder="支持中英文顺序模糊"
+                value={searchKeyword}
+                onChange={(e) => handleSearch(e.target.value)}
+              />
+              {searchKeyword && (
+                <button className="clear-btn" onClick={() => handleSearch('')}>
+                  <X size={14} />
+                </button>
+              )}
             </div>
-          )}
+          </div>
+        )}
+
+        {/* 任务列表 */}
+        <div className="drawer-content">
+          <TaskList
+            tasks={taskList}
+            loading={loading}
+            onPreview={handlePreview}
+            onRefresh={fetchTaskList}
+          />
         </div>
       </div>
-      <PreviewModal visible={previewVisible} loading={previewLoading} data={previewData} currentTask={currentPreviewTask} onClose={() => setPreviewVisible(false)} onPageChange={handlePreview} />
+
+      {/* 预览弹窗 */}
+      <PreviewModal
+        visible={previewVisible}
+        loading={previewLoading}
+        data={previewData}
+        currentTask={currentPreviewTask}
+        onClose={() => {
+          setPreviewVisible(false);
+          setPreviewData({
+            items: [],
+            columns: [],
+            rows: [],
+            total: 0,
+            total_rows: 0,
+            cache_total: 0,
+            page: 1,
+            page_size: 20,
+          });
+        }}
+        onPageChange={handlePreviewPageChange}
+      />
     </>
   );
 };

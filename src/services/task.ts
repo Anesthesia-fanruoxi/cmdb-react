@@ -3,6 +3,7 @@
  */
 
 import { apiClient } from './request';
+import { getToken } from './storage/tokenStorage';
 
 // 任务类型定义
 export interface Task {
@@ -12,7 +13,18 @@ export interface Task {
   created_at: string;
   progress?: number;
   error_message?: string;
-  setup?: Record<string, { status: string; duration?: number }>;
+  setup?: Record<string, { 
+    status: string; 
+    duration?: number;
+    description?: string;
+  }>;
+  // 新增字段
+  type_text?: string;        // 任务类型文本
+  status_text?: string;      // 状态文本
+  nick_name?: string;        // 用户昵称
+  is_expired?: boolean;      // 是否过期
+  processed_count?: number;  // 已处理数量
+  total_count?: number;      // 总数量
 }
 
 export interface TaskListResponse {
@@ -28,8 +40,12 @@ export interface TaskStatusResponse {
 }
 
 export interface PreviewData {
-  items: { value: string; count: number }[];
-  total: number;
+  items?: { value: string; count: number }[];  // 数据分析预览
+  columns?: string[];                          // SQL/ES 导出列名
+  rows?: any[][];                              // SQL/ES 导出数据行
+  total?: number;                              // 数据分析总数
+  total_rows?: number;                         // SQL/ES 总行数
+  cache_total?: number;                        // 缓存总数
   page: number;
   page_size: number;
 }
@@ -39,7 +55,47 @@ export async function getTaskList(): Promise<TaskListResponse> {
   return apiClient.get('/tasks/list');
 }
 
-// 获取任务状态
+// 获取任务详情（SSE流式）
+export function getTaskDetail(
+  taskId: string,
+  onMessage: (data: Task) => void,
+  onError?: () => void,
+  onComplete?: () => void
+): EventSource {
+  const token = getToken();
+  const baseUrl = import.meta.env.VITE_SSE_BASE_URL || import.meta.env.VITE_API_BASE_URL || '';
+  const url = `${baseUrl}/tasks/detail?id=${taskId}&token=${token}`;
+  
+  const eventSource = new EventSource(url);
+  
+  eventSource.addEventListener('connected', () => {
+    console.log('[TaskDetail] SSE 连接成功');
+  });
+  
+  eventSource.addEventListener('data', (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      onMessage(data);
+    } catch (e) {
+      console.error('[TaskDetail] SSE 解析错误:', e);
+    }
+  });
+  
+  eventSource.onerror = () => {
+    console.error('[TaskDetail] SSE 错误');
+    eventSource.close();
+    onError?.();
+  };
+  
+  eventSource.addEventListener('complete', () => {
+    eventSource.close();
+    onComplete?.();
+  });
+  
+  return eventSource;
+}
+
+// 获取任务状态（普通HTTP请求，用于轮询）
 export async function getTaskStatus(taskId: string): Promise<TaskStatusResponse> {
   return apiClient.get(`/tasks/status?id=${taskId}`);
 }
@@ -63,6 +119,6 @@ export async function exportTaskData(params: {
   id: string;
   type: string;
 }): Promise<Blob> {
-  const response = await apiClient.post<Blob>('/tasks/export', params, { responseType: 'blob' });
+  const response = await apiClient.post('/tasks/export', params, { responseType: 'blob' });
   return response as unknown as Blob;
 }

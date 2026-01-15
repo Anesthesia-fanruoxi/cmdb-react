@@ -6,7 +6,7 @@
 import { create } from 'zustand';
 import type { MenuItem, TagView } from '../types/menu';
 import { getUserMenus } from '../services/system/menu';
-import { markDirty } from '../services/storage';
+import { markDirty } from '../services/storage/autoSave';
 
 // 首页菜单配置
 const HOME_MENU: MenuItem = {

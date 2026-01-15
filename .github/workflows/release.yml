@@ -147,9 +147,9 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"
-          DESCRIPTION="1、优化了elfk查询时候的标签切换时间被重置
-          2、修复了elfk查询的时候使用的是旧时间
-          3、重新规划了数据持久化逻辑"
+          DESCRIPTION="1、优化sse逻辑
+          2、优化任务中心处理逻辑
+          3、去掉了所有发送邮件的功能"
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \
             -H "Content-Type: application/json" \

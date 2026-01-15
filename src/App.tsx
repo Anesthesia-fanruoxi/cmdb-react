@@ -139,12 +139,20 @@ function App() {
       const clear = params.get('clear');
       const isDetached = window.location.pathname === '/detached';
       
+      console.log('[App] 启动检测:', { 
+        pathname: window.location.pathname, 
+        isDetached, 
+        from, 
+        clear 
+      });
+      
       if (from || clear) {
         window.history.replaceState({}, '', window.location.pathname);
       }
       
       // 独立窗口 - 快速初始化
       if (isDetached) {
+        console.log('[App] 独立窗口模式，跳过动画');
         initSecurity();
         initTheme();
         await initFromStorage();
@@ -194,16 +202,21 @@ function App() {
       if (from === 'login') {
         console.log('[App] 检测到 from=login，跳过 init 动画');
         
-        // 先设置 flowType 为 login，避免显示 init 画面
+        // 从 URL 读取主题
+        const themeParam = params.get('theme') as 'light' | 'dark' | null;
+        if (themeParam) {
+          setTheme(themeParam);
+        }
+        
+        // 设置 flowType 为 login
         setFlowType('login');
         setCurrentStep(0);
         
-        // 初始化存储（不播放动画）
+        // 初始化存储
         await initAllStorage();
         await initFromStorage();
         
         const hasToken = !!useAuthStore.getState().token;
-        console.log('[App] hasToken:', hasToken);
         if (hasToken) {
           await runFlow('login', [
             async () => {},

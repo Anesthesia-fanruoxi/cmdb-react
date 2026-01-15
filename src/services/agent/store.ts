@@ -14,8 +14,9 @@ export const getPluginStoreList = (params?: { keyword?: string; plugin_type?: st
 // 获取插件详情
 export const getPluginDetail = (id: number) => apiClient.get('/agent/plugin/store/detail', { id });
 
-// 安装插件
-export const installPlugin = (data: InstallPluginData) => apiClient.post('/agent/store/install', data);
+// 安装插件（超时60秒）
+export const installPlugin = (data: InstallPluginData) => 
+  apiClient.post('/agent/store/install', data, { timeout: 60000 });
 
 // 预览插件配置
 export const previewPluginConfig = (data: { name: string; project: string }) => 

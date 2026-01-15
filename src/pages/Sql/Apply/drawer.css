@@ -5,8 +5,7 @@
 
 /* SQL 只读编辑器 */
 .sql-editor-readonly {
-  flex: 1;
-  min-height: 200px;
+  height: 300px;
   border-radius: 6px;
   overflow: hidden;
   border: 1px solid var(--border-color-light);

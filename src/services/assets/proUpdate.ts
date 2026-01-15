@@ -79,7 +79,7 @@ export function subscribeProjectDetail(
   onMessage: (data: ProjectDetailResponse) => void,
   onError?: (error: Event) => void
 ): { close: () => void } {
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
+  const baseUrl = import.meta.env.VITE_SSE_BASE_URL || import.meta.env.VITE_API_BASE_URL || '';
   const url = `${baseUrl}/assets/proUpdate/list-detail?project=${project}${type ? `&type=${type}` : ''}`;
   
   const eventSource = new EventSource(url);

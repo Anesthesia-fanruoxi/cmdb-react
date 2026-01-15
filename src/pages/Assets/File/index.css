@@ -85,6 +85,13 @@
   border-radius: 4px;
   font-size: 13px;
   min-width: 160px;
+  background: var(--bg-color, #fff);
+  color: var(--text-color, #333);
+}
+
+.filter-item select option {
+  background: var(--bg-color, #fff);
+  color: var(--text-color, #333);
 }
 
 .path-nav {

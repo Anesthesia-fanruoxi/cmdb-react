@@ -3,19 +3,57 @@
  */
 
 import { X, Loader2 } from 'lucide-react';
+import { useEffect } from 'react';
+import { dialogStackManager } from '../../utils/dialogStack';
 import { PreviewData, Task } from '../../services/task';
 
 interface PreviewModalProps {
   visible: boolean;
   loading: boolean;
-  data: PreviewData | null;
+  data: PreviewData;
   currentTask: Task | null;
   onClose: () => void;
   onPageChange: (task: Task, page: number) => void;
 }
 
 const PreviewModal = ({ visible, loading, data, currentTask, onClose, onPageChange }: PreviewModalProps) => {
+  // ESC 关闭（只在最顶层时响应）
+  useEffect(() => {
+    const dialogId = 'preview-modal';
+    
+    if (!visible) {
+      dialogStackManager.pop(dialogId);
+      return;
+    }
+    
+    dialogStackManager.push(dialogId);
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && dialogStackManager.isTop(dialogId)) {
+        onClose();
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      dialogStackManager.pop(dialogId);
+    };
+  }, [visible, onClose]);
+
   if (!visible) return null;
+
+  // 判断是否是数据分析预览
+  const isAnalysisPreview = currentTask?.type === 'analysis';
+  
+  // 转换表格数据（SQL/ES导出）
+  const previewTableData = data.rows?.map(row => {
+    const obj: Record<string, any> = {};
+    row.forEach((val, idx) => {
+      obj[`col${idx}`] = val;
+    });
+    return obj;
+  }) || [];
 
   return (
     <div className="preview-modal-overlay" onClick={onClose}>
@@ -27,18 +65,56 @@ const PreviewModal = ({ visible, loading, data, currentTask, onClose, onPageChan
         <div className="preview-content">
           {loading ? (
             <div className="preview-loading"><Loader2 size={24} className="spin" /></div>
-          ) : data ? (
+          ) : (
             <>
-              <table className="preview-table">
-                <thead><tr><th>值</th><th>数量</th></tr></thead>
-                <tbody>
-                  {data.items.map((item, i) => (
-                    <tr key={i}><td>{item.value}</td><td>{item.count}</td></tr>
-                  ))}
-                </tbody>
-              </table>
+              {/* 数据分析预览 */}
+              {isAnalysisPreview && data.items && data.items.length > 0 && (
+                <table className="preview-table">
+                  <thead><tr><th>值</th><th>数量</th></tr></thead>
+                  <tbody>
+                    {data.items.map((item, i) => (
+                      <tr key={i}><td>{item.value}</td><td>{item.count}</td></tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+              
+              {/* SQL/ES导出预览 */}
+              {!isAnalysisPreview && data.columns && data.columns.length > 0 && (
+                <div className="preview-table-wrapper">
+                  <table className="preview-table">
+                    <thead>
+                      <tr>
+                        {data.columns.map((col, idx) => (
+                          <th key={idx}>{col}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {previewTableData.map((row, i) => (
+                        <tr key={i}>
+                          {data.columns!.map((_, idx) => (
+                            <td key={idx}>{row[`col${idx}`]}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              
+              {/* 分页 */}
               <div className="preview-pagination">
-                <span>共 {data.total} 条</span>
+                <div className="preview-info">
+                  <span className="preview-total">
+                    总数: {isAnalysisPreview ? data.total : data.total_rows}
+                  </span>
+                  {((isAnalysisPreview ? data.total : data.total_rows) || 0) > 100 && (
+                    <span className="preview-tip">
+                      预览只展示100条数据，需要全部数据可以下载
+                    </span>
+                  )}
+                </div>
                 <div className="pagination-btns">
                   <button 
                     disabled={data.page <= 1} 
@@ -46,13 +122,13 @@ const PreviewModal = ({ visible, loading, data, currentTask, onClose, onPageChan
                   >上一页</button>
                   <span>第 {data.page} 页</span>
                   <button 
-                    disabled={data.page * data.page_size >= data.total}
+                    disabled={data.page * data.page_size >= (isAnalysisPreview ? data.cache_total || 0 : Math.min(data.total_rows || 0, 100))}
                     onClick={() => currentTask && onPageChange(currentTask, data.page + 1)}
                   >下一页</button>
                 </div>
               </div>
             </>
-          ) : null}
+          )}
         </div>
       </div>
     </div>

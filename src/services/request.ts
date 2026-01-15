@@ -140,7 +140,7 @@ async function request<T>(
     // 处理二进制响应
     if (config.responseType === 'blob') {
       const blob = await response.blob();
-      return { code: 200, message: 'success', data: blob as unknown as T };
+      return blob as unknown as ApiResponse<T>;
     }
 
     // 获取响应文本并应用大整数保护

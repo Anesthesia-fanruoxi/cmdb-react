@@ -34,6 +34,7 @@ const SqlAnalysisDialog = ({
   const [activeTab, setActiveTab] = useState(0)
   const [activeResultTab, setActiveResultTab] = useState<'analysis' | 'rules'>('analysis')
   const editorRefs = useRef<Record<number, ace.Ace.Editor>>({})
+  const containerRefs = useRef<Record<number, HTMLDivElement | null>>({})
 
   const currentSql = sqlList[activeTab] || null
 
@@ -43,8 +44,9 @@ const SqlAnalysisDialog = ({
     return rules.some(r => r.rule_type === 'syntax_check' && !r.passed)
   }
 
-  // 初始化单个编辑器
-  const initEditor = useCallback((index: number, container: HTMLDivElement | null) => {
+  // 初始化编辑器
+  const createEditor = useCallback((index: number) => {
+    const container = containerRefs.current[index]
     if (!container || editorRefs.current[index]) return
     
     const editor = ace.edit(container)
@@ -59,12 +61,9 @@ const SqlAnalysisDialog = ({
       showGutter: true,
       highlightActiveLine: false,
       showPrintMargin: false,
-      wrap: true,
-      maxLines: Infinity,
-      minLines: 5
+      wrap: true
     })
     
-    // 设置对应的 SQL 内容
     if (sqlList[index]) {
       editor.setValue(sqlList[index].sql || '', -1)
     }
@@ -78,6 +77,15 @@ const SqlAnalysisDialog = ({
     editorRefs.current[index] = editor
   }, [sqlList])
 
+  // 组件挂载后初始化当前 tab 的编辑器
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      createEditor(activeTab)
+      editorRefs.current[activeTab]?.resize()
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [activeTab, createEditor])
+
   // 清理编辑器
   useEffect(() => {
     return () => {
@@ -88,6 +96,11 @@ const SqlAnalysisDialog = ({
 
   const currentHasSyntaxError = currentSql && hasSyntaxError(currentSql)
   const currentRules = currentSql?.rule_infos || currentSql?.rule_results || []
+
+  // 保存容器引用
+  const setContainerRef = useCallback((index: number, el: HTMLDivElement | null) => {
+    containerRefs.current[index] = el
+  }, [])
 
   return (
     <div className="modal-overlay" onClick={onCancel}>
@@ -119,7 +132,7 @@ const SqlAnalysisDialog = ({
                 key={index}
                 className={`sql-editor-box ${hasSyntaxError(sql) ? 'has-error' : ''}`}
                 style={{ display: activeTab === index ? 'block' : 'none' }}
-                ref={el => initEditor(index, el)}
+                ref={el => setContainerRef(index, el)}
               />
             ))}
           </div>

@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
+import { dialogStackManager } from '@/utils/dialogStack';
 
 interface StepInfo {
   step: number;
@@ -45,13 +46,28 @@ const LogViewerDialog = ({ visible, logStep, taskInfo, projectDetail, onClose }:
   }, [visible, logStep, taskInfo]);
 
   // ESC 键关闭
+  // ESC 关闭（只在最顶层时响应）
   useEffect(() => {
-    if (!visible) return;
+    const dialogId = 'log-viewer-dialog';
+    
+    if (!visible) {
+      dialogStackManager.pop(dialogId);
+      return;
+    }
+    
+    dialogStackManager.push(dialogId);
+    
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape' && dialogStackManager.isTop(dialogId)) {
+        onClose();
+      }
     };
+    
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      dialogStackManager.pop(dialogId);
+    };
   }, [visible, onClose]);
 
   // 自动滚动到底部
@@ -78,17 +94,22 @@ const LogViewerDialog = ({ visible, logStep, taskInfo, projectDetail, onClose }:
     // 构建 WebSocket URL
     // Tauri 桌面应用中 location.host 不是后端地址，需要从 API URL 提取
     let wsUrl: string;
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
+    const wsBaseUrl = import.meta.env.VITE_WS_BASE_URL;
     
-    if (apiBaseUrl) {
-      // 从 API URL 提取主机地址，如 https://cmdb.hzbxhd.com/api -> wss://cmdb.hzbxhd.com
-      const apiUrl = new URL(apiBaseUrl);
-      const wsProtocol = apiUrl.protocol === 'https:' ? 'wss:' : 'ws:';
-      wsUrl = `${wsProtocol}//${apiUrl.host}/ws/assets/proUpdate/logs?task_id=${encodeURIComponent(taskId)}&step_type=${encodeURIComponent(stepType)}&project=${encodeURIComponent(project)}&type=${encodeURIComponent(type)}`;
+    if (wsBaseUrl) {
+      // 使用配置的 WebSocket 地址
+      wsUrl = `${wsBaseUrl}/assets/proUpdate/logs?task_id=${encodeURIComponent(taskId)}&step_type=${encodeURIComponent(stepType)}&project=${encodeURIComponent(project)}&type=${encodeURIComponent(type)}`;
     } else {
-      // 开发环境 fallback
-      const wsBase = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8080';
-      wsUrl = `${wsBase}/ws/assets/proUpdate/logs?task_id=${encodeURIComponent(taskId)}&step_type=${encodeURIComponent(stepType)}&project=${encodeURIComponent(project)}&type=${encodeURIComponent(type)}`;
+      // Fallback: 从 API URL 提取主机地址
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
+      if (apiBaseUrl) {
+        const apiUrl = new URL(apiBaseUrl);
+        const wsProtocol = apiUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+        wsUrl = `${wsProtocol}//${apiUrl.host}/ws/assets/proUpdate/logs?task_id=${encodeURIComponent(taskId)}&step_type=${encodeURIComponent(stepType)}&project=${encodeURIComponent(project)}&type=${encodeURIComponent(type)}`;
+      } else {
+        // 开发环境 fallback
+        wsUrl = `ws://localhost:8080/ws/assets/proUpdate/logs?task_id=${encodeURIComponent(taskId)}&step_type=${encodeURIComponent(stepType)}&project=${encodeURIComponent(project)}&type=${encodeURIComponent(type)}`;
+      }
     }
 
     try {

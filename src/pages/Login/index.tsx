@@ -9,7 +9,6 @@ import { useAppStore } from '../../stores/appStore';
 import { isTauriEnv, hasDeviceCredentials } from '../../services/machine';
 import { getLoginHistory, getLastUser } from '../../services/loginHistory';
 import {
-  getDefaultTheme,
   setDefaultTheme,
   getActiveRoute,
 } from '../../services/storage';
@@ -196,7 +195,8 @@ const Login = () => {
   // 登录成功后跳转
   const onLoginSuccess = () => {
     setGlobalTheme(theme);
-    window.location.href = '/dashboard?from=login';
+    // 通过 URL 参数传递主题，避免跳转后重新读取
+    window.location.href = `/dashboard?from=login&theme=${theme}`;
   };
 
   // 普通登录处理

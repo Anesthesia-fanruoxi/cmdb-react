@@ -109,7 +109,7 @@
 
 .modal-content.modal-sm { width: 400px; }
 .modal-content.modal-lg { width: 700px; }
-.modal-content.modal-xl { width: 900px; max-width: 95%; }
+.modal-content.modal-xl { width: 80%; height: 80vh; }
 
 .modal-header {
   display: flex;

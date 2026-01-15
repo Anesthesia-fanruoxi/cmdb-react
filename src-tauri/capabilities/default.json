@@ -37,6 +37,10 @@
     "http:allow-fetch-cancel",
     "http:allow-fetch-read-body",
     "http:allow-fetch-send",
-    "store:default"
+    "store:default",
+    "dialog:default",
+    "dialog:allow-save",
+    "fs:default",
+    "fs:allow-write-file"
   ]
 }

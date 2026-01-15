@@ -131,9 +131,8 @@ export function createSSEConnection(
   onComplete?: () => void
 ) {
   const token = getToken();
-  // VITE_API_BASE_URL 已包含 /api，所以这里不需要再加
-  // 例如: http://192.168.31.25:8080/api + /sql/apply/list
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
+  // SSE 使用独立的服务地址
+  const baseUrl = import.meta.env.VITE_SSE_BASE_URL || import.meta.env.VITE_API_BASE_URL || '';
   const fullUrl = `${baseUrl}${url}?token=${token}`;
   
   console.log('SSE连接URL:', fullUrl);

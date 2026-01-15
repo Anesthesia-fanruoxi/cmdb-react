@@ -8,6 +8,7 @@ import { cancelTask } from '@/services/assets';
 import type { ReleaseRecord } from '@/services/assets';
 import LogViewerDialog from './LogViewerDialog';
 import { confirm } from '@/components/ConfirmModal';
+import { dialogStackManager } from '@/utils/dialogStack';
 
 interface StepDetail {
   step: number;
@@ -56,13 +57,28 @@ const RecordDetailDialog = ({ visible, record, projectDetail, onClose, onRefresh
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, record]);
 
-  // ESC 关闭
+  // ESC 关闭（只在最顶层时响应）
   useEffect(() => {
+    const dialogId = 'record-detail-dialog';
+    
+    if (visible) {
+      dialogStackManager.push(dialogId);
+    } else {
+      dialogStackManager.pop(dialogId);
+      return;
+    }
+    
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && visible) onClose();
+      if (e.key === 'Escape' && dialogStackManager.isTop(dialogId)) {
+        onClose();
+      }
     };
+    
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      dialogStackManager.pop(dialogId);
+    };
   }, [visible, onClose]);
 
   const closeSSE = () => {
@@ -83,7 +99,7 @@ const RecordDetailDialog = ({ visible, record, projectDetail, onClose, onRefresh
     setLoading(true);
     closeSSE();
 
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
+    const baseUrl = import.meta.env.VITE_SSE_BASE_URL || import.meta.env.VITE_API_BASE_URL || '';
     const url = `${baseUrl}/assets/proUpdate/records-detail?id=${taskId}`;
     const eventSource = new EventSource(url);
 

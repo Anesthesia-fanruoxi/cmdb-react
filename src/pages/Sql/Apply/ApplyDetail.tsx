@@ -48,9 +48,7 @@ const ApplyDetailDrawer = ({ detail, onClose, onRefresh, onResubmit }: Props) =>
       showGutter: true,
       highlightActiveLine: false,
       showPrintMargin: false,
-      wrap: true,
-      maxLines: Infinity,
-      minLines: 5
+      wrap: true
     });
     
     editor.setValue(detail.sql_content || '', -1);
