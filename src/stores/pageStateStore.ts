@@ -4,19 +4,7 @@
  */
 
 import { create } from 'zustand';
-
-// 延迟导入 markDirty 避免循环依赖
-let markDirtyFn: (() => void) | null = null;
-const callMarkDirty = () => {
-  if (!markDirtyFn) {
-    import('../services/storage/autoSave').then(m => {
-      markDirtyFn = m.markDirty;
-      markDirtyFn?.();
-    });
-  } else {
-    markDirtyFn();
-  }
-};
+import { markDirty } from '../services/storage/autoSave';
 
 /** 页面状态数据 */
 interface PageState {
@@ -44,7 +32,6 @@ interface PageStateStore {
   lastRoute: string | null;
   lastSaveTime: number | null;
   _hasHydrated: boolean;
-
   setPageState: <T extends PageState>(pageKey: string, state: Partial<T>) => void;
   getPageState: <T extends PageState>(pageKey: string) => T | undefined;
   clearPageState: (pageKey: string) => void;
@@ -64,14 +51,11 @@ export const usePageStateStore = create<PageStateStore>()((set, get) => ({
     set((prev) => ({
       pages: {
         ...prev.pages,
-        [pageKey]: {
-          ...prev.pages[pageKey],
-          ...state,
-        },
+        [pageKey]: { ...prev.pages[pageKey], ...state },
       },
       lastSaveTime: Date.now(),
     }));
-    callMarkDirty();
+    markDirty();
   },
 
   getPageState: <T extends PageState>(pageKey: string) => {
@@ -83,19 +67,18 @@ export const usePageStateStore = create<PageStateStore>()((set, get) => ({
       const { [pageKey]: _, ...rest } = prev.pages;
       return { pages: rest };
     });
-    callMarkDirty();
+    markDirty();
   },
 
   clearAllPageStates: () => {
     set({ pages: {}, lastRoute: null, lastSaveTime: null });
-    callMarkDirty();
+    markDirty();
   },
 
   setLastRoute: (route) => {
     set({ lastRoute: route });
   },
 
-  // 状态恢复（由 authStore 调用）
   restoreState: (state) => {
     set({
       pages: state.pages || {},
@@ -104,7 +87,6 @@ export const usePageStateStore = create<PageStateStore>()((set, get) => ({
     });
   },
 
-  // 重置状态（登出时调用）
   reset: () => {
     set({
       pages: {},

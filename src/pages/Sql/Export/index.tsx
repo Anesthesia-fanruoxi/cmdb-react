@@ -2,9 +2,9 @@
  * SQL数据导出页面
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { 
-  getExportList, getSqlExportProjects, submitExport, getProcessList, getDatabases,
+  getExportListSSE, getSqlExportProjects, submitExport, getProcessList, getDatabases,
   EXPORT_STATUS_MAP, type ExportItem, type ExportProject, type ProcessInfo
 } from '@/services/sql';
 import { toast } from '@/components/AppNotification';
@@ -15,6 +15,7 @@ const SqlExport = () => {
   const [loading, setLoading] = useState(false);
   const [exportList, setExportList] = useState<ExportItem[]>([]);
   const [projects, setProjects] = useState<ExportProject[]>([]);
+  const eventSourceRef = useRef<EventSource | null>(null);
   
   // 抽屉状态
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -45,20 +46,39 @@ const SqlExport = () => {
     executorId: null as number | null
   });
 
-  // 获取导出列表
-  const fetchExportList = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await getExportList();
-      if (res.code === 200) {
-        setExportList(res.data?.export || []);
-      }
-    } catch (error) {
-      console.error('获取导出列表失败:', error);
-    } finally {
-      setLoading(false);
+  // 关闭 SSE 连接
+  const closeSSE = useCallback(() => {
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
     }
   }, []);
+
+  // 获取导出列表（SSE）
+  const fetchExportList = useCallback(() => {
+    closeSSE();
+    setLoading(true);
+    
+    const eventSource = getExportListSSE(
+      (data) => {
+        setExportList(data.export || []);
+        setLoading(false);
+      },
+      () => {
+        setLoading(false);
+      },
+      () => {
+        // complete
+      }
+    );
+    
+    eventSourceRef.current = eventSource;
+  }, [closeSSE]);
+
+  // 组件卸载时关闭 SSE
+  useEffect(() => {
+    return () => closeSSE();
+  }, [closeSSE]);
 
   // 获取项目列表
   const fetchProjects = useCallback(async () => {
@@ -68,8 +88,8 @@ const SqlExport = () => {
         const items = (res.data as { items?: ExportProject[] })?.items || res.data || [];
         setProjects(Array.isArray(items) ? items : []);
       }
-    } catch (error) {
-      console.error('获取项目列表失败:', error);
+    } catch {
+      // 静默处理
     }
   }, []);
 
@@ -80,8 +100,8 @@ const SqlExport = () => {
       if (res.code === 200 && res.data?.list) {
         setProcessList(res.data.list);
       }
-    } catch (error) {
-      console.error('获取流程列表失败:', error);
+    } catch {
+      // 静默处理
     }
   }, []);
 
@@ -135,8 +155,8 @@ const SqlExport = () => {
           const dbs = res.data.databases;
           setDatabases(Array.isArray(dbs) ? dbs : Object.keys(dbs));
         }
-      } catch (error) {
-        console.error('获取数据库列表失败:', error);
+      } catch {
+        // 静默处理
       }
     }
   };
@@ -154,8 +174,8 @@ const SqlExport = () => {
             const dbs = res.data.databases;
             setDatabases(Array.isArray(dbs) ? dbs : Object.keys(dbs));
           }
-        } catch (error) {
-          console.error('获取数据库列表失败:', error);
+        } catch {
+          // 静默处理
         }
       }
     }
@@ -225,8 +245,7 @@ const SqlExport = () => {
       } else {
         toast.error(res.message || '提交失败');
       }
-    } catch (error) {
-      console.error('提交申请失败:', error);
+    } catch {
       toast.error('提交失败');
     } finally {
       setSubmitting(false);

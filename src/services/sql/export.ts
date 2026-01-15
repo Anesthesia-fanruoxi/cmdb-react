@@ -3,6 +3,7 @@
  */
 
 import { apiClient } from '../request';
+import { getToken } from '../storage/tokenStorage';
 
 // 类型定义
 export interface ExportProject {
@@ -68,7 +69,45 @@ export function getSqlExportProjects() {
   return apiClient.get<ExportProject[]>('/sql/export/projects');
 }
 
-// 获取SQL导出申请列表
+// 获取SQL导出申请列表（SSE流式）
+export function getExportListSSE(
+  onMessage: (data: { export: ExportItem[]; total_count: number }) => void,
+  onError?: (error: Event) => void,
+  onComplete?: () => void
+): EventSource {
+  const token = getToken();
+  const baseUrl = import.meta.env.VITE_SSE_BASE_URL || import.meta.env.VITE_API_BASE_URL || '';
+  const url = `${baseUrl}/sql/export/list?token=${token}`;
+  
+  const eventSource = new EventSource(url);
+  
+  eventSource.addEventListener('connected', () => {
+    // 连接成功
+  });
+  
+  eventSource.addEventListener('data', (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      onMessage(data);
+    } catch {
+      // 解析错误静默处理
+    }
+  });
+  
+  eventSource.onerror = (error) => {
+    eventSource.close();
+    onError?.(error);
+  };
+  
+  eventSource.addEventListener('complete', () => {
+    eventSource.close();
+    onComplete?.();
+  });
+  
+  return eventSource;
+}
+
+// 获取SQL导出申请列表（普通请求，备用）
 export function getExportList(params?: { status?: number; project?: string; page?: number }) {
   return apiClient.get<{ export: ExportItem[]; total_count: number; page: number; page_size: number }>('/sql/export/list', params);
 }

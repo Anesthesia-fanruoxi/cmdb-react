@@ -83,8 +83,8 @@ const ExportDetailDrawer = ({ visible, exportId, onClose, onRefresh }: Props) =>
           }
         }
       }
-    } catch (error) {
-      console.error('获取详情失败:', error);
+    } catch {
+      // 静默处理
     } finally {
       setLoading(false);
     }
