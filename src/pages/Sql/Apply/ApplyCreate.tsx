@@ -13,6 +13,7 @@ import {
 } from '../../../services/sql/apply';
 import { getDatabases } from '../../../services/sql/search';
 import { toast } from '../../../components/AppNotification';
+import { confirm } from '../../../components/ConfirmModal';
 import SqlAnalysisDialog from './SqlAnalysisDialog';
 import ace from 'ace-builds';
 import 'ace-builds/src-noconflict/mode-sql';
@@ -402,9 +403,13 @@ const ApplyCreateDrawer = ({ prefillData, onClose, onSuccess }: Props) => {
                   <div className="switch-row">
                     <span className={`switch-text ${!isScheduled ? 'active' : ''}`}>立即执行</span>
                     <label className="switch">
-                      <input type="checkbox" checked={isScheduled} onChange={e => {
-                        setIsScheduled(e.target.checked);
-                        updateForm('executeTime', e.target.checked ? dayjs().format('YYYY-MM-DD HH:mm:ss') : '');
+                      <input type="checkbox" checked={isScheduled} onChange={async e => {
+                        const checked = e.target.checked;
+                        if (checked) {
+                          await confirm({ title: '定时执行', content: '您已开启定时执行，请选择执行时间', type: 'info' });
+                        }
+                        setIsScheduled(checked);
+                        updateForm('executeTime', checked ? dayjs().add(1, 'hour').format('YYYY-MM-DD HH:mm:ss') : '');
                       }} />
                       <span className="slider"></span>
                     </label>
@@ -423,6 +428,16 @@ const ApplyCreateDrawer = ({ prefillData, onClose, onSuccess }: Props) => {
                         onChange={(date) => updateForm('executeTime', date ? date.format('YYYY-MM-DD HH:mm:ss') : '')}
                         style={{ flex: 1 }}
                         allowClear
+                        disabledDate={(current) => current && current < dayjs().startOf('day')}
+                        disabledTime={(current) => {
+                          if (!current || !current.isSame(dayjs(), 'day')) return {};
+                          const now = dayjs();
+                          return {
+                            disabledHours: () => Array.from({ length: now.hour() }, (_, i) => i),
+                            disabledMinutes: (hour: number) => hour === now.hour() ? Array.from({ length: now.minute() }, (_, i) => i) : [],
+                            disabledSeconds: (hour: number, minute: number) => hour === now.hour() && minute === now.minute() ? Array.from({ length: now.second() }, (_, i) => i) : []
+                          };
+                        }}
                       />
                     </ConfigProvider>
                   </div>
