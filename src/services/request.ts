@@ -5,13 +5,18 @@
 
 import { fetch } from '@tauri-apps/plugin-http';
 import type { ApiResponse } from '../types/api';
-import { getToken, removeToken } from './storage';
+import { getToken, removeToken, saveToken, getTokenUsername } from './storage';
+import { autoLogin, hasDeviceCredentials, isTauriEnv } from './machine';
 
 // API 基础地址
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
 
 // 默认超时时间（毫秒）
 const DEFAULT_TIMEOUT = 30000;
+
+// Token 刷新状态
+let isRefreshing = false;
+let refreshPromise: Promise<string | null> | null = null;
 
 /**
  * 自定义请求错误类
@@ -26,6 +31,57 @@ export class RequestError extends Error {
     this.code = code;
     this.details = details;
   }
+}
+
+/**
+ * 尝试自动刷新 Token
+ * 使用设备凭据进行无感登录
+ */
+async function tryRefreshToken(): Promise<string | null> {
+  // 防止并发刷新
+  if (isRefreshing && refreshPromise) {
+    return refreshPromise;
+  }
+
+  // 非 Tauri 环境不支持自动刷新
+  if (!isTauriEnv()) {
+    return null;
+  }
+
+  const username = getTokenUsername();
+  if (!username) {
+    return null;
+  }
+
+  // 检查是否有设备凭据
+  const hasCredentials = await hasDeviceCredentials(username);
+  if (!hasCredentials) {
+    return null;
+  }
+
+  isRefreshing = true;
+  refreshPromise = (async () => {
+    try {
+      const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+      const version = import.meta.env.VITE_APP_VERSION || 'v1.0.0';
+      
+      const result = await autoLogin(apiBase, username, version);
+      
+      if (result.success && result.token) {
+        // 保存新 token
+        await saveToken(result.token, username);
+        return result.token;
+      }
+      return null;
+    } catch {
+      return null;
+    } finally {
+      isRefreshing = false;
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
 }
 
 /**
@@ -103,10 +159,11 @@ async function request<T>(
   method: 'GET' | 'POST' | 'PUT' | 'DELETE',
   url: string,
   data?: unknown,
-  config: RequestConfig = {}
+  config: RequestConfig = {},
+  isRetry = false
 ): Promise<ApiResponse<T>> {
   const fullUrl = url.startsWith('http') ? url : `${BASE_URL}${url}`;
-  const token = getToken(); // 同步获取 token
+  const token = getToken();
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -152,10 +209,16 @@ async function request<T>(
       const errorData = responseData as { code?: number; message?: string };
       const errorMessage = errorData?.message || getHttpErrorMessage(response.status);
       
-      // 处理 401 未授权 - 桌面应用不自动跳转，只清除 token
-      if (response.status === 401) {
+      // 处理 401 未授权 - 尝试自动刷新 token
+      if (response.status === 401 && !isRetry) {
+        const newToken = await tryRefreshToken();
+        if (newToken) {
+          // 刷新成功，重试请求
+          return request<T>(method, url, data, config, true);
+        }
+        // 刷新失败，清除 token 并跳转登录
         removeToken();
-        // 桌面应用：不自动跳转，让调用方处理
+        window.location.href = '/login';
         throw new RequestError(401, errorMessage || '登录已过期，请重新登录');
       }
 
@@ -169,7 +232,6 @@ async function request<T>(
           window.location.href = '/force-change-password';
           throw new RequestError(403, errorData.message);
         }
-        // 其他 403 错误：权限不足，不跳转，只抛出错误
         throw new RequestError(403, errorMessage || '权限不足');
       }
 

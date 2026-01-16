@@ -147,9 +147,8 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"
-          DESCRIPTION="1、优化sse逻辑
-          2、优化任务中心处理逻辑
-          3、去掉了所有发送邮件的功能"
+          DESCRIPTION="1、绑定凭据之后，token过期自动刷新
+          2、优化部分已知问题"
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \
             -H "Content-Type: application/json" \
