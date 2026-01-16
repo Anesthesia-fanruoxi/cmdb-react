@@ -3,10 +3,10 @@
  */
 
 import { useState, useMemo } from 'react';
-import { X, Copy, Loader2 } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 import { analyzeField } from '../../../../services/elfk/search';
 import toast from '../../../../components/Toast';
-import { useMessageStore } from '../../../../stores/messageStore';
+import { useTaskCenterStore } from '../../../../stores/taskCenterStore';
 import type { ViewDetail } from '../../../../services/elfk/view';
 import type { LogHit } from '../../../../services/elfk/search';
 import '../styles/analysis-modal.css';
@@ -20,15 +20,12 @@ interface Props {
   onClose: () => void;
 }
 
-interface BucketItem { key: string; doc_count: number; }
-
 const AnalysisModal = ({ visible, currentView, searchParams, logs, total, onClose }: Props) => {
-  const addMessage = useMessageStore(state => state.addMessage);
+  const { open: openTaskCenter, addRunningTask } = useTaskCenterStore();
   const [selectedField, setSelectedField] = useState('');
   const [startDelimiter, setStartDelimiter] = useState('');
   const [endDelimiter, setEndDelimiter] = useState('');
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ field: string; total: number; buckets: BucketItem[] } | null>(null);
   const [sampleValue, setSampleValue] = useState<string>('');
 
   // 获取可分析的字段
@@ -40,10 +37,23 @@ const AnalysisModal = ({ visible, currentView, searchParams, logs, total, onClos
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [currentView]);
 
+  // 递归获取嵌套对象中的值
+  const getNestedValue = (obj: Record<string, unknown>, path: string): unknown => {
+    if (!obj || !path) return undefined;
+    const keys = path.split('.');
+    let current: unknown = obj;
+    for (const key of keys) {
+      if (current === null || current === undefined || typeof current !== 'object') {
+        return undefined;
+      }
+      current = (current as Record<string, unknown>)[key];
+    }
+    return current;
+  };
+
   // 字段变化时获取示例值
   const handleFieldChange = (fieldName: string) => {
     setSelectedField(fieldName);
-    setResult(null);
     setStartDelimiter('');
     setEndDelimiter('');
     
@@ -55,7 +65,7 @@ const AnalysisModal = ({ visible, currentView, searchParams, logs, total, onClos
     // 从日志中找示例值
     for (const log of logs) {
       const source = log._source || log;
-      const value = (source as Record<string, unknown>)[fieldName];
+      const value = getNestedValue(source as Record<string, unknown>, fieldName);
       if (value !== undefined) {
         setSampleValue(typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value));
         return;
@@ -65,61 +75,60 @@ const AnalysisModal = ({ visible, currentView, searchParams, logs, total, onClos
   };
 
   const handleAnalyze = async () => {
-    if (!selectedField || !searchParams.query_id) {
+    if (!selectedField) {
       toast.warning('请选择分析字段');
+      return;
+    }
+    
+    if (!searchParams.query_id) {
+      toast.warning('请先执行搜索');
       return;
     }
 
     setLoading(true);
     try {
+      // 构建分析参数（与 Vue 版本一致）
       const params: Record<string, unknown> = {
         qid: searchParams.query_id,
         field: selectedField,
         log_type: currentView?.log_type || 'elfk',
         count: total || 0
       };
+      
+      // 只有设置了分隔符才添加
       if (startDelimiter) params.startDelimiter = startDelimiter;
       if (endDelimiter) params.endDelimiter = endDelimiter;
 
       const res = await analyzeField(params as any);
       
-      if (res.code === 200 && res.data) {
-        setResult(res.data);
-        toast.success('分析完成');
-        addMessage({
-          type: 'success',
-          title: '数据分析完成',
-          content: `字段 ${selectedField} 分析完成，共 ${res.data.buckets?.length || 0} 个唯一值`,
-        });
+      if (res.code === 200) {
+        // 关闭弹框
+        handleClose();
+        
+        // 显示 toast 提示
+        toast.success('分析任务已创建');
+        
+        // 添加运行中任务并触发 SSE（如果返回了任务 ID）
+        if (res.data?.task_id) {
+          addRunningTask(res.data.task_id, 'analysis');
+        }
+        
+        // 自动打开任务中心
+        openTaskCenter();
       } else {
-        toast.error(res.message || '分析失败');
-        addMessage({
-          type: 'error',
-          title: '数据分析失败',
-          content: res.message || '分析失败',
-        });
+        toast.error(res.message || '创建任务失败');
       }
     } catch (err) {
-      console.error('分析失败:', err);
-      toast.error('分析失败');
+      toast.error('创建任务失败');
     } finally {
       setLoading(false);
     }
-  };
-
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      toast.success(`${label}已复制`);
-    }).catch(() => {
-      toast.error('复制失败');
-    });
   };
 
   const handleClose = () => {
     setSelectedField('');
     setStartDelimiter('');
     setEndDelimiter('');
-    setResult(null);
     setSampleValue('');
     onClose();
   };
@@ -172,34 +181,10 @@ const AnalysisModal = ({ visible, currentView, searchParams, logs, total, onClos
             </>
           )}
 
-          {/* 分析结果 */}
-          {result && result.buckets && (
-            <div className="result-section">
-              <div className="form-divider">分析结果 - {result.field}</div>
-              <div className="result-grid">
-                {/* 去重值 */}
-                <ResultColumn
-                  title="去重后的数据"
-                  data={result.buckets.map(b => ({ value: b.key }))}
-                  columns={[{ key: 'value', label: '值' }]}
-                  onCopy={() => copyToClipboard(result.buckets.map(b => b.key).join('\n'), '去重数据')}
-                />
-                {/* 按值排序 */}
-                <ResultColumn
-                  title="按值升序"
-                  data={[...result.buckets].sort((a, b) => a.key.localeCompare(b.key)).map(b => ({ value: b.key, count: b.doc_count }))}
-                  columns={[{ key: 'value', label: '值' }, { key: 'count', label: '数量' }]}
-                  onCopy={() => copyToClipboard([...result.buckets].sort((a, b) => a.key.localeCompare(b.key)).map(b => `${b.key}\t${b.doc_count}`).join('\n'), '按值排序')}
-                />
-                {/* 按数量排序 */}
-                <ResultColumn
-                  title="按数量降序"
-                  data={[...result.buckets].sort((a, b) => b.doc_count - a.doc_count).map(b => ({ value: b.key, count: b.doc_count }))}
-                  columns={[{ key: 'value', label: '值' }, { key: 'count', label: '数量' }]}
-                  onCopy={() => copyToClipboard([...result.buckets].sort((a, b) => b.doc_count - a.doc_count).map(b => `${b.key}\t${b.doc_count}`).join('\n'), '按数量排序')}
-                />
-              </div>
-              <div className="result-summary">总计: {result.total} 条记录，{result.buckets.length} 个唯一值</div>
+          {/* 提示信息 */}
+          {selectedField && (
+            <div className="analysis-tip">
+              <p>分析任务将在后台执行，完成后可在任务中心查看结果</p>
             </div>
           )}
         </div>
@@ -207,33 +192,5 @@ const AnalysisModal = ({ visible, currentView, searchParams, logs, total, onClos
     </div>
   );
 };
-
-// 结果列组件
-const ResultColumn = ({ title, data, columns, onCopy }: {
-  title: string;
-  data: { value: string; count?: number }[];
-  columns: { key: string; label: string }[];
-  onCopy: () => void;
-}) => (
-  <div className="result-column">
-    <div className="column-header">
-      <span>{title}</span>
-      <button className="btn-copy" onClick={onCopy}><Copy size={14} /> 复制</button>
-    </div>
-    <div className="column-body">
-      <table>
-        <thead>
-          <tr>{columns.map(c => <th key={c.key}>{c.label}</th>)}</tr>
-        </thead>
-        <tbody>
-          {data.slice(0, 100).map((row, i) => (
-            <tr key={i}>{columns.map(c => <td key={c.key}>{String((row as Record<string, unknown>)[c.key] ?? '')}</td>)}</tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-    <div className="column-footer">总数: {data.length}</div>
-  </div>
-);
 
 export default AnalysisModal;

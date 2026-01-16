@@ -337,3 +337,29 @@
 .msg-drawer .msg-item .msg-time {
   color: var(--text-secondary);
 }
+
+
+/* 可点击的消息项 */
+.msg-item.clickable {
+  cursor: pointer;
+}
+
+.msg-item.clickable:hover {
+  background: var(--bg-hover, #f5f5f5);
+}
+
+/* 消息底部 */
+.msg-item .msg-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.msg-item .msg-action-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--primary-color, #1890ff);
+}

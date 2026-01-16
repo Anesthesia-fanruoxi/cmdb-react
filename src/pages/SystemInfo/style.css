@@ -91,6 +91,22 @@
 
 .system-info-page .btn-update-now:hover { opacity: 0.9; }
 
+/* 下载状态 */
+.system-info-page .download-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: var(--bg-secondary, #f3f4f6);
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--primary-color, #667eea);
+}
+
+:root.dark .system-info-page .download-status {
+  background: #374151;
+}
+
 @keyframes pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4); }
   50% { box-shadow: 0 0 0 6px rgba(102, 126, 234, 0); }

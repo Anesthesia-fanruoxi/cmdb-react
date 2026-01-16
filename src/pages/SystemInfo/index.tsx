@@ -3,9 +3,9 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { HardDrive, Database, RefreshCw, Download } from 'lucide-react';
+import { HardDrive, Database, RefreshCw, Download, Loader2 } from 'lucide-react';
 import { isTauriEnv, getSystemInfo, type SystemInfo } from '../../services/machine';
-import { checkUpdate, installUpdate } from '../../services/updater';
+import { checkUpdate, installUpdate, checkAndDownloadUpdate } from '../../services/updater';
 import { getUpdateInfo, initAllStorage, type UpdateInfo } from '../../services/storage';
 import { useAppStore } from '../../stores/appStore';
 import { UpdateModal } from '../../components/UpdateModal';
@@ -29,20 +29,26 @@ const SystemInfoPage = () => {
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [checking, setChecking] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [installing, setInstalling] = useState(false);
   const timerRef = useRef<number | null>(null);
 
+  // 判断是否是 Mac 系统
+  const isMac = sysInfo?.os_name?.toLowerCase().includes('mac') || 
+                sysInfo?.os_name?.toLowerCase().includes('darwin');
+
   useEffect(() => {
     const init = async () => {
-      // 独立窗口需要先初始化存储
       await initAllStorage();
       initTheme();
       
-      // 检查是否有已下载的更新
       const info = getUpdateInfo();
-      console.log('[SystemInfo] 更新信息:', info);
       if (info.downloadedVersion || info.latestVersion) {
         setUpdateInfo(info);
+        // 如果正在下载中，恢复下载状态
+        if (info.downloadStatus === 'downloading') {
+          setDownloading(true);
+        }
       }
     };
     
@@ -66,28 +72,64 @@ const SystemInfoPage = () => {
   }, [initTheme]);
 
   const handleCheckUpdate = async () => {
-    if (!isTauriEnv() || checking) return;
+    if (!isTauriEnv() || checking || downloading) return;
     setChecking(true);
+    
     try {
+      // 先检查是否有新版本
       const result = await checkUpdate();
-      if (result) {
-        // 有新版本，获取完整的更新信息
-        const info = getUpdateInfo();
+      
+      if (!result) {
+        toast.info('当前已是最新版本');
+        setChecking(false);
+        return;
+      }
+
+      // 有新版本
+      if (isMac) {
+        // Mac：直接弹出提示，让用户手动下载
         setUpdateInfo({
-          ...info,
           latestVersion: result.version,
-          downloadedVersion: info.downloadedVersion || result.version,
+          downloadedVersion: '',
+          downloadedPath: '',
+          downloadStatus: 'none',
+          downloadProgress: 0,
           changelog: result.changelog,
+          lastCheckTime: Date.now(),
         });
         setShowUpdateModal(true);
+        setChecking(false);
       } else {
-        toast.info('当前已是最新版本');
+        // Windows：开始下载
+        setChecking(false);
+        setDownloading(true);
+        setUpdateInfo({
+          latestVersion: result.version,
+          downloadedVersion: '',
+          downloadedPath: '',
+          downloadStatus: 'downloading',
+          downloadProgress: 0,
+          changelog: result.changelog,
+          lastCheckTime: Date.now(),
+        });
+
+        // 开始下载
+        const downloadedInfo = await checkAndDownloadUpdate();
+        setDownloading(false);
+        
+        if (downloadedInfo && downloadedInfo.downloadStatus === 'completed') {
+          setUpdateInfo(downloadedInfo);
+          // 下载完成，弹出安装弹框
+          setShowUpdateModal(true);
+        } else {
+          toast.error('下载更新失败');
+        }
       }
     } catch (err: any) {
       const msg = err?.message || '检查更新失败';
       toast.error(msg);
-    } finally {
       setChecking(false);
+      setDownloading(false);
     }
   };
 
@@ -102,6 +144,45 @@ const SystemInfoPage = () => {
     }
   };
 
+  // 渲染版本信息行
+  const renderVersionRow = () => {
+    // 已下载完成，显示更新按钮
+    if (updateInfo?.downloadedVersion && updateInfo.downloadStatus === 'completed') {
+      return (
+        <span className="info-value">
+          {APP_VERSION}
+          <button className="btn-update-now" onClick={() => setShowUpdateModal(true)} title="立即更新">
+            <Download size={12} />
+            <span>更新到 {updateInfo.downloadedVersion}</span>
+          </button>
+        </span>
+      );
+    }
+
+    // 正在下载中
+    if (downloading) {
+      return (
+        <span className="info-value">
+          {APP_VERSION}
+          <span className="download-status">
+            <Loader2 size={12} className="spin" />
+            <span>下载中 {updateInfo?.latestVersion}...</span>
+          </span>
+        </span>
+      );
+    }
+
+    // 默认显示检查更新按钮
+    return (
+      <span className="info-value">
+        {APP_VERSION}
+        <button className="btn-check" onClick={handleCheckUpdate} disabled={checking} title="检查更新">
+          <RefreshCw size={12} className={checking ? 'spin' : ''} />
+        </button>
+      </span>
+    );
+  };
+
   return (
     <div className="system-info-page">
       <div className="system-info-logo">
@@ -112,19 +193,7 @@ const SystemInfoPage = () => {
       <div className="system-info-list">
         <div className="info-item">
           <span className="info-label">当前版本</span>
-          <span className="info-value">
-            {APP_VERSION}
-            {updateInfo?.downloadedVersion ? (
-              <button className="btn-update-now" onClick={() => setShowUpdateModal(true)} title="立即更新">
-                <Download size={12} />
-                <span>更新</span>
-              </button>
-            ) : (
-              <button className="btn-check" onClick={handleCheckUpdate} disabled={checking} title="检查更新">
-                <RefreshCw size={12} className={checking ? 'spin' : ''} />
-              </button>
-            )}
-          </span>
+          {renderVersionRow()}
         </div>
         <div className="info-item">
           <span className="info-label">操作系统</span>

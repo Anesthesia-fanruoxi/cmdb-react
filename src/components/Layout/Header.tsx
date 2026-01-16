@@ -6,6 +6,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '../../stores/authStore';
 import { useAppStore } from '../../stores/appStore';
+import { useTaskCenterStore } from '../../stores/taskCenterStore';
 import { Sun, Moon, LogOut, ChevronLeft, ChevronRight, User, ListTodo } from 'lucide-react';
 import { getUserAvatar } from '../../services/storage';
 import MessageCenter from '../MessageCenter';
@@ -21,8 +22,8 @@ interface HeaderProps {
 const Header = ({ collapsed, onToggleCollapse }: HeaderProps) => {
   const { user, userName } = useAuthStore();
   const { theme, toggleTheme } = useAppStore();
+  const { visible: taskCenterVisible, open: openTaskCenter, close: closeTaskCenter } = useTaskCenterStore();
   const [dropdownVisible, setDropdownVisible] = useState(false);
-  const [taskCenterVisible, setTaskCenterVisible] = useState(false);
   const [profileVisible, setProfileVisible] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -68,7 +69,7 @@ const Header = ({ collapsed, onToggleCollapse }: HeaderProps) => {
 
   const handleTaskCenter = () => {
     setDropdownVisible(false);
-    setTaskCenterVisible(true);
+    openTaskCenter();
   };
 
   const getInitial = () => {
@@ -128,7 +129,7 @@ const Header = ({ collapsed, onToggleCollapse }: HeaderProps) => {
         </div>
       </div>
       
-      <TaskCenter visible={taskCenterVisible} onClose={() => setTaskCenterVisible(false)} />
+      <TaskCenter visible={taskCenterVisible} onClose={closeTaskCenter} />
       <ProfileDrawer visible={profileVisible} onClose={handleProfileClose} />
     </header>
   );

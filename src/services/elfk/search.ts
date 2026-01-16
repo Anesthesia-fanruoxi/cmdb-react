@@ -98,20 +98,20 @@ export interface ContextResult {
 
 /** 字段分析参数 */
 export interface AnalyzeParams {
-  project: string;
-  index_pattern: string;
-  time_field: string;
-  start_time: string;
-  end_time: string;
-  field: string;
-  keyword?: string;
+  qid: string;           // 查询ID
+  field: string;         // 分析字段
+  log_type?: string;     // 日志类型
+  count?: number;        // 总数
+  startDelimiter?: string; // 开始分隔符
+  endDelimiter?: string;   // 结束分隔符
 }
 
 /** 字段分析结果 */
 export interface AnalyzeResult {
-  field: string;
-  total: number;
-  buckets: Array<{
+  task_id?: string;      // 任务ID（异步任务）
+  field?: string;
+  total?: number;
+  buckets?: Array<{
     key: string;
     doc_count: number;
   }>;

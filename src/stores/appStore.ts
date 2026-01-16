@@ -38,6 +38,7 @@ interface AppState {
   // 更新状态
   hasUpdate: boolean;
   updateInfo: UpdateInfo | null;
+  updateModalOpen: boolean;
 
   // 操作
   setSystemInfo: (info: Partial<SystemSetting>) => void;
@@ -50,6 +51,8 @@ interface AppState {
   clearError: () => void;
   setUpdateInfo: (info: UpdateInfo | null) => void;
   clearUpdate: () => void;
+  openUpdateModal: () => void;
+  closeUpdateModal: () => void;
 }
 
 export const useAppStore = create<AppState>()((set, get) => ({
@@ -65,6 +68,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
   error: null,
   hasUpdate: false,
   updateInfo: null,
+  updateModalOpen: false,
 
   // 设置系统信息
   setSystemInfo: (info) => {
@@ -164,5 +168,15 @@ export const useAppStore = create<AppState>()((set, get) => ({
   // 清除更新状态
   clearUpdate: () => {
     set({ hasUpdate: false, updateInfo: null });
+  },
+
+  // 打开更新弹框
+  openUpdateModal: () => {
+    set({ updateModalOpen: true });
+  },
+
+  // 关闭更新弹框
+  closeUpdateModal: () => {
+    set({ updateModalOpen: false });
   },
 }));

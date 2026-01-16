@@ -10,6 +10,7 @@ import { useMenuStore } from '../../stores/menuStore';
 import { useAuthStore } from '../../stores/authStore';
 import { useAppStore } from '../../stores/appStore';
 import { useMessageStore } from '../../stores/messageStore';
+import { useTaskCenterStore } from '../../stores/taskCenterStore';
 import type { MenuItem as MenuItemType } from '../../types/menu';
 import Icon from '../Icon';
 import { Circle, LogOut, User, ListTodo, RefreshCw, Trash2, Info } from 'lucide-react';
@@ -34,12 +35,12 @@ const Sidebar = ({ collapsed = false }: SidebarProps) => {
   const location = useLocation();
   const { menuList, fetchUserMenus } = useMenuStore();
   const { user, userName, fetchProfile } = useAuthStore();
-  const { theme, toggleTheme, hasUpdate } = useAppStore();
+  const { theme, toggleTheme, hasUpdate, openUpdateModal } = useAppStore();
   const unreadCount = useMessageStore(state => state.unreadCount);
+  const { visible: taskCenterVisible, open: openTaskCenter, close: closeTaskCenter } = useTaskCenterStore();
   
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [profileVisible, setProfileVisible] = useState(false);
-  const [taskCenterVisible, setTaskCenterVisible] = useState(false);
   const [messageCenterVisible, setMessageCenterVisible] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -229,7 +230,7 @@ const Sidebar = ({ collapsed = false }: SidebarProps) => {
                   <div className="dropdown-item" onClick={() => { setDropdownVisible(false); setProfileVisible(true); }}>
                     <User size={16} /><span>个人信息</span>
                   </div>
-                  <div className="dropdown-item" onClick={() => { setDropdownVisible(false); setTaskCenterVisible(true); }}>
+                  <div className="dropdown-item" onClick={() => { setDropdownVisible(false); openTaskCenter(); }}>
                     <ListTodo size={16} /><span>任务中心</span>
                   </div>
                   {isTauriEnv() && (
@@ -264,7 +265,7 @@ const Sidebar = ({ collapsed = false }: SidebarProps) => {
             {hasUpdate && isTauriEnv() && (
               <button 
                 className="footer-icon-btn update-btn" 
-                onClick={() => openComponentWindow({ type: 'system-info', label: 'system-info', title: '系统信息', width: 400, height: 600 })}
+                onClick={openUpdateModal}
                 title="有新版本可用"
               >
                 🆙
@@ -275,7 +276,7 @@ const Sidebar = ({ collapsed = false }: SidebarProps) => {
       </div>
 
       <ProfileDrawer visible={profileVisible} onClose={handleProfileClose} />
-      <TaskCenter visible={taskCenterVisible} onClose={() => setTaskCenterVisible(false)} />
+      <TaskCenter visible={taskCenterVisible} onClose={closeTaskCenter} />
       <MessageCenter visible={messageCenterVisible} onClose={() => setMessageCenterVisible(false)} />
     </aside>
   );

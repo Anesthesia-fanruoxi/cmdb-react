@@ -4,8 +4,9 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { Bell, CheckCheck, Trash2, X, AlertCircle, CheckCircle, Info } from 'lucide-react';
+import { Bell, CheckCheck, Trash2, X, AlertCircle, CheckCircle, Info, ExternalLink } from 'lucide-react';
 import { useMessageStore, type Message } from '../../stores/messageStore';
+import { useTaskCenterStore } from '../../stores/taskCenterStore';
 import './style.css';
 
 const typeIcons = {
@@ -35,6 +36,7 @@ const MessageCenter = ({ visible: externalVisible, onClose }: MessageCenterProps
   const [internalVisible, setInternalVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const { messages, unreadCount, markAsRead, markAllAsRead, removeMessage, clearAll, rehydrate } = useMessageStore();
+  const openTaskCenter = useTaskCenterStore(state => state.open);
 
   // 是否是抽屉模式
   const isDrawerMode = onClose !== undefined;
@@ -56,7 +58,31 @@ const MessageCenter = ({ visible: externalVisible, onClose }: MessageCenterProps
 
   const handleItemClick = (msg: Message) => {
     if (!msg.read) markAsRead(msg.id);
+    
+    // 处理点击跳转
+    if (msg.action) {
+      if (msg.action.type === 'task-center') {
+        if (isDrawerMode) onClose?.();
+        else setInternalVisible(false);
+        openTaskCenter();
+      }
+    }
   };
+
+  const renderMessageItem = (msg: Message) => (
+    <div key={msg.id} className={`msg-item ${msg.read ? 'read' : 'unread'} msg-${msg.type} ${msg.action ? 'clickable' : ''}`} onClick={() => handleItemClick(msg)}>
+      <div className="msg-icon">{typeIcons[msg.type]}</div>
+      <div className="msg-content">
+        <div className="msg-title">{msg.title}</div>
+        <div className="msg-text">{msg.content}</div>
+        <div className="msg-footer">
+          <span className="msg-time">{formatTime(msg.time)}</span>
+          {msg.action && <span className="msg-action-hint"><ExternalLink size={12} /> 点击查看</span>}
+        </div>
+      </div>
+      <button className="btn-remove" onClick={e => { e.stopPropagation(); removeMessage(msg.id); }}><X size={14} /></button>
+    </div>
+  );
 
   // 抽屉模式
   if (isDrawerMode) {
@@ -76,26 +102,14 @@ const MessageCenter = ({ visible: externalVisible, onClose }: MessageCenterProps
           <div className="drawer-content">
             {messages.length === 0 ? (
               <div className="msg-empty">暂无消息</div>
-            ) : (
-              messages.map(msg => (
-                <div key={msg.id} className={`msg-item ${msg.read ? 'read' : 'unread'} msg-${msg.type}`} onClick={() => handleItemClick(msg)}>
-                  <div className="msg-icon">{typeIcons[msg.type]}</div>
-                  <div className="msg-content">
-                    <div className="msg-title">{msg.title}</div>
-                    <div className="msg-text">{msg.content}</div>
-                    <div className="msg-time">{formatTime(msg.time)}</div>
-                  </div>
-                  <button className="btn-remove" onClick={e => { e.stopPropagation(); removeMessage(msg.id); }}><X size={14} /></button>
-                </div>
-              ))
-            )}
+            ) : messages.map(renderMessageItem)}
           </div>
         </div>
       </>
     );
   }
 
-  // 下拉模式（原有逻辑）
+  // 下拉模式
   return (
     <div className="message-center" ref={containerRef}>
       <button className={`msg-trigger ${unreadCount > 0 ? 'has-unread' : ''}`} onClick={() => setInternalVisible(!internalVisible)}>
@@ -114,19 +128,7 @@ const MessageCenter = ({ visible: externalVisible, onClose }: MessageCenterProps
           <div className="msg-list">
             {messages.length === 0 ? (
               <div className="msg-empty">暂无消息</div>
-            ) : (
-              messages.map(msg => (
-                <div key={msg.id} className={`msg-item ${msg.read ? 'read' : 'unread'} msg-${msg.type}`} onClick={() => handleItemClick(msg)}>
-                  <div className="msg-icon">{typeIcons[msg.type]}</div>
-                  <div className="msg-content">
-                    <div className="msg-title">{msg.title}</div>
-                    <div className="msg-text">{msg.content}</div>
-                    <div className="msg-time">{formatTime(msg.time)}</div>
-                  </div>
-                  <button className="btn-remove" onClick={e => { e.stopPropagation(); removeMessage(msg.id); }}><X size={14} /></button>
-                </div>
-              ))
-            )}
+            ) : messages.map(renderMessageItem)}
           </div>
         </div>
       )}

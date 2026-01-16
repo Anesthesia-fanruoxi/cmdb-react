@@ -15,6 +15,11 @@ export interface Message {
   content: string;
   time: number;
   read: boolean;
+  // 可选：点击跳转动作
+  action?: {
+    type: 'task-center' | 'link';
+    payload?: string;
+  };
   // 可选：关联的文件路径等
   extra?: Record<string, unknown>;
 }

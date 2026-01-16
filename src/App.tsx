@@ -31,8 +31,8 @@ function App() {
   const [flowType, setFlowType] = useState<FlowType>('none');
   const [currentStep, setCurrentStep] = useState(0);
   
-  // 更新弹窗状态
-  const [updateModalOpen, setUpdateModalOpen] = useState(false);
+  // 更新弹窗状态（从 store 获取）
+  const { updateModalOpen, openUpdateModal, closeUpdateModal } = useAppStore();
   const [pendingUpdate, setPendingUpdate] = useState<UpdateInfo | null>(null);
   const [installing, setInstalling] = useState(false);
 
@@ -53,7 +53,7 @@ function App() {
         changelog: event.payload.changelog,
         lastCheckTime: Date.now(),
       });
-      setUpdateModalOpen(true);
+      openUpdateModal();
       useAppStore.getState().setUpdateInfo({
         version: event.payload.version,
         changelog: event.payload.changelog,
@@ -321,7 +321,7 @@ function App() {
   const handleInstallUpdate = async () => {
     if (!pendingUpdate?.downloadedPath) return;
     setInstalling(true);
-    setUpdateModalOpen(false);
+    closeUpdateModal();
     
     try {
       forceSave();
@@ -329,7 +329,7 @@ function App() {
     } catch (e) {
       console.error('[更新] 安装失败:', e);
       setInstalling(false);
-      setUpdateModalOpen(true);
+      openUpdateModal();
     }
   };
 
@@ -353,7 +353,7 @@ function App() {
         open={updateModalOpen}
         updateInfo={pendingUpdate}
         onInstall={handleInstallUpdate}
-        onSkip={() => setUpdateModalOpen(false)}
+        onSkip={closeUpdateModal}
         installing={installing}
       />
     </>
