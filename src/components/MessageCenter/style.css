@@ -102,9 +102,20 @@
   border-radius: 4px;
 }
 
+.msg-header .btn-action.btn-text {
+  width: auto;
+  padding: 0 8px;
+  font-size: 12px;
+  color: #666;
+}
+
 .msg-header .btn-action:hover {
   background: #f5f5f5;
   color: #666;
+}
+
+.msg-header .btn-action.btn-text:hover {
+  color: #1890ff;
 }
 
 .msg-list {
@@ -189,25 +200,35 @@
   position: absolute;
   top: 8px;
   right: 8px;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border: none;
-  background: transparent;
-  color: #ccc;
+  background: rgba(0, 0, 0, 0.04);
   cursor: pointer;
   border-radius: 4px;
-  display: none;
+  display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.msg-item:hover .btn-remove {
-  display: flex;
+  transition: all 0.2s;
+  font-size: 14px;
+  opacity: 0.6;
 }
 
 .msg-item .btn-remove:hover {
-  background: #f0f0f0;
-  color: #999;
+  background: rgba(255, 77, 79, 0.1);
+  transform: scale(1.15);
+  opacity: 1;
+}
+
+:root.dark .msg-item .btn-remove {
+  background: rgba(255, 255, 255, 0.06);
+  opacity: 0.7;
+}
+
+:root.dark .msg-item .btn-remove:hover {
+  background: rgba(255, 77, 79, 0.2);
+  transform: scale(1.15);
+  opacity: 1;
 }
 
 
@@ -218,28 +239,45 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
-  z-index: 999;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 9999;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .msg-drawer {
   position: fixed;
   top: 0;
   right: 0;
-  width: 380px;
+  width: 420px;
   max-width: 90vw;
   height: 100vh;
-  background: var(--bg-color);
+  background: #fff;
   box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
+  z-index: 10000;
   display: flex;
   flex-direction: column;
-  animation: slideIn 0.2s ease-out;
+  animation: slideIn 0.3s ease-out;
+}
+
+:root.dark .msg-drawer {
+  background: #1a1a1a;
+  border-left: 1px solid #333;
 }
 
 @keyframes slideIn {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+  from { 
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to { 
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 .msg-drawer .drawer-header {
@@ -247,13 +285,24 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #f0f0f0;
+  background: #fff;
+}
+
+:root.dark .msg-drawer .drawer-header {
+  background: #1a1a1a;
+  border-bottom-color: #333;
 }
 
 .msg-drawer .drawer-header h3 {
   margin: 0;
   font-size: 16px;
-  color: var(--text-color);
+  font-weight: 600;
+  color: #333;
+}
+
+:root.dark .msg-drawer .drawer-header h3 {
+  color: #e5e5e5;
 }
 
 .msg-drawer .header-actions {
@@ -270,14 +319,45 @@
   height: 28px;
   border: none;
   background: transparent;
-  color: var(--text-secondary);
+  color: #999;
   cursor: pointer;
   border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.msg-drawer .btn-action.btn-text {
+  width: auto;
+  padding: 0 10px;
+  font-size: 13px;
+  color: #666;
 }
 
 .msg-drawer .btn-action:hover {
-  background: var(--bg-hover);
-  color: var(--text-color);
+  background: #f5f5f5;
+  color: #666;
+}
+
+.msg-drawer .btn-action.btn-text:hover {
+  background: transparent;
+  color: #1890ff;
+}
+
+:root.dark .msg-drawer .btn-action {
+  color: #888;
+}
+
+:root.dark .msg-drawer .btn-action.btn-text {
+  color: #aaa;
+}
+
+:root.dark .msg-drawer .btn-action:hover {
+  background: #333;
+  color: #e5e5e5;
+}
+
+:root.dark .msg-drawer .btn-action.btn-text:hover {
+  background: transparent;
+  color: #40a9ff;
 }
 
 .msg-drawer .close-btn {
@@ -288,25 +368,45 @@
   height: 32px;
   background: transparent;
   border: none;
-  color: var(--text-secondary);
+  color: #666;
   cursor: pointer;
   border-radius: 4px;
+  transition: all 0.2s;
+  font-size: 18px;
 }
 
 .msg-drawer .close-btn:hover {
-  background: var(--bg-hover);
-  color: var(--text-color);
+  background: #f5f5f5;
+  color: #333;
+}
+
+:root.dark .msg-drawer .close-btn {
+  color: #aaa;
+}
+
+:root.dark .msg-drawer .close-btn:hover {
+  background: #333;
+  color: #fff;
 }
 
 .msg-drawer .drawer-content {
   flex: 1;
   overflow-y: auto;
+  background: #fafafa;
+}
+
+:root.dark .msg-drawer .drawer-content {
+  background: #1a1a1a;
 }
 
 .msg-drawer .msg-empty {
   padding: 60px 20px;
   text-align: center;
-  color: var(--text-secondary);
+  color: #999;
+}
+
+:root.dark .msg-drawer .msg-empty {
+  color: #666;
 }
 
 .msg-drawer .msg-item {
@@ -314,28 +414,63 @@
   gap: 10px;
   padding: 14px 20px;
   cursor: pointer;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #f0f0f0;
   position: relative;
+  background: #fff;
+  transition: background 0.2s;
 }
 
 .msg-drawer .msg-item:hover {
-  background: var(--bg-hover);
+  background: #f5f5f5;
 }
 
 .msg-drawer .msg-item.unread {
-  background: rgba(24, 144, 255, 0.05);
+  background: #e6f4ff;
+}
+
+.msg-drawer .msg-item.unread:hover {
+  background: #d9edff;
+}
+
+:root.dark .msg-drawer .msg-item {
+  background: #1f1f1f;
+  border-bottom-color: #333;
+}
+
+:root.dark .msg-drawer .msg-item:hover {
+  background: #2a2a2a;
+}
+
+:root.dark .msg-drawer .msg-item.unread {
+  background: rgba(24, 144, 255, 0.1);
+}
+
+:root.dark .msg-drawer .msg-item.unread:hover {
+  background: rgba(24, 144, 255, 0.15);
 }
 
 .msg-drawer .msg-item .msg-title {
-  color: var(--text-color);
+  color: #333;
 }
 
 .msg-drawer .msg-item .msg-text {
-  color: var(--text-secondary);
+  color: #666;
 }
 
 .msg-drawer .msg-item .msg-time {
-  color: var(--text-secondary);
+  color: #999;
+}
+
+:root.dark .msg-drawer .msg-item .msg-title {
+  color: #e5e5e5;
+}
+
+:root.dark .msg-drawer .msg-item .msg-text {
+  color: #999;
+}
+
+:root.dark .msg-drawer .msg-item .msg-time {
+  color: #666;
 }
 
 
@@ -362,4 +497,39 @@
   gap: 4px;
   font-size: 11px;
   color: var(--primary-color, #1890ff);
+}
+
+/* 下载消息操作按钮 */
+.msg-download-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn-download-action {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 8px;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-color);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-download-action:hover {
+  background: var(--bg-secondary, #f5f5f5);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.btn-download-action svg {
+  flex-shrink: 0;
 }

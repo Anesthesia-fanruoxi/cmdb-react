@@ -65,7 +65,7 @@ const TrafficSwitching = () => {
         // 添加 updated_at 用于 memo 比较
         const processed = items.map(item => ({
           ...item,
-          updated_at: new Date().toISOString(),
+          updated_at: Date.now(),
         }));
         setMetrics(processed);
       }

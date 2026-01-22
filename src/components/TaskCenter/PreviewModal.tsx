@@ -111,7 +111,7 @@ const PreviewModal = ({ visible, loading, data, currentTask, onClose, onPageChan
                   </span>
                   {((isAnalysisPreview ? data.total : data.total_rows) || 0) > 100 && (
                     <span className="preview-tip">
-                      预览只展示100条数据，需要全部数据可以下载
+                      ⚠️ 预览只展示前 100 条数据，完整数据请下载
                     </span>
                   )}
                 </div>
@@ -120,7 +120,9 @@ const PreviewModal = ({ visible, loading, data, currentTask, onClose, onPageChan
                     disabled={data.page <= 1} 
                     onClick={() => currentTask && onPageChange(currentTask, data.page - 1)}
                   >上一页</button>
-                  <span>第 {data.page} 页</span>
+                  <span>
+                    第 {data.page} / {Math.ceil((isAnalysisPreview ? (data.cache_total || 0) : Math.min(data.total_rows || 0, 100)) / data.page_size)} 页
+                  </span>
                   <button 
                     disabled={data.page * data.page_size >= (isAnalysisPreview ? data.cache_total || 0 : Math.min(data.total_rows || 0, 100))}
                     onClick={() => currentTask && onPageChange(currentTask, data.page + 1)}

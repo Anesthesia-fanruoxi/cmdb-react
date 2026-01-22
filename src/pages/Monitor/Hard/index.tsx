@@ -61,7 +61,7 @@ const HardwareMonitor = () => {
           ...item,
           hosts_count: item.data?.result?.length || 0,
           project: selectedProject,
-          updated_at: new Date().toISOString(),
+          updated_at: Date.now() as string | number,
         }));
         processed.sort((a, b) => (a.sort || 0) - (b.sort || 0));
         setMetrics(processed);

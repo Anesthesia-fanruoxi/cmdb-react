@@ -5,6 +5,7 @@
 
 import { invoke } from '@tauri-apps/api/core';
 import { getUpdateInfo, saveUpdateInfo, clearUpdateInfo, getInstallPath, setInstallPath } from './storage';
+import { formatDate } from '../utils/datetime';
 import type { UpdateInfo } from './storage';
 
 // 版本接口
@@ -80,7 +81,7 @@ const fetchLatestVersion = async (): Promise<{ version: string; changelog: strin
 const prepareUpdateFile = async (version: string, changelog: string): Promise<string> => {
   const info: VersionInfo = {
     version,
-    release_date: new Date().toISOString().split('T')[0],
+    release_date: formatDate(),
     changelog,
   };
   // 后端会检查 MSI 是否存在，存在则只生成脚本，不存在则下载

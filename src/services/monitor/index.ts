@@ -18,7 +18,7 @@ export interface MonitorView {
   sort?: number;
   project?: string;
   created_at?: string;
-  updated_at?: string;
+  updated_at?: string | number;  // 支持字符串或时间戳
 }
 
 /** 监控指标数据 */

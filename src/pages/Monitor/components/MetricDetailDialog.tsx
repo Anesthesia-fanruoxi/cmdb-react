@@ -6,6 +6,7 @@ import { X, Download } from 'lucide-react';
 import type { MonitorMetric } from '../../../services/monitor';
 import { formatValue, formatTimestamp } from '../utils/format';
 import { convertToChartSeries, getChartColor } from '../utils/chart';
+import { formatDate } from '../../../utils/datetime';
 import './MetricDetailDialog.css';
 
 interface MetricDetailDialogProps {
@@ -47,7 +48,7 @@ const MetricDetailDialog = ({ visible, metric, onClose }: MetricDetailDialogProp
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${metric.view_name}_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `${metric.view_name}_${formatDate()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };

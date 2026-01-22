@@ -194,3 +194,130 @@ pub fn get_last_user(app_handle: AppHandle) -> String {
 pub fn clear_login_history(app_handle: AppHandle) -> Result<(), String> {
     login_history::clear_history(&app_handle)
 }
+
+// ==================== 文件系统操作 ====================
+
+/// 获取系统默认下载目录
+#[tauri::command]
+pub fn get_download_dir() -> Result<String, String> {
+    #[cfg(target_os = "windows")]
+    {
+        use std::env;
+        let user_profile = env::var("USERPROFILE").map_err(|e| e.to_string())?;
+        Ok(format!("{}\\Downloads", user_profile))
+    }
+    
+    #[cfg(target_os = "macos")]
+    {
+        use std::env;
+        let home = env::var("HOME").map_err(|e| e.to_string())?;
+        Ok(format!("{}/Downloads", home))
+    }
+    
+    #[cfg(target_os = "linux")]
+    {
+        use std::env;
+        let home = env::var("HOME").map_err(|e| e.to_string())?;
+        Ok(format!("{}/Downloads", home))
+    }
+}
+
+/// 打开文件夹
+#[tauri::command]
+pub fn open_folder(path: String) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("explorer")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+    
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+    
+    #[cfg(target_os = "linux")]
+    {
+        std::process::Command::new("xdg-open")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+    
+    Ok(())
+}
+
+/// 在文件管理器中显示文件
+#[tauri::command]
+pub fn show_in_folder(path: String) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("explorer")
+            .args(["/select,", &path])
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+    
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .args(["-R", &path])
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+    
+    #[cfg(target_os = "linux")]
+    {
+        // Linux 上尝试使用 xdg-open 打开父目录
+        let path_obj = Path::new(&path);
+        if let Some(parent) = path_obj.parent() {
+            std::process::Command::new("xdg-open")
+                .arg(parent)
+                .spawn()
+                .map_err(|e| e.to_string())?;
+        }
+    }
+    
+    Ok(())
+}
+
+/// 使用系统默认程序打开文件
+#[tauri::command]
+pub fn open_file(path: String) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("cmd")
+            .args(["/C", "start", "", &path])
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+    
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+    
+    #[cfg(target_os = "linux")]
+    {
+        std::process::Command::new("xdg-open")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+    
+    Ok(())
+}
+
+/// 检查文件是否存在
+#[tauri::command]
+pub fn file_exists(path: String) -> bool {
+    Path::new(&path).exists()
+}

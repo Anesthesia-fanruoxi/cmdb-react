@@ -75,7 +75,7 @@ const ContainerMonitor = () => {
           hosts_count: item.data?.result?.length || 0,
           project: selectedProject,
           category: 'container',
-          updated_at: new Date().toISOString(),
+          updated_at: Date.now(),
         }));
         processed.sort((a, b) => (a.sort || 0) - (b.sort || 0));
         setMetrics(processed);

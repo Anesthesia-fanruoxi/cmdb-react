@@ -137,6 +137,11 @@ export function resendEmail(data: { id: string }) {
   return apiClient.post<void>('/sql/export/resend-email', data);
 }
 
+// 下载导出文件
+export function downloadExportFile(id: string) {
+  return apiClient.get<Blob>('/sql/export/download', { id }, true);
+}
+
 // 状态映射
 export const EXPORT_STATUS_MAP: Record<number, { text: string; type: string }> = {
   0: { text: '待提交', type: 'info' },

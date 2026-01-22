@@ -74,7 +74,20 @@
 .btn-analysis:hover:not(:disabled) { background: #73d13d; }
 .btn-analysis:disabled { opacity: 0.6; cursor: not-allowed; }
 
-/* 时间范围选择器 */
+/* 时间范围选择器 - Ant Design 版本 */
+.time-range-picker-antd {
+  flex-shrink: 0;
+}
+
+.time-range-picker-antd .ant-picker {
+  height: 32px;
+}
+
+.time-range-picker-antd .ant-picker-input > input {
+  font-size: 13px;
+}
+
+/* 保留旧版本的样式以防回退 */
 .time-range-picker {
   position: relative;
   flex-shrink: 0;

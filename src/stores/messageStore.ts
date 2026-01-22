@@ -17,11 +17,16 @@ export interface Message {
   read: boolean;
   // 可选：点击跳转动作
   action?: {
-    type: 'task-center' | 'link';
+    type: 'task-center' | 'link' | 'download';
     payload?: string;
   };
   // 可选：关联的文件路径等
-  extra?: Record<string, unknown>;
+  extra?: Record<string, unknown> & {
+    // 下载相关
+    filePath?: string;
+    filename?: string;
+    downloadDir?: string;
+  };
 }
 
 interface MessageState {

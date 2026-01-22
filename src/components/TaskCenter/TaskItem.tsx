@@ -3,11 +3,12 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import { getTaskDetail, cancelTask, exportTaskData, type Task } from '../../services/task';
+import { ChevronDown, ChevronUp, Download, Link as LinkIcon } from 'lucide-react';
+import { getTaskDetail, cancelTask, generateDownloadLink, type Task } from '../../services/task';
 import { toast } from '../Toast';
 import { useMessageStore } from '../../stores/messageStore';
 import TaskDetailPanel from './TaskDetailPanel';
+import DownloadDialog from './DownloadDialog';
 
 interface TaskItemProps {
   task: Task;
@@ -59,6 +60,9 @@ const TaskItem = ({ task, expanded, onToggle, onPreview, onRefresh }: TaskItemPr
   const addMessage = useMessageStore(state => state.addMessage);
   const [taskDetail, setTaskDetail] = useState<Task | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showDownloadDialog, setShowDownloadDialog] = useState(false);
+  const [downloadUrl, setDownloadUrl] = useState('');
+  const [generating, setGenerating] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
 
   // 获取任务详情（SSE）
@@ -99,7 +103,6 @@ const TaskItem = ({ task, expanded, onToggle, onPreview, onRefresh }: TaskItemPr
       const res = await cancelTask(task.id);
       if (res.code === 200) {
         toast.success('任务已取消');
-        // 重新获取详情
         setTaskDetail(null);
         onRefresh();
       }
@@ -108,121 +111,105 @@ const TaskItem = ({ task, expanded, onToggle, onPreview, onRefresh }: TaskItemPr
     }
   };
 
-  // 导出数据
-  const handleExport = async () => {
+  // 处理下载
+  const handleDownload = async () => {
+    // 如果已有下载链接，直接下载
+    if (task.download_url) {
+      window.open(task.download_url, '_blank');
+      return;
+    }
+
+    // 否则生成下载链接
+    setGenerating(true);
     try {
-      // 检查是否在 Tauri 环境
-      const isTauri = '__TAURI__' in window;
-      
-      if (isTauri) {
-        // Tauri 环境：使用文件保存对话框
-        const { save } = await import('@tauri-apps/plugin-dialog');
-        const { writeFile } = await import('@tauri-apps/plugin-fs');
-        
-        const fileName = `${task.type}_${task.id.slice(0, 8)}_${Date.now()}.xlsx`;
-        const filePath = await save({
-          defaultPath: fileName,
-          filters: [{
-            name: 'Excel 文件',
-            extensions: ['xlsx']
-          }]
-        });
-        
-        if (!filePath) {
-          // 用户取消了保存
-          return;
-        }
-        
-        // 获取数据并保存
-        const blob = await exportTaskData({ id: task.id, type: task.type });
-        const arrayBuffer = await blob.arrayBuffer();
-        const uint8Array = new Uint8Array(arrayBuffer);
-        await writeFile(filePath, uint8Array);
-        
-        toast.success('导出成功');
-        addMessage({
-          type: 'success',
-          title: '任务导出成功',
-          content: `文件已保存到：${filePath}`,
-        });
+      const res = await generateDownloadLink(task.id);
+      if (res.code === 200) {
+        setDownloadUrl(res.data.downloadUrl);
+        setShowDownloadDialog(true);
       } else {
-        // Web 环境：使用浏览器下载
-        const blob = await exportTaskData({ id: task.id, type: task.type });
-        const link = document.createElement('a');
-        link.href = window.URL.createObjectURL(blob);
-        const fileName = `${task.type}_${task.id.slice(0, 8)}_${Date.now()}.xlsx`;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(link.href);
-        
-        toast.success('导出成功');
-        addMessage({
-          type: 'success',
-          title: '任务导出成功',
-          content: `文件 ${fileName} 已下载到浏览器默认下载目录`,
-        });
+        toast.error(res.message || '生成下载链接失败');
       }
     } catch {
-      toast.error('导出失败');
+      toast.error('生成下载链接失败');
+    } finally {
+      setGenerating(false);
     }
   };
 
   return (
-    <div className={`task-item ${task.is_expired ? 'task-expired' : ''}`}>
-      <div className={`task-header ${getStatusClass(task.status)}`}>
-        <div className="task-basic-info">
-          <span className="task-type-name">
-            {task.type_text || TASK_TYPE_MAP[task.type] || task.type}
-          </span>
-          {task.nick_name && (
-            <span className="task-nick-name">{task.nick_name}</span>
-          )}
-          <span className="task-time">{task.created_at}</span>
-          <span className={`task-status-tag tag-${getStatusType(task.status)}`}>
-            {task.status_text || STATUS_MAP[task.status] || task.status}
-          </span>
+    <>
+      <div className={`task-item ${task.is_expired ? 'task-expired' : ''}`}>
+        <div className={`task-header ${getStatusClass(task.status)}`}>
+          <div className="task-basic-info">
+            <span className="task-type-name">
+              {task.type_text || TASK_TYPE_MAP[task.type] || task.type}
+            </span>
+            {task.nick_name && (
+              <span className="task-nick-name">{task.nick_name}</span>
+            )}
+            <span className="task-time">{task.created_at}</span>
+            <span className={`task-status-tag tag-${getStatusType(task.status)}`}>
+              {task.status_text || STATUS_MAP[task.status] || task.status}
+            </span>
+          </div>
+          <div className="task-actions-group">
+            {task.status === 'success' && (
+              <>
+                <button
+                  className="link-btn"
+                  onClick={(e) => { e.stopPropagation(); onPreview(); }}
+                  disabled={task.is_expired}
+                >
+                  预览
+                </button>
+                <button
+                  className="link-btn"
+                  onClick={(e) => { e.stopPropagation(); handleDownload(); }}
+                  disabled={generating}
+                >
+                  {task.download_url ? (
+                    <><Download size={14} /> 下载</>
+                  ) : (
+                    <><LinkIcon size={14} /> {generating ? '生成中...' : '生成链接'}</>
+                  )}
+                </button>
+              </>
+            )}
+            <button
+              className="link-btn"
+              onClick={onToggle}
+              disabled={task.is_expired}
+            >
+              {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              {expanded ? '收起' : '详情'}
+            </button>
+          </div>
         </div>
-        <div className="task-actions-group">
-          {task.status === 'success' && (
-            <>
-              <button
-                className="link-btn"
-                onClick={(e) => { e.stopPropagation(); onPreview(); }}
-                disabled={task.is_expired}
-              >
-                预览
-              </button>
-              <button
-                className="link-btn"
-                onClick={(e) => { e.stopPropagation(); handleExport(); }}
-              >
-                下载
-              </button>
-            </>
-          )}
-          <button
-            className="link-btn"
-            onClick={onToggle}
-            disabled={task.is_expired}
-          >
-            {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            {expanded ? '收起' : '详情'}
-          </button>
-        </div>
+        {expanded && (
+          <div className="task-detail">
+            <TaskDetailPanel
+              taskId={task.id}
+              taskDetail={taskDetail}
+              loading={loading}
+              onCancel={handleCancel}
+            />
+          </div>
+        )}
       </div>
-      {expanded && (
-        <div className="task-detail">
-          <TaskDetailPanel
-            taskId={task.id}
-            taskDetail={taskDetail}
-            loading={loading}
-            onCancel={handleCancel}
-          />
-        </div>
-      )}
-    </div>
+
+      {/* 下载对话框 */}
+      <DownloadDialog
+        visible={showDownloadDialog}
+        downloadUrl={downloadUrl}
+        taskType={task.type}
+        taskId={task.id}
+        onClose={() => {
+          setShowDownloadDialog(false);
+          setDownloadUrl('');
+          onRefresh(); // 刷新列表，获取新的 download_url
+        }}
+      />
+    </>
   );
 };
 

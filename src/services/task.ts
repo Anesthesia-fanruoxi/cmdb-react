@@ -25,6 +25,7 @@ export interface Task {
   is_expired?: boolean;      // 是否过期
   processed_count?: number;  // 已处理数量
   total_count?: number;      // 总数量
+  download_url?: string;     // 临时下载链接（60秒有效）
 }
 
 export interface TaskListResponse {
@@ -114,7 +115,20 @@ export async function previewTaskData(params: {
   return apiClient.post('/tasks/preview', params);
 }
 
-// 导出任务数据
+// 生成临时下载链接
+export async function generateDownloadLink(taskId: string): Promise<{
+  code: number;
+  data: {
+    downloadUrl: string;
+    downloadCode: string;
+    expiresAt: number;
+  };
+  message?: string;
+}> {
+  return apiClient.post('/tasks/download/generate', { taskId });
+}
+
+// 导出任务数据（已废弃，使用原生下载）
 export async function exportTaskData(params: {
   id: string;
   type: string;
