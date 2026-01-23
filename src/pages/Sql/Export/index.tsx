@@ -5,10 +5,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   getExportListSSE, getSqlExportProjects, submitExport, getProcessList, getDatabases,
-  EXPORT_STATUS_MAP, type ExportItem, type ExportProject, type ProcessInfo
+  generateExportDownloadLink, EXPORT_STATUS_MAP, 
+  type ExportItem, type ExportProject, type ProcessInfo, type ExportProgress
 } from '@/services/sql';
 import { toast } from '@/components/AppNotification';
 import ExportDetailDrawer from './ExportDetail';
+import DownloadDialog from '@/components/TaskCenter/DownloadDialog';
 import './style.css';
 
 const SqlExport = () => {
@@ -16,6 +18,16 @@ const SqlExport = () => {
   const [exportList, setExportList] = useState<ExportItem[]>([]);
   const [projects, setProjects] = useState<ExportProject[]>([]);
   const eventSourceRef = useRef<EventSource | null>(null);
+  
+  // 进度数据
+  const [progressData, setProgressData] = useState<ExportProgress[]>([]);
+  const progressHistoryRef = useRef<Record<string, Array<{ time: number; rows: number }>>>({});
+  
+  // 下载相关
+  const [showDownloadDialog, setShowDownloadDialog] = useState(false);
+  const [downloadUrl, setDownloadUrl] = useState('');
+  const [currentDownloadId, setCurrentDownloadId] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
   
   // 抽屉状态
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -62,6 +74,26 @@ const SqlExport = () => {
     const eventSource = getExportListSSE(
       (data) => {
         setExportList(data.export || []);
+        
+        // 处理进度数据
+        const newProgress = data.progress || [];
+        newProgress.forEach(p => {
+          const id = p.export_id;
+          if (!progressHistoryRef.current[id]) {
+            progressHistoryRef.current[id] = [];
+          }
+          // 添加新记录
+          progressHistoryRef.current[id].push({
+            time: Date.now(),
+            rows: p.current_rows
+          });
+          // 只保留最近10条记录
+          if (progressHistoryRef.current[id].length > 10) {
+            progressHistoryRef.current[id].shift();
+          }
+        });
+        setProgressData(newProgress);
+        
         setLoading(false);
       },
       () => {
@@ -257,6 +289,83 @@ const SqlExport = () => {
     return EXPORT_STATUS_MAP[status] || { text: '未知', type: 'default' };
   };
 
+  // 获取进度信息
+  const getProgress = (exportId: string) => {
+    return progressData.find(p => p.export_id === exportId);
+  };
+
+  // 计算进度百分比
+  const getProgressPercent = (exportId: string) => {
+    const progress = getProgress(exportId);
+    if (!progress || !progress.total_rows) return 0;
+    return Math.round((progress.current_rows / progress.total_rows) * 100);
+  };
+
+  // 计算预估剩余时间
+  const getEstimatedTime = (exportId: string) => {
+    const progress = getProgress(exportId);
+    const history = progressHistoryRef.current[exportId];
+    
+    if (!progress || !history || history.length < 2 || !progress.total_rows) {
+      return '计算中...';
+    }
+    
+    // 计算速度（基于最近的记录）
+    const oldest = history[0];
+    const newest = history[history.length - 1];
+    const elapsed = (newest.time - oldest.time) / 1000; // 秒
+    const processedRows = newest.rows - oldest.rows;
+    
+    if (elapsed === 0 || processedRows === 0) {
+      return '计算中...';
+    }
+    
+    const speed = processedRows / elapsed; // 行/秒
+    const remainingRows = progress.total_rows - progress.current_rows;
+    const remainingSeconds = remainingRows / speed;
+    
+    // 格式化时间
+    if (remainingSeconds < 60) {
+      return `${Math.ceil(remainingSeconds)}秒`;
+    } else if (remainingSeconds < 3600) {
+      return `${Math.ceil(remainingSeconds / 60)}分钟`;
+    } else {
+      return `${Math.ceil(remainingSeconds / 3600)}小时`;
+    }
+  };
+
+  // 处理下载
+  const handleDownload = async (item: ExportItem) => {
+    // 如果已有下载链接，直接下载
+    if (item.download_url) {
+      window.open(item.download_url, '_blank');
+      return;
+    }
+
+    // 否则生成下载链接
+    setCurrentDownloadId(item.id);
+    setGenerating(true);
+    try {
+      const res = await generateExportDownloadLink(item.id);
+      if (res.code === 200) {
+        setDownloadUrl(res.data.downloadUrl || res.data.download_url);
+        setShowDownloadDialog(true);
+        
+        // 更新列表中的 download_url
+        setExportList(prev => prev.map(exp => 
+          exp.id === item.id ? { ...exp, download_url: res.data.downloadUrl || res.data.download_url } : exp
+        ));
+      } else {
+        toast.error(res.message || '生成下载链接失败');
+      }
+    } catch {
+      toast.error('生成下载链接失败');
+    } finally {
+      setGenerating(false);
+      setCurrentDownloadId(null);
+    }
+  };
+
   return (
     <div className="sql-export">
       <div className="page-header">
@@ -279,8 +388,8 @@ const SqlExport = () => {
                 <th>审批人</th>
                 <th>创建时间</th>
                 <th>当前操作人</th>
-                <th>状态</th>
-                <th style={{ width: 120 }}>操作</th>
+                <th style={{ minWidth: 200 }}>状态</th>
+                <th style={{ width: 150 }}>操作</th>
               </tr>
             </thead>
             <tbody>
@@ -289,6 +398,9 @@ const SqlExport = () => {
               ) : (
                 exportList.map(item => {
                   const statusInfo = getStatusInfo(item.status);
+                  const progress = getProgress(item.id);
+                  const showProgress = item.status === 8 && progress;
+                  
                   return (
                     <tr key={item.id}>
                       <td>{item.project_name}</td>
@@ -296,9 +408,33 @@ const SqlExport = () => {
                       <td>{item.apply_name || '-'}</td>
                       <td>{item.created_at?.replace('T', ' ').substring(0, 19)}</td>
                       <td className={item.current_operator ? 'highlight-cell' : ''}>{item.current_operator || '-'}</td>
-                      <td><span className={`tag tag-${statusInfo.type}`}>{statusInfo.text}</span></td>
+                      <td>
+                        {showProgress ? (
+                          <div className="progress-wrapper">
+                            <div className="progress-info">
+                              <span className="progress-text">{progress.message}</span>
+                              <span className="progress-percent">{getProgressPercent(item.id)}%</span>
+                            </div>
+                            <div className="progress-bar">
+                              <div className="progress-fill" style={{ width: `${getProgressPercent(item.id)}%` }} />
+                            </div>
+                            <div className="progress-eta">预计剩余: {getEstimatedTime(item.id)}</div>
+                          </div>
+                        ) : (
+                          <span className={`tag tag-${statusInfo.type}`}>{statusInfo.text}</span>
+                        )}
+                      </td>
                       <td className="action-cell">
                         <button className="btn btn-link" onClick={() => handleViewDetail(item)}>详情</button>
+                        {item.status === 4 && (
+                          <button 
+                            className="btn btn-link" 
+                            onClick={() => handleDownload(item)}
+                            disabled={generating && currentDownloadId === item.id}
+                          >
+                            {generating && currentDownloadId === item.id ? '生成中...' : (item.download_url ? '下载' : '生成链接')}
+                          </button>
+                        )}
                       </td>
                     </tr>
                   );
@@ -400,6 +536,19 @@ const SqlExport = () => {
         exportId={currentId}
         onClose={() => setDetailVisible(false)}
         onRefresh={fetchExportList}
+      />
+
+      {/* 下载对话框 */}
+      <DownloadDialog
+        visible={showDownloadDialog}
+        downloadUrl={downloadUrl}
+        taskType="sql_export"
+        taskId={currentDownloadId || undefined}
+        onClose={() => {
+          setShowDownloadDialog(false);
+          setDownloadUrl('');
+          fetchExportList(); // 刷新列表
+        }}
       />
     </div>
   );

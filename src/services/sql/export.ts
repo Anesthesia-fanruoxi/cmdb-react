@@ -29,6 +29,15 @@ export interface ExportItem {
   current_operator: string;
   created_at: string;
   updated_at: string;
+  download_url?: string; // 下载链接
+}
+
+// 导出进度信息
+export interface ExportProgress {
+  export_id: string;
+  current_rows: number;
+  total_rows: number;
+  message: string;
 }
 
 export interface ExportDetail extends ExportItem {
@@ -71,7 +80,7 @@ export function getSqlExportProjects() {
 
 // 获取SQL导出申请列表（SSE流式）
 export function getExportListSSE(
-  onMessage: (data: { export: ExportItem[]; total_count: number }) => void,
+  onMessage: (data: { export: ExportItem[]; progress?: ExportProgress[]; total_count: number }) => void,
   onError?: (error: Event) => void,
   onComplete?: () => void
 ): EventSource {
@@ -140,6 +149,11 @@ export function resendEmail(data: { id: string }) {
 // 下载导出文件
 export function downloadExportFile(id: string) {
   return apiClient.get<Blob>('/sql/export/download', { id }, true);
+}
+
+// 生成导出下载链接
+export function generateExportDownloadLink(id: string) {
+  return apiClient.post<{ downloadUrl: string; download_url: string; code: string; expireTime: string; expire_time: string }>('/sql/export/download/generate', { id });
 }
 
 // 状态映射
