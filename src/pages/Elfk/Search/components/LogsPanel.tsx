@@ -22,6 +22,7 @@ interface LogsPanelProps {
   currentView: ViewDetail | null;
   selectedFields: string[];
   searchParams?: Record<string, unknown>;
+  sortOrder?: 'asc' | 'desc'; // 新增：外部传入的排序状态
   onSortChange?: (sortOrder: string) => void;
   onPageData?: (data: { logs: LogHit[]; page: number; pages: number; append?: boolean }) => void;
   onLoadingChange?: (loading: boolean) => void;
@@ -33,8 +34,8 @@ const typeColors: Record<string, string> = {
   date: '#c45656', array: '#737579', object: '#8b5da7',
 };
 
-const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields, searchParams, onSortChange, onPageData, onLoadingChange, onAnalysis }: LogsPanelProps) => {
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields, searchParams, sortOrder: externalSortOrder = 'desc', onSortChange, onPageData, onLoadingChange, onAnalysis }: LogsPanelProps) => {
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(externalSortOrder);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageLoading, setPageLoading] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
@@ -56,6 +57,13 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
   const totalPages = searchParams?.pages as number || 1;
   const queryId = searchParams?.query_id as string || '';
   const hasMore = currentPage < totalPages;
+
+  // 监听外部 sortOrder 变化，同步到本地状态
+  useEffect(() => {
+    if (externalSortOrder) {
+      setSortOrder(externalSortOrder);
+    }
+  }, [externalSortOrder]);
 
   // 监听 searchParams 变化，重置分页状态
   useEffect(() => {

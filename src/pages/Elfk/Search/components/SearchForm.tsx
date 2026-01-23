@@ -1,11 +1,12 @@
 /**
  * 搜索表单 - 顶部栏：视图选择 + 搜索框 + 时间范围
+ * 更新时间：2025-01-23
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getViewList, getViewDetail } from '../../../../services/elfk/view';
 import { useUserPrefsStore } from '../../../../stores';
-import TimeRangePicker from './TimeRangePicker';
+import KibanaTimeRangePicker from './KibanaTimeRangePicker';
 import HistoryDropdown, { saveLocalHistory } from './HistoryDropdown';
 import SaveSharedDialog from './SaveSharedDialog';
 import ShortcutSettings from './ShortcutSettings';
@@ -24,12 +25,14 @@ interface Props {
   loading: boolean;
   initialKeyword?: string;
   initialTimeRange?: { start: string; end: string; label: string };
+  autoRefresh?: boolean; // 新增：自动刷新状态
   onViewChange: (view: ViewDetail) => void;
   onSearch: (params: Record<string, unknown>) => void;
   onReset: () => void;
   onAddTab?: () => void;
   onKeywordChange?: (keyword: string) => void;
   onTimeRangeChange?: (range: { start: string; end: string; label: string }) => void;
+  onAutoRefreshToggle?: (enabled: boolean) => void; // 新增：自动刷新切换回调
 }
 
 // 格式化本地时间
@@ -123,7 +126,7 @@ const getActualTimeRange = (timeRange: { start: string; end: string; label: stri
   return { start: formatLocalDateTime(start), end: formatLocalDateTime(end) };
 };
 
-const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, initialTimeRange, onViewChange, onSearch, onReset, onAddTab, onKeywordChange, onTimeRangeChange }: Props) => {
+const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, initialTimeRange, autoRefresh = false, onViewChange, onSearch, onReset, onAddTab, onKeywordChange, onTimeRangeChange, onAutoRefreshToggle }: Props) => {
   const [allViews, setAllViews] = useState<ViewListItem[]>([]);
   const [viewLoading, setViewLoading] = useState(false);
   const [timeRange, setTimeRange] = useState(initialTimeRange || getTodayRange);
@@ -198,11 +201,30 @@ const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, initial
     });
   }, [currentView, projectInfo, localKeyword, timeRange, onSearch]);
 
-  // 时间范围变化时同步到父组件
-  const handleTimeRangeChange = (range: { start: string; end: string; label?: string }) => {
+  // 时间范围变化时同步到父组件，并根据需要自动搜索
+  const handleTimeRangeChange = (range: { start: string; end: string; label?: string }, autoSearch = false) => {
     const newRange = { ...range, label: range.label || '自定义' };
     setTimeRange(newRange);
     onTimeRangeChange?.(newRange);
+    
+    // 如果需要自动搜索（快捷选择触发）
+    if (autoSearch && currentView && projectInfo) {
+      // 使用新的时间范围立即搜索
+      const actualRange = getActualTimeRange(newRange);
+      
+      onSearch({
+        project: projectInfo.project,
+        view_id: currentView.id,
+        view_name: currentView.name,
+        index_pattern: currentView.index_pattern,
+        start_time: formatSearchTime(actualRange.start),
+        end_time: formatSearchTime(actualRange.end),
+        time_field: currentView.time_field || '@timestamp',
+        time_format: currentView.time_format || 'epoch_millis',
+        keyword: localKeyword.trim(),
+        log_type: currentView.log_type || 'elfk'
+      });
+    }
   };
 
   const handleReset = () => {
@@ -314,8 +336,11 @@ const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, initial
           />
         </div>
 
-        {/* 时间范围选择器 */}
-        <TimeRangePicker value={timeRange} onChange={handleTimeRangeChange} />
+        {/* 时间范围选择器 - Kibana 风格 */}
+        <KibanaTimeRangePicker 
+          value={timeRange} 
+          onChange={handleTimeRangeChange}
+        />
 
         {/* 按钮 */}
         <div className="form-btns">
@@ -323,6 +348,13 @@ const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, initial
             {loading ? '搜索中...' : '搜索'}
           </button>
           <button className="btn-reset" onClick={handleReset}>重置</button>
+          <button 
+            className={`btn-auto-refresh ${autoRefresh ? 'active' : ''}`}
+            onClick={() => onAutoRefreshToggle?.(!autoRefresh)}
+            title={autoRefresh ? '关闭自动刷新' : '开启自动刷新（每5秒）'}
+          >
+            🔄 {autoRefresh ? '自动刷新中' : '自动刷新'}
+          </button>
           <button className="btn-settings" onClick={() => setShortcutVisible(true)} title="快捷键设置">
             ⚙️
           </button>

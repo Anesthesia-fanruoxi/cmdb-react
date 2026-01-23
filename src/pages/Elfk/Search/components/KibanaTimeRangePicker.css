@@ -1,0 +1,393 @@
+/**
+ * Kibana 风格时间选择器样式
+ * 更新时间：2025-01-23
+ */
+
+/* 主按钮 */
+.kibana-time-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: #f7f8fa;
+  border: 1px solid #d3dae6;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #343741;
+  transition: all 0.2s;
+  height: 32px;
+  min-width: 160px;
+  max-width: 400px;
+  width: auto;
+}
+
+.kibana-time-btn:hover {
+  background: #e9edf2;
+  border-color: #98a2b3;
+}
+
+.kibana-time-btn:active {
+  background: #dfe3e8;
+}
+
+.kibana-time-btn .icon {
+  color: #69707d;
+  font-size: 14px;
+}
+
+.kibana-time-btn .time-text {
+  flex: 0 1 auto;
+  text-align: left;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kibana-time-btn .arrow {
+  font-size: 10px;
+  color: #69707d;
+}
+
+/* 弹窗内容 */
+.kibana-time-modal .ant-modal-content {
+  background: var(--modal-bg, #ffffff);
+}
+
+.kibana-time-modal .ant-modal-header {
+  background: var(--modal-header-bg, #fafafa);
+  border-bottom: 1px solid var(--border-color, #d3dae6);
+}
+
+.kibana-time-modal .ant-modal-title {
+  color: var(--text-color, #343741);
+  font-weight: 600;
+}
+
+.kibana-time-modal .ant-modal-body {
+  padding: 20px;
+  padding-bottom: 80px; /* 为底部按钮留出空间 */
+  min-height: 400px;
+}
+
+/* 标签页1：快捷选择面板 */
+.kibana-time-modal .quick-select-panel {
+  padding: 16px 0;
+  height: 400px;
+  overflow-y: auto;
+}
+
+.kibana-time-modal .quick-category {
+  margin-bottom: 24px;
+}
+
+.kibana-time-modal .quick-category:last-child {
+  margin-bottom: 0;
+}
+
+.kibana-time-modal .category-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #69707d;
+  margin-bottom: 12px;
+  padding-left: 4px;
+}
+
+.kibana-time-modal .quick-options-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.kibana-time-modal .quick-option-card {
+  padding: 16px;
+  text-align: center;
+  font-size: 14px;
+  color: #343741;
+  background: #f7f8fa;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.kibana-time-modal .quick-option-card:hover {
+  background: #e9edf2;
+  border-color: #98a2b3;
+}
+
+.kibana-time-modal .quick-option-card.active {
+  background: #e6f7ff;
+  border-color: #1890ff;
+  color: #1890ff;
+}
+
+/* 标签页2：自定义时间范围面板 */
+.kibana-time-modal .custom-range-panel {
+  padding: 16px 0;
+  height: 400px;
+  overflow-y: auto;
+  position: relative;
+}
+
+.custom-range-panel .ant-picker-range {
+  width: 100%;
+}
+
+.selected-range {
+  margin-top: 20px;
+  padding: 16px;
+  background: #f7f8fa;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.range-info {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+}
+
+.range-info .label {
+  color: #69707d;
+  margin-right: 8px;
+  min-width: 80px;
+}
+
+.range-info .value {
+  color: #343741;
+  font-weight: 500;
+}
+
+/* 标签页3：过去时间面板 */
+.kibana-time-modal .relative-time-panel {
+  padding: 16px 0;
+  height: 400px;
+  overflow-y: auto;
+  position: relative;
+}
+
+.relative-time-input {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.relative-time-input .input-label {
+  font-size: 14px;
+  color: #343741;
+  font-weight: 500;
+}
+
+.relative-time-input .ant-input-number,
+.relative-time-input .ant-select {
+  flex: 0 0 auto;
+}
+
+.relative-time-hint {
+  padding: 12px;
+  background: #f0f5ff;
+  border-left: 3px solid #1890ff;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #69707d;
+  line-height: 1.6;
+}
+
+/* 面板底部确认按钮 - 固定在右下角 */
+.panel-footer {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  margin: 0;
+  padding: 16px 20px;
+  border-top: 1px solid #d3dae6;
+  background: #ffffff;
+  display: flex;
+  justify-content: flex-end;
+  z-index: 10;
+}
+
+.confirm-btn {
+  padding: 8px 24px;
+  background: #1890ff;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.confirm-btn:hover:not(:disabled) {
+  background: #40a9ff;
+}
+
+.confirm-btn:active:not(:disabled) {
+  background: #096dd9;
+}
+
+.confirm-btn:disabled {
+  background: #d9d9d9;
+  color: rgba(0, 0, 0, 0.25);
+  cursor: not-allowed;
+}
+
+/* 深色模式适配 - 直接针对弹窗 */
+.dark .ant-modal-root .kibana-time-modal .ant-modal-content,
+body.dark .ant-modal-root .kibana-time-modal .ant-modal-content {
+  background: #1f1f1f;
+}
+
+.dark .ant-modal-root .kibana-time-modal .ant-modal-header,
+body.dark .ant-modal-root .kibana-time-modal .ant-modal-header {
+  background: #141414;
+  border-bottom-color: #434343;
+}
+
+.dark .ant-modal-root .kibana-time-modal .ant-modal-title,
+body.dark .ant-modal-root .kibana-time-modal .ant-modal-title {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.dark .ant-modal-root .kibana-time-modal .ant-modal-close,
+body.dark .ant-modal-root .kibana-time-modal .ant-modal-close {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.dark .ant-modal-root .kibana-time-modal .ant-modal-close:hover,
+body.dark .ant-modal-root .kibana-time-modal .ant-modal-close:hover {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.dark .ant-modal-root .kibana-time-modal .ant-modal-footer,
+body.dark .ant-modal-root .kibana-time-modal .ant-modal-footer {
+  border-top-color: #434343;
+}
+
+.dark .ant-modal-root .kibana-time-modal .ant-picker,
+body.dark .ant-modal-root .kibana-time-modal .ant-picker {
+  background: #141414;
+  border-color: #434343;
+}
+
+.dark .ant-modal-root .kibana-time-modal .ant-picker input,
+body.dark .ant-modal-root .kibana-time-modal .ant-picker input {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.dark .ant-modal-root .kibana-time-modal .ant-picker-suffix,
+body.dark .ant-modal-root .kibana-time-modal .ant-picker-suffix {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.dark .kibana-time-btn {
+  background: #25262e;
+  border-color: #343741;
+  color: #dfe5ef;
+}
+
+.dark .kibana-time-btn:hover {
+  background: #2e2f3a;
+  border-color: #535966;
+}
+
+.dark .kibana-time-btn:active {
+  background: #1a1b20;
+}
+
+.dark .kibana-time-btn .icon,
+.dark .kibana-time-btn .arrow {
+  color: #98a2b3;
+}
+
+/* 深色模式 - 快捷选择 */
+.dark .kibana-time-modal .category-title {
+  color: #98a2b3;
+}
+
+.dark .kibana-time-modal .quick-option-card {
+  background: #25262e;
+  color: #dfe5ef;
+}
+
+.dark .kibana-time-modal .quick-option-card:hover {
+  background: #2e2f3a;
+  border-color: #535966;
+}
+
+.dark .kibana-time-modal .quick-option-card.active {
+  background: #1a3a52;
+  border-color: #40a9ff;
+  color: #40a9ff;
+}
+
+/* 深色模式 - 自定义时间范围 */
+.dark .selected-range {
+  background: #25262e;
+}
+
+.dark .range-info .label {
+  color: #98a2b3;
+}
+
+.dark .range-info .value {
+  color: #dfe5ef;
+}
+
+/* 深色模式 - 过去时间 */
+.dark .relative-time-input .input-label {
+  color: #dfe5ef;
+}
+
+.dark .relative-time-hint {
+  background: #111b26;
+  border-left-color: #177ddc;
+  color: #98a2b3;
+}
+
+/* 深色模式 - 确认按钮 */
+.dark .panel-footer {
+  border-top-color: #434343;
+  background: #1f1f1f;
+}
+
+.dark .confirm-btn {
+  background: #177ddc;
+}
+
+.dark .confirm-btn:hover:not(:disabled) {
+  background: #1890ff;
+}
+
+.dark .confirm-btn:active:not(:disabled) {
+  background: #0050b3;
+}
+
+.dark .confirm-btn:disabled {
+  background: #434343;
+  color: rgba(255, 255, 255, 0.25);
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .kibana-time-btn {
+    min-width: 160px;
+    font-size: 12px;
+  }
+  
+  .quick-options-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .relative-time-input {
+    flex-wrap: wrap;
+  }
+}
