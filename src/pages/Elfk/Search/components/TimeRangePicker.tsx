@@ -3,7 +3,7 @@
  * 支持快捷选择和自定义时间
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { DatePicker, ConfigProvider } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import type { Dayjs } from 'dayjs';
@@ -46,7 +46,7 @@ const shortcuts = [
     value: 'today',
     getRange: () => {
       const now = dayjs();
-      return [now.startOf('day'), now];
+      return [now.startOf('day'), now] as [Dayjs, Dayjs];
     },
   },
   {
@@ -54,7 +54,7 @@ const shortcuts = [
     value: 'yesterday',
     getRange: () => {
       const yesterday = dayjs().subtract(1, 'day');
-      return [yesterday.startOf('day'), yesterday.endOf('day')];
+      return [yesterday.startOf('day'), yesterday.endOf('day')] as [Dayjs, Dayjs];
     },
   },
   { label: '近3天', value: '3d', ms: 3 * 24 * 3600 * 1000 },
@@ -64,7 +64,7 @@ const shortcuts = [
     value: 'thisMonth',
     getRange: () => {
       const now = dayjs();
-      return [now.startOf('month'), now];
+      return [now.startOf('month'), now] as [Dayjs, Dayjs];
     },
   },
   {
@@ -72,7 +72,7 @@ const shortcuts = [
     value: 'lastMonth',
     getRange: () => {
       const lastMonth = dayjs().subtract(1, 'month');
-      return [lastMonth.startOf('month'), lastMonth.endOf('month')];
+      return [lastMonth.startOf('month'), lastMonth.endOf('month')] as [Dayjs, Dayjs];
     },
   },
   { label: '近1个月', value: '1M', ms: 30 * 24 * 3600 * 1000 },
@@ -103,22 +103,22 @@ const TimeRangePicker = ({ value, onChange }: Props) => {
     }
   }, [value.start, value.end, value.label]);
 
-  const handleChange = (dates: [Dayjs, Dayjs] | null, dateStrings: [string, string]) => {
-    if (!dates) {
+  const handleChange = (dates: [Dayjs | null, Dayjs | null] | null) => {
+    if (!dates || !dates[0] || !dates[1]) {
       return;
     }
 
-    const [start, end] = dates;
+    const [start, end] = dates as [Dayjs, Dayjs];
     
     // 检查是否匹配某个快捷选项
     let matchedLabel = '自定义';
     for (const shortcut of shortcuts) {
       let shortcutRange: [Dayjs, Dayjs];
       if (shortcut.getRange) {
-        shortcutRange = shortcut.getRange();
+        shortcutRange = shortcut.getRange() as [Dayjs, Dayjs];
       } else {
         const now = dayjs();
-        shortcutRange = [now.subtract(shortcut.ms!, 'millisecond'), now];
+        shortcutRange = [now.subtract(shortcut.ms!, 'millisecond'), now] as [Dayjs, Dayjs];
       }
       
       // 允许1分钟误差
@@ -131,7 +131,7 @@ const TimeRangePicker = ({ value, onChange }: Props) => {
       }
     }
 
-    setDateRange(dates);
+    setDateRange([start, end]);
     setCurrentLabel(matchedLabel);
     
     onChange({

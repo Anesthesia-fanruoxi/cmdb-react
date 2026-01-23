@@ -6,7 +6,6 @@ import { useState, useEffect, useRef } from 'react';
 import { ChevronDown, ChevronUp, Download, Link as LinkIcon } from 'lucide-react';
 import { getTaskDetail, cancelTask, generateDownloadLink, type Task } from '../../services/task';
 import { toast } from '../Toast';
-import { useMessageStore } from '../../stores/messageStore';
 import TaskDetailPanel from './TaskDetailPanel';
 import DownloadDialog from './DownloadDialog';
 
@@ -57,7 +56,6 @@ const getStatusType = (status: string) => {
 };
 
 const TaskItem = ({ task, expanded, onToggle, onPreview, onRefresh }: TaskItemProps) => {
-  const addMessage = useMessageStore(state => state.addMessage);
   const [taskDetail, setTaskDetail] = useState<Task | null>(null);
   const [loading, setLoading] = useState(false);
   const [showDownloadDialog, setShowDownloadDialog] = useState(false);

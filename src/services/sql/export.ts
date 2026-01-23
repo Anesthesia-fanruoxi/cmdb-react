@@ -148,7 +148,7 @@ export function resendEmail(data: { id: string }) {
 
 // 下载导出文件
 export function downloadExportFile(id: string) {
-  return apiClient.get<Blob>('/sql/export/download', { id }, true);
+  return apiClient.get<Blob>('/sql/export/download', { id }, { responseType: 'blob' });
 }
 
 // 生成导出下载链接

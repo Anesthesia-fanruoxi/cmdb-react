@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { Bell, CheckCheck, Trash2, X, AlertCircle, CheckCircle, Info, ExternalLink, FolderOpen, FileText, Download } from 'lucide-react';
+import { Bell, X, AlertCircle, CheckCircle, Info, ExternalLink, FolderOpen, FileText, Download } from 'lucide-react';
 import { useMessageStore, type Message } from '../../stores/messageStore';
 import { useTaskCenterStore } from '../../stores/taskCenterStore';
 import { openFolder, showInFolder, openFile } from '../../utils/fileSystem';
