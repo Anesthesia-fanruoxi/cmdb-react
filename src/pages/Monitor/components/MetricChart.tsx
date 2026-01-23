@@ -38,24 +38,35 @@ const areEqual = (prev: MetricChartProps, next: MetricChartProps) => {
   if (prev.height !== next.height) return false;
   if (prev.isDetailed !== next.isDetailed) return false;
   
-  // 比较 updated_at 字段（切换项目时会更新）
-  if ((prev.metric as MonitorMetric & { updated_at?: string }).updated_at !== (next.metric as MonitorMetric & { updated_at?: string }).updated_at) return false;
+  // 比较数据结果数量
+  const prevResultCount = prev.metric.data?.result?.length || 0;
+  const nextResultCount = next.metric.data?.result?.length || 0;
+  if (prevResultCount !== nextResultCount) return false;
   
-  // 比较数据的第一个和最后一个时间戳，判断数据范围是否变化
-  const prevData = prev.metric.data?.result?.[0]?.values;
-  const nextData = next.metric.data?.result?.[0]?.values;
+  // 如果都没有数据，认为相等
+  if (prevResultCount === 0 && nextResultCount === 0) return true;
   
-  if (!prevData && !nextData) return true;
-  if (!prevData || !nextData) return false;
-  if (prevData.length !== nextData.length) return false;
+  const prevResult = prev.metric.data?.result?.[0];
+  const nextResult = next.metric.data?.result?.[0];
   
-  // 比较首尾时间戳
-  const prevFirst = prevData[0]?.[0];
-  const prevLast = prevData[prevData.length - 1]?.[0];
-  const nextFirst = nextData[0]?.[0];
-  const nextLast = nextData[nextData.length - 1]?.[0];
+  if (!prevResult || !nextResult) return false;
   
-  return prevFirst === nextFirst && prevLast === nextLast;
+  // matrix 类型：只比较最后一个数据点（最新的数据）
+  if (prevResult.values && nextResult.values) {
+    if (prevResult.values.length !== nextResult.values.length) return false;
+    const prevLast = prevResult.values[prevResult.values.length - 1];
+    const nextLast = nextResult.values[nextResult.values.length - 1];
+    return prevLast?.[0] === nextLast?.[0] && prevLast?.[1] === nextLast?.[1];
+  }
+  
+  // vector 类型：比较 value
+  if (prevResult.value && nextResult.value) {
+    return prevResult.value[0] === nextResult.value[0] && 
+           prevResult.value[1] === nextResult.value[1];
+  }
+  
+  // 数据类型不一致，认为不相等
+  return false;
 };
 
 const MetricChart = memo(({
@@ -81,14 +92,24 @@ const MetricChart = memo(({
     // 初始化或重用图表实例
     if (!chartInstance.current) {
       chartInstance.current = echarts.init(chartRef.current, null, { renderer: 'svg' });
-    } else {
-      // 清空图表，触发重新渲染动画
+    }
+
+    // 检查是否需要强制重载（手动刷新或首次加载）
+    const shouldReload = (metric as MonitorMetric & { forceReload?: boolean }).forceReload;
+    
+    if (shouldReload) {
+      // 强制重载：清空图表，触发完整的加载动画
       chartInstance.current.clear();
     }
 
     // 创建图表配置
-    const option = createChartOption(metric, isDetailed);
-    chartInstance.current.setOption(option);
+    const option = createChartOption(metric, isDetailed, shouldReload);
+    
+    // 使用增量更新模式（SSE 更新时）或完整更新模式（手动刷新时）
+    chartInstance.current.setOption(option, {
+      notMerge: shouldReload, // 强制重载时完全替换，否则合并
+      lazyUpdate: !shouldReload, // 强制重载时立即更新，否则延迟更新
+    });
 
     // 保存所有图例名称
     if (option.legend && Array.isArray(option.legend.data)) {
@@ -234,7 +255,7 @@ function isDataCrossingMidnight(metric: MonitorMetric): boolean {
 }
 
 /** 创建图表配置 */
-function createChartOption(metric: MonitorMetric, isDetailed: boolean) {
+function createChartOption(metric: MonitorMetric, isDetailed: boolean, forceReload = false) {
   const series: echarts.SeriesOption[] = [];
   const standard = (metric.standard || 'default') as DataStandard;
   const colors = getThemeColors();
@@ -288,14 +309,13 @@ function createChartOption(metric: MonitorMetric, isDetailed: boolean) {
       series.push({
         name: seriesName,
         type: 'line',
-        showSymbol: isDetailed, // 详细模式显示数据点
+        showSymbol: isDetailed,
         symbolSize: isDetailed ? 6 : 4,
         smooth: true,
         connectNulls: false,
         data: seriesData,
         itemStyle: { color: seriesColor },
         lineStyle: { color: seriesColor },
-        // 始终显示区域填充
         areaStyle: { opacity: isDetailed ? 0.15 : 0.3 },
       });
     });
@@ -306,10 +326,10 @@ function createChartOption(metric: MonitorMetric, isDetailed: boolean) {
       legendSelected[s.name as string] = true;
     });
 
-    return createChartConfig(xAxisData, series, legendSelected, standard, isDetailed, colors);
+    return createChartConfig(xAxisData, series, legendSelected, standard, isDetailed, colors, forceReload);
   }
 
-  return createChartConfig([], series, {}, standard, isDetailed, colors);
+  return createChartConfig([], series, {}, standard, isDetailed, colors, forceReload);
 }
 
 /** 创建图表配置对象 */
@@ -319,7 +339,8 @@ function createChartConfig(
   legendSelected: Record<string, boolean>,
   standard: DataStandard,
   isDetailed: boolean,
-  colors: ReturnType<typeof getThemeColors>
+  colors: ReturnType<typeof getThemeColors>,
+  forceReload = false
 ) {
   // 只有一个系列时隐藏图例
   const showLegend = series.length > 1;
@@ -327,9 +348,9 @@ function createChartConfig(
   return {
     backgroundColor: 'transparent',
     animation: true,
-    animationDuration: 800,
+    animationDuration: forceReload ? 1000 : 800, // 强制重载时使用1秒动画
     animationEasing: 'cubicOut' as const,
-    animationDurationUpdate: 500,
+    animationDurationUpdate: forceReload ? 1000 : 0, // 强制重载时更新动画1秒，否则无动画
     animationEasingUpdate: 'cubicInOut' as const,
     grid: {
       left: '3%',

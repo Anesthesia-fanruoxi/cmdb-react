@@ -108,7 +108,7 @@ export function extractHostNames(metrics: MonitorMetric[]): string[] {
   const hosts = new Set<string>();
   
   metrics.forEach(metric => {
-    if (metric.data?.resultType === 'matrix' && metric.data.result) {
+    if (metric.data?.result) {
       metric.data.result.forEach(item => {
         const hostName = item.metric?.hostName || item.metric?.instance;
         if (hostName) hosts.add(hostName);
@@ -126,7 +126,7 @@ export function extractContainerNames(metrics: MonitorMetric[]): string[] {
   const containers = new Set<string>();
   
   metrics.forEach(metric => {
-    if (metric.data?.resultType === 'matrix' && metric.data.result) {
+    if (metric.data?.result) {
       metric.data.result.forEach(item => {
         const name = item.metric?.container || item.metric?.controller || 
                      item.metric?.deployment || item.metric?.pod;

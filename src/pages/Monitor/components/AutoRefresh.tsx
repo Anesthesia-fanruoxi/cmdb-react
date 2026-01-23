@@ -2,7 +2,7 @@
  * 自动刷新组件
  */
 
-import { RefreshCw, Clock } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import './AutoRefresh.css';
 
 interface AutoRefreshProps {
@@ -10,7 +10,7 @@ interface AutoRefreshProps {
   onToggle: () => void;
   interval: number;
   onIntervalChange: (value: number) => void;
-  countdown: number;
+  countdown: number; // 保留参数以兼容现有调用
   disabled?: boolean;
 }
 
@@ -26,9 +26,11 @@ const AutoRefresh = ({
   onToggle,
   interval,
   onIntervalChange,
-  countdown,
   disabled = false,
 }: AutoRefreshProps) => {
+  // 是否显示间隔选择器（间隔为5秒时不显示，表示固定间隔）
+  const showIntervalSelect = interval !== 5;
+  
   return (
     <div className="auto-refresh">
       <button
@@ -41,26 +43,19 @@ const AutoRefresh = ({
         <span>自动刷新</span>
       </button>
       
-      {enabled && (
-        <>
-          <select
-            value={interval}
-            onChange={e => onIntervalChange(Number(e.target.value))}
-            className="interval-select"
-            disabled={disabled}
-          >
-            {INTERVAL_OPTIONS.map(opt => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-          
-          <div className="countdown">
-            <Clock size={12} />
-            <span>{countdown}s</span>
-          </div>
-        </>
+      {enabled && showIntervalSelect && (
+        <select
+          value={interval}
+          onChange={e => onIntervalChange(Number(e.target.value))}
+          className="interval-select"
+          disabled={disabled}
+        >
+          {INTERVAL_OPTIONS.map(opt => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
       )}
     </div>
   );

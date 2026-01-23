@@ -20,16 +20,37 @@ const areEqual = (prev: MetricCardProps, next: MetricCardProps) => {
   if (prev.metric.view_id !== next.metric.view_id) return false;
   if (prev.hideLegends !== next.hideLegends) return false;
   
-  // 比较数据的首尾时间戳
-  const prevData = prev.metric.data?.result?.[0]?.values;
-  const nextData = next.metric.data?.result?.[0]?.values;
+  // 比较数据结果数量
+  const prevResultCount = prev.metric.data?.result?.length || 0;
+  const nextResultCount = next.metric.data?.result?.length || 0;
+  if (prevResultCount !== nextResultCount) return false;
   
-  if (!prevData && !nextData) return true;
-  if (!prevData || !nextData) return false;
-  if (prevData.length !== nextData.length) return false;
+  // 如果都没有数据，认为相等
+  if (prevResultCount === 0 && nextResultCount === 0) return true;
   
-  return prevData[0]?.[0] === nextData[0]?.[0] && 
-         prevData[prevData.length - 1]?.[0] === nextData[nextData.length - 1]?.[0];
+  // 比较第一个结果的数据（支持 matrix 和 vector 类型）
+  const prevResult = prev.metric.data?.result?.[0];
+  const nextResult = next.metric.data?.result?.[0];
+  
+  if (!prevResult || !nextResult) return false;
+  
+  // matrix 类型：比较 values 数组的长度和最后一个时间戳
+  if (prevResult.values && nextResult.values) {
+    if (prevResult.values.length !== nextResult.values.length) return false;
+    // 只比较最后一个数据点的时间戳和值，避免比较整个数组
+    const prevLast = prevResult.values[prevResult.values.length - 1];
+    const nextLast = nextResult.values[nextResult.values.length - 1];
+    return prevLast?.[0] === nextLast?.[0] && prevLast?.[1] === nextLast?.[1];
+  }
+  
+  // vector 类型：比较 value
+  if (prevResult.value && nextResult.value) {
+    return prevResult.value[0] === nextResult.value[0] && 
+           prevResult.value[1] === nextResult.value[1];
+  }
+  
+  // 数据类型不一致，认为不相等
+  return false;
 };
 
 const MetricCard = memo(({ metric }: MetricCardProps) => {

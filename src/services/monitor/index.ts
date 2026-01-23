@@ -122,3 +122,78 @@ export const updateMonitorView = (data: UpdateViewParams) => {
 export const deleteMonitorView = (id: number) => {
   return apiClient.delete<null>(`/monitor/view/delete?id=${id}`);
 };
+
+/** 获取监控指标实时数据（SSE） */
+export interface GetMetricsSSEParams {
+  project: string;
+  category: string;
+  service?: string;
+  namespace?: string;
+  token: string;
+}
+
+export const getMonitorMetricsSSE = (
+  params: GetMetricsSSEParams,
+  onMessage: (data: MonitorMetric[]) => void,
+  onError?: (error: Event) => void,
+  onComplete?: () => void
+): EventSource => {
+  const baseUrl = import.meta.env.VITE_SSE_BASE_URL || import.meta.env.VITE_API_BASE_URL || '';
+  
+  // 构建查询参数，只添加有值的参数
+  const queryObj: Record<string, string> = {
+    project: params.project,
+    category: params.category,
+    token: params.token,
+  };
+  
+  if (params.service) {
+    queryObj.service = params.service;
+  }
+  
+  if (params.namespace) {
+    queryObj.namespace = params.namespace;
+  }
+  
+  const queryParams = new URLSearchParams(queryObj);
+  const url = `${baseUrl}/monitor/metrics/list?${queryParams.toString()}`;
+  
+  console.log('[SSE] 连接地址:', url);
+  const eventSource = new EventSource(url);
+  
+  eventSource.addEventListener('connected', () => {
+    console.log('[SSE] 监控数据流已连接');
+  });
+  
+  eventSource.addEventListener('data', (event) => {
+    try {
+      const response = JSON.parse(event.data);
+      console.log('[SSE] 收到原始响应:', response);
+      
+      // 如果响应有 data 字段，说明是包装过的数据
+      const data = response.data || response;
+      
+      console.log('[SSE] 解析后的数据:', data);
+      if (Array.isArray(data)) {
+        onMessage(data);
+      } else {
+        console.error('[SSE] 数据格式错误，期望数组，实际:', typeof data);
+      }
+    } catch (err) {
+      console.error('[SSE] 数据解析失败:', err);
+    }
+  });
+  
+  eventSource.onerror = (error) => {
+    console.error('[SSE] 连接错误:', error);
+    eventSource.close();
+    onError?.(error);
+  };
+  
+  eventSource.addEventListener('complete', () => {
+    eventSource.close();
+    onComplete?.();
+  });
+  
+  return eventSource;
+};
