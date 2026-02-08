@@ -147,8 +147,8 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"
-          DESCRIPTION="1、优化es时间选择器，添加了3种选择方式
-          2、优化监控添加自动刷新"
+          DESCRIPTION="1、sql审批添加了申请说明列展示
+          2、修复了es查询的时候多窗口之间的影响"
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \
             -H "Content-Type: application/json" \
