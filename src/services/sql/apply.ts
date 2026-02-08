@@ -138,6 +138,7 @@ export interface ApplyItem {
   database_name: string;
   sql_content: string;
   remark?: string;
+  description?: string; // 申请说明
   status: number | string;
   submitter_id: number;
   submitter_name: string;
