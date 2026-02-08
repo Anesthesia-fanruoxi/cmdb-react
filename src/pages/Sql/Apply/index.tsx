@@ -97,33 +97,25 @@ const SqlApply = () => {
             <table className="apply-table">
               <thead>
                 <tr>
-                  <th>申请ID</th>
                   <th>所属项目</th>
-                  <th>数据库</th>
                   <th>创建人</th>
-                  <th>审批人</th>
-                  <th>执行人</th>
+                  <th>申请说明</th>
                   <th>当前操作人</th>
                   <th>执行时间</th>
-                  <th>申请时间</th>
                   <th>状态</th>
                   <th>操作</th>
                 </tr>
               </thead>
               <tbody>
                 {applyList.length === 0 ? (
-                  <tr><td colSpan={11} className="empty-row">暂无数据</td></tr>
+                  <tr><td colSpan={7} className="empty-row">暂无数据</td></tr>
                 ) : applyList.map(item => (
                   <tr key={item.id}>
-                    <td>{item.id}</td>
                     <td>{item.project}</td>
-                    <td>{item.database_name}</td>
                     <td>{item.submitter_name}</td>
-                    <td>{item.apply_name}</td>
-                    <td>{item.executor_name}</td>
+                    <td>{item.description || '-'}</td>
                     <td>{item.current_operator || '-'}</td>
                     <td>{item.execution_time || '立即执行'}</td>
-                    <td>{item.created_at}</td>
                     <td>
                       <span className={`status-tag status-${getStatusInfo(item.status).type}`}>
                         {getStatusInfo(item.status).text}

@@ -11,7 +11,12 @@
 }
 
 /* 表格容器 */
-.table-container { flex: 1; overflow: auto; padding: 16px; }
+.table-container { 
+  flex: 1; 
+  overflow: auto; 
+  padding: 0;
+  position: relative;
+}
 
 /* 页面特有的单元格样式 */
 .reason-cell, .email-cell {
@@ -182,8 +187,76 @@
   gap: 8px;
   align-items: center;
   justify-content: flex-start;
+  overflow: visible !important;
 }
 
 .action-cell .btn {
   white-space: nowrap;
+}
+
+/* 操作列特殊处理 */
+.sql-export .data-table td:nth-child(7) {
+  overflow: visible;
+}
+
+/* 数据表格样式 */
+.sql-export .data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  table-layout: fixed;
+}
+
+.sql-export .data-table th,
+.sql-export .data-table td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sql-export .data-table th {
+  background: var(--bg-secondary);
+  font-weight: 600;
+  color: var(--text-color);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-bottom: 2px solid var(--border-color);
+  font-size: 14px;
+}
+
+.sql-export .data-table tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+.sql-export .data-table .empty-cell {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 60px 14px;
+}
+
+/* 列宽设置 */
+.sql-export .data-table th:nth-child(1), 
+.sql-export .data-table td:nth-child(1) { width: 15%; } /* 所属项目 */
+.sql-export .data-table th:nth-child(2), 
+.sql-export .data-table td:nth-child(2) { width: 10%; } /* 提交人 */
+.sql-export .data-table th:nth-child(3), 
+.sql-export .data-table td:nth-child(3) { width: 10%; } /* 审批人 */
+.sql-export .data-table th:nth-child(4), 
+.sql-export .data-table td:nth-child(4) { width: 15%; } /* 创建时间 */
+.sql-export .data-table th:nth-child(5), 
+.sql-export .data-table td:nth-child(5) { width: 12%; } /* 当前操作人 */
+.sql-export .data-table th:nth-child(6), 
+.sql-export .data-table td:nth-child(6) { width: 23%; } /* 状态 */
+.sql-export .data-table th:nth-child(7), 
+.sql-export .data-table td:nth-child(7) { width: 15%; } /* 操作 */
+
+/* 高亮单元格 */
+.sql-export .data-table .highlight-cell {
+  color: var(--primary-color);
+  font-weight: 500;
 }

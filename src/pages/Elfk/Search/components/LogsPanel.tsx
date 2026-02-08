@@ -23,9 +23,11 @@ interface LogsPanelProps {
   selectedFields: string[];
   searchParams?: Record<string, unknown>;
   sortOrder?: 'asc' | 'desc'; // 新增：外部传入的排序状态
+  scrollPosition?: number; // 新增：滚动位置
   onSortChange?: (sortOrder: string) => void;
   onPageData?: (data: { logs: LogHit[]; page: number; pages: number; append?: boolean }) => void;
   onLoadingChange?: (loading: boolean) => void;
+  onScrollPositionChange?: (position: number) => void; // 新增：滚动位置变化回调
   onAnalysis?: () => void;
 }
 
@@ -34,7 +36,7 @@ const typeColors: Record<string, string> = {
   date: '#c45656', array: '#737579', object: '#8b5da7',
 };
 
-const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields, searchParams, sortOrder: externalSortOrder = 'desc', onSortChange, onPageData, onLoadingChange, onAnalysis }: LogsPanelProps) => {
+const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields, searchParams, sortOrder: externalSortOrder = 'desc', scrollPosition = 0, onSortChange, onPageData, onLoadingChange, onScrollPositionChange, onAnalysis }: LogsPanelProps) => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(externalSortOrder);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageLoading, setPageLoading] = useState(false);
@@ -45,8 +47,10 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
   // 滚动加载相关状态
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasReachedBottom, setHasReachedBottom] = useState(false);
+  const [shouldResetScroll, setShouldResetScroll] = useState(false); // 新增：标记是否需要重置滚动
   const contentRef = useRef<HTMLDivElement>(null);
   const scrollTimerRef = useRef<number | null>(null);
+  const lastQueryIdRef = useRef<string>(''); // 新增：记录上次的 query_id
 
   const hasPermission = useAuthStore(s => s.hasPermission);
   const addMessage = useMessageStore(s => s.addMessage);
@@ -57,6 +61,23 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
   const totalPages = searchParams?.pages as number || 1;
   const queryId = searchParams?.query_id as string || '';
   const hasMore = currentPage < totalPages;
+
+  // 恢复滚动位置
+  useEffect(() => {
+    if (!contentRef.current) return;
+    
+    // 如果需要重置滚动（新搜索），滚动到顶部
+    if (shouldResetScroll) {
+      contentRef.current.scrollTop = 0;
+      setShouldResetScroll(false);
+      return;
+    }
+    
+    // 否则恢复保存的滚动位置
+    if (scrollPosition > 0) {
+      contentRef.current.scrollTop = scrollPosition;
+    }
+  }, [logs, scrollPosition, shouldResetScroll]);
 
   // 监听外部 sortOrder 变化，同步到本地状态
   useEffect(() => {
@@ -72,6 +93,13 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
       if (searchParams.page === 1) {
         setHasReachedBottom(false);
       }
+    }
+    
+    // 检测是否是新的搜索（query_id 变化）
+    const currentQueryId = searchParams?.query_id as string || '';
+    if (currentQueryId && currentQueryId !== lastQueryIdRef.current) {
+      lastQueryIdRef.current = currentQueryId;
+      setShouldResetScroll(true); // 标记需要重置滚动
     }
   }, [searchParams?.query_id, searchParams?.page]);
 
@@ -166,8 +194,9 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
         
         if (append) {
           setHasReachedBottom(false);
-        } else if (contentRef.current) {
-          contentRef.current.scrollTop = 0;
+        } else {
+          // 点击分页按钮时，标记需要重置滚动
+          setShouldResetScroll(true);
         }
       }
     } catch (err) {
@@ -198,6 +227,9 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const target = e.target as HTMLDivElement;
     
+    // 保存滚动位置
+    onScrollPositionChange?.(target.scrollTop);
+    
     if (scrollTimerRef.current) {
       cancelAnimationFrame(scrollTimerRef.current);
     }
@@ -223,7 +255,7 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
         }
       }
     });
-  }, [isLoadingMore, hasMore, queryId, hasReachedBottom, loadMoreData]);
+  }, [isLoadingMore, hasMore, queryId, hasReachedBottom, loadMoreData, onScrollPositionChange]);
 
   // 跳页
   const handleJumpPage = () => {

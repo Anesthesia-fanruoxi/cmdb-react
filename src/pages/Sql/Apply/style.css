@@ -33,7 +33,12 @@
 }
 
 .apply-card .card-actions { display: flex; gap: 12px; }
-.apply-card .card-body { flex: 1; padding: 16px; overflow: auto; }
+.apply-card .card-body { 
+  flex: 1; 
+  padding: 0;
+  overflow: auto; 
+  position: relative;
+}
 
 /* 链接按钮 */
 .link-btn {
@@ -51,7 +56,7 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
-  border: 1px solid var(--border-color);
+  table-layout: fixed;
 }
 
 .apply-table th, .apply-table td {
@@ -60,16 +65,29 @@
   border-bottom: 1px solid var(--border-color);
   color: var(--text-color);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .apply-table th {
   background: var(--bg-secondary);
-  font-weight: 500;
-  color: var(--text-secondary);
+  font-weight: 600;
+  color: var(--text-color);
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 10;
+  border-bottom: 2px solid var(--border-color);
+  font-size: 14px;
 }
+
+/* 列宽设置 */
+.apply-table th:nth-child(1), .apply-table td:nth-child(1) { width: 12%; } /* 所属项目 */
+.apply-table th:nth-child(2), .apply-table td:nth-child(2) { width: 10%; } /* 创建人 */
+.apply-table th:nth-child(3), .apply-table td:nth-child(3) { width: 30%; } /* 申请说明 */
+.apply-table th:nth-child(4), .apply-table td:nth-child(4) { width: 12%; } /* 当前操作人 */
+.apply-table th:nth-child(5), .apply-table td:nth-child(5) { width: 15%; } /* 执行时间 */
+.apply-table th:nth-child(6), .apply-table td:nth-child(6) { width: 10%; } /* 状态 */
+.apply-table th:nth-child(7), .apply-table td:nth-child(7) { width: 11%; } /* 操作 */
 
 .apply-table tbody tr:hover { background: var(--bg-hover); }
 .apply-table .empty-row { text-align: center; color: var(--text-muted); padding: 60px 14px; }

@@ -26,7 +26,7 @@ const DETACHED_KEY = 'elfk/detached-tabs';
 const createDefaultTab = (): TabData => ({
   id: 'detached', name: '日志搜索', initialized: false, projectInfo: null,
   loading: false, currentView: null, logs: [], total: 0, keyword: '', lastParams: {}, selectedFields: [],
-  timeRange: null, sortOrder: 'desc', autoRefresh: false
+  timeRange: null, sortOrder: 'desc', autoRefresh: false, scrollPosition: 0
 });
 
 const ElfkSearchDetached = ({ initialTab }: Props) => {
@@ -181,9 +181,11 @@ const ElfkSearchDetached = ({ initialTab }: Props) => {
                   currentView={tab.currentView}
                   selectedFields={tab.selectedFields || []}
                   searchParams={tab.lastParams}
+                  scrollPosition={tab.scrollPosition}
                   onSortChange={handleSortChange}
                   onPageData={handlePageData}
                   onLoadingChange={(loading) => updateTab({ loading })}
+                  onScrollPositionChange={(pos) => updateTab({ scrollPosition: pos })}
                   onAnalysis={() => setAnalysisVisible(true)}
                 />
               </div>

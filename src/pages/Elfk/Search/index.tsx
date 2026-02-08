@@ -35,6 +35,7 @@ export interface TabData {
   timeRange: { start: string; end: string; label: string } | null;
   sortOrder: 'asc' | 'desc';
   autoRefresh: boolean; // 新增：自动刷新开关
+  scrollPosition: number; // 新增：滚动位置
 }
 
 // 获取今日时间范围
@@ -50,7 +51,7 @@ const getTodayRange = () => {
 const createDefaultTab = (id: string, name: string): TabData => ({
   id, name, initialized: false, projectInfo: null, loading: false,
   currentView: null, logs: [], total: 0, keyword: '', lastParams: {}, selectedFields: [],
-  timeRange: null, sortOrder: 'desc', autoRefresh: false // 默认关闭自动刷新
+  timeRange: null, sortOrder: 'desc', autoRefresh: false, scrollPosition: 0 // 默认关闭自动刷新，滚动位置为0
 });
 
 // 序列化标签页（保存完整状态，包括搜索结果）
@@ -68,6 +69,7 @@ const serializeTab = (tab: TabData) => ({
   timeRange: tab.timeRange,
   sortOrder: tab.sortOrder,
   autoRefresh: tab.autoRefresh, // 保存自动刷新状态
+  scrollPosition: tab.scrollPosition, // 保存滚动位置
 });
 
 // 格式化为搜索接口需要的格式
@@ -424,9 +426,11 @@ const ElfkSearch = () => {
                   selectedFields={activeTab.selectedFields}
                   searchParams={activeTab.lastParams}
                   sortOrder={activeTab.sortOrder}
+                  scrollPosition={activeTab.scrollPosition}
                   onSortChange={handleSortChange}
                   onPageData={handlePageData}
                   onLoadingChange={(l: boolean) => updateTab(activeTab.id, { loading: l })}
+                  onScrollPositionChange={(pos: number) => updateTab(activeTab.id, { scrollPosition: pos })}
                   onAnalysis={() => setAnalysisVisible(true)}
                 />
               </div>
