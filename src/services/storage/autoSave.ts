@@ -81,7 +81,6 @@ async function saveIfDirty(): Promise<void> {
     });
     
     isDirty = false;
-    // console.log('[AutoSave] 状态已保存');
   } catch (e) {
     console.error('[AutoSave] 保存失败:', e);
   }

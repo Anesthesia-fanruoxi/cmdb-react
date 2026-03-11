@@ -61,9 +61,7 @@ export function getColorForType(meta: string): string {
 
 /** 创建自定义渲染器（图标 + 名称 + 类型） */
 export function createCustomRenderer() {
-  console.log('✅ 自定义渲染器已创建')
   return function(item: Suggestion, str: string) {
-    console.log('🎨 渲染项:', { caption: item.caption, meta: item.meta, str, dbName: (item as any).dbName })
     
     const el = document.createElement('div')
     el.className = 'ace_autocomplete_item'

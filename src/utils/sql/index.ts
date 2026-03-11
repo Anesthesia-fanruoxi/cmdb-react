@@ -33,8 +33,6 @@ export function createSqlCompleter(ace: any, { getTables, loadTableStructure }: 
     ) => {
       try {
         // 移除锁机制，允许快速输入时的多次补全请求
-        console.log('🔄 开始补全:', prefix)
-        
         const currentLine = session.getLine(pos.row)
         const lineUntilCursor = currentLine.substring(0, pos.column)
         const isDotContext = /\.\w*$/.test(lineUntilCursor)
@@ -68,6 +66,12 @@ export function createSqlCompleter(ace: any, { getTables, loadTableStructure }: 
         // Navicat风格：收集所有可能的建议，通过匹配分数排序
         const allSuggestions: Suggestion[] = []
         
+        // 判断是否在 WHERE 子句中
+        const isInWhereClause = context.clause === 'WHERE'
+        
+        // 获取当前 SQL 中涉及的表名集合（用于优先提示）
+        const currentSqlTableNames = new Set(context.tables.map(t => t.name.toLowerCase()))
+        
         // 1. SQL关键字（所有类型）
         const allKeywords = [
           ...SQL_KEYWORDS.INITIAL,
@@ -87,11 +91,13 @@ export function createSqlCompleter(ace: any, { getTables, loadTableStructure }: 
           if (matchResult.match) {
             // 使用关键字优先级权重
             const priorityBonus = KEYWORD_PRIORITY[keyword] || 50
+            // WHERE 子句中降低关键字优先级
+            const baseScore = isInWhereClause ? 7000 : 10000
             allSuggestions.push({ 
               caption: keyword, 
               value: keyword, 
               meta: 'keyword', 
-              score: 10000 + (priorityBonus * 10) + matchResult.score
+              score: baseScore + (priorityBonus * 10) + matchResult.score
             })
           }
         })
@@ -100,11 +106,13 @@ export function createSqlCompleter(ace: any, { getTables, loadTableStructure }: 
         SQL_KEYWORDS.FUNCTIONS.forEach(func => {
           const matchResult = fuzzyMatch(prefix, func)
           if (matchResult.match) {
+            // WHERE 子句中函数优先级略微降低
+            const baseScore = isInWhereClause ? 8000 : 9000
             allSuggestions.push({ 
               caption: func, 
               value: func + '()', 
               meta: 'function', 
-              score: 9000 + matchResult.score
+              score: baseScore + matchResult.score
             })
           }
         })
@@ -113,32 +121,62 @@ export function createSqlCompleter(ace: any, { getTables, loadTableStructure }: 
         tables.forEach(table => {
           const matchResult = fuzzyMatch(prefix, table.name)
           if (matchResult.match) {
+            // WHERE 子句中表名优先级降低（因为通常不直接使用表名）
+            const baseScore = isInWhereClause ? 6000 : 8000
             allSuggestions.push({ 
               caption: table.name, 
               value: table.name, 
               meta: 'table', 
-              score: 8000 + matchResult.score,
+              score: baseScore + matchResult.score,
               dbName: table.dbName // 附带库名
             })
           }
         })
         
         // 4. 所有已加载的字段（来自所有表）
+        // 在 WHERE 子句中，优先加载当前 SQL 涉及的表的字段
+        if (isInWhereClause && context.tables.length > 0 && loadTableStructure) {
+          // 同步等待加载当前 SQL 涉及的表的字段
+          const loadPromises = context.tables.map(table => {
+            const fields = getTableFields(table.name)
+            const hasValidCache = fields && fields.length > 0
+            
+            // 如果字段未缓存或缓存为空数组，立即加载
+            if (!hasValidCache) {
+              return loadTableStructure(table.name).catch(() => null)
+            }
+            return Promise.resolve(null)
+          })
+          
+          // 等待所有表字段加载完成（最多等待 500ms）
+          await Promise.race([
+            Promise.all(loadPromises),
+            new Promise(resolve => setTimeout(resolve, 500))
+          ])
+        }
+        
         tables.forEach(table => {
           const fields = getTableFields(table.name)
           if (fields) {
             fields.forEach(field => {
               const matchResult = fuzzyMatch(prefix, field.caption)
               if (matchResult.match) {
+                // 判断字段是否来自当前 SQL 涉及的表
+                const isFromCurrentSqlTable = currentSqlTableNames.has(table.name.toLowerCase())
+                
+                // WHERE 子句中，当前 SQL 涉及的表的字段获得最高优先级
+                let baseScore = 7000
+                if (isInWhereClause && isFromCurrentSqlTable) {
+                  baseScore = 9500 // WHERE 中当前表的字段优先级最高
+                } else if (isInWhereClause) {
+                  baseScore = 6500 // WHERE 中其他表的字段优先级较低
+                }
+                
                 // 添加表名前缀到注释，方便识别
                 const fieldWithTable = {
                   ...field,
                   comment: `${table.name}.${field.caption}`,
-                  score: 7000 + matchResult.score
-                }
-                // 调试日志: 检查字段的 dbName
-                if (!field.dbName) {
-                  console.warn(`Field ${field.caption} missing dbName in cache`)
+                  score: baseScore + matchResult.score
                 }
                 
                 allSuggestions.push(fieldWithTable)
@@ -155,11 +193,13 @@ export function createSqlCompleter(ace: any, { getTables, loadTableStructure }: 
           Object.keys(context.tableAliases).forEach(alias => {
             const matchResult = fuzzyMatch(prefix, alias)
             if (matchResult.match) {
+              // WHERE 子句中别名优先级提高（用于 alias.field 的场景）
+              const baseScore = isInWhereClause ? 9800 : 8500
               allSuggestions.push({
                 caption: alias,
                 value: alias,
                 meta: 'alias',
-                score: 8500 + matchResult.score
+                score: baseScore + matchResult.score
               })
             }
           })
@@ -185,11 +225,6 @@ export function createSqlCompleter(ace: any, { getTables, loadTableStructure }: 
           }
         })
         
-        console.log('🔍 补全结果:', {
-          prefix,
-          总数: finalSuggestions.length,
-          前5项原始: finalSuggestions.slice(0, 5) // 直接打印原始对象
-        })
         return callback(null, finalSuggestions)
       } catch (error) {
         console.error('SQL自动补全出错:', error)
@@ -204,11 +239,6 @@ export function createSqlCompleter(ace: any, { getTables, loadTableStructure }: 
   const customRenderer = createCustomRenderer()
   completer.renderer = customRenderer
   completer.$textCompleter = customRenderer
-  
-  console.log('🎯 渲染器已注入:', { 
-    renderer: typeof completer.renderer,
-    $textCompleter: typeof completer.$textCompleter
-  })
   
   langTools.addCompleter(completer)
   

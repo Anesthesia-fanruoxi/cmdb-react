@@ -110,7 +110,6 @@
 /* 编辑器容器 */
 .editor-container {
   position: relative;
-  transition: height 0.2s ease;
   overflow: hidden;
   flex-shrink: 0;
 }

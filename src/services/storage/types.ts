@@ -150,6 +150,7 @@ export interface UiPrefs {
   tablePageSize: number;
   codeEditorFontSize: number;
   sqlEditorHeight: number;
+  sqlEditorHeightPercent: number; // 编辑器高度百分比
 }
 
 export interface PreferencesData {

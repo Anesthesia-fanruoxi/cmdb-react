@@ -53,8 +53,39 @@ const SqlEditor = forwardRef<SqlEditorRef, Props>(({
   const [showFindDialog, setShowFindDialog] = useState(false)
   const [showReplaceDialog, setShowReplaceDialog] = useState(false)
   
-  // 字体大小状态（用于Ctrl+滚轮缩放）
-  const [fontSize, setFontSize] = useState(14)
+  // 从用户偏好获取字体大小
+  const { uiPrefs, setUiPref, _hasHydrated } = useUserPrefsStore()
+  const [fontSize, setFontSize] = useState(16) // 默认16px
+  
+  // 字体大小提示框状态
+  const [showFontSizeTooltip, setShowFontSizeTooltip] = useState(false)
+  const fontSizeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const fontSizeSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  
+  // hydration 完成后同步字体大小
+  useEffect(() => {
+    if (_hasHydrated) {
+      // 如果有保存的值且合理（5-32之间），使用保存的值
+      if (uiPrefs.codeEditorFontSize && uiPrefs.codeEditorFontSize >= 5 && uiPrefs.codeEditorFontSize <= 32) {
+        setFontSize(uiPrefs.codeEditorFontSize);
+        // 同时更新编辑器
+        if (aceEditorRef.current) {
+          aceEditorRef.current.setOptions({
+            fontSize: `${uiPrefs.codeEditorFontSize}px`
+          });
+        }
+      } else {
+        // 否则使用默认值并保存
+        setFontSize(16);
+        setUiPref('codeEditorFontSize', 16);
+        if (aceEditorRef.current) {
+          aceEditorRef.current.setOptions({
+            fontSize: '16px'
+          });
+        }
+      }
+    }
+  }, [_hasHydrated, uiPrefs.codeEditorFontSize, setUiPref]);
   
   // 获取用户自定义快捷键
   const sqlShortcuts = useUserPrefsStore((state) => state.sqlShortcuts)
@@ -279,13 +310,36 @@ const SqlEditor = forwardRef<SqlEditorRef, Props>(({
           const delta = e.deltaY > 0 ? -1 : 1
           const newSize = prevSize + delta
           
-          // 限制字体大小范围: 10px - 24px
-          const clampedSize = Math.max(10, Math.min(24, newSize))
+          // 限制字体大小范围: 5px - 32px
+          const clampedSize = Math.max(5, Math.min(32, newSize))
           
           // 更新编辑器字体大小
           editor.setOptions({
             fontSize: `${clampedSize}px`
           })
+          
+          // 显示字体大小提示
+          setShowFontSizeTooltip(true)
+          
+          // 清除之前的提示定时器
+          if (fontSizeTimerRef.current) {
+            clearTimeout(fontSizeTimerRef.current)
+          }
+          
+          // 1秒后自动隐藏提示
+          fontSizeTimerRef.current = setTimeout(() => {
+            setShowFontSizeTooltip(false)
+          }, 1000)
+          
+          // 清除之前的保存定时器
+          if (fontSizeSaveTimerRef.current) {
+            clearTimeout(fontSizeSaveTimerRef.current)
+          }
+          
+          // 滚动结束后 500ms 保存（防抖）
+          fontSizeSaveTimerRef.current = setTimeout(() => {
+            setUiPref('codeEditorFontSize', clampedSize);
+          }, 500);
           
           return clampedSize
         })
@@ -303,6 +357,13 @@ const SqlEditor = forwardRef<SqlEditorRef, Props>(({
       observer.disconnect()
       if (editorContainer) {
         editorContainer.removeEventListener('wheel', handleWheel)
+      }
+      // 清理定时器
+      if (fontSizeTimerRef.current) {
+        clearTimeout(fontSizeTimerRef.current)
+      }
+      if (fontSizeSaveTimerRef.current) {
+        clearTimeout(fontSizeSaveTimerRef.current)
       }
       editor.destroy()
     }
@@ -424,8 +485,31 @@ const SqlEditor = forwardRef<SqlEditorRef, Props>(({
   }, [sqlShortcuts, loading, onExecute, onNewTab, onShowHistory])
 
   return (
-    <div className="sql-editor">
+    <div className="sql-editor" style={{ position: 'relative' }}>
       <div ref={editorRef} className="ace-editor" style={{ width: '100%', height: '100%' }} />
+      
+      {/* 字体大小提示框 */}
+      {showFontSizeTooltip && (
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          color: '#fff',
+          padding: '8px 16px',
+          borderRadius: '6px',
+          fontSize: '14px',
+          fontWeight: '500',
+          pointerEvents: 'none',
+          zIndex: 10000,
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.4)',
+          whiteSpace: 'nowrap'
+        }}>
+          字体大小: {fontSize}px
+        </div>
+      )}
+      
       <SearchDialog 
         visible={showFindDialog} 
         onClose={() => setShowFindDialog(false)} 

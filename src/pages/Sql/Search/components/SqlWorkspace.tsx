@@ -82,15 +82,18 @@ const SqlWorkspace = ({
   tableList = [],
   project = ''
 }: Props) => {
-  // 从用户偏好获取编辑器高度
+  // 从用户偏好获取编辑器高度百分比
   const { uiPrefs, setUiPref, _hasHydrated } = useUserPrefsStore();
-  const [editorHeight, setEditorHeight] = useState(200);
+  const [editorHeightPercent, setEditorHeightPercent] = useState(50); // 默认50%
   // 是否正在拖动
   const [isDragging, setIsDragging] = useState(false);
   // 执行计时器
   const [elapsedTime, setElapsedTime] = useState(0);
   const [isExecuting, setIsExecuting] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  
+  // 容器引用，用于获取总高度
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // 执行计时（0.1秒更新一次），只在执行查询时计时，翻页不计时
   useEffect(() => {
@@ -115,15 +118,22 @@ const SqlWorkspace = ({
     }
   }, [loading, isExecuting]);
 
-  // hydration 完成后同步高度
+  // hydration 完成后同步高度百分比
   useEffect(() => {
-    if (_hasHydrated && uiPrefs.sqlEditorHeight) {
-      setEditorHeight(uiPrefs.sqlEditorHeight);
+    if (_hasHydrated) {
+      // 如果有保存的值且合理（10-90之间），使用保存的值
+      if (uiPrefs.sqlEditorHeightPercent && uiPrefs.sqlEditorHeightPercent >= 10 && uiPrefs.sqlEditorHeightPercent <= 90) {
+        setEditorHeightPercent(uiPrefs.sqlEditorHeightPercent);
+      } else {
+        // 否则使用默认值并保存
+        setEditorHeightPercent(50);
+        setUiPref('sqlEditorHeightPercent', 50);
+      }
     }
-  }, [_hasHydrated, uiPrefs.sqlEditorHeight]);
+  }, [_hasHydrated, uiPrefs.sqlEditorHeightPercent, setUiPref]);
   // 拖动起始位置
   const dragStartY = useRef(0);
-  const dragStartHeight = useRef(0);
+  const dragStartPercent = useRef(0);
   // 编辑器容器引用
   const editorContainerRef = useRef<HTMLDivElement>(null);
   // SQL 编辑器引用
@@ -207,27 +217,34 @@ const SqlWorkspace = ({
     e.preventDefault();
     setIsDragging(true);
     dragStartY.current = e.clientY;
-    dragStartHeight.current = editorHeight;
-  }, [editorHeight]);
+    dragStartPercent.current = editorHeightPercent;
+  }, [editorHeightPercent]);
 
-  // 当前高度 ref（用于拖动结束时保存最新值）
-  const currentHeightRef = useRef(editorHeight);
-  currentHeightRef.current = editorHeight;
+  // 当前百分比 ref（用于拖动结束时保存最新值）
+  const currentPercentRef = useRef(editorHeightPercent);
+  currentPercentRef.current = editorHeightPercent;
 
   // 处理拖动
   useEffect(() => {
     if (!isDragging) return;
 
     const handleMouseMove = (e: MouseEvent) => {
+      if (!containerRef.current) return;
+      
+      const containerHeight = containerRef.current.clientHeight;
       const delta = e.clientY - dragStartY.current;
-      const newHeight = Math.max(100, Math.min(600, dragStartHeight.current + delta));
-      setEditorHeight(newHeight);
+      const deltaPercent = (delta / containerHeight) * 100;
+      
+      // 限制范围：10% - 90%，并四舍五入到整数
+      const newPercent = Math.round(Math.max(10, Math.min(90, dragStartPercent.current + deltaPercent)));
+      setEditorHeightPercent(newPercent);
     };
 
     const handleMouseUp = () => {
       setIsDragging(false);
-      // 保存高度到用户偏好（使用 ref 获取最新值）
-      setUiPref('sqlEditorHeight', currentHeightRef.current);
+      // 保存百分比到用户偏好（只在拖动结束时保存）
+      const percentToSave = Math.round(currentPercentRef.current);
+      setUiPref('sqlEditorHeightPercent', percentToSave);
     };
 
     document.addEventListener('mousemove', handleMouseMove);
@@ -237,7 +254,7 @@ const SqlWorkspace = ({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, editorHeight, setUiPref]);
+  }, [isDragging, setUiPref]);
 
   // Ctrl+E 快捷键执行
   useEffect(() => {
@@ -255,7 +272,7 @@ const SqlWorkspace = ({
   }, [loading, handleExecute]);
 
   return (
-    <div className="sql-workspace">
+    <div ref={containerRef} className="sql-workspace" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* 工具栏 */}
       <div className="workspace-toolbar">
         <div className="toolbar-left">
@@ -281,7 +298,7 @@ const SqlWorkspace = ({
       <div
         ref={editorContainerRef}
         className="editor-container"
-        style={{ height: editorHeight }}
+        style={{ height: `${editorHeightPercent}%`, flexShrink: 0 }}
       >
         <SqlEditor
           ref={sqlEditorRef}
@@ -316,25 +333,27 @@ const SqlWorkspace = ({
         </div>
       )}
 
-      {/* 结果面板 */}
-      <ResultPanel
-        columns={columns}
-        results={results}
-        total={total}
-        took={took}
-        loading={loading}
-        isExecuting={isExecuting}
-        elapsedTime={elapsedTime}
-        dbName={dbName}
-        allResults={allResults}
-        currentResultIndex={currentResultIndex}
-        onResultChange={onResultChange}
-        currentPage={currentPage}
-        onPageChange={onPageChange}
-        exportLoading={exportLoading}
-        onExport={onExport}
-        queryId={queryId}
-      />
+      {/* 结果面板 - 占用剩余空间 */}
+      <div style={{ flex: 1, minHeight: '10%', display: 'flex', flexDirection: 'column' }}>
+        <ResultPanel
+          columns={columns}
+          results={results}
+          total={total}
+          took={took}
+          loading={loading}
+          isExecuting={isExecuting}
+          elapsedTime={elapsedTime}
+          dbName={dbName}
+          allResults={allResults}
+          currentResultIndex={currentResultIndex}
+          onResultChange={onResultChange}
+          currentPage={currentPage}
+          onPageChange={onPageChange}
+          exportLoading={exportLoading}
+          onExport={onExport}
+          queryId={queryId}
+        />
+      </div>
     </div>
   );
 };

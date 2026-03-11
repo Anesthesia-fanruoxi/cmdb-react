@@ -4,6 +4,7 @@
  */
 
 import { create } from 'zustand';
+import { markDirty } from '@/services/storage/autoSave';
 
 /** SQL 编辑器快捷键配置 */
 export interface SqlShortcuts {
@@ -46,6 +47,7 @@ export interface UiPrefs {
   tablePageSize: number;
   codeEditorFontSize: number;
   sqlEditorHeight: number;
+  sqlEditorHeightPercent: number; // 新增：编辑器高度百分比
 }
 
 /** 默认值 */
@@ -83,8 +85,9 @@ const DEFAULT_ES_PREFS: EsSearchPrefs = {
 const DEFAULT_UI_PREFS: UiPrefs = {
   sidebarCollapsed: false,
   tablePageSize: 20,
-  codeEditorFontSize: 14,
+  codeEditorFontSize: 16, // 默认16px
   sqlEditorHeight: 200,
+  sqlEditorHeightPercent: 50, // 默认50%
 };
 
 interface UserPrefsState {
@@ -120,26 +123,31 @@ export const useUserPrefsStore = create<UserPrefsState>()((set) => ({
     set((state) => ({
       sqlShortcuts: { ...state.sqlShortcuts, [key]: value },
     }));
+    markDirty();
   },
 
   resetSqlShortcuts: () => {
     set({ sqlShortcuts: { ...DEFAULT_SQL_SHORTCUTS } });
+    markDirty();
   },
 
   setElfkShortcut: (key, value) => {
     set((state) => ({
       elfkShortcuts: { ...state.elfkShortcuts, [key]: value },
     }));
+    markDirty();
   },
 
   resetElfkShortcuts: () => {
     set({ elfkShortcuts: { ...DEFAULT_ELFK_SHORTCUTS } });
+    markDirty();
   },
 
   setMonitorDefault: (key, value) => {
     set((state) => ({
       monitorDefaults: { ...state.monitorDefaults, [key]: value },
     }));
+    markDirty();
   },
 
   addRecentSearch: (search) => {
@@ -151,18 +159,21 @@ export const useUserPrefsStore = create<UserPrefsState>()((set) => ({
         esSearchPrefs: { ...state.esSearchPrefs, recentSearches: updated },
       };
     });
+    markDirty();
   },
 
   clearRecentSearches: () => {
     set((state) => ({
       esSearchPrefs: { ...state.esSearchPrefs, recentSearches: [] },
     }));
+    markDirty();
   },
 
   setUiPref: (key, value) => {
     set((state) => ({
       uiPrefs: { ...state.uiPrefs, [key]: value },
     }));
+    markDirty();
   },
 
   // 状态恢复
@@ -173,6 +184,7 @@ export const useUserPrefsStore = create<UserPrefsState>()((set) => ({
       monitorDefaults: { ...DEFAULT_MONITOR, ...prefs.monitorDefaults },
       esSearchPrefs: { ...DEFAULT_ES_PREFS, ...prefs.esSearchPrefs },
       uiPrefs: { ...DEFAULT_UI_PREFS, ...prefs.uiPrefs },
+      _hasHydrated: true,
     }));
   },
 
