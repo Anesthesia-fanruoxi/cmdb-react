@@ -16,6 +16,11 @@ interface NotificationProps {
   content: string;
   duration?: number;
   onClose: () => void;
+  buttons?: Array<{
+    text: string;
+    primary?: boolean;
+    onClick: () => void;
+  }>;
 }
 
 const icons = {
@@ -25,7 +30,7 @@ const icons = {
   info: <Info size={24} />,
 };
 
-const NotificationItem = ({ type, title, content, duration = 2000, onClose }: NotificationProps) => {
+const NotificationItem = ({ type, title, content, duration = 2000, onClose, buttons }: NotificationProps) => {
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
@@ -36,14 +41,37 @@ const NotificationItem = ({ type, title, content, duration = 2000, onClose }: No
     return () => clearTimeout(timer);
   }, [duration, onClose]);
 
+  const handleClose = () => {
+    setVisible(false);
+    setTimeout(onClose, 300);
+  };
+
+  const handleButtonClick = (onClick: () => void) => {
+    onClick();
+    handleClose();
+  };
+
   return (
     <div className={`app-notification app-notification-${type} ${visible ? 'show' : 'hide'}`}>
       <span className="app-notification-icon">{icons[type]}</span>
       <div className="app-notification-content">
         <div className="app-notification-title">{title}</div>
         <div className="app-notification-body">{content}</div>
+        {buttons && buttons.length > 0 && (
+          <div className="app-notification-buttons">
+            {buttons.map((button, index) => (
+              <button
+                key={index}
+                className={`app-notification-btn ${button.primary ? 'primary' : 'secondary'}`}
+                onClick={() => handleButtonClick(button.onClick)}
+              >
+                {button.text}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
-      <button className="app-notification-close" onClick={() => { setVisible(false); setTimeout(onClose, 300); }}>
+      <button className="app-notification-close" onClick={handleClose}>
         <X size={16} />
       </button>
     </div>
@@ -53,7 +81,18 @@ const NotificationItem = ({ type, title, content, duration = 2000, onClose }: No
 // 通知容器
 let container: HTMLDivElement | null = null;
 let root: ReturnType<typeof createRoot> | null = null;
-let notifications: { id: number; type: NotificationType; title: string; content: string; duration?: number }[] = [];
+let notifications: { 
+  id: number; 
+  type: NotificationType; 
+  title: string; 
+  content: string; 
+  duration?: number;
+  buttons?: Array<{
+    text: string;
+    primary?: boolean;
+    onClick: () => void;
+  }>;
+}[] = [];
 let idCounter = 0;
 
 const renderNotifications = () => {
@@ -78,6 +117,7 @@ const renderNotifications = () => {
           title={n.title}
           content={n.content}
           duration={n.duration}
+          buttons={n.buttons}
           onClose={() => removeNotification(n.id)}
         />
       ))}
@@ -85,8 +125,18 @@ const renderNotifications = () => {
   );
 };
 
-const show = (type: NotificationType, title: string, content: string, duration?: number) => {
-  notifications.push({ id: ++idCounter, type, title, content, duration });
+const show = (
+  type: NotificationType, 
+  title: string, 
+  content: string, 
+  duration?: number,
+  buttons?: Array<{
+    text: string;
+    primary?: boolean;
+    onClick: () => void;
+  }>
+) => {
+  notifications.push({ id: ++idCounter, type, title, content, duration, buttons });
   renderNotifications();
 };
 
@@ -95,6 +145,18 @@ export const appNotification = {
   error: (title: string, content?: string, duration?: number) => show('error', title, content || '', duration),
   warning: (title: string, content?: string, duration?: number) => show('warning', title, content || '', duration),
   info: (title: string, content?: string, duration?: number) => show('info', title, content || '', duration),
+  // 带按钮的通知
+  withButtons: (
+    type: NotificationType,
+    title: string,
+    content: string,
+    buttons: Array<{
+      text: string;
+      primary?: boolean;
+      onClick: () => void;
+    }>,
+    duration?: number
+  ) => show(type, title, content, duration, buttons),
 };
 
 // 简化版本，用于替换 alert()

@@ -21,11 +21,56 @@
   font-size: 13px !important;
 }
 
-.ace_autocomplete .ace_line { padding: 4px 8px !important; }
+.ace_autocomplete .ace_line { 
+  padding: 6px 10px !important;
+  line-height: 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+/* 自定义图标样式 */
+.completion-icon {
+  display: inline-block !important;
+  width: 18px !important;
+  height: 18px !important;
+  line-height: 18px !important;
+  text-align: center !important;
+  font-size: 12px !important;
+  margin-right: 8px !important;
+  flex-shrink: 0 !important;
+}
+
+/* 中文类型和库标签 */
+.completion-meta-info {
+  margin-left: auto !important;
+  font-size: 11px !important;
+  color: #888 !important;
+  opacity: 0.7 !important;
+  padding-left: 8px !important;
+  white-space: nowrap !important;
+}
+
+/* 选中状态 */
+.ace_autocomplete .ace_line-hover {
+  background: var(--primary-color) !important;
+}
+
+.ace_autocomplete .ace_line-hover * {
+  color: #fff !important;
+}
+
+.ace_autocomplete .ace_line-hover .completion-meta-info {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
 
 .ace_autocomplete .ace_line-hover,
 .ace_autocomplete .ace_selected {
   background: var(--primary-color) !important;
+}
+
+.ace_autocomplete .ace_line-hover *,
+.ace_autocomplete .ace_selected * {
   color: #fff !important;
 }
 
@@ -34,22 +79,45 @@
   font-weight: 600 !important;
 }
 
-.ace_autocomplete .ace_selected .ace_completion-highlight { color: #fff !important; }
+.ace_autocomplete .ace_selected .ace_completion-highlight { 
+  color: #fff !important; 
+}
 
-.ace_autocomplete_item { display: flex; align-items: center; padding: 4px 8px; gap: 8px; }
+.ace_autocomplete_item { 
+  display: flex !important; 
+  align-items: center !important; 
+  padding: 6px 10px !important; 
+  gap: 8px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.ace_autocomplete_icon {
+  display: inline-block !important;
+  font-size: 11px !important;
+  font-weight: bold !important;
+  width: 18px !important;
+  height: 18px !important;
+  line-height: 18px !important;
+  text-align: center !important;
+  flex-shrink: 0 !important;
+  border-radius: 3px !important;
+  color: #ffffff !important;
+}
 
 .ace_autocomplete_type {
-  font-size: 11px;
-  color: var(--text-muted);
-  background: var(--bg-secondary);
-  padding: 2px 6px;
-  border-radius: 3px;
-  flex-shrink: 0;
+  font-size: 11px !important;
+  color: var(--text-muted) !important;
+  background: var(--bg-secondary) !important;
+  padding: 2px 8px !important;
+  border-radius: 3px !important;
+  flex-shrink: 0 !important;
+  margin-left: auto !important;
 }
 
 .ace_autocomplete .ace_selected .ace_autocomplete_type {
-  background: rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: rgba(255, 255, 255, 0.95) !important;
 }
 
 /* 文档提示框 */

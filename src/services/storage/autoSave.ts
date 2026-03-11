@@ -81,7 +81,7 @@ async function saveIfDirty(): Promise<void> {
     });
     
     isDirty = false;
-    console.log('[AutoSave] 状态已保存');
+    // console.log('[AutoSave] 状态已保存');
   } catch (e) {
     console.error('[AutoSave] 保存失败:', e);
   }
@@ -138,7 +138,7 @@ export async function startAutoSave(): Promise<void> {
     console.warn('[AutoSave] 注册窗口关闭事件失败:', e);
   }
   
-  console.log('[AutoSave] 自动保存已启动');
+  // console.log('[AutoSave] 自动保存已启动');
 }
 
 /**

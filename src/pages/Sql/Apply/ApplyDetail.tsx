@@ -142,7 +142,12 @@ const ApplyDetailDrawer = ({ detail, onClose, onRefresh, onResubmit }: Props) =>
       project: detail.project,
       database_name: detail.database_name,
       sql_content: detail.sql_content,
-      remark: detail.remark || detail.description || ''
+      remark: detail.remark || detail.description || '',
+      // 保留原审批流程信息
+      apply_id: detail.apply_id,
+      apply_name: detail.apply_name,
+      executor_id: detail.executor_id,
+      executor_name: detail.executor_name
     });
   };
 

@@ -9,7 +9,8 @@ import type { MatchResult, Suggestion } from './types'
  * 模糊匹配函数 - 支持首字母匹配、包含匹配、驼峰匹配
  */
 export function fuzzyMatch(query: string, target: string): MatchResult {
-  if (!query || !target) return { match: true, score: 0 }
+  // 空查询或空目标不匹配
+  if (!query || !target) return { match: false, score: 0 }
   
   const q = query.toLowerCase()
   const t = target.toLowerCase()

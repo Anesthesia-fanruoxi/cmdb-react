@@ -533,3 +533,75 @@
 .btn-download-action svg {
   flex-shrink: 0;
 }
+
+/* 自定义操作按钮 */
+.msg-custom-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color, #f0f0f0);
+}
+
+.btn-custom-action {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  background: var(--primary-color, #1890ff);
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-custom-action:hover {
+  background: var(--primary-hover, #40a9ff);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+}
+
+.btn-custom-action:active {
+  transform: translateY(0);
+}
+
+.btn-custom-action:first-child {
+  background: var(--primary-color, #1890ff);
+}
+
+.btn-custom-action:last-child:not(:first-child) {
+  background: transparent;
+  border: 1px solid var(--border-color, #d9d9d9);
+  color: var(--text-color, #666);
+}
+
+.btn-custom-action:last-child:not(:first-child):hover {
+  background: var(--bg-secondary, #f5f5f5);
+  border-color: var(--primary-color, #1890ff);
+  color: var(--primary-color, #1890ff);
+  box-shadow: none;
+}
+
+:root.dark .btn-custom-action {
+  background: #177ddc;
+}
+
+:root.dark .btn-custom-action:hover {
+  background: #1890ff;
+}
+
+:root.dark .btn-custom-action:last-child:not(:first-child) {
+  background: transparent;
+  border-color: #434343;
+  color: #aaa;
+}
+
+:root.dark .btn-custom-action:last-child:not(:first-child):hover {
+  background: #2a2a2a;
+  border-color: #177ddc;
+  color: #40a9ff;
+}

@@ -131,7 +131,7 @@ const SqlWorkspace = ({
 
   // 转换表列表为 TableInfo 格式
   const tables: TableInfo[] = useMemo(() => 
-    tableList.map(name => ({ name })), [tableList]
+    tableList.map(name => ({ name, dbName })), [tableList, dbName]
   );
 
   // 加载表结构的回调 - 与 Vue 版本对齐
@@ -156,12 +156,18 @@ const SqlWorkspace = ({
         }));
         
         // 直接缓存到 window.sqlFieldSuggestions - 与 Vue 版本一致
+        // 修改：缓存字段时记录数据库名称
         if (typeof window !== 'undefined' && fields.length > 0) {
           if (!window.sqlFieldSuggestions) {
             window.sqlFieldSuggestions = {};
           }
-          window.sqlFieldSuggestions[tableName] = fields;
-          window.sqlFieldSuggestions[tableName.toLowerCase()] = fields;
+          // 为每个字段添加 dbName 属性
+          const fieldsWithDb = fields.map(f => ({
+            ...f,
+            dbName: dbName
+          }));
+          window.sqlFieldSuggestions[tableName] = fieldsWithDb;
+          window.sqlFieldSuggestions[tableName.toLowerCase()] = fieldsWithDb;
         }
         
         return fields;

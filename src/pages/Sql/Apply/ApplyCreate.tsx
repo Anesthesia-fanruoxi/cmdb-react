@@ -353,10 +353,24 @@ const ApplyCreateDrawer = ({ prefillData, onClose, onSuccess }: Props) => {
         project: prefillData.project || '', 
         database: prefillData.database_name || '',
         sqlContent: prefillData.sql_content || '', 
-        remark: prefillData.remark || ''
+        remark: prefillData.remark || '',
+        // 如果预填充数据包含审批流程信息，直接使用
+        apply: (prefillData as any).apply_name || '',
+        executor: (prefillData as any).executor_name || '',
+        applyId: (prefillData as any).apply_id || null,
+        executorId: (prefillData as any).executor_id || null
       }));
       if (prefillData.project) {
-        handleProjectChange(prefillData.project);
+        // 如果已有审批流程信息，不需要重新匹配
+        if (!(prefillData as any).apply_id || !(prefillData as any).executor_id) {
+          handleProjectChange(prefillData.project);
+        } else {
+          // 仍需加载数据库列表和表列表
+          fetchDatabases(prefillData.project);
+          if (prefillData.database_name) {
+            fetchTables(prefillData.project, prefillData.database_name);
+          }
+        }
       }
     }
   }, [prefillData]); // eslint-disable-line

@@ -12,6 +12,7 @@ export interface Suggestion {
   tableName?: string
   isPrimaryKey?: boolean
   docHTML?: string
+  dbName?: string // 所属数据库
 }
 
 // 表信息
@@ -20,6 +21,7 @@ export interface TableInfo {
   alias?: string | null
   comment?: string
   isCurrentDb?: boolean
+  dbName?: string // 所属数据库
 }
 
 // SQL 上下文
@@ -46,6 +48,7 @@ export interface FieldInfo {
   score: number
   tableName?: string
   isPrimaryKey?: boolean
+  dbName?: string // 所属数据库
 }
 
 // 匹配结果

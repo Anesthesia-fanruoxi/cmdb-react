@@ -5,34 +5,88 @@
 
 import type { Suggestion } from './types'
 
-/** 创建自定义渲染器（两列：名称 + 类型） */
+/** 根据类型获取图标字符 */
+export function getIconForType(meta: string): string {
+  switch (meta) {
+    case 'keyword':
+      return '⚡' // 关键字 - 闪电
+    case 'function':
+      return 'ƒ' // 函数
+    case 'table':
+      return '📋' // 表
+    case 'field':
+      return '●' // 字段
+    case 'alias':
+      return '§' // 别名
+    default:
+      return '•'
+  }
+}
+
+/** 根据类型获取中文描述 */
+export function getTypeLabel(meta: string): string {
+  switch (meta) {
+    case 'keyword':
+      return '关键字'
+    case 'function':
+      return '函数'
+    case 'table':
+      return '表'
+    case 'field':
+      return '字段'
+    case 'alias':
+      return '别名'
+    default:
+      return meta || '项'
+  }
+}
+
+/** 根据类型获取图标颜色 */
+export function getColorForType(meta: string): string {
+  switch (meta) {
+    case 'keyword':
+      return '#569CD6' // 蓝色
+    case 'function':
+      return '#DCDCAA' // 黄色
+    case 'table':
+      return '#4EC9B0' // 青色
+    case 'field':
+      return '#9CDCFE' // 浅蓝色
+    case 'alias':
+      return '#C586C0' // 紫色
+    default:
+      return '#808080'
+  }
+}
+
+/** 创建自定义渲染器（图标 + 名称 + 类型） */
 export function createCustomRenderer() {
-  return {
-    renderItem: function(item: Suggestion, str: string, _prefix: string, parent: HTMLElement) {
-      const el = parent.appendChild(document.createElement('div'))
-      el.className = 'ace_autocomplete_item'
-      
-      // 字段名/表名容器
-      const nameContainer = document.createElement('div')
-      nameContainer.style.flexGrow = '1'
-      nameContainer.style.overflow = 'hidden'
-      nameContainer.style.textOverflow = 'ellipsis'
-      nameContainer.style.whiteSpace = 'nowrap'
-      
-      const text = document.createTextNode(str)
-      nameContainer.appendChild(text)
-      el.appendChild(nameContainer)
-      
-      // 类型标签
-      if (item.meta) {
-        const typeEl = document.createElement('span')
-        typeEl.className = 'ace_autocomplete_type'
-        typeEl.textContent = item.meta
-        el.appendChild(typeEl)
-      }
-      
-      return el
-    }
+  console.log('✅ 自定义渲染器已创建')
+  return function(item: Suggestion, str: string) {
+    console.log('🎨 渲染项:', { caption: item.caption, meta: item.meta, str, dbName: (item as any).dbName })
+    
+    const el = document.createElement('div')
+    el.className = 'ace_autocomplete_item'
+    
+    // 图标
+    const iconEl = document.createElement('span')
+    iconEl.className = 'ace_autocomplete_icon'
+    iconEl.textContent = getIconForType(item.meta || '')
+    iconEl.style.backgroundColor = getColorForType(item.meta || '')
+    el.appendChild(iconEl)
+    
+    // 字段名/表名
+    const nameEl = document.createElement('span')
+    nameEl.textContent = str
+    nameEl.style.flex = '1'
+    nameEl.style.overflow = 'hidden'
+    nameEl.style.textOverflow = 'ellipsis'
+    el.appendChild(nameEl)
+    
+    // 类型标签 (如果没显示在控件的右侧,这里也可以作为一种补充显示)
+    // 但为了保持 UI 简洁,我们主要靠 SqlEditor.tsx 在右侧显示中文标签和库信息
+    
+    return el
   }
 }
 

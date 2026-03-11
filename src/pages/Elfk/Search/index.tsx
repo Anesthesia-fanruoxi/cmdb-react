@@ -30,6 +30,7 @@ export interface TabData {
   logs: LogHit[];
   total: number;
   keyword: string;
+  highlightKeyword: string; // 新增：用于高亮显示的关键字，只有搜索成功后才更新
   lastParams: Record<string, unknown>;
   selectedFields: string[];
   timeRange: { start: string; end: string; label: string } | null;
@@ -41,16 +42,16 @@ export interface TabData {
 // 获取今日时间范围
 const getTodayRange = () => {
   const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
   const pad = (n: number) => n.toString().padStart(2, '0');
   const formatLocalDateTime = (date: Date) => 
-    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
   return { start: formatLocalDateTime(start), end: formatLocalDateTime(now), label: '今日' };
 };
 
 const createDefaultTab = (id: string, name: string): TabData => ({
   id, name, initialized: false, projectInfo: null, loading: false,
-  currentView: null, logs: [], total: 0, keyword: '', lastParams: {}, selectedFields: [],
+  currentView: null, logs: [], total: 0, keyword: '', highlightKeyword: '', lastParams: {}, selectedFields: [],
   timeRange: null, sortOrder: 'desc', autoRefresh: false, scrollPosition: 0 // 默认关闭自动刷新，滚动位置为0
 });
 
@@ -62,6 +63,7 @@ const serializeTab = (tab: TabData) => ({
   projectInfo: tab.projectInfo,
   currentView: tab.currentView,
   keyword: tab.keyword,
+  highlightKeyword: tab.highlightKeyword,
   logs: tab.logs,
   total: tab.total,
   lastParams: tab.lastParams,
@@ -79,15 +81,15 @@ const formatSearchTime = (dateStr: string) => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 };
 
-// 格式化本地时间
+// 格式化本地时间（包含秒）
 const formatLocalDateTime = (date: Date) => {
   const pad = (n: number) => n.toString().padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 };
 
 // 判断是否为相对时间标签
 const isRelativeTimeLabel = (label: string) => {
-  const relativeLabels = ['过去15分钟', '过去30分钟', '过去45分钟', '近1小时', '近3小时', '近6小时', '近12小时', '今日', '近3天', '近7天', '本月', '近1个月', '近3个月'];
+  const relativeLabels = ['过去15分钟', '过去30分钟', '过去45分钟', '近1小时', '近3小时', '近6小时', '近12小时', '今日', '今天', '昨天', '前天', '本周', '上周', '上上周', '本月', '上个月', '上上个月', '近3天', '近7天', '近1个月', '近3个月', '本周', '上周', '上上周', '本月', '上个月', '上上个月'];
   return relativeLabels.includes(label) || /^过去\d+(分钟|小时|天|周|月)$/.test(label);
 };
 
@@ -132,14 +134,81 @@ const calculateRelativeTime = (label: string): { start: string; end: string } | 
     return { start: formatLocalDateTime(start), end: formatLocalDateTime(end) };
   }
   
-  // 特殊处理
-  if (label === '今日') {
-    start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  // 特殊处理 - 按天
+  if (label === '今日' || label === '今天') {
+    start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
     return { start: formatLocalDateTime(start), end: formatLocalDateTime(end) };
   }
   
+  if (label === '昨天') {
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    start = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 0, 0, 0, 0);
+    end = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 23, 59, 59, 999);
+    return { start: formatLocalDateTime(start), end: formatLocalDateTime(end) };
+  }
+  
+  if (label === '前天') {
+    const dayBefore = new Date(now);
+    dayBefore.setDate(dayBefore.getDate() - 2);
+    start = new Date(dayBefore.getFullYear(), dayBefore.getMonth(), dayBefore.getDate(), 0, 0, 0, 0);
+    end = new Date(dayBefore.getFullYear(), dayBefore.getMonth(), dayBefore.getDate(), 23, 59, 59, 999);
+    return { start: formatLocalDateTime(start), end: formatLocalDateTime(end) };
+  }
+  
+  // 特殊处理 - 按周
+  if (label === '本周') {
+    const day = now.getDay();
+    const diff = day === 0 ? 6 : day - 1;
+    start = new Date(now);
+    start.setDate(now.getDate() - diff);
+    start.setHours(0, 0, 0, 0);
+    return { start: formatLocalDateTime(start), end: formatLocalDateTime(end) };
+  }
+  
+  if (label === '上周') {
+    const day = now.getDay();
+    const diff = day === 0 ? 6 : day - 1;
+    const thisWeekStart = new Date(now);
+    thisWeekStart.setDate(now.getDate() - diff);
+    start = new Date(thisWeekStart);
+    start.setDate(thisWeekStart.getDate() - 7);
+    start.setHours(0, 0, 0, 0);
+    end = new Date(thisWeekStart);
+    end.setDate(thisWeekStart.getDate() - 1);
+    end.setHours(23, 59, 59, 999);
+    return { start: formatLocalDateTime(start), end: formatLocalDateTime(end) };
+  }
+  
+  if (label === '上上周') {
+    const day = now.getDay();
+    const diff = day === 0 ? 6 : day - 1;
+    const thisWeekStart = new Date(now);
+    thisWeekStart.setDate(now.getDate() - diff);
+    start = new Date(thisWeekStart);
+    start.setDate(thisWeekStart.getDate() - 14);
+    start.setHours(0, 0, 0, 0);
+    end = new Date(thisWeekStart);
+    end.setDate(thisWeekStart.getDate() - 8);
+    end.setHours(23, 59, 59, 999);
+    return { start: formatLocalDateTime(start), end: formatLocalDateTime(end) };
+  }
+  
+  // 特殊处理 - 按月
   if (label === '本月') {
-    start = new Date(now.getFullYear(), now.getMonth(), 1);
+    start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+    return { start: formatLocalDateTime(start), end: formatLocalDateTime(end) };
+  }
+  
+  if (label === '上个月') {
+    start = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
+    end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+    return { start: formatLocalDateTime(start), end: formatLocalDateTime(end) };
+  }
+  
+  if (label === '上上个月') {
+    start = new Date(now.getFullYear(), now.getMonth() - 2, 1, 0, 0, 0, 0);
+    end = new Date(now.getFullYear(), now.getMonth() - 1, 0, 23, 59, 59, 999);
     return { start: formatLocalDateTime(start), end: formatLocalDateTime(end) };
   }
   
@@ -255,7 +324,7 @@ const ElfkSearch = () => {
     const tab = tabs.find(t => t.id === tabId);
     if (!tab) return;
     tabCounter.current += 1;
-    setTabs(prev => [...prev, { ...tab, id: `tab-${Date.now()}`, name: `${tab.name} 副本`, logs: [], total: 0, lastParams: {} }]);
+    setTabs(prev => [...prev, { ...tab, id: `tab-${Date.now()}`, name: `${tab.name} 副本`, logs: [], total: 0, highlightKeyword: '', lastParams: {} }]);
   };
 
   const handleTabsReorder = (newTabs: { id: string; name: string }[]) => {
@@ -301,28 +370,65 @@ const ElfkSearch = () => {
 
   const handleSearch = async (params: Record<string, unknown>) => {
     if (!activeTab) return;
-    updateTab(activeTab.id, { loading: true, keyword: params.keyword as string || '' });
+    const searchKeyword = params.keyword as string || '';
+    updateTab(activeTab.id, { loading: true, keyword: searchKeyword });
+    
+    console.log('[ELFK Search] ========== 开始搜索 ==========');
+    console.log('[ELFK Search] 原始参数:', params);
+    console.log('[ELFK Search] 当前标签页时间范围:', activeTab.timeRange);
+    
     try {
-      // 如果有相对时间标签，需要重新计算时间范围
+      // 如果有相对时间标签（快捷选择或过去时间），需要重新计算时间范围
       let searchParams: Record<string, unknown> = { ...params, sort_order: activeTab.sortOrder };
       
-      if (activeTab.timeRange?.label && isRelativeTimeLabel(activeTab.timeRange.label)) {
-        const actualRange = calculateRelativeTime(activeTab.timeRange.label);
+      const timeLabel = params.time_label as string || activeTab.timeRange?.label || '';
+      console.log('[ELFK Search] 时间标签:', timeLabel);
+      console.log('[ELFK Search] 是否为相对时间:', isRelativeTimeLabel(timeLabel));
+      
+      if (timeLabel && isRelativeTimeLabel(timeLabel)) {
+        // 重新计算相对时间范围，确保使用最新的时间
+        console.log('[ELFK Search] 开始重新计算相对时间...');
+        const actualRange = calculateRelativeTime(timeLabel);
+        console.log('[ELFK Search] 计算后的时间范围:', actualRange);
+        
         if (actualRange) {
+          const formattedStart = formatSearchTime(actualRange.start);
+          const formattedEnd = formatSearchTime(actualRange.end);
+          console.log('[ELFK Search] 格式化后的开始时间:', formattedStart);
+          console.log('[ELFK Search] 格式化后的结束时间:', formattedEnd);
+          
           searchParams = {
             ...searchParams,
-            start_time: formatSearchTime(actualRange.start),
-            end_time: formatSearchTime(actualRange.end),
+            start_time: formattedStart,
+            end_time: formattedEnd,
           };
         }
+      } else {
+        console.log('[ELFK Search] 使用固定时间范围，不重新计算');
+        console.log('[ELFK Search] start_time:', params.start_time);
+        console.log('[ELFK Search] end_time:', params.end_time);
       }
+      
+      console.log('[ELFK Search] 最终搜索参数:', searchParams);
+      console.log('[ELFK Search] ========== 搜索参数准备完成 ==========');
       
       const res = await searchLogs(searchParams as any);
       if (res.code === 200 && res.data) {
-        updateTab(activeTab.id, { logs: res.data.hits || [], total: res.data.total_hits || 0, lastParams: { ...searchParams, query_id: res.data.query_id, pages: res.data.pages, page: res.data.page || 1 } });
+        // 搜索成功后才更新 highlightKeyword，用于高亮显示
+        updateTab(activeTab.id, { 
+          logs: res.data.hits || [], 
+          total: res.data.total_hits || 0, 
+          highlightKeyword: searchKeyword, // 只有搜索成功后才更新高亮关键字
+          lastParams: { ...searchParams, query_id: res.data.query_id, pages: res.data.pages, page: res.data.page || 1 } 
+        });
+        console.log('[ELFK Search] 搜索成功，结果数量:', res.data.total_hits);
       }
-    } catch (err) { console.error('搜索失败:', err); }
-    finally { updateTab(activeTab.id, { loading: false }); }
+    } catch (err) { 
+      console.error('[ELFK Search] 搜索失败:', err); 
+    }
+    finally { 
+      updateTab(activeTab.id, { loading: false }); 
+    }
   };
 
   const handleTimeRangeChange = (range: { start: string; end: string; label: string }) => {
@@ -421,7 +527,7 @@ const ElfkSearch = () => {
                   loading={activeTab.loading}
                   logs={activeTab.logs}
                   total={activeTab.total}
-                  keyword={activeTab.keyword}
+                  keyword={activeTab.highlightKeyword}
                   currentView={activeTab.currentView}
                   selectedFields={activeTab.selectedFields}
                   searchParams={activeTab.lastParams}

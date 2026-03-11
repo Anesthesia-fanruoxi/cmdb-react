@@ -15,6 +15,7 @@ export interface SqlShortcuts {
   newTab: string;
   history: string;
   saveShared: string;
+  duplicateLine: string;
 }
 
 /** ELFK 日志搜索快捷键配置 */
@@ -57,6 +58,7 @@ const DEFAULT_SQL_SHORTCUTS: SqlShortcuts = {
   newTab: 'Ctrl-T',
   history: 'Ctrl-Shift-H',
   saveShared: 'Ctrl-Shift-S',
+  duplicateLine: 'Ctrl-D',
 };
 
 const DEFAULT_ELFK_SHORTCUTS: ElfkShortcuts = {

@@ -35,10 +35,10 @@ interface Props {
   onAutoRefreshToggle?: (enabled: boolean) => void; // 新增：自动刷新切换回调
 }
 
-// 格式化本地时间
+// 格式化本地时间（包含秒）
 const formatLocalDateTime = (date: Date) => {
   const pad = (n: number) => n.toString().padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 };
 
 // 格式化为搜索接口需要的格式
@@ -184,21 +184,33 @@ const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, initial
     if (!currentView || !projectInfo) return;
     if (localKeyword.trim()) saveLocalHistory(localKeyword.trim());
     
+    console.log('[SearchForm] ========== 准备搜索 ==========');
+    console.log('[SearchForm] 当前时间范围:', timeRange);
+    
     // 动态计算实际时间范围
     const actualRange = getActualTimeRange(timeRange);
+    console.log('[SearchForm] 计算后的实际时间范围:', actualRange);
+    
+    const formattedStart = formatSearchTime(actualRange.start);
+    const formattedEnd = formatSearchTime(actualRange.end);
+    console.log('[SearchForm] 格式化后的开始时间:', formattedStart);
+    console.log('[SearchForm] 格式化后的结束时间:', formattedEnd);
+    console.log('[SearchForm] 时间标签:', timeRange.label || '自定义');
     
     onSearch({
       project: projectInfo.project,
       view_id: currentView.id,
       view_name: currentView.name,
       index_pattern: currentView.index_pattern,
-      start_time: formatSearchTime(actualRange.start),
-      end_time: formatSearchTime(actualRange.end),
+      start_time: formattedStart,
+      end_time: formattedEnd,
       time_field: currentView.time_field || '@timestamp',
       time_format: currentView.time_format || 'epoch_millis',
       keyword: localKeyword.trim(),
-      log_type: currentView.log_type || 'elfk'
+      log_type: currentView.log_type || 'elfk',
+      time_label: timeRange.label || '自定义' // 传递时间标签，用于后续重新计算
     });
+    console.log('[SearchForm] ========== 搜索参数已发送 ==========');
   }, [currentView, projectInfo, localKeyword, timeRange, onSearch]);
 
   // 时间范围变化时同步到父组件，并根据需要自动搜索
@@ -256,7 +268,8 @@ const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, initial
       time_field: currentView.time_field || '@timestamp',
       time_format: currentView.time_format || 'epoch_millis',
       keyword: keyword.trim(),
-      log_type: currentView.log_type || 'elfk'
+      log_type: currentView.log_type || 'elfk',
+      time_label: timeRange.label || '自定义' // 传递时间标签
     });
   };
 

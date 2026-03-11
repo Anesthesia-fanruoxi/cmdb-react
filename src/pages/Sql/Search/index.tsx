@@ -10,6 +10,8 @@ import {
 } from '../../../services/sql/search';
 import { openComponentWindow, onReattachTab } from '../../../utils/window';
 import { usePageStateStore, useMessageStore, useUserPrefsStore } from '../../../stores';
+import { toast } from '../../../components/Toast';
+import { appNotification } from '../../../components/AppNotification';
 import TableTree from './components/TableTree';
 import SqlWorkspace from './components/SqlWorkspace';
 import DraggableTabs from './components/DraggableTabs';
@@ -489,10 +491,21 @@ const SqlSearch = () => {
     });
   };
 
-  // 后端导出（异步导出，后端发送邮件）
+  // 后端导出（异步导出，创建任务并监听完成状态）
   const handleExport = async () => {
+    console.log('='.repeat(60));
+    console.log('[导出] 🎯 开始处理导出请求');
+    console.log('[导出] ⏰ 请求时间:', new Date().toLocaleString());
+    
     const tab = currentTab;
+    console.log('[导出] 📋 当前标签页:', {
+      queryId: tab.queryId,
+      dbName: tab.dbName,
+      project: tab.project
+    });
+    
     if (!tab.queryId) {
+      console.log('[导出] ❌ 缺少查询ID');
       updateTab(activeTabId, {
         messages: [{ type: 'warning', content: '无法导出：缺少查询ID' }]
       });
@@ -500,38 +513,131 @@ const SqlSearch = () => {
     }
 
     updateTab(activeTabId, { exportLoading: true });
+    console.log('[导出] ⏳ 设置加载状态为 true');
     
     try {
+      console.log('[导出] 📤 发送导出请求');
       const res = await exportQueryResult({
         query_id: tab.queryId,
         db_name: tab.dbName
       });
       
+      console.log('[导出] 📥 收到响应:', res);
+      
       if (res.code === 200) {
-        // 导出请求成功，后端会异步处理并发送邮件
-        addMessage({
-          type: 'success',
-          title: 'SQL导出请求已提交',
-          content: res.message || '导出任务已提交，请稍后查收邮件',
-        });
+        console.log('[导出] ✅ 导出请求成功');
+        
+        // 检查是否返回了任务ID
+        const taskId = (res as any).data?.task_id;
+        console.log('[导出] 📋 任务ID:', taskId);
+        
+        if (taskId) {
+          // 有任务ID，开始监听任务状态
+          console.log('[导出] 🔄 开始监听任务状态');
+          
+          // 使用 toast 提示请求已提交
+          toast.success('导出请求已提交，正在处理中...');
+          
+          // 导入任务监听API
+          const { getTaskDetail } = await import('../../../services/task');
+          
+          let messageCount = 0;
+          const eventSource = getTaskDetail(
+            taskId,
+            (data) => {
+              messageCount++;
+              console.log('─'.repeat(60));
+              console.log(`[导出] 📨 收到第 ${messageCount} 条任务状态消息`);
+              console.log('[导出] 📊 任务数据:', data);
+              console.log('[导出] 🔍 任务状态:', data.status);
+              
+              if (data.status === 'success') {
+                console.log('[导出] ✅ 任务完成！');
+                eventSource.close();
+                
+                // 保存任务ID，用于下载
+                const completedTaskId = taskId;
+                
+                // 1. 发送带按钮的系统通知（5秒后自动关闭）
+                appNotification.withButtons(
+                  'success',
+                  'SQL导出完成',
+                  'SQL导出',
+                  [
+                    {
+                      text: '点击查看',
+                      primary: true,
+                      onClick: () => {
+                        console.log('[导出] 🖱️ 用户点击"点击查看"');
+                        import('../../../stores/taskCenterStore').then(({ useTaskCenterStore }) => {
+                          const { open, setActiveType } = useTaskCenterStore.getState();
+                          setActiveType('sql_export');
+                          open();
+                          console.log('[导出] ✅ 任务中心已打开');
+                        });
+                      }
+                    }
+                  ],
+                  5000
+                );
+                console.log('[导出] 📢 带按钮的通知已发送（5秒后自动关闭）');
+                
+                // 2. 同时添加到消息中心（铃铛显示未读）
+                addMessage({
+                  type: 'success',
+                  title: 'SQL导出完成',
+                  content: 'SQL导出',
+                  action: {
+                    type: 'task-center'
+                  }
+                });
+                console.log('[导出] 📢 消息中心通知已添加');
+              } else if (data.status === 'failed') {
+                console.log('[导出] ❌ 任务失败');
+                eventSource.close();
+                
+                addMessage({
+                  type: 'error',
+                  title: '导出失败',
+                  content: data.error_message || '导出任务执行失败',
+                });
+                console.log('[导出] 📢 失败通知已发送');
+              } else if (data.status === 'running') {
+                console.log('[导出] ⚙️ 任务运行中...');
+                if (data.progress) {
+                  console.log('[导出] 📈 进度:', data.progress);
+                }
+              } else if (data.status === 'pending') {
+                console.log('[导出] ⏳ 任务等待中...');
+              }
+              console.log('─'.repeat(60));
+            },
+            () => {
+              console.error('[导出] ❌ SSE连接错误');
+            },
+            () => {
+              console.log('[导出] 🔒 SSE连接已关闭');
+              console.log('[导出] 📊 总共收到消息数:', messageCount);
+            }
+          );
+          
+          console.log('[导出] ✅ 任务监听已启动');
+        } else {
+          // 没有任务ID，使用旧的通知方式
+          console.log('[导出] ⚠️ 响应中没有任务ID，使用旧的通知方式');
+          toast.success(res.message || '导出任务已提交，请稍后查收邮件');
+        }
       } else {
-        updateTab(activeTabId, {
-          messages: [{ type: 'error', content: res.message || '导出失败' }]
-        });
+        console.log('[导出] ❌ 导出请求失败:', res.message);
+        toast.error(res.message || '导出失败');
       }
     } catch (error) {
-      console.error('导出失败:', error);
-      updateTab(activeTabId, {
-        messages: [{ type: 'error', content: '导出失败，请稍后重试' }]
-      });
-      
-      addMessage({
-        type: 'error',
-        title: 'SQL导出失败',
-        content: '导出失败，请稍后重试',
-      });
+      console.error('[导出] ❌ 请求异常:', error);
+      toast.error('导出失败，请稍后重试');
     } finally {
       updateTab(activeTabId, { exportLoading: false });
+      console.log('[导出] ⏳ 设置加载状态为 false');
+      console.log('='.repeat(60));
     }
   };
 

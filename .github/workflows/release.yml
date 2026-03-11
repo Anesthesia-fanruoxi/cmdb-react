@@ -147,8 +147,14 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"
-          DESCRIPTION="1、sql审批添加了申请说明列展示
-          2、修复了es查询的时候多窗口之间的影响"
+          DESCRIPTION="1、添加了sql编辑框中的ctrl +D功能
+          2、sql编辑框支持ctrl+滚动实现字体放大缩小
+          3、修改sql提示逻辑使其提示更加自由
+          4、优化导出提示
+          5、优化es搜索页面的实时渲染高亮
+          6、优化es搜索时间问题，时间条件为非固定时间每次搜索前会重新计算一次
+          7、修复sql审批中的再次提交出现流程不全的问题。"
+
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \
             -H "Content-Type: application/json" \

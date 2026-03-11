@@ -119,15 +119,34 @@ const MessageCenter = ({ visible: externalVisible, onClose }: MessageCenterProps
   };
 
   const renderMessageItem = (msg: Message) => (
-    <div key={msg.id} className={`msg-item ${msg.read ? 'read' : 'unread'} msg-${msg.type} ${msg.action && msg.action.type !== 'download' ? 'clickable' : ''}`} onClick={() => handleItemClick(msg)}>
+    <div key={msg.id} className={`msg-item ${msg.read ? 'read' : 'unread'} msg-${msg.type} ${msg.action && msg.action.type !== 'download' && msg.action.type !== 'custom' ? 'clickable' : ''}`} onClick={() => handleItemClick(msg)}>
       <div className="msg-icon">{typeIcons[msg.type]}</div>
       <div className="msg-content">
         <div className="msg-title">{msg.title}</div>
         <div className="msg-text">{msg.content}</div>
         <div className="msg-footer">
           <span className="msg-time">{formatTime(msg.time)}</span>
-          {msg.action && msg.action.type !== 'download' && <span className="msg-action-hint"><ExternalLink size={12} /> 点击查看</span>}
+          {msg.action && msg.action.type !== 'download' && msg.action.type !== 'custom' && <span className="msg-action-hint"><ExternalLink size={12} /> 点击查看</span>}
         </div>
+        {/* 自定义按钮 */}
+        {msg.action?.type === 'custom' && msg.action.buttons && (
+          <div className="msg-custom-actions">
+            {msg.action.buttons.map((button, index) => (
+              <button
+                key={index}
+                className="btn-custom-action"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  button.onClick();
+                  if (!msg.read) markAsRead(msg.id);
+                }}
+              >
+                {button.text}
+              </button>
+            ))}
+          </div>
+        )}
+        {/* 下载操作按钮 */}
         {msg.action?.type === 'download' && isTauriEnv() && msg.extra?.filePath && (
           <div className="msg-download-actions">
             <button className="btn-download-action" onClick={(e) => handleOpenFolder(msg, e)} title="打开文件夹">

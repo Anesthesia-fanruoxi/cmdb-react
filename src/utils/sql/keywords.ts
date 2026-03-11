@@ -76,3 +76,39 @@ export const SQL_KEYWORDS_LIST = [
   'UPDATE', 'DELETE', 'INSERT', 'CREATE', 'DROP', 'ALTER', 'TRUNCATE',
   'INDEX', 'TABLE', 'DATABASE', 'VIEW', 'TRIGGER', 'PROCEDURE', 'FUNCTION'
 ]
+
+// 常用关键字权重（用于排序优先级）
+export const KEYWORD_PRIORITY: Record<string, number> = {
+  // 最常用的语句起始关键字
+  'SELECT': 100,
+  'INSERT': 95,
+  'UPDATE': 95,
+  'DELETE': 95,
+  'CREATE': 90,
+  'ALTER': 90,
+  'DROP': 90,
+  
+  // 常用子句关键字
+  'FROM': 85,
+  'WHERE': 85,
+  'JOIN': 80,
+  'LEFT': 80,
+  'RIGHT': 80,
+  'INNER': 80,
+  'GROUP': 75,
+  'ORDER': 75,
+  'HAVING': 75,
+  'LIMIT': 75,
+  
+  // 其他常用关键字
+  'AND': 70,
+  'OR': 70,
+  'IN': 70,
+  'ON': 70,
+  'BY': 65,
+  'AS': 60,  // AS 优先级较低
+  'SET': 65,
+  'INTO': 65,
+  
+  // 默认优先级为 50
+}

@@ -4,7 +4,7 @@
  */
 
 import { create } from 'zustand';
-import { showNotification, startTrayFlash, stopTrayFlash } from '../services/notification';
+import { startTrayFlash, stopTrayFlash } from '../services/notification';
 
 export type MessageType = 'success' | 'error' | 'warning' | 'info';
 
@@ -17,8 +17,13 @@ export interface Message {
   read: boolean;
   // 可选：点击跳转动作
   action?: {
-    type: 'task-center' | 'link' | 'download';
+    type: 'task-center' | 'link' | 'download' | 'custom';
     payload?: string;
+    // 自定义按钮（当type为custom时使用）
+    buttons?: Array<{
+      text: string;
+      onClick: () => void;
+    }>;
   };
   // 可选：关联的文件路径等
   extra?: Record<string, unknown> & {
@@ -83,8 +88,8 @@ export const useMessageStore = create<MessageState>((set) => ({
       saveToStorage(messages);
       const unreadCount = messages.filter(m => !m.read).length;
       
-      // 发送应用内通知
-      showNotification(msg.title, msg.content, msg.type);
+      // 注意：不再自动发送应用内通知，由调用方决定是否需要通知
+      // showNotification(msg.title, msg.content, msg.type);
       
       // 有未读消息时启动托盘闪烁
       if (unreadCount > 0) {
