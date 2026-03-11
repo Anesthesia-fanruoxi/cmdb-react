@@ -555,9 +555,6 @@ const SqlSearch = () => {
                 console.log('[导出] ✅ 任务完成！');
                 eventSource.close();
                 
-                // 保存任务ID，用于下载
-                const completedTaskId = taskId;
-                
                 // 1. 发送带按钮的系统通知（5秒后自动关闭）
                 appNotification.withButtons(
                   'success',

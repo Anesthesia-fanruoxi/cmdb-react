@@ -25,7 +25,7 @@ const DETACHED_KEY = 'elfk/detached-tabs';
 
 const createDefaultTab = (): TabData => ({
   id: 'detached', name: '日志搜索', initialized: false, projectInfo: null,
-  loading: false, currentView: null, logs: [], total: 0, keyword: '', lastParams: {}, selectedFields: [],
+  loading: false, currentView: null, logs: [], total: 0, keyword: '', highlightKeyword: '', lastParams: {}, selectedFields: [],
   timeRange: null, sortOrder: 'desc', autoRefresh: false, scrollPosition: 0
 });
 

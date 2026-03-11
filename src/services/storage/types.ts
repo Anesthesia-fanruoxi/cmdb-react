@@ -119,6 +119,7 @@ export interface SqlShortcuts {
   newTab: string;
   history: string;
   saveShared: string;
+  duplicateLine: string;
 }
 
 /** ELFK 日志搜索快捷键配置 */
