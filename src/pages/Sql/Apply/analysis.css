@@ -33,7 +33,15 @@
 }
 
 /* SQL 标签页 */
-.sql-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.sql-tabs { 
+  display: flex; 
+  flex-wrap: wrap; 
+  gap: 8px; 
+  margin-bottom: 12px;
+  max-height: 200px; /* 限制最大高度 */
+  overflow-y: auto; /* 添加垂直滚动 */
+  padding-right: 4px; /* 为滚动条留出空间 */
+}
 
 .sql-tab {
   padding: 8px 14px;
