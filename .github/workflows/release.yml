@@ -12,12 +12,28 @@ permissions:
 
 jobs:
   build-windows:
-    runs-on: self-hosted
+    runs-on: windows-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           clean: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
 
       - name: Clean old build
         run: |
