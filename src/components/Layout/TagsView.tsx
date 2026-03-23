@@ -111,16 +111,44 @@ const TagsView = ({ collapsed, onToggleCollapse }: TagsViewProps) => {
 
   // 关闭标签
   const handleClose = (e: React.MouseEvent, tag: TagView) => {
+    console.log('[TagsView] 关闭标签被点击:', tag.path);
     e.stopPropagation();
-    if (tag.meta?.affix) return;
+    if (tag.meta?.affix) {
+      console.log('[TagsView] 标签是固定的，无法关闭');
+      return;
+    }
+
+    console.log('[TagsView] 当前路径:', location.pathname);
+    console.log('[TagsView] 当前标签数量:', visitedViews.length);
 
     if (tag.path === location.pathname) {
       const index = visitedViews.findIndex(v => v.path === tag.path);
-      const remaining = visitedViews.filter(v => v.path !== tag.path);
-      const nextTag = remaining[Math.min(index, remaining.length - 1)] || remaining[0];
-      navigate(nextTag?.path || '/dashboard');
-      setTimeout(() => delVisitedView(tag), 0);
+      console.log('[TagsView] 当前标签索引:', index);
+      
+      // 优先显示右边的标签，如果是最后一个则显示左边的
+      let nextTag: TagView | undefined;
+      if (index < visitedViews.length - 1) {
+        // 不是最后一个，显示右边的
+        nextTag = visitedViews[index + 1];
+        console.log('[TagsView] 显示右边的标签:', nextTag?.path);
+      } else if (index > 0) {
+        // 是最后一个，显示左边的
+        nextTag = visitedViews[index - 1];
+        console.log('[TagsView] 显示左边的标签:', nextTag?.path);
+      }
+      
+      // 先删除标签
+      console.log('[TagsView] 执行删除操作');
+      delVisitedView(tag);
+      
+      // 再跳转到下一个标签
+      if (nextTag) {
+        navigate(nextTag.path);
+      } else {
+        navigate('/dashboard');
+      }
     } else {
+      console.log('[TagsView] 关闭非当前标签');
       delVisitedView(tag);
     }
   };
@@ -141,11 +169,24 @@ const TagsView = ({ collapsed, onToggleCollapse }: TagsViewProps) => {
       case 'close':
         if (!tag.meta?.affix) {
           const index = visitedViews.findIndex(v => v.path === tag.path);
-          delVisitedView(tag);
+          
           if (tag.path === location.pathname) {
-            const nextTag = visitedViews[index] || visitedViews[index - 1];
-            navigate(nextTag?.path || '/');
+            // 关闭当前标签，优先显示右边的，如果是最后一个则显示左边的
+            let nextTag: TagView | undefined;
+            if (index < visitedViews.length - 1) {
+              nextTag = visitedViews[index + 1];
+            } else if (index > 0) {
+              nextTag = visitedViews[index - 1];
+            }
+            
+            if (nextTag) {
+              navigate(nextTag.path);
+            } else {
+              navigate('/dashboard');
+            }
           }
+          
+          delVisitedView(tag);
         }
         break;
       case 'closeOthers':
@@ -154,7 +195,7 @@ const TagsView = ({ collapsed, onToggleCollapse }: TagsViewProps) => {
         break;
       case 'closeAll':
         delAllViews();
-        navigate('/');
+        navigate('/dashboard');
         break;
     }
   };

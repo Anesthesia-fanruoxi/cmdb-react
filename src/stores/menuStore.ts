@@ -155,9 +155,13 @@ export const useMenuStore = create<MenuState>()((set, get) => ({
   },
 
   delVisitedView: (view) => {
-    set((state) => ({
-      visitedViews: state.visitedViews.filter((v) => v.path !== view.path),
-    }));
+    console.log('[MenuStore] delVisitedView 被调用:', view.path);
+    set((state) => {
+      const newViews = state.visitedViews.filter((v) => v.path !== view.path);
+      console.log('[MenuStore] 删除前标签数量:', state.visitedViews.length);
+      console.log('[MenuStore] 删除后标签数量:', newViews.length);
+      return { visitedViews: newViews };
+    });
     get().delCachedView(view.name);
     markDirty();
   },
