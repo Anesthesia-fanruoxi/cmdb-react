@@ -214,22 +214,42 @@ const SqlDatabi = () => {
 
       if (res.code === 200 && res.data) {
         const { head, table } = res.data;
+        
+        console.log('[BI查询] 查询结果:', { head, table });
+        console.log('[BI查询] head 类型:', Array.isArray(head), 'head 长度:', head?.length);
+        console.log('[BI查询] table 类型:', Array.isArray(table), 'table 长度:', table?.length);
+        if (table && table.length > 0) {
+          console.log('[BI查询] 第一行数据:', table[0]);
+          console.log('[BI查询] 第一行数据类型:', typeof table[0], 'is array:', Array.isArray(table[0]));
+        }
 
         if (head && head.length > 0) {
           setResultColumns(head);
         }
 
         if (table && table.length > 0) {
-          setResultData(table);
+          // 检查数据格式：如果第一行是对象，直接使用；如果是数组，需要转换
+          const firstRow = table[0];
+          if (Array.isArray(firstRow)) {
+            // 二维数组格式，需要转换为对象数组
+            console.log('[BI查询] 检测到二维数组格式，进行转换');
+            const convertedData = table.map((row: any[]) => {
+              const obj: Record<string, any> = {};
+              head.forEach((col: string, index: number) => {
+                obj[col] = row[index];
+              });
+              return obj;
+            });
+            console.log('[BI查询] 转换后的数据:', convertedData);
+            setResultData(convertedData as any);
+          } else {
+            // 已经是对象数组格式
+            console.log('[BI查询] 检测到对象数组格式，直接使用');
+            setResultData(table);
+          }
         }
 
         setTook(Date.now() - startTime);
-
-        if (table && table.length > 0) {
-          toast.success(`查询成功，共 ${table.length} 条记录`);
-        } else {
-          toast.info('查询成功，无数据返回');
-        }
       } else {
         toast.error(res.message || '查询失败');
       }
@@ -269,6 +289,44 @@ const SqlDatabi = () => {
   useEffect(() => {
     fetchProjects();
   }, []);
+
+  // 复制整列
+  const handleCopyColumn = (colIndex: number) => {
+    const col = resultColumns[colIndex];
+    const values = resultData.map(row => {
+      const value = typeof row === 'object' && !Array.isArray(row)
+        ? row[col]
+        : row[colIndex];
+      return String(value ?? '');
+    });
+    
+    navigator.clipboard.writeText(values.join('\n')).then(() => {
+      toast.success('已复制整列数据');
+    }).catch(() => {
+      toast.error('复制失败');
+    });
+  };
+
+  // 复制整行（JSON 格式）
+  const handleCopyRow = (rowIndex: number) => {
+    const row = resultData[rowIndex];
+    const rowObject: Record<string, any> = {};
+    
+    resultColumns.forEach((col, colIndex) => {
+      const value = typeof row === 'object' && !Array.isArray(row)
+        ? row[col]
+        : row[colIndex];
+      rowObject[col] = value;
+    });
+    
+    const jsonString = JSON.stringify(rowObject, null, 2);
+    
+    navigator.clipboard.writeText(jsonString).then(() => {
+      toast.success('已复制整行数据（JSON 格式）');
+    }).catch(() => {
+      toast.error('复制失败');
+    });
+  };
 
   // 处理拖动开始
   const handleDragStart = (e: React.MouseEvent) => {
@@ -381,7 +439,7 @@ const SqlDatabi = () => {
           </div>
 
           {/* 查询结果 - 占用剩余空间 */}
-          <div style={{ flex: 1, minHeight: '10%', display: 'flex', flexDirection: 'column' }}>
+          <div className="result-panel-wrapper">
             <div className="result-section">
               <div className="result-header">
                 <span className="title">查询结果</span>
@@ -397,26 +455,59 @@ const SqlDatabi = () => {
                 {queryLoading ? (
                   <div className="loading">查询中...</div>
                 ) : resultData.length > 0 ? (
-                  <table className="result-table">
-                    <thead>
-                      <tr>
-                        {resultColumns.map(col => (
-                          <th key={col}>{col}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {resultData.map((row, index) => (
-                        <tr key={index}>
-                          {resultColumns.map((_col, colIndex) => (
-                            <td key={colIndex}>
-                              {String(row[colIndex] ?? '')}
-                            </td>
+                  <>
+                    {console.log('[BI查询] 渲染表格, resultColumns:', resultColumns, 'resultData:', resultData)}
+                    <table className="result-table">
+                      <thead>
+                        <tr>
+                          <th className="copy-column">#</th>
+                          {resultColumns.map((col, colIndex) => (
+                            <th key={col}>
+                              <div className="th-content">
+                                <span>{col}</span>
+                                <button
+                                  className="copy-btn"
+                                  onClick={() => handleCopyColumn(colIndex)}
+                                  title="复制整列"
+                                >
+                                  📋
+                                </button>
+                              </div>
+                            </th>
                           ))}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {resultData.map((row, rowIndex) => {
+                          console.log(`[BI查询] 渲染第 ${rowIndex} 行:`, row);
+                          return (
+                            <tr key={rowIndex}>
+                              <td className="copy-column">
+                                <button
+                                  className="copy-btn"
+                                  onClick={() => handleCopyRow(rowIndex)}
+                                  title="复制整行"
+                                >
+                                  📋
+                                </button>
+                              </td>
+                              {resultColumns.map((col, colIndex) => {
+                                // 支持对象格式和数组格式
+                                const value = typeof row === 'object' && !Array.isArray(row)
+                                  ? row[col]  // 对象格式：使用列名作为 key
+                                  : row[colIndex];  // 数组格式：使用索引
+                                return (
+                                  <td key={colIndex}>
+                                    {String(value ?? '')}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </>
                 ) : (
                   <div className="empty-state">
                     <span>暂无数据</span>
