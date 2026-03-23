@@ -1,0 +1,39 @@
+name: Cleanup All Tags
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Delete all tags
+        run: |
+          echo "Fetching all tags..."
+          git fetch --tags
+          
+          echo "Listing all tags:"
+          git tag -l
+          
+          TAG_COUNT=$(git tag -l | wc -l)
+          echo "Total tags to delete: $TAG_COUNT"
+          
+          if [ $TAG_COUNT -eq 0 ]; then
+            echo "No tags found to delete."
+            exit 0
+          fi
+          
+          echo "Deleting all tags..."
+          git tag -l | xargs -n 1 git push --delete origin || true
+          
+          echo "All tags deleted successfully!"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
