@@ -163,7 +163,8 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"
-          DESCRIPTION="新上大数据BI查询菜单"
+          DESCRIPTION="1、修复了bi查询边框丢失问题。
+          2、添加了查询的实时保存逻辑。"
 
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \

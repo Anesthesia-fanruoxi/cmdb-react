@@ -12,6 +12,7 @@ import {
 import { type Project } from '@/services/sql/search';
 import { toast } from '@/components/AppNotification';
 import SqlEditor, { type SqlEditorRef } from '../Search/components/SqlEditor';
+import { usePageStateStore } from '@/stores';
 import './index.css';
 
 /** 树节点类型 */
@@ -25,6 +26,11 @@ interface TreeNode {
 }
 
 const SqlDatabi = () => {
+  // 页面状态管理
+  const { setPageState, getPageState, _hasHydrated } = usePageStateStore();
+  const PAGE_KEY = 'sql/databi';
+  const hasRestored = useRef(false);
+
   // 项目相关状态
   const [projectList, setProjectList] = useState<Project[]>([]);
   const [projectLoading, setProjectLoading] = useState(false);
@@ -289,6 +295,50 @@ const SqlDatabi = () => {
   useEffect(() => {
     fetchProjects();
   }, []);
+
+  // 恢复保存的状态
+  useEffect(() => {
+    if (!_hasHydrated || hasRestored.current) return;
+    hasRestored.current = true;
+
+    try {
+      const saved = getPageState<{
+        currentProject: string;
+        sqlQuery: string;
+        editorHeightPercent: number;
+      }>(PAGE_KEY);
+
+      if (saved) {
+        if (saved.currentProject) {
+          setCurrentProject(saved.currentProject);
+          handleProjectChange(saved.currentProject);
+        }
+        if (saved.sqlQuery) {
+          setSqlQuery(saved.sqlQuery);
+        }
+        if (saved.editorHeightPercent) {
+          setEditorHeightPercent(saved.editorHeightPercent);
+        }
+      }
+    } catch (error) {
+      console.error('恢复 BI 查询页面状态失败:', error);
+    }
+  }, [_hasHydrated, getPageState]);
+
+  // 保存状态（防抖）
+  useEffect(() => {
+    if (!_hasHydrated || !hasRestored.current) return;
+
+    const timer = setTimeout(() => {
+      setPageState(PAGE_KEY, {
+        currentProject,
+        sqlQuery,
+        editorHeightPercent,
+      });
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [currentProject, sqlQuery, editorHeightPercent, setPageState, _hasHydrated]);
 
   // 复制整列
   const handleCopyColumn = (colIndex: number) => {
