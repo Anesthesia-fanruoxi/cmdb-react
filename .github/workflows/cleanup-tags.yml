@@ -15,7 +15,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Delete all tags
+      - name: Delete old tags (keep latest 3)
         run: |
           echo "Fetching all tags..."
           git fetch --tags
@@ -24,16 +24,33 @@ jobs:
           git tag -l
           
           TAG_COUNT=$(git tag -l | wc -l)
-          echo "Total tags to delete: $TAG_COUNT"
+          echo "Total tags found: $TAG_COUNT"
           
           if [ $TAG_COUNT -eq 0 ]; then
-            echo "No tags found to delete."
+            echo "No tags found."
             exit 0
           fi
           
-          echo "Deleting all tags..."
-          git tag -l | xargs -n 1 git push --delete origin || true
+          if [ $TAG_COUNT -le 3 ]; then
+            echo "Only $TAG_COUNT tags found, keeping all (threshold: 3)"
+            exit 0
+          fi
           
-          echo "All tags deleted successfully!"
+          echo "Getting tags sorted by creation date (newest first)..."
+          TAGS_TO_DELETE=$(git tag --sort=-creatordate | tail -n +4)
+          
+          if [ -z "$TAGS_TO_DELETE" ]; then
+            echo "No tags to delete."
+            exit 0
+          fi
+          
+          DELETE_COUNT=$(echo "$TAGS_TO_DELETE" | wc -l)
+          echo "Tags to delete: $DELETE_COUNT"
+          echo "$TAGS_TO_DELETE"
+          
+          echo "Deleting old tags..."
+          echo "$TAGS_TO_DELETE" | xargs -n 1 git push --delete origin || true
+          
+          echo "Cleanup completed! Kept latest 3 tags, deleted $DELETE_COUNT old tags."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
