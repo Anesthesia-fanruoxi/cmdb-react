@@ -3,6 +3,7 @@
  */
 
 import { apiClient } from '../request';
+import { getToken } from '../storage';
 
 /** 项目列表响应 */
 export interface DatabiProjectsResponse {
@@ -29,6 +30,16 @@ export interface DatabiQueryResponse {
   table: unknown[][];
 }
 
+/** SSE 事件数据 */
+export interface SseEventData {
+  type: 'idle' | 'cached' | 'refreshing' | 'loading' | 'success' | 'error';
+  status?: string;
+  message?: string;
+  progress?: number;
+  tables?: DatabiTablesResponse;
+  error?: string;
+}
+
 /**
  * 获取 BI 查询项目列表
  */
@@ -37,10 +48,101 @@ export const getDatabiProjects = () => {
 };
 
 /**
- * 获取项目的数据库和表列表
+ * 获取项目的数据库和表列表（SSE 流式）
  */
-export const getDatabiTables = (project: string) => {
-  return apiClient.get<DatabiTablesResponse>('/sql/databi/tables', { project });
+export const getDatabiTables = (
+  project: string,
+  onMessage?: (data: SseEventData) => void,
+  onError?: (error: Event) => void
+): EventSource => {
+  const token = getToken();
+  const baseUrl = import.meta.env.VITE_SSE_BASE_URL || import.meta.env.VITE_API_BASE_URL || '';
+  const url = `${baseUrl}/sql/databi/tables?project=${encodeURIComponent(project)}&token=${token}`;
+  
+  const eventSource = new EventSource(url);
+  let hasReceivedFinalEvent = false; // 标记是否已收到终态事件
+  
+  // 监听 idle 事件
+  eventSource.addEventListener('idle', (event: MessageEvent) => {
+    try {
+      const data = JSON.parse(event.data);
+      onMessage?.({ type: 'idle', ...data });
+    } catch (e) {
+      console.error('SSE 解析错误:', e);
+    }
+  });
+  
+  // 监听 cached 事件
+  eventSource.addEventListener('cached', (event: MessageEvent) => {
+    try {
+      const data = JSON.parse(event.data);
+      hasReceivedFinalEvent = true;
+      onMessage?.({ type: 'cached', ...data });
+    } catch (e) {
+      console.error('SSE 解析错误:', e);
+    }
+  });
+  
+  // 监听 refreshing 事件
+  eventSource.addEventListener('refreshing', (event: MessageEvent) => {
+    try {
+      const data = JSON.parse(event.data);
+      onMessage?.({ type: 'refreshing', ...data });
+    } catch (e) {
+      console.error('SSE 解析错误:', e);
+    }
+  });
+  
+  // 监听 loading 事件
+  eventSource.addEventListener('loading', (event: MessageEvent) => {
+    try {
+      const data = JSON.parse(event.data);
+      onMessage?.({ type: 'loading', ...data });
+    } catch (e) {
+      console.error('SSE 解析错误:', e);
+    }
+  });
+  
+  // 监听 success 事件
+  eventSource.addEventListener('success', (event: MessageEvent) => {
+    try {
+      const data = JSON.parse(event.data);
+      hasReceivedFinalEvent = true;
+      onMessage?.({ type: 'success', ...data });
+    } catch (e) {
+      console.error('SSE 解析错误:', e);
+    }
+  });
+  
+  // 监听 error 事件
+  eventSource.addEventListener('error', (event: MessageEvent) => {
+    try {
+      const data = JSON.parse(event.data);
+      hasReceivedFinalEvent = true;
+      onMessage?.({ type: 'error', ...data });
+    } catch (e) {
+      console.error('SSE 解析错误:', e);
+    }
+  });
+  
+  // 监听连接错误（只有在未收到终态事件时才当作错误）
+  eventSource.onerror = (error: Event) => {
+    eventSource.close();
+    // 如果已经收到终态事件，说明是正常关闭，不触发错误回调
+    if (!hasReceivedFinalEvent) {
+      console.error('SSE 连接错误:', error);
+      onError?.(error);
+    }
+  };
+  
+  return eventSource;
+};
+
+/**
+ * 刷新项目的库和表
+ */
+export const refreshDatabiTables = (project: string) => {
+  return apiClient.post(`/sql/databi/refresh?project=${encodeURIComponent(project)}`);
 };
 
 /**

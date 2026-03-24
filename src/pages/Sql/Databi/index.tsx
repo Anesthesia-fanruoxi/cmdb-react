@@ -3,11 +3,14 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
+import { Database, Table, ChevronRight, ChevronDown } from 'lucide-react';
 import { 
   getDatabiProjects, 
   getDatabiTables, 
+  refreshDatabiTables,
   executeDatabiQuery,
-  type DatabiTablesResponse 
+  type DatabiTablesResponse,
+  type SseEventData
 } from '@/services/sql/databi';
 import { type Project } from '@/services/sql/search';
 import { toast } from '@/components/AppNotification';
@@ -38,7 +41,14 @@ const SqlDatabi = () => {
 
   // 表树相关状态
   const [tableLoading, setTableLoading] = useState(false);
+  const [refreshLoading, setRefreshLoading] = useState(false);
   const [treeData, setTreeData] = useState<TreeNode[]>([]);
+  const sseConnectionRef = useRef<EventSource | null>(null);
+
+  // 刷新进度
+  const [refreshProgress, setRefreshProgress] = useState(0);
+  const [refreshMessage, setRefreshMessage] = useState('');
+  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
 
   // SQL 编辑器
   const sqlEditorRef = useRef<SqlEditorRef>(null);
@@ -57,33 +67,33 @@ const SqlDatabi = () => {
   const dragStartPercent = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // 关闭 SSE 连接
+  const closeSseConnection = () => {
+    if (sseConnectionRef.current) {
+      sseConnectionRef.current.close();
+      sseConnectionRef.current = null;
+    }
+  };
+
   // 获取项目列表
   const fetchProjects = async () => {
     setProjectLoading(true);
     try {
       const res = await getDatabiProjects();
-      console.log('BI查询项目列表原始响应:', res);
-      console.log('响应数据详情:', JSON.stringify(res.data, null, 2));
       
       if (res.code === 200 && res.data) {
         let items: any[] = [];
         
         // 处理不同的响应格式，和 SQL Search 保持一致
         if (Array.isArray(res.data)) {
-          console.log('数据格式: 直接数组');
           items = res.data;
         } else if (res.data.items) {
-          console.log('数据格式: items 数组');
           items = res.data.items;
         } else if (res.data.list) {
-          console.log('数据格式: list 数组');
           items = res.data.list;
         } else if (res.data.projects) {
-          console.log('数据格式: projects 数组');
           items = res.data.projects;
         }
-        
-        console.log('提取的 items:', items);
         
         // 转换为标准的项目格式
         const projectList = items.map(item => {
@@ -105,15 +115,26 @@ const SqlDatabi = () => {
             project_name: item.project_name || item.label || item.name || item.value || item.project || ''
           };
           
-          console.log('转换项目:', item, '->', project);
           return project;
         });
         
-        console.log('转换后的项目列表:', projectList);
         setProjectList(projectList);
         
         if (projectList.length === 0) {
           toast.warning('暂无可用项目');
+        } else {
+          // 如果当前没有选中项目,默认选中 dwd
+          if (!currentProject) {
+            const dwdProject = projectList.find(p => p.value === 'dwd');
+            if (dwdProject) {
+              setCurrentProject('dwd');
+              handleProjectChange('dwd');
+            } else {
+              // 如果没有 dwd,选中第一个项目
+              setCurrentProject(projectList[0].value);
+              handleProjectChange(projectList[0].value);
+            }
+          }
         }
       } else {
         toast.error(res.message || '获取项目列表失败');
@@ -131,21 +152,132 @@ const SqlDatabi = () => {
     if (!project) return;
 
     setCurrentProject(project);
+    
+    // 关闭之前的 SSE 连接
+    closeSseConnection();
+    
     setTableLoading(true);
     setTreeData([]);
+    setRefreshProgress(0);
+    setRefreshMessage('');
 
     try {
-      const res = await getDatabiTables(project);
-      if (res.code === 200 && res.data) {
-        buildTreeData(res.data);
+      // 建立 SSE 连接
+      sseConnectionRef.current = getDatabiTables(
+        project,
+        // onMessage
+        (data) => {
+          handleSseEvent(data);
+        },
+        // onError
+        (error) => {
+          console.error('SSE 错误:', error);
+          setTableLoading(false);
+          setRefreshLoading(false);
+          toast.error('连接失败，请重试');
+        }
+      );
+    } catch (error) {
+      console.error('建立 SSE 连接错误:', error);
+      toast.error('连接失败');
+      setTableLoading(false);
+    }
+  };
+
+  // 处理 SSE 事件
+  const handleSseEvent = (data: SseEventData) => {
+    const { type, message, progress, tables, error } = data;
+    
+    switch (type) {
+      case 'idle':
+        setRefreshMessage(message || '请点击刷新按钮');
+        setTableLoading(false);
+        break;
+        
+      case 'cached':
+        setRefreshMessage(message || '使用缓存数据');
+        if (tables) {
+          buildTreeData(tables);
+        }
+        setTableLoading(false);
+        setRefreshLoading(false);
+        break;
+        
+      case 'refreshing':
+        setRefreshProgress(progress || 20);
+        setRefreshMessage(message || '正在刷新插件缓存...');
+        setRefreshLoading(true);
+        break;
+        
+      case 'loading':
+        setRefreshProgress(progress || 60);
+        setRefreshMessage(message || '正在加载表列表...');
+        setRefreshLoading(true);
+        break;
+        
+      case 'success':
+        setRefreshProgress(100);
+        setRefreshMessage(message || '刷新完成');
+        if (tables) {
+          buildTreeData(tables);
+          toast.success('刷新成功');
+        }
+        setTableLoading(false);
+        setRefreshLoading(false);
+        break;
+        
+      case 'error':
+        setRefreshMessage(error || message || '刷新失败');
+        toast.error(error || message || '刷新失败');
+        setTableLoading(false);
+        setRefreshLoading(false);
+        break;
+    }
+  };
+
+  // 刷新项目的库和表
+  const handleRefresh = async () => {
+    if (!currentProject) {
+      toast.warning('请先选择项目');
+      return;
+    }
+    
+    setRefreshLoading(true);
+    setRefreshProgress(0);
+    setRefreshMessage('正在触发刷新任务...');
+    
+    try {
+      // 1. 关闭旧的 SSE 连接
+      closeSseConnection();
+      
+      // 2. 触发刷新任务
+      const res = await refreshDatabiTables(currentProject);
+      
+      if (res.code === 200) {
+        setRefreshMessage(res.message || '刷新任务已启动');
+        
+        // 3. 重新建立 SSE 连接
+        sseConnectionRef.current = getDatabiTables(
+          currentProject,
+          // onMessage
+          (data) => {
+            handleSseEvent(data);
+          },
+          // onError
+          (error) => {
+            console.error('SSE 错误:', error);
+            setRefreshLoading(false);
+            toast.error('连接失败，请重试');
+          }
+        );
       } else {
-        toast.error(res.message || '获取表列表失败');
+        toast.error(res.message || '触发刷新失败');
+        setRefreshLoading(false);
       }
     } catch (error) {
-      console.error('获取表列表错误:', error);
-      toast.error('获取表列表失败');
-    } finally {
-      setTableLoading(false);
+      console.error('触发刷新错误:', error);
+      toast.error('触发刷新失败');
+      setRefreshLoading(false);
     }
   };
 
@@ -153,14 +285,20 @@ const SqlDatabi = () => {
   const buildTreeData = (data: DatabiTablesResponse) => {
     const tree: TreeNode[] = [];
     let nodeId = 0;
+    const newExpandedKeys = new Set<string>();
 
-    Object.keys(data).forEach(dbName => {
+    Object.keys(data).forEach((dbName, index) => {
       const dbNode: TreeNode = {
         id: `db_${nodeId++}`,
         label: dbName,
         type: 'database',
         children: []
       };
+
+      // 默认展开第一个数据库
+      if (index === 0) {
+        newExpandedKeys.add(dbNode.id);
+      }
 
       const tables = data[dbName] || [];
       tables.forEach(tableName => {
@@ -177,6 +315,7 @@ const SqlDatabi = () => {
     });
 
     setTreeData(tree);
+    setExpandedKeys(newExpandedKeys);
   };
 
   // 树节点点击
@@ -190,6 +329,19 @@ const SqlDatabi = () => {
         editor.focus();
       }
     }
+  };
+
+  // 切换展开/收起
+  const toggleExpand = (nodeId: string) => {
+    setExpandedKeys(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(nodeId)) {
+        newSet.delete(nodeId);
+      } else {
+        newSet.add(nodeId);
+      }
+      return newSet;
+    });
   };
 
   // 执行查询
@@ -220,14 +372,6 @@ const SqlDatabi = () => {
 
       if (res.code === 200 && res.data) {
         const { head, table } = res.data;
-        
-        console.log('[BI查询] 查询结果:', { head, table });
-        console.log('[BI查询] head 类型:', Array.isArray(head), 'head 长度:', head?.length);
-        console.log('[BI查询] table 类型:', Array.isArray(table), 'table 长度:', table?.length);
-        if (table && table.length > 0) {
-          console.log('[BI查询] 第一行数据:', table[0]);
-          console.log('[BI查询] 第一行数据类型:', typeof table[0], 'is array:', Array.isArray(table[0]));
-        }
 
         if (head && head.length > 0) {
           setResultColumns(head);
@@ -238,7 +382,6 @@ const SqlDatabi = () => {
           const firstRow = table[0];
           if (Array.isArray(firstRow)) {
             // 二维数组格式，需要转换为对象数组
-            console.log('[BI查询] 检测到二维数组格式，进行转换');
             const convertedData = table.map((row: any[]) => {
               const obj: Record<string, any> = {};
               head.forEach((col: string, index: number) => {
@@ -246,11 +389,9 @@ const SqlDatabi = () => {
               });
               return obj;
             });
-            console.log('[BI查询] 转换后的数据:', convertedData);
             setResultData(convertedData as any);
           } else {
             // 已经是对象数组格式
-            console.log('[BI查询] 检测到对象数组格式，直接使用');
             setResultData(table);
           }
         }
@@ -276,24 +417,53 @@ const SqlDatabi = () => {
   };
 
   // 渲染树节点
-  const renderTreeNode = (node: TreeNode) => (
-    <div key={node.id}>
-      <div
-        className={`tree-node ${node.type}`}
-        onClick={() => handleNodeClick(node)}
-      >
-        <span className="icon">
-          {node.type === 'database' ? '🗄️' : '📄'}
-        </span>
-        <span>{node.label}</span>
+  const renderTreeNode = (node: TreeNode) => {
+    const isExpanded = expandedKeys.has(node.id);
+    const hasChildren = node.children && node.children.length > 0;
+
+    return (
+      <div key={node.id} className="tree-node-wrapper">
+        <div
+          className={`tree-node ${node.type}`}
+          onClick={() => {
+            if (node.type === 'database') {
+              toggleExpand(node.id);
+            } else {
+              handleNodeClick(node);
+            }
+          }}
+        >
+          {node.type === 'database' && hasChildren && (
+            <span className="expand-icon">
+              {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            </span>
+          )}
+          <span className="node-icon">
+            {node.type === 'database' ? (
+              <Database size={16} />
+            ) : (
+              <Table size={16} />
+            )}
+          </span>
+          <span className="node-label">{node.label}</span>
+        </div>
+        {node.type === 'database' && hasChildren && isExpanded && (
+          <div className="tree-children">
+            {node.children!.map(child => renderTreeNode(child))}
+          </div>
+        )}
       </div>
-      {node.children && node.children.map(child => renderTreeNode(child))}
-    </div>
-  );
+    );
+  };
 
   // 组件挂载时初始化
   useEffect(() => {
     fetchProjects();
+    
+    // 组件卸载时关闭 SSE 连接
+    return () => {
+      closeSseConnection();
+    };
   }, []);
 
   // 恢复保存的状态
@@ -309,9 +479,10 @@ const SqlDatabi = () => {
       }>(PAGE_KEY);
 
       if (saved) {
+        // 只恢复项目选择,不自动建立 SSE 连接
         if (saved.currentProject) {
           setCurrentProject(saved.currentProject);
-          handleProjectChange(saved.currentProject);
+          // 不调用 handleProjectChange,等用户手动选择或刷新
         }
         if (saved.sqlQuery) {
           setSqlQuery(saved.sqlQuery);
@@ -426,16 +597,36 @@ const SqlDatabi = () => {
               onChange={(e) => handleProjectChange(e.target.value)}
               disabled={projectLoading}
             >
-              <option value="">请选择项目</option>
               {projectList.map(project => (
                 <option key={project.value} value={project.value}>
                   {project.label}
                 </option>
               ))}
             </select>
+            <button
+              className="btn-refresh"
+              onClick={handleRefresh}
+              disabled={!currentProject || refreshLoading}
+              title="刷新表列表"
+            >
+              {refreshLoading ? '⟳' : '↻'}
+            </button>
           </div>
 
           <div className="table-tree">
+            {/* 刷新进度提示 */}
+            {refreshLoading && refreshMessage && (
+              <div className="refresh-status">
+                <div className="progress-bar">
+                  <div 
+                    className="progress-fill" 
+                    style={{ width: `${refreshProgress}%` }}
+                  />
+                </div>
+                <span className="status-text">{refreshMessage}</span>
+              </div>
+            )}
+            
             {tableLoading ? (
               <div className="loading">加载中...</div>
             ) : treeData.length > 0 ? (
@@ -506,7 +697,6 @@ const SqlDatabi = () => {
                   <div className="loading">查询中...</div>
                 ) : resultData.length > 0 ? (
                   <>
-                    {console.log('[BI查询] 渲染表格, resultColumns:', resultColumns, 'resultData:', resultData)}
                     <table className="result-table">
                       <thead>
                         <tr>
@@ -529,7 +719,6 @@ const SqlDatabi = () => {
                       </thead>
                       <tbody>
                         {resultData.map((row, rowIndex) => {
-                          console.log(`[BI查询] 渲染第 ${rowIndex} 行:`, row);
                           return (
                             <tr key={rowIndex}>
                               <td className="copy-column">
