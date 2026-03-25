@@ -22,6 +22,12 @@ export interface PodStatus {
   available_replicas: number;
   status: 'running' | 'stopped' | 'pending' | 'error';
   last_update: string;
+  is_building?: boolean;
+  last_build_duration?: number;
+  last_build_result?: string;
+  last_build_time?: number;
+  last_executor?: string;
+  last_build_branch?: string;
 }
 
 /** API 原始返回的 Pod 项 */
@@ -31,6 +37,12 @@ export interface PodRawItem {
   namespace: string;
   domain?: string;
   is_active: boolean;
+  is_building?: boolean;
+  last_build_duration?: number;
+  last_build_result?: string;
+  last_build_time?: number;
+  last_executor?: string;
+  last_build_branch?: string;
 }
 
 /** K8s 列表响应 */

@@ -8,12 +8,13 @@ import { getKubePodProjects, getK8sList, operatePod } from '../../../services/as
 import type { PodProject, PodStatus } from '../../../services/assets/kubePod';
 import toast from '../../../components/Toast';
 import { confirm } from '../../../components/ConfirmModal';
+import { formatTimestamp, formatDuration, formatRelativeTime } from '../../../utils/datetime';
 import './index.css';
 
 const KubePodPage = () => {
   const [loading, setLoading] = useState(false);
   const [projectList, setProjectList] = useState<PodProject[]>([]);
-  const [selectedProject, setSelectedProject] = useState('');
+  const [selectedProject, setSelectedProject] = useState(''); // 初始为空,等待项目列表加载后设置
   const [tableData, setTableData] = useState<PodStatus[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
@@ -44,7 +45,13 @@ const KubePodPage = () => {
       const res = await getKubePodProjects();
       if (res.code === 200 && res.data) {
         const items = res.data.items || res.data || [];
-        setProjectList(Array.isArray(items) ? items : []);
+        const projects = Array.isArray(items) ? items : [];
+        setProjectList(projects);
+        
+        // 自动选择第一个项目
+        if (projects.length > 0 && !selectedProject) {
+          setSelectedProject(projects[0].project);
+        }
       }
     } catch (err) {
       console.error('获取项目列表失败:', err);
@@ -52,9 +59,12 @@ const KubePodPage = () => {
   };
 
   const fetchList = useCallback(async () => {
+    // 如果没有选择项目,不发起请求
+    if (!selectedProject) return;
+    
     setLoading(true);
     try {
-      const params = selectedProject ? { project: selectedProject } : { project: '*' };
+      const params = { project: selectedProject };
       const res = await getK8sList(params);
       if (res.code === 200 && res.data) {
         // API 返回结构: { result: [...], active_count, inactive_count, count }
@@ -69,7 +79,13 @@ const KubePodPage = () => {
           ready_replicas: item.is_active ? 1 : 0,
           available_replicas: item.is_active ? 1 : 0,
           status: item.is_active ? 'running' : 'stopped',
-          last_update: ''
+          last_update: '',
+          is_building: item.is_building,
+          last_build_duration: item.last_build_duration,
+          last_build_result: item.last_build_result,
+          last_build_time: item.last_build_time,
+          last_executor: item.last_executor,
+          last_build_branch: item.last_build_branch
         })));
       }
     } catch (err) {
@@ -123,10 +139,6 @@ const KubePodPage = () => {
           <div className="project-filter">
             <span className="filter-label">项目筛选：</span>
             <div className="project-radios">
-              <label className={`radio-item ${selectedProject === '' ? 'active' : ''}`}>
-                <input type="radio" name="project" checked={selectedProject === ''} onChange={() => setSelectedProject('')} />
-                全部项目
-              </label>
               {projectList.map(p => (
                 <label key={p.project} className={`radio-item ${selectedProject === p.project ? 'active' : ''}`}>
                   <input type="radio" name="project" checked={selectedProject === p.project} onChange={() => setSelectedProject(p.project)} />
@@ -156,18 +168,34 @@ const KubePodPage = () => {
           <table className="data-table">
             <thead>
               <tr>
-                <th>项目名称</th><th>命名空间</th><th>域名地址</th><th>运行状态</th>
+                <th style={{width: '10%'}}>项目名称</th>
+                <th style={{width: '8%'}}>执行人</th>
+                <th style={{width: '10%'}}>构建分支</th>
+                <th style={{width: '12%'}}>命名空间</th>
+                <th style={{width: '12%'}}>域名地址</th>
+                <th style={{width: '8%'}}>构建状态</th>
+                <th style={{width: '8%'}}>构建结果</th>
+                <th style={{width: '8%'}}>构建耗时</th>
+                <th style={{width: '12%'}}>构建时间</th>
+                <th style={{width: '8%'}}>距今时间</th>
+                <th style={{width: '10%'}}>运行状态</th>
               </tr>
             </thead>
             <tbody>
-              {loading ? <tr><td colSpan={4} className="loading-cell">加载中...</td></tr> :
-               filteredData.length === 0 ? <tr><td colSpan={4} className="empty-cell">暂无数据</td></tr> :
+              {loading ? <tr><td colSpan={11} className="loading-cell">加载中...</td></tr> :
+               filteredData.length === 0 ? <tr><td colSpan={11} className="empty-cell">暂无数据</td></tr> :
                filteredData.map(row => {
                  const key = `${row.namespace}`;
                  const isLoading = actionLoading[key];
                  return (
                   <tr key={key}>
                     <td>{row.project_name}</td>
+                    <td>{row.last_executor || '-'}</td>
+                    <td>
+                      {row.last_build_branch ? (
+                        <span className="branch-tag">{row.last_build_branch}</span>
+                      ) : '-'}
+                    </td>
                     <td><span className="namespace-tag">{row.namespace}</span></td>
                     <td>
                       {row.domain ? (
@@ -187,6 +215,25 @@ const KubePodPage = () => {
                           </button>
                         </div>
                       ) : '-'}
+                    </td>
+                    <td>
+                      {row.is_building ? (
+                        <span className="build-status building">构建中</span>
+                      ) : (
+                        <span className="build-status idle">空闲</span>
+                      )}
+                    </td>
+                    <td>
+                      {row.last_build_result ? (
+                        <span className={`build-result ${row.last_build_result.toLowerCase()}`}>
+                          {row.last_build_result}
+                        </span>
+                      ) : '-'}
+                    </td>
+                    <td>{formatDuration(row.last_build_duration)}</td>
+                    <td>{formatTimestamp(row.last_build_time)}</td>
+                    <td>
+                      <span className="relative-time">{formatRelativeTime(row.last_build_time)}</span>
                     </td>
                     <td className="action-cell">
                       <label className={`status-switch ${row.status === 'running' ? 'active' : ''} ${isLoading ? 'loading' : ''}`}>

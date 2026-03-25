@@ -57,6 +57,7 @@ export const getDatabiTables = (
 ): EventSource => {
   const token = getToken();
   const baseUrl = import.meta.env.VITE_SSE_BASE_URL || import.meta.env.VITE_API_BASE_URL || '';
+  // SSE 路径：baseUrl 已包含 /sse，所以这里直接使用 /sql/databi/tables
   const url = `${baseUrl}/sql/databi/tables?project=${encodeURIComponent(project)}&token=${token}`;
   
   const eventSource = new EventSource(url);
