@@ -327,49 +327,6 @@ const SqlDatabi = () => {
   };
 
   // 批量保存所有修改
-  const handleSaveAllFields = async () => {
-    const modifiedCols = columnDialog.columns.filter(col => {
-      const original = columnDialog.originalColumns.find(c => c.col_name === col.col_name);
-      return original && original.comment !== col.comment;
-    });
-
-    if (modifiedCols.length === 0) {
-      toast.info('没有修改的字段');
-      return;
-    }
-
-    setColumnDialog(prev => ({ ...prev, saving: true }));
-    
-    try {
-      const colName = modifiedCols.map(col => col.col_name);
-      const comment = modifiedCols.map(col => col.comment || '');
-
-      const res = await updateDatabiColumnComment({
-        project: currentProject,
-        table: columnDialog.tableName,
-        colName,
-        comment
-      });
-
-      if (res.code === 200) {
-        toast.success(`成功更新 ${modifiedCols.length} 个字段`);
-        setColumnDialog(prev => ({
-          ...prev,
-          originalColumns: prev.columns.map(col => ({ ...col, originalComment: col.comment })),
-          editingField: null,
-          saving: false
-        }));
-      } else {
-        toast.error(res.message || '更新失败');
-        setColumnDialog(prev => ({ ...prev, saving: false }));
-      }
-    } catch (error) {
-      console.error('批量更新字段注释错误:', error);
-      toast.error('更新失败');
-      setColumnDialog(prev => ({ ...prev, saving: false }));
-    }
-  };
-
   // 解析CSV内容
   const parseCsvContent = (content: string): CsvRow[] => {
     const lines = content.split('\n').filter(line => line.trim());
@@ -791,7 +748,6 @@ const SqlDatabi = () => {
         onEditField={handleEditField}
         onCancelEdit={handleCancelEditField}
         onSaveField={handleSaveField}
-        onSaveAll={handleSaveAllFields}
         onCommentChange={handleCommentChange}
       />
 

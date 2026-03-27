@@ -13,7 +13,6 @@ interface ColumnDetailDialogProps {
   onEditField: (colName: string) => void;
   onCancelEdit: (colName: string) => void;
   onSaveField: (colName: string) => void;
-  onSaveAll: () => void;
   onCommentChange: (colName: string, comment: string) => void;
 }
 
@@ -76,7 +75,6 @@ export const ColumnDetailDialog = ({
   onEditField,
   onCancelEdit,
   onSaveField,
-  onSaveAll,
   onCommentChange
 }: ColumnDetailDialogProps) => {
   const dialogRef = useRef<HTMLDivElement>(null);
