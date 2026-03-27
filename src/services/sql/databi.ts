@@ -154,3 +154,32 @@ export const executeDatabiQuery = (data: DatabiQueryRequest) => {
     timeout: 600000, // 10分钟超时
   });
 };
+ 
+// 表字段响应
+export interface DatabiColumnResponse {
+  col_name: string;
+  data_type: string;
+  comment: string;
+}
+
+// 更新字段注释请求
+export interface UpdateColumnCommentRequest {
+  project: string;
+  table: string;
+  colName: string[];
+  comment: string[];
+}
+
+/**
+ * 获取表字段列表
+ */
+export const getDatabiColumnList = (project: string, table: string) => {
+  return apiClient.get<DatabiColumnResponse[]>('/sql/databi/column/list', { project, table });
+};
+
+/**
+ * 更新字段注释（支持批量）
+ */
+export const updateDatabiColumnComment = (data: UpdateColumnCommentRequest) => {
+  return apiClient.post('/sql/databi/column/update', data);
+};

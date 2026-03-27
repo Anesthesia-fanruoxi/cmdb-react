@@ -202,7 +202,13 @@ async function request<T>(
 
     // 获取响应文本并应用大整数保护
     const responseText = await response.text();
+    console.log('=== 响应信息 ===');
+    console.log('状态码:', response.status);
+    console.log('响应文本长度:', responseText.length);
+    console.log('响应文本前200字符:', responseText.substring(0, 200));
+    
     const responseData = protectBigInt(responseText);
+    console.log('解析后数据:', responseData);
 
     // 处理 HTTP 错误状态
     if (!response.ok) {
@@ -290,10 +296,20 @@ export const apiClient = {
     const queryString = params
       ? '?' + Object.entries(params)
           .filter(([, v]) => v !== undefined && v !== null)
-          .map(([k, v]) => `${encodeURIComponent(k)}=${String(v)}`)
+          .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
           .join('&')
       : '';
-    return request<T>('GET', url + queryString, undefined, config);
+    
+    const urlWithParams = url + queryString;
+    const fullUrl = urlWithParams.startsWith('http') ? urlWithParams : `${BASE_URL}${urlWithParams}`;
+    
+    console.log('=== GET 请求 ===');
+    console.log('相对 URL:', urlWithParams);
+    console.log('完整 URL:', fullUrl);
+    console.log('BASE_URL:', BASE_URL);
+    console.log('参数:', params);
+    
+    return request<T>('GET', urlWithParams, undefined, config);
   },
 
   /**

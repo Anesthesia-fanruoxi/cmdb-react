@@ -468,3 +468,400 @@
     height: 200px;
   }
 }
+
+/* 右键菜单 */
+.context-menu {
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 4px 0;
+  min-width: 120px;
+}
+
+.context-menu-item {
+  padding: 8px 16px;
+  font-size: 14px;
+  color: var(--text-color);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.context-menu-item:hover {
+  background-color: var(--bg-secondary);
+}
+
+/* CSV 上传按钮 */
+.btn-csv-upload {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.btn-csv-upload:hover:not(:disabled) {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.btn-csv-upload:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   Dialog 弹框样式
+   ============================================ */
+
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+.dialog-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  background: var(--bg-color, #fff);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  width: 70vw;
+  max-width: 900px;
+  min-width: 500px;
+  max-height: 70vh;
+  opacity: 1;
+  transition: opacity 0.3s ease, box-shadow 0.3s ease;
+}
+
+.dialog-container.unfocused {
+  opacity: 0.4;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.dialog-container.dragging {
+  cursor: move;
+  user-select: none;
+}
+
+.dialog-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color, #e5e5e5);
+  background: var(--bg-secondary, #f5f5f5);
+  border-radius: 8px 8px 0 0;
+  cursor: move;
+}
+
+.dialog-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-color, #333);
+}
+
+.dialog-body {
+  flex: 1;
+  overflow: hidden;
+  padding: 20px;
+  min-height: 200px;
+  max-height: calc(70vh - 140px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 搜索框 */
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-input {
+  flex: 1;
+  padding: 8px 32px 8px 12px;
+  border: 1px solid var(--border-color, #d9d9d9);
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+  background: var(--bg-color, #fff);
+  color: var(--text-color, #333);
+  transition: border-color 0.2s;
+}
+
+.search-input:focus {
+  border-color: var(--primary-color, #1890ff);
+}
+
+.search-input::placeholder {
+  color: var(--text-secondary, #999);
+}
+
+.btn-clear-search {
+  position: absolute;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #999);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-clear-search:hover {
+  color: var(--text-color, #333);
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-color, #e5e5e5);
+  background: var(--bg-secondary, #f5f5f5);
+  border-radius: 0 0 8px 8px;
+}
+
+/* 表格包装容器 */
+.table-wrapper {
+  flex: 1;
+  overflow: auto;
+  border: 1px solid var(--border-color-light, #eee);
+  border-radius: 4px;
+}
+
+/* 字段详情表格样式 */
+.column-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.column-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg-secondary, #f5f5f5);
+}
+
+.column-table th,
+.column-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color-light, #eee);
+}
+
+.column-table th {
+  background: var(--bg-secondary, #f5f5f5);
+  font-weight: 500;
+  color: var(--text-color, #333);
+}
+
+.column-table .col-name {
+  width: 200px;
+  font-family: monospace;
+  color: var(--primary-color, #1890ff);
+}
+
+.column-table .col-name.clickable {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.column-table .col-name.clickable:hover {
+  background-color: rgba(24, 144, 255, 0.1);
+}
+
+.column-table .col-type {
+  width: 150px;
+  font-family: monospace;
+  color: var(--text-secondary, #666);
+}
+
+.column-table .col-comment {
+  min-width: 200px;
+}
+
+/* CSV 导入预览表格 */
+.preview-table-wrapper {
+  max-height: 400px;
+  overflow: auto;
+  border: 1px solid var(--border-color-light, #eee);
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+.preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.preview-table th,
+.preview-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color-light, #eee);
+}
+
+.preview-table th {
+  background: var(--bg-secondary, #f5f5f5);
+  font-weight: 500;
+  color: var(--text-color, #333);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.preview-table .col-name {
+  font-family: monospace;
+  color: var(--primary-color, #1890ff);
+}
+
+.preview-table .col-old {
+  color: var(--text-secondary, #666);
+}
+
+.preview-table .col-new {
+  color: var(--success-color, #52c41a);
+  font-weight: 500;
+}
+
+.import-summary {
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-secondary, #666);
+}
+
+.unmatched-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background: #fffbe6;
+  border: 1px solid #ffe58f;
+  border-radius: 4px;
+  color: #ad6800;
+  font-size: 14px;
+}
+
+.warning-icon {
+  font-size: 16px;
+}
+
+/* 字段注释编辑样式 */
+.edit-mode {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.comment-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--primary-color, #1890ff);
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+  background: var(--bg-color, #fff);
+  color: var(--text-color, #333);
+}
+
+.edit-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-save,
+.btn-cancel {
+  padding: 4px 12px;
+  border: 1px solid var(--border-color, #d9d9d9);
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-save {
+  background: var(--primary-color, #1890ff);
+  border-color: var(--primary-color, #1890ff);
+  color: white;
+}
+
+.btn-save:hover:not(:disabled) {
+  background: var(--primary-color-dark, #096dd9);
+  border-color: var(--primary-color-dark, #096dd9);
+}
+
+.btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-cancel {
+  background: var(--bg-color, #fff);
+  color: var(--text-color, #333);
+}
+
+.btn-cancel:hover:not(:disabled) {
+  border-color: var(--primary-color, #1890ff);
+  color: var(--primary-color, #1890ff);
+}
+
+.display-mode {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 6px 10px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  min-height: 32px;
+}
+
+.display-mode:hover {
+  background-color: rgba(24, 144, 255, 0.08);
+}
+
+.display-mode span {
+  flex: 1;
+  color: var(--text-color, #333);
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: var(--text-secondary, #666);
+  font-size: 14px;
+}
