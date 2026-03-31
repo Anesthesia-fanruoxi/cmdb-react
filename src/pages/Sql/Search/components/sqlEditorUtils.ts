@@ -102,22 +102,12 @@ export function createDotHandler(
             if (fields) {
               window.sqlFieldSuggestions[identifier] = fields
               window.sqlFieldSuggestions[key] = fields
-            } else if (loadTableStructure) {
-              // 如果表字段未缓存，先加载表结构
-              const loadedFields = await loadTableStructure(tableName)
-              if (loadedFields && loadedFields.length > 0) {
-                window.sqlFieldSuggestions[identifier] = loadedFields
-                window.sqlFieldSuggestions[key] = loadedFields
-              }
             }
-          } else if (loadTableStructure) {
-            // 不是别名，可能是表名，尝试加载表结构
-            await loadTableStructure(identifier)
+            // 元数据已在项目切换时全部缓存,不需要异步加载
           }
-        } else if (loadTableStructure) {
-          // 没有 FROM 子句，直接尝试加载表结构
-          await loadTableStructure(identifier)
+          // 元数据已在项目切换时全部缓存,不需要异步加载
         }
+        // 元数据已在项目切换时全部缓存,不需要异步加载
       }
 
       // 触发自动补全

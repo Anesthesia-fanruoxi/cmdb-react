@@ -461,42 +461,67 @@ const SqlDatabi = () => {
     }
   };
 
-  // 确认导入CSV
-  const handleConfirmCsvImport = async () => {
+  // 确认导入CSV（异步处理，避免超时卡住）
+  const handleConfirmCsvImport = () => {
     if (csvDialog.matched.length === 0) {
       toast.warning('没有可导入的字段');
       return;
     }
 
-    setCsvDialog(prev => ({ ...prev, saving: true }));
-    
-    try {
-      const fullTableName = csvDialog.dbName && csvDialog.tableName 
-        ? `${csvDialog.dbName}.${csvDialog.tableName}` 
-        : csvDialog.tableName;
-      
-      const colName = csvDialog.matched.map(item => item.col_name);
-      const comment = csvDialog.matched.map(item => item.newComment);
+    // 保存导入数据（关闭对话框后state会被清空）
+    const importData = {
+      project: currentProject,
+      dbName: csvDialog.dbName,
+      tableName: csvDialog.tableName,
+      matched: [...csvDialog.matched],
+    };
 
-      const res = await updateDatabiColumnComment({
-        project: currentProject,
-        table: fullTableName,
-        colName,
-        comment
-      });
+    // 立即关闭对话框，不阻塞用户
+    setCsvDialog({
+      visible: false,
+      loading: false,
+      saving: false,
+      dbName: '',
+      tableName: '',
+      matched: [],
+      unmatched: [],
+      total: 0,
+      fileName: ''
+    });
 
-      if (res.code === 200) {
-        toast.success(`成功导入 ${csvDialog.matched.length} 个字段的注释`);
-        setCsvDialog(prev => ({ ...prev, visible: false, saving: false }));
-      } else {
-        toast.error(res.message || '导入失败');
-        setCsvDialog(prev => ({ ...prev, saving: false }));
+    // 显示导入中提示
+    toast.info(`正在导入 ${importData.matched.length} 个字段的注释...`);
+
+    // 异步执行导入（后台线程）
+    const executeImport = async () => {
+      try {
+        const fullTableName = importData.dbName && importData.tableName 
+          ? `${importData.dbName}.${importData.tableName}` 
+          : importData.tableName;
+        
+        const colName = importData.matched.map(item => item.col_name);
+        const comment = importData.matched.map(item => item.newComment);
+
+        const res = await updateDatabiColumnComment({
+          project: importData.project,
+          table: fullTableName,
+          colName,
+          comment
+        });
+
+        if (res.code === 200) {
+          toast.success(`成功导入 ${importData.matched.length} 个字段的注释`);
+        } else {
+          toast.error(res.message || '导入失败');
+        }
+      } catch (error) {
+        console.error('导入错误:', error);
+        toast.error('导入失败，请重试');
       }
-    } catch (error) {
-      console.error('导入错误:', error);
-      toast.error('导入失败');
-      setCsvDialog(prev => ({ ...prev, saving: false }));
-    }
+    };
+
+    // 启动后台任务，不等待返回
+    executeImport();
   };
 
   // 执行查询

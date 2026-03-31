@@ -60,9 +60,31 @@ export function getProjectList() {
   return apiClient.get<{ items?: Project[]; list?: Project[] } | Project[]>('/sql/search/projects');
 }
 
+// 数据库元数据
+export interface DatabaseMetadata {
+  db_name: string;
+  tables: {
+    name: string;
+    comment?: string;
+    columns: {
+      name: string;
+      data_type: string;
+      column_type?: string;
+      comment?: string;
+      column_key?: string;
+      is_primary_key?: boolean;
+    }[];
+  }[];
+}
+
 // 查询数据库列表
 export function getDatabases(data: { agent: string }) {
-  return apiClient.post<{ databases: string[] }>('/sql/search/db', { ...data, type: 'db' });
+  return apiClient.post<{ 
+    databases: string[];
+    metadata?: {
+      databases: DatabaseMetadata[];
+    };
+  }>('/sql/search/db', { ...data, type: 'db' });
 }
 
 // 查询表列表
@@ -87,8 +109,20 @@ export function getTableStructure(data: { agent: string; dbName: string; tbName:
 }
 
 // 执行SQL查询
-export function executeQuery(data: { agent: string; dbName: string; query: string }) {
+export function executeQuery(data: { agent: string; dbName: string; query: string; query_id?: string }) {
+  console.log('🚀 [API请求] executeQuery 被调用');
+  console.log('📦 [API请求] 请求参数:', JSON.stringify(data, null, 2));
+  console.log('🏢 [API请求] agent:', data.agent);
+  console.log('💾 [API请求] dbName:', data.dbName);
+  console.log('📝 [API请求] query:', data.query.substring(0, 100));
+  console.log('🆔 [API请求] query_id:', data.query_id);
+  
   return apiClient.post<QueryResult>('/sql/search/data', data, { timeout: 600000 });
+}
+
+// 取消SQL查询
+export function cancelQuery(data: { agent: string; query_id: string }) {
+  return apiClient.post<{ code: number; message: string }>('/sql/search/cancel', data);
 }
 
 // 分页查询

@@ -12,6 +12,8 @@ export function getIconForType(meta: string): string {
       return '⚡' // 关键字 - 闪电
     case 'function':
       return 'ƒ' // 函数
+    case 'database':
+      return '🗄️' // 数据库
     case 'table':
       return '📋' // 表
     case 'field':
@@ -30,6 +32,8 @@ export function getTypeLabel(meta: string): string {
       return '关键字'
     case 'function':
       return '函数'
+    case 'database':
+      return '数据库'
     case 'table':
       return '表'
     case 'field':
@@ -48,6 +52,8 @@ export function getColorForType(meta: string): string {
       return '#569CD6' // 蓝色
     case 'function':
       return '#DCDCAA' // 黄色
+    case 'database':
+      return '#CE9178' // 橙色
     case 'table':
       return '#4EC9B0' // 青色
     case 'field':

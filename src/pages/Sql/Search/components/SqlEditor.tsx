@@ -124,13 +124,8 @@ const SqlEditor = forwardRef<SqlEditorRef, Props>(({
   useEffect(() => {
     tablesRef.current = tables
     
-    // 预加载前5个表的字段（异步不阻塞）
-    if (loadTableStructure && tables.length > 0) {
-      tables.slice(0, 5).forEach(table => {
-        loadTableStructure(table.name).catch(() => {})
-      })
-    }
-  }, [tables, loadTableStructure])
+    // 元数据已在项目切换时全部缓存,无需预加载
+  }, [tables])
 
   // 更新 loadTableStructure ref
   useEffect(() => {

@@ -117,7 +117,22 @@ export function createSqlCompleter(ace: any, { getTables, loadTableStructure }: 
           }
         })
         
-        // 3. 表名
+        // 3. 数据库名
+        const { getAllCachedDatabases } = await import('./cache')
+        const databases = getAllCachedDatabases()
+        databases.forEach(dbName => {
+          const matchResult = fuzzyMatch(prefix, dbName)
+          if (matchResult.match) {
+            allSuggestions.push({
+              caption: dbName,
+              value: dbName,
+              meta: 'database',
+              score: 8500 + matchResult.score
+            })
+          }
+        })
+        
+        // 4. 表名
         tables.forEach(table => {
           const matchResult = fuzzyMatch(prefix, table.name)
           if (matchResult.match) {
@@ -133,31 +148,11 @@ export function createSqlCompleter(ace: any, { getTables, loadTableStructure }: 
           }
         })
         
-        // 4. 所有已加载的字段（来自所有表）
-        // 在 WHERE 子句中，优先加载当前 SQL 涉及的表的字段
-        if (isInWhereClause && context.tables.length > 0 && loadTableStructure) {
-          // 同步等待加载当前 SQL 涉及的表的字段
-          const loadPromises = context.tables.map(table => {
-            const fields = getTableFields(table.name)
-            const hasValidCache = fields && fields.length > 0
-            
-            // 如果字段未缓存或缓存为空数组，立即加载
-            if (!hasValidCache) {
-              return loadTableStructure(table.name).catch(() => null)
-            }
-            return Promise.resolve(null)
-          })
-          
-          // 等待所有表字段加载完成（最多等待 500ms）
-          await Promise.race([
-            Promise.all(loadPromises),
-            new Promise(resolve => setTimeout(resolve, 500))
-          ])
-        }
-        
+        // 5. 所有已加载的字段（来自所有表）
+        // 注意：字段信息已在项目切换时通过元数据缓存，不再需要异步加载
         tables.forEach(table => {
           const fields = getTableFields(table.name)
-          if (fields) {
+          if (fields && fields.length > 0) {
             fields.forEach(field => {
               const matchResult = fuzzyMatch(prefix, field.caption)
               if (matchResult.match) {
@@ -182,13 +177,11 @@ export function createSqlCompleter(ace: any, { getTables, loadTableStructure }: 
                 allSuggestions.push(fieldWithTable)
               }
             })
-          } else if (loadTableStructure) {
-            // 异步加载未缓存的表字段（不阻塞当前补全）
-            loadTableStructure(table.name).catch(() => {})
           }
+          // 移除了异步加载逻辑，因为元数据已在项目切换时全部缓存
         })
         
-        // 5. 如果有上下文中的表别名，提供别名建议
+        // 6. 如果有上下文中的表别名，提供别名建议
         if (context.tableAliases && Object.keys(context.tableAliases).length > 0) {
           Object.keys(context.tableAliases).forEach(alias => {
             const matchResult = fuzzyMatch(prefix, alias)

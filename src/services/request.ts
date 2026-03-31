@@ -189,7 +189,12 @@ async function request<T>(
 
     if (data && (method === 'POST' || method === 'PUT')) {
       fetchOptions.body = JSON.stringify(data);
+      console.log('📤 [请求发送] 请求体:', fetchOptions.body);
     }
+    
+    console.log('📤 [请求发送] 方法:', method);
+    console.log('📤 [请求发送] URL:', fullUrl);
+    console.log('📤 [请求发送] Headers:', headers);
 
     const response = await fetch(fullUrl, fetchOptions);
     clearTimeout(timeoutId);
@@ -316,6 +321,23 @@ export const apiClient = {
    * POST 请求
    */
   post<T>(url: string, data?: unknown, config?: RequestConfig) {
+    const fullUrl = url.startsWith('http') ? url : `${BASE_URL}${url}`;
+    
+    console.log('=== POST 请求 ===');
+    console.log('相对 URL:', url);
+    console.log('完整 URL:', fullUrl);
+    console.log('BASE_URL:', BASE_URL);
+    console.log('请求数据:', JSON.stringify(data, null, 2));
+    
+    // 如果是 SQL 查询请求，特别标注
+    if (url.includes('/sql/search/data')) {
+      console.log('🔍 [SQL查询请求] 这是一个SQL查询请求');
+      const sqlData = data as { agent?: string; dbName?: string; query?: string };
+      console.log('🔍 [SQL查询请求] agent:', sqlData.agent);
+      console.log('🔍 [SQL查询请求] dbName:', sqlData.dbName);
+      console.log('🔍 [SQL查询请求] query:', sqlData.query?.substring(0, 100));
+    }
+    
     return request<T>('POST', url, data, config);
   },
 

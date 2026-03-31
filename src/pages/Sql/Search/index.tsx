@@ -50,6 +50,8 @@ export interface Tab {
   queryLoading: boolean;
   treeLoading: boolean;
   exportLoading: boolean;
+  metadataRefreshing: boolean;
+  metadataCacheAge: number | null;
   // 查询结果
   results: unknown[][];
   columns: string[];
@@ -68,6 +70,7 @@ export interface Tab {
 const createTab = (id: string): Tab => ({
   id, name: `查询 ${id}`, project: '', dbName: '', sqlQuery: '',
   dbList: [], tableList: [], queryLoading: false, treeLoading: false, exportLoading: false,
+  metadataRefreshing: false, metadataCacheAge: null,
   results: [], columns: [], total: 0, took: 0, queryId: '', currentPage: 1, pageSize: 50,
   allResults: [], currentResultIndex: 0, lastExecutedSql: '', messages: []
 });
@@ -310,16 +313,129 @@ const SqlSearch = () => {
 
   // 项目变更
   const handleProjectChange = async (project: string, tabId: string) => {
-    updateTab(tabId, { project, dbName: '', dbList: [], tableList: [] });
+    console.log(`[项目切换] 标签页 ${tabId}: 项目=${project}`);
+    
+    updateTab(tabId, { project, dbName: '', dbList: [], tableList: [], metadataCacheAge: null });
     if (project) {
       try {
-        const res = await getDatabases({ agent: project });
-        if (res.code === 200) {
-          updateTab(tabId, { dbList: res.data?.databases || [] });
+        // 先尝试从 localStorage 恢复缓存
+        const { restoreMetadataFromStorage, getMetadataCacheAge } = await import('../../../utils/sql/cache');
+        const restored = restoreMetadataFromStorage(project);
+        
+        if (restored) {
+          // 缓存恢复成功,直接使用缓存数据
+          const { getAllCachedDatabases } = await import('../../../utils/sql/cache');
+          const cachedDbList = getAllCachedDatabases();
+          const cacheAge = getMetadataCacheAge(project);
+          
+          console.log(`[项目切换] ✅ 使用缓存数据: ${cachedDbList.length} 个数据库`);
+          updateTab(tabId, { dbList: cachedDbList, metadataCacheAge: cacheAge });
+        } else {
+          // 缓存不存在或已过期,调用 API 获取
+          console.log(`[项目切换] 📡 缓存不可用,调用 API 获取元数据`);
+          await fetchAndCacheMetadata(project, tabId);
         }
       } catch (error) {
-        console.error('获取数据库列表失败:', error);
+        console.error('[项目切换] 获取元数据失败:', error);
+        toast.error('获取数据库列表失败');
       }
+    }
+  };
+
+  // 获取并缓存元数据(提取为独立方法,供刷新功能复用)
+  const fetchAndCacheMetadata = async (project: string, tabId: string) => {
+    const res = await getDatabases({ agent: project });
+    if (res.code !== 200) {
+      throw new Error(res.message || '获取数据库列表失败');
+    }
+    
+    const dbList = res.data?.databases || [];
+    console.log(`[元数据获取] 获取到 ${dbList.length} 个数据库:`, dbList);
+    
+    // 缓存数据库列表,用于跨库智能提示
+    const { cacheDatabases, cacheDbTables, cacheTableFields, initCache, persistMetadataToStorage, getMetadataCacheAge } = await import('../../../utils/sql/cache');
+    initCache();
+    cacheDatabases(dbList);
+    console.log(`[智能提示] 已缓存 ${dbList.length} 个数据库名称`);
+    
+    // 处理元数据:缓存所有数据库的表和字段信息
+    if (res.data?.metadata?.databases && Array.isArray(res.data.metadata.databases)) {
+      const dbMetadataList = res.data.metadata.databases;
+      
+      let totalTables = 0;
+      let totalFields = 0;
+      
+      dbMetadataList.forEach(dbMeta => {
+        const dbName = dbMeta.db_name;
+        const tables = dbMeta.tables || [];
+        
+        // 缓存数据库->表的映射
+        const tableNames = tables.map(t => t.name).filter(Boolean);
+        if (dbName && tableNames.length > 0) {
+          cacheDbTables(dbName, tableNames);
+          totalTables += tableNames.length;
+        }
+        
+        // 缓存每个表的字段信息
+        tables.forEach(table => {
+          const tableName = table.name;
+          const columns = table.columns || [];
+          
+          if (tableName && columns.length > 0) {
+            // 转换为补全建议格式
+            const fieldSuggestions = columns.map((col, index) => ({
+              caption: col.name,
+              value: col.name,
+              meta: col.data_type || col.column_type || 'field',
+              comment: `[${tableName}] ${col.comment || ''}`,
+              tableName: tableName,
+              dbName: dbName,
+              isPrimaryKey: col.column_key === 'PRI' || col.is_primary_key,
+              score: 900 - index
+            }));
+            
+            // 缓存到全局(表名作为 key)
+            cacheTableFields(tableName, fieldSuggestions);
+            totalFields += fieldSuggestions.length;
+          }
+        });
+      });
+      
+      console.log(`[智能提示] ✅ 元数据缓存完成: ${dbMetadataList.length} 个数据库, ${totalTables} 个表, ${totalFields} 个字段`);
+      
+      // 持久化到 localStorage
+      persistMetadataToStorage(project);
+    } else {
+      console.log(`[智能提示] ⚠️ 响应中没有元数据`);
+    }
+    
+    // 更新标签页状态
+    const cacheAge = getMetadataCacheAge(project);
+    updateTab(tabId, { dbList, metadataCacheAge: cacheAge });
+  };
+
+  // 刷新元数据
+  const handleRefreshMetadata = async () => {
+    const tab = tabsRef.current.find(t => t.id === activeTabId);
+    const project = tab?.project;
+    
+    if (!project) {
+      console.warn('[刷新元数据] 未选择项目');
+      return;
+    }
+    
+    console.log(`[刷新元数据] 🔄 开始刷新项目 ${project} 的元数据`);
+    updateTab(activeTabId, { metadataRefreshing: true });
+    
+    try {
+      await fetchAndCacheMetadata(project, activeTabId);
+      toast.success('元数据刷新成功');
+      console.log(`[刷新元数据] ✅ 刷新完成`);
+    } catch (error) {
+      console.error('[刷新元数据] ❌ 刷新失败:', error);
+      toast.error('刷新失败，请稍后重试');
+    } finally {
+      updateTab(activeTabId, { metadataRefreshing: false });
     }
   };
 
@@ -328,18 +444,17 @@ const SqlSearch = () => {
     const tab = tabsRef.current.find(t => t.id === tabId);
     const project = tab?.project || '';
     
-    updateTab(tabId, { dbName, tableList: [], treeLoading: true });
+    console.log(`[数据库切换] 标签页 ${tabId}: 项目=${project}, 数据库=${dbName}`);
+    
+    updateTab(tabId, { dbName, tableList: [] });
     
     if (dbName && project) {
-      try {
-        const res = await getTables({ agent: project, dbName });
-        updateTab(tabId, { tableList: res.code === 200 ? (res.data?.tables || []) : [], treeLoading: false });
-      } catch (error) {
-        console.error('获取表列表失败:', error);
-        updateTab(tabId, { treeLoading: false });
-      }
-    } else {
-      updateTab(tabId, { treeLoading: false });
+      // 直接从缓存中读取表列表,无需调用 API
+      const { getDbTables } = await import('../../../utils/sql/cache');
+      const tableList = getDbTables(dbName);
+      
+      console.log(`[数据库切换] 从缓存读取 ${tableList.length} 个表`);
+      updateTab(tabId, { tableList });
     }
   };
 
@@ -350,12 +465,30 @@ const SqlSearch = () => {
     const tabProject = tab?.project || '';
     const tabDbName = tab?.dbName || '';
 
+    console.log('='.repeat(60));
+    console.log('[SQL查询] 🎯 开始执行查询');
+    console.log('[SQL查询] 📋 标签页ID:', activeTabId);
+    console.log('[SQL查询] 🏢 项目名称:', tabProject);
+    console.log('[SQL查询] 💾 数据库名:', tabDbName);
+    console.log('[SQL查询] 📝 SQL语句:', sql.substring(0, 100) + (sql.length > 100 ? '...' : ''));
+    console.log('[SQL查询] ✂️ 是否选中执行:', _isSelection);
+
     if (!tabProject || !tabDbName || !sql.trim()) {
+      console.log('[SQL查询] ❌ 参数验证失败');
+      console.log('[SQL查询] 项目:', tabProject || '(空)');
+      console.log('[SQL查询] 数据库:', tabDbName || '(空)');
+      console.log('[SQL查询] SQL:', sql.trim() ? '有内容' : '(空)');
+      console.log('='.repeat(60));
+      
       updateTab(activeTabId, { 
         messages: [{ type: 'warning', content: '请选择项目、数据库并输入SQL' }] 
       });
       return;
     }
+
+    // 生成唯一的 query_id (前端生成,传给后端)
+    const queryId = `qid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    console.log('[SQL查询] 🆔 生成 queryId:', queryId);
 
     updateTab(activeTabId, { 
       queryLoading: true, 
@@ -366,19 +499,43 @@ const SqlSearch = () => {
       allResults: [],
       currentResultIndex: 0,
       messages: [],
-      lastExecutedSql: sql
+      lastExecutedSql: sql,
+      queryId: queryId // 立即设置 queryId
     });
     
     try {
-      const res = await executeQuery({
+      const queryParams = {
         agent: tabProject,
         dbName: tabDbName,
-        query: sql
+        query: sql,
+        query_id: queryId // 传递给后端
+      };
+      
+      console.log('[SQL查询] 📤 发送请求参数:', queryParams);
+      
+      const res = await executeQuery(queryParams);
+      
+      console.log('[SQL查询] 📥 收到响应:', {
+        code: res.code,
+        message: res.message,
+        hasData: !!res.data,
+        queryId: res.data?.query_id
       });
       
       if (res.code === 200 && res.data) {
+        console.log('[SQL查询] ✅ 查询成功');
+        
         // 使用 handleQueryData 处理查询结果
         const processed = handleQueryData(res.data, tabDbName, sql);
+        
+        console.log('[SQL查询] 📊 处理后的结果:', {
+          结果行数: processed.queryResults.length,
+          列数: processed.resultColumns.length,
+          总数: processed.total,
+          耗时: processed.took + 'ms',
+          查询ID: processed.queryId,
+          结果集数量: processed.allResults.length
+        });
         
         updateTab(activeTabId, {
           results: processed.queryResults,
@@ -391,18 +548,75 @@ const SqlSearch = () => {
           currentPage: 1,
           messages: []
         });
+        
+        console.log('[SQL查询] ✅ 状态已更新');
       } else {
+        console.log('[SQL查询] ❌ 查询失败:', res.message);
         updateTab(activeTabId, {
           messages: [{ type: 'error', content: res.message || '查询失败' }]
         });
       }
     } catch (error) {
-      console.error('执行查询失败:', error);
+      console.error('[SQL查询] ❌ 请求异常:', error);
       updateTab(activeTabId, {
         messages: [{ type: 'error', content: '执行查询失败，请稍后重试' }]
       });
     } finally {
       updateTab(activeTabId, { queryLoading: false });
+      console.log('[SQL查询] 🏁 查询流程结束');
+      console.log('='.repeat(60));
+    }
+  };
+
+  // 取消查询
+  const handleCancelQuery = async () => {
+    const tab = tabsRef.current.find(t => t.id === activeTabId);
+    const queryId = tab?.queryId;
+    const project = tab?.project;
+    
+    console.log('[取消查询] 🛑 尝试取消查询');
+    console.log('[取消查询] queryId:', queryId);
+    console.log('[取消查询] project:', project);
+    
+    if (!queryId) {
+      console.warn('[取消查询] ⚠️ 没有 queryId,无法取消');
+      toast.warning('查询尚未开始,无法取消');
+      return;
+    }
+    
+    if (!project) {
+      console.warn('[取消查询] ⚠️ 没有 project,无法取消');
+      toast.warning('无法确定项目,取消失败');
+      return;
+    }
+    
+    console.log('[取消查询] 📤 发送取消请求,等待后端确认:', { agent: project, query_id: queryId });
+    toast.info('正在取消查询,请稍候...');
+    
+    try {
+      const { cancelQuery } = await import('../../../services/sql/search');
+      // 同步等待后端响应
+      const res = await cancelQuery({ agent: project, query_id: queryId });
+      
+      console.log('[取消查询] 📥 收到后端响应:', res);
+      
+      if (res.code === 200) {
+        console.log('[取消查询] ✅ 后端确认取消成功');
+        toast.success('查询已取消');
+        // 只有后端确认成功后才重置状态
+        updateTab(activeTabId, {
+          queryLoading: false,
+          messages: [{ type: 'warning', content: '查询已被取消' }]
+        });
+      } else {
+        console.log('[取消查询] ❌ 后端取消失败:', res.message);
+        toast.error(res.message || '取消失败');
+        // 取消失败,保持 loading 状态
+      }
+    } catch (error) {
+      console.error('[取消查询] ❌ 请求异常:', error);
+      toast.error('取消查询失败');
+      // 请求失败,保持 loading 状态
     }
   };
 
@@ -760,6 +974,9 @@ const SqlSearch = () => {
             onDbChange={(db) => handleDbChange(db, activeTabId)}
             onInsertSql={handleInsertSql}
             onTableDetail={handleTableDetail}
+            onRefreshMetadata={handleRefreshMetadata}
+            metadataRefreshing={currentTab.metadataRefreshing}
+            metadataCacheAge={currentTab.metadataCacheAge}
           />
         </div>
         <div className="content">
@@ -770,6 +987,7 @@ const SqlSearch = () => {
                 sql={tab.sqlQuery}
                 onSqlChange={(sql: string) => updateTab(tab.id, { sqlQuery: sql })}
                 onExecute={handleExecute}
+                onCancelQuery={handleCancelQuery}
                 onNewTab={addTab}
                 onShowHistory={showHistory}
                 loading={tab.queryLoading}

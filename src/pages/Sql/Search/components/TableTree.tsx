@@ -30,14 +30,33 @@ interface Props {
   onDbChange: (db: string) => void;
   onInsertSql: (sql: string) => void;
   onTableDetail?: (tableName: string, command: string) => void;
+  onRefreshMetadata?: () => void;
+  metadataRefreshing?: boolean;
+  metadataCacheAge?: number | null;
 }
 
 const TableTree = ({
   projects, projectLoading, currentProject, currentDb,
-  dbList, tableList, treeLoading, onProjectChange, onDbChange, onInsertSql: _onInsertSql, onTableDetail
+  dbList, tableList, treeLoading, onProjectChange, onDbChange, onInsertSql: _onInsertSql, onTableDetail,
+  onRefreshMetadata, metadataRefreshing = false, metadataCacheAge
 }: Props) => {
   const [expandedTable, setExpandedTable] = useState<string | null>(null);
   const [searchKey, setSearchKey] = useState('');
+
+  // 格式化缓存时间
+  const formatCacheAge = (timestamp: number | null): string => {
+    if (!timestamp) return '未缓存';
+    
+    const age = Date.now() - timestamp;
+    const minutes = Math.floor(age / 1000 / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    
+    if (days > 0) return `${days}天前`;
+    if (hours > 0) return `${hours}小时前`;
+    if (minutes > 0) return `${minutes}分钟前`;
+    return '刚刚';
+  };
 
   // 展开/收起表
   const toggleTable = (tableName: string) => {
@@ -120,6 +139,24 @@ const TableTree = ({
           <option value="">选择数据库</option>
           {dbList.map(db => <option key={db} value={db}>{db}</option>)}
         </select>
+        {currentProject && (
+          <button 
+            className="refresh-btn-icon" 
+            onClick={onRefreshMetadata}
+            disabled={metadataRefreshing || !currentProject}
+            title={metadataCacheAge ? `刷新元数据 (缓存: ${formatCacheAge(metadataCacheAge)})` : '刷新元数据'}
+          >
+            <svg 
+              className={metadataRefreshing ? 'refresh-icon spinning' : 'refresh-icon'} 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2"
+            >
+              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+            </svg>
+          </button>
+        )}
       </div>
 
       {currentDb && (

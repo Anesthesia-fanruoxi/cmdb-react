@@ -31,6 +31,7 @@ interface Props {
   sql: string;
   onSqlChange: (sql: string) => void;
   onExecute: (sql: string, isSelection: boolean) => void;
+  onCancelQuery?: () => void;
   onNewTab?: () => void;
   onShowHistory?: () => void;
   loading: boolean;
@@ -62,6 +63,7 @@ const SqlWorkspace = ({
   sql,
   onSqlChange,
   onExecute,
+  onCancelQuery,
   onNewTab,
   onShowHistory,
   loading,
@@ -276,9 +278,15 @@ const SqlWorkspace = ({
       {/* 工具栏 */}
       <div className="workspace-toolbar">
         <div className="toolbar-left">
-          <button className="btn btn-primary" onClick={handleExecute} disabled={loading || !sql.trim()}>
-            {loading ? '执行中...' : '▶ 执行'}
-          </button>
+          {loading ? (
+            <button className="btn btn-danger" onClick={onCancelQuery}>
+              ⏹ 取消
+            </button>
+          ) : (
+            <button className="btn btn-primary" onClick={handleExecute} disabled={!sql.trim()}>
+              ▶ 执行
+            </button>
+          )}
           <button className="btn btn-default" onClick={handleFormat} disabled={!sql.trim()}>
             格式化
           </button>
