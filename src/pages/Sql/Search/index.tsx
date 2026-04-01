@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { 
-  getProjectList, getDatabases, getTables, executeQuery, 
+  getProjectList, getDatabases, executeQuery, 
   executePageQuery, exportQueryResult,
   type Project
 } from '../../../services/sql/search';

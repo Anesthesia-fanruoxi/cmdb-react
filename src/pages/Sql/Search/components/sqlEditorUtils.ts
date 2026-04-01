@@ -48,7 +48,7 @@ export function formatSqlContent(editor: ace.Ace.Editor) {
 /** 创建点号处理器，用于 table.field 补全 - 与 Vue 版本对齐 */
 export function createDotHandler(
   editor: ace.Ace.Editor, 
-  loadTableStructure?: (tableName: string) => Promise<FieldInfo[] | null>
+  _loadTableStructure?: (tableName: string) => Promise<FieldInfo[] | null>
 ) {
   editor.commands.addCommand({
     name: 'dotAndComplete',

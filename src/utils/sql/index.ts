@@ -16,7 +16,7 @@ interface CompleterOptions {
 }
 
 /** 创建 SQL 自动补全器 */
-export function createSqlCompleter(ace: any, { getTables, loadTableStructure }: CompleterOptions) {
+export function createSqlCompleter(ace: any, { getTables, loadTableStructure: _loadTableStructure }: CompleterOptions) {
   const langTools = ace.require('ace/ext/language_tools')
   langTools.setCompleters([])
   initCache()

@@ -32,7 +32,8 @@ const createDefaultTab = (id: string): Tab => ({
   id, name: `查询 ${id}`, project: '', dbName: '', sqlQuery: '',
   dbList: [], tableList: [], queryLoading: false, treeLoading: false, exportLoading: false,
   results: [], columns: [], total: 0, took: 0, queryId: '', currentPage: 1, pageSize: 50,
-  allResults: [], currentResultIndex: 0, lastExecutedSql: '', messages: []
+  allResults: [], currentResultIndex: 0, lastExecutedSql: '', messages: [],
+  metadataRefreshing: false, metadataCacheAge: null
 });
 
 const SqlWorkspaceDetached = ({ detachKey, project, dbName, initialTab }: Props) => {
