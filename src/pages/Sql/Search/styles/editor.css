@@ -53,11 +53,11 @@
 
 .editor-textarea:focus { outline: none; }
 
-/* 语法高亮 */
-.hl-keyword { color: #7c3aed; font-weight: 500; }
-.hl-string { color: #059669; }
-.hl-number { color: #d97706; }
-.hl-comment { color: #9ca3af; font-style: italic; }
+/* 语法高亮 - 暗色主题友好 */
+.hl-keyword { color: #a78bfa; font-weight: 500; }  /* 柔和紫色 */
+.hl-string { color: #6ee7b7; }                      /* 柔和绿色 */
+.hl-number { color: #fbbf24; }                      /* 柔和黄色 */
+.hl-comment { color: #6b7280; font-style: italic; } /* 灰色 */
 .hl-placeholder { color: var(--text-muted); }
 
 /* 工作区工具栏 */

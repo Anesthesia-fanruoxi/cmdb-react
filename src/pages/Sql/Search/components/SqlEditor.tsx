@@ -6,7 +6,7 @@ import { useRef, useEffect, useImperativeHandle, forwardRef, useState } from 're
 import ace from 'ace-builds'
 import 'ace-builds/src-noconflict/mode-sql'
 import 'ace-builds/src-noconflict/theme-xcode'
-import 'ace-builds/src-noconflict/theme-twilight'
+import 'ace-builds/src-noconflict/theme-tomorrow_night'
 import 'ace-builds/src-noconflict/ext-language_tools'
 import { createSqlCompleter } from '@/utils/sql'
 import { useUserPrefsStore } from '@/stores/userPrefsStore'
@@ -141,13 +141,13 @@ const SqlEditor = forwardRef<SqlEditorRef, Props>(({
 
     // 设置主题（根据系统主题）
     const isDark = document.documentElement.classList.contains('dark')
-    editor.setTheme(isDark ? 'ace/theme/twilight' : 'ace/theme/xcode')
+    editor.setTheme(isDark ? 'ace/theme/tomorrow_night' : 'ace/theme/xcode')
     editor.session.setMode('ace/mode/sql')
 
     // 监听主题变化
     const observer = new MutationObserver(() => {
       const isDarkNow = document.documentElement.classList.contains('dark')
-      editor.setTheme(isDarkNow ? 'ace/theme/twilight' : 'ace/theme/xcode')
+      editor.setTheme(isDarkNow ? 'ace/theme/tomorrow_night' : 'ace/theme/xcode')
     })
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
 

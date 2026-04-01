@@ -45,6 +45,9 @@ interface TableInfo {
   preview_data?: PreviewData;
   indexes?: TableIndex[];
   create_sql?: string;
+  rows?: number; // 表总行数
+  data_length?: number; // 表数据大小（字节）
+  index_length?: number; // 索引大小（字节）
 }
 
 interface Props {
@@ -53,6 +56,7 @@ interface Props {
   tableName: string;
   initialTab?: TabType;
   windowLabel?: string; // 窗口标识，用于监听更新事件
+  onOpenInQuery?: (tableName: string, dbName: string, agent: string) => void; // 在查询中打开回调
 }
 
 const TAB_CONFIG = [
@@ -63,7 +67,7 @@ const TAB_CONFIG = [
 ] as const;
 
 
-const TableDetailContent = ({ agent, dbName, tableName, initialTab = 'fields', windowLabel }: Props) => {
+const TableDetailContent = ({ agent, dbName, tableName, initialTab = 'fields', windowLabel, onOpenInQuery }: Props) => {
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
 
   // 监听窗口更新事件，切换 Tab
@@ -93,12 +97,43 @@ const TableDetailContent = ({ agent, dbName, tableName, initialTab = 'fields', w
     setError('');
     try {
       const res = await getTableStructure({ agent, dbName, tbName: tableName });
+      console.log('[表详情] 📥 API 返回的原始数据:', res.data);
+      
       if (res.code === 200 && res.data) {
-        setTableInfo(res.data as unknown as TableInfo);
+        const data = res.data as unknown as TableInfo;
+        
+        // 从缓存中获取表统计信息
+        const { getTableStats } = await import('../../../../utils/sql/cache');
+        const stats = getTableStats(tableName);
+        
+        console.log('[表详情] 📊 从缓存获取的统计信息:', stats);
+        console.log('[表详情] 🔍 表名:', tableName);
+        
+        if (stats) {
+          console.log('[表详情] ✅ 合并统计信息到 tableInfo');
+          // 合并统计信息到 tableInfo
+          data.rows = stats.rowCount;
+          data.data_length = stats.dataLength;
+          data.index_length = stats.indexLength;
+        } else {
+          console.log('[表详情] ⚠️ 缓存中没有找到统计信息');
+        }
+        
+        console.log('[表详情] 📋 最终的 tableInfo:', {
+          rows: data.rows,
+          data_length: data.data_length,
+          index_length: data.index_length,
+          create_time: data.create_time,
+          engine: data.engine,
+          collation: data.collation
+        });
+        
+        setTableInfo(data);
       } else {
         setError(res.message || '获取表详情失败');
       }
-    } catch {
+    } catch (err) {
+      console.error('[表详情] 请求异常:', err);
       setError('获取表详情出错，请稍后重试');
     } finally {
       setLoading(false);
@@ -127,7 +162,27 @@ const TableDetailContent = ({ agent, dbName, tableName, initialTab = 'fields', w
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
-    return new Date(dateString).toLocaleString('zh-CN');
+    
+    // 处理数组格式的日期字符串 "[50 48 50 53 45 49 50 45 50 53 32 49 56 58 48 52 58 50 52]"
+    if (typeof dateString === 'string' && dateString.startsWith('[') && dateString.endsWith(']')) {
+      try {
+        // 移除方括号并分割
+        const numbers = dateString.slice(1, -1).split(' ').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+        // 将 ASCII 码转换为字符串
+        const dateStr = String.fromCharCode(...numbers);
+        return new Date(dateStr).toLocaleString('zh-CN');
+      } catch (e) {
+        console.error('[日期格式化] 转换失败:', e);
+        return '-';
+      }
+    }
+    
+    // 处理普通日期字符串
+    try {
+      return new Date(dateString).toLocaleString('zh-CN');
+    } catch {
+      return '-';
+    }
   };
 
   const renderKeyTag = (key: string) => {
@@ -143,6 +198,57 @@ const TableDetailContent = ({ agent, dbName, tableName, initialTab = 'fields', w
     return String(value);
   };
 
+  // 格式化文件大小，并返回颜色样式
+  const getSizeStyle = (bytes?: number): { text: string; color: string } => {
+    if (!bytes || bytes === 0) return { text: '-', color: '' };
+    
+    const KB = 1024;
+    const MB = 1024 * KB;
+    const GB = 1024 * MB;
+    
+    if (bytes >= GB) {
+      // GB 级别 - 红色系，按 GB 数深浅变化
+      const gb = bytes / GB;
+      if (gb >= 100) return { text: `${gb.toFixed(2)} GB`, color: '#ff4d4f' }; // 极深红
+      if (gb >= 10)  return { text: `${gb.toFixed(2)} GB`, color: '#ff7875' }; // 深红
+      if (gb >= 1)   return { text: `${gb.toFixed(2)} GB`, color: '#ffa39e' }; // 中红
+      return { text: `${gb.toFixed(2)} GB`, color: '#ffccc7' }; // 浅红
+    }
+    
+    if (bytes >= MB) {
+      // MB 级别 - 蓝色系，按 MB 数深浅变化
+      const mb = bytes / MB;
+      if (mb >= 500) return { text: `${mb.toFixed(2)} MB`, color: '#1677ff' }; // 极深蓝
+      if (mb >= 100) return { text: `${mb.toFixed(2)} MB`, color: '#4096ff' }; // 深蓝
+      if (mb >= 10)  return { text: `${mb.toFixed(2)} MB`, color: '#69b1ff' }; // 中蓝
+      return { text: `${mb.toFixed(2)} MB`, color: '#91caff' }; // 浅蓝
+    }
+    
+    if (bytes >= KB) {
+      // KB 级别 - 绿色
+      const kb = bytes / KB;
+      return { text: `${kb.toFixed(2)} KB`, color: '#95de64' };
+    }
+    
+    return { text: `${bytes} B`, color: 'var(--text-color)' };
+  };
+
+  // 格式化文件大小（纯文本，用于详细信息）
+  const formatSize = (bytes?: number): string => {
+    if (!bytes || bytes === 0) return '-';
+    const KB = 1024, MB = 1024 * KB, GB = 1024 * MB;
+    if (bytes >= GB) return `${(bytes / GB).toFixed(2)} GB`;
+    if (bytes >= MB) return `${(bytes / MB).toFixed(2)} MB`;
+    if (bytes >= KB) return `${(bytes / KB).toFixed(2)} KB`;
+    return `${bytes} B`;
+  };
+
+  // 格式化行数
+  const formatRows = (rows?: number): string => {
+    if (!rows && rows !== 0) return '-';
+    return rows.toLocaleString('zh-CN');
+  };
+
 
   return (
     <div className="table-detail-content">
@@ -156,6 +262,25 @@ const TableDetailContent = ({ agent, dbName, tableName, initialTab = 'fields', w
             <span className="meta-label">字符集:</span>
             <span className="meta-value">{tableInfo.collation || '-'}</span>
           </div>
+          {(tableInfo.rows !== undefined || tableInfo.preview_data?.total) && (
+            <div className="meta-item">
+              <span className="meta-label">总行数:</span>
+              <span className="meta-value">{formatRows(tableInfo.rows || tableInfo.preview_data?.total)}</span>
+            </div>
+          )}
+          {(tableInfo.data_length || tableInfo.index_length) && (
+            <div className="meta-item">
+              <span className="meta-label">大小:</span>
+              <span className="meta-value" style={{ color: getSizeStyle((tableInfo.data_length || 0) + (tableInfo.index_length || 0)).color }}>
+                {getSizeStyle((tableInfo.data_length || 0) + (tableInfo.index_length || 0)).text}
+                {tableInfo.data_length && tableInfo.index_length && (
+                  <span className="meta-detail" style={{ color: 'var(--text-muted)' }}>
+                    {' '}(数据: {formatSize(tableInfo.data_length)}, 索引: {formatSize(tableInfo.index_length)})
+                  </span>
+                )}
+              </span>
+            </div>
+          )}
           <div className="meta-item">
             <span className="meta-label">创建时间:</span>
             <span className="meta-value">{formatDate(tableInfo.create_time)}</span>
@@ -217,7 +342,16 @@ const TableDetailContent = ({ agent, dbName, tableName, initialTab = 'fields', w
             ) : (
               <>
                 <div className="preview-info">
-                  共 {previewData.total} 条数据，耗时: {previewData.took}ms
+                  <span>共 {previewData.total} 条数据，耗时: {previewData.took}ms</span>
+                  {onOpenInQuery && (
+                    <button 
+                      className="btn btn-primary btn-sm"
+                      onClick={() => onOpenInQuery(tableName, dbName, agent)}
+                      style={{ marginLeft: '12px' }}
+                    >
+                      📝 在查询中打开
+                    </button>
+                  )}
                 </div>
                 <div className="preview-table-wrapper">
                   <table className="detail-table preview-table">

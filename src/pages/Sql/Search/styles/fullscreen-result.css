@@ -1,0 +1,120 @@
+/**
+ * 全屏结果面板样式
+ */
+
+.fullscreen-result-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  background: var(--bg-color);
+  display: flex;
+  flex-direction: column;
+}
+
+.fullscreen-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  flex-shrink: 0;
+}
+
+.fullscreen-header .header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fullscreen-header .header-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.fullscreen-header .header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fullscreen-table-wrapper {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+}
+
+.fullscreen-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.fullscreen-table th,
+.fullscreen-table td {
+  padding: 4px 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fullscreen-table th {
+  background: var(--bg-secondary);
+  font-weight: 500;
+  color: var(--text-secondary);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.fullscreen-table td {
+  color: var(--text-color);
+  line-height: 1.4;
+}
+
+.fullscreen-table tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+.fullscreen-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  flex-shrink: 0;
+}
+
+.loading-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: var(--primary-color);
+  font-size: 14px;
+}
+
+.no-more-data {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: var(--text-muted);
+  font-size: 14px;
+  border-top: 1px dashed var(--border-color);
+  margin: 0 20px;
+}
+
+.no-more-data span {
+  background: var(--bg-secondary);
+  padding: 8px 16px;
+  border-radius: 4px;
+}

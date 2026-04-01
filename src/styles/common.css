@@ -175,6 +175,7 @@
 .drawer.drawer-sm { width: 400px; }
 .drawer.drawer-lg { width: 70%; max-width: 1000px; }
 .drawer.drawer-wide { width: 65%; max-width: none; }
+.drawer.table-detail-drawer { width: 45%; max-width: none; }
 
 .drawer-header {
   display: flex;

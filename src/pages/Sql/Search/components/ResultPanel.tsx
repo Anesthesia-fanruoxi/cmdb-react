@@ -7,6 +7,8 @@ import { useState, useMemo, useEffect } from 'react';
 import { useAuthStore } from '../../../../stores/authStore';
 import toast from '../../../../components/Toast';
 import type { ResultSet } from './SqlWorkspace';
+import FullscreenResultPanel from './FullscreenResultPanel';
+import '../styles/fullscreen-result.css';
 
 interface Props {
   columns: string[];
@@ -68,6 +70,7 @@ const ResultPanel = ({
   exportLoading = false, onExport, queryId
 }: Props) => {
   const [localPage, setLocalPage] = useState(1);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   
   // 检查导出权限 (sql:search:w)
   const hasPermission = useAuthStore((state) => state.hasPermission);
@@ -82,6 +85,7 @@ const ResultPanel = ({
   
   const totalPages = useMemo(() => Math.ceil(total / pageSize) || 1, [total, pageSize]);
   
+  // 显示数据
   const currentData = useMemo(() => {
     if (useBackendPagination) return results;
     const start = (localPage - 1) * pageSize;
@@ -120,15 +124,43 @@ const ResultPanel = ({
     if (onExport && queryId) onExport();
   };
 
+  // 切换全屏
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+  };
+
   // 复制列数据（使用全部结果，不只是当前页）
   const handleCopyColumn = (colIndex: number, colName: string) => {
     copyColumnData(results, colIndex, colName);
   };
 
+  // 行号起始位置
   const rowNumberStart = (currentPage - 1) * pageSize;
 
+  // 如果是全屏模式，渲染全屏组件
+  if (isFullscreen && useBackendPagination && onPageChange) {
+    return (
+      <FullscreenResultPanel
+        columns={columns}
+        results={results}
+        total={total}
+        took={took}
+        dbName={dbName}
+        currentPage={currentPage}
+        onPageChange={onPageChange}
+        onClose={() => {
+          setIsFullscreen(false);
+          // 恢复到第1页
+          if (currentPage !== 1) {
+            onPageChange(1, pageSize);
+          }
+        }}
+      />
+    );
+  }
+
   return (
-    <div className="result-panel">
+    <div className={`result-panel ${isFullscreen ? 'fullscreen' : ''}`}>
       {/* 顶部：结果集选择器 + 导出按钮 */}
       <div className="result-header">
         <div className="header-left">
@@ -155,6 +187,15 @@ const ResultPanel = ({
           )}
         </div>
         <div className="header-right">
+          {hasResults && (
+            <button 
+              className="btn btn-link"
+              onClick={toggleFullscreen}
+              title={isFullscreen ? '退出全屏' : '全屏显示'}
+            >
+              {isFullscreen ? '⤢' : '⛶'}
+            </button>
+          )}
           {hasResults && queryId && canExport && (
             <button 
               className={`btn btn-link ${exportLoading ? 'loading' : ''}`}
@@ -174,44 +215,49 @@ const ResultPanel = ({
         ) : columns.length === 0 ? (
           <div className="result-empty">执行SQL查询后，结果将显示在这里</div>
         ) : (
-          <table className="result-table">
-            <thead>
-              <tr>
-                <th className="row-num">#</th>
-                {columns.map((col, colIdx) => (
-                  <th key={col}>
-                    <div className="column-header">
-                      <span>{col}</span>
-                      <button 
-                        className="copy-col-btn" 
-                        title="复制此列数据"
-                        onClick={() => handleCopyColumn(colIdx, col)}
-                      >
-                        📋
-                      </button>
-                    </div>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {currentData.map((row, idx) => (
-                <tr key={idx}>
-                  <td className="row-num">{rowNumberStart + idx + 1}</td>
-                  {row.map((val, colIdx) => (
-                    <td 
-                      key={colIdx} 
-                      title={`双击复制: ${formatValue(val)}`}
-                      onDoubleClick={() => copyCellValue(val)}
-                      className="cell-copyable"
-                    >
-                      {formatValue(val)}
-                    </td>
+          <>
+            <table className="result-table">
+              <thead>
+                <tr>
+                  <th className="row-num">#</th>
+                  {columns.map((col, colIdx) => (
+                    <th key={col}>
+                      <div className="column-header">
+                        <span>{col}</span>
+                        <button 
+                          className="copy-col-btn" 
+                          title="复制此列数据"
+                          onClick={() => handleCopyColumn(colIdx, col)}
+                        >
+                          📋
+                        </button>
+                      </div>
+                    </th>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {currentData.map((row, idx) => {
+                  const absoluteIndex = rowNumberStart + idx;
+                  return (
+                    <tr key={absoluteIndex}>
+                      <td className="row-num">{absoluteIndex + 1}</td>
+                      {row.map((val, colIdx) => (
+                        <td 
+                          key={colIdx} 
+                          title={`双击复制: ${formatValue(val)}`}
+                          onDoubleClick={() => copyCellValue(val)}
+                          className="cell-copyable"
+                        >
+                          {formatValue(val)}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </>
         )}
       </div>
 

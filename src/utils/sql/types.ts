@@ -22,6 +22,9 @@ export interface TableInfo {
   comment?: string
   isCurrentDb?: boolean
   dbName?: string // 所属数据库
+  rowCount?: number // 表行数
+  dataLength?: number // 数据大小（字节）
+  indexLength?: number // 索引大小（字节）
 }
 
 // SQL 上下文
@@ -64,6 +67,7 @@ export interface SqlCache {
     databases?: string[]
     dbTables?: Record<string, string[]>
     tables?: TableInfo[]
+    tableStats?: Record<string, { rowCount: number; dataLength: number; indexLength?: number }> // 表统计信息
   }
 }
 
@@ -75,6 +79,7 @@ declare global {
       databases?: string[]
       dbTables?: Record<string, string[]>
       tables?: TableInfo[]
+      tableStats?: Record<string, { rowCount: number; dataLength: number; indexLength?: number }>
     }
   }
 }

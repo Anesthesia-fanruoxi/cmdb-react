@@ -66,6 +66,9 @@ export interface DatabaseMetadata {
   tables: {
     name: string;
     comment?: string;
+    row_count?: number;
+    data_length?: number;
+    index_length?: number;
     columns: {
       name: string;
       data_type: string;
@@ -117,7 +120,8 @@ export function executeQuery(data: { agent: string; dbName: string; query: strin
   console.log('📝 [API请求] query:', data.query.substring(0, 100));
   console.log('🆔 [API请求] query_id:', data.query_id);
   
-  return apiClient.post<QueryResult>('/sql/search/data', data, { timeout: 600000 });
+  // React 项目固定为桌面端
+  return apiClient.post<QueryResult>('/sql/search/data', { ...data, platform: 'desktop' }, { timeout: 600000 });
 }
 
 // 取消SQL查询
@@ -132,12 +136,18 @@ export function executePageQuery(data: {
   size?: number;
   result_index?: number;
 }) {
-  return apiClient.post<QueryResult | { results: QueryResult[] }>('/sql/search/page', data, { timeout: 600000 });
+  return apiClient.post<QueryResult | { results: QueryResult[] }>('/sql/search/page', {
+    ...data,
+    platform: 'desktop'
+  }, { timeout: 600000 });
 }
 
-// 导出查询结果（异步导出，后端发送邮件）
+// 导出查询结果（异步导出,后端发送邮件）
 export function exportQueryResult(data: { query_id: string; db_name: string }) {
-  return apiClient.post<{ code: number; message: string }>('/sql/search/export', data, { 
+  return apiClient.post<{ code: number; message: string }>('/sql/search/export', {
+    ...data,
+    platform: 'desktop'
+  }, { 
     timeout: 60000
   });
 }

@@ -22,7 +22,7 @@
 
 /* 左侧边栏 */
 .sidebar {
-  width: 280px;
+  width: 350px;
   flex-shrink: 0;
   background: var(--bg-color);
   border-radius: 8px;

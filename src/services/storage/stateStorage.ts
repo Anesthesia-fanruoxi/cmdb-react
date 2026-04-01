@@ -94,3 +94,51 @@ export async function removeState(username: string): Promise<void> {
   delete all[username];
   await updateStorageData(FILE, all);
 }
+
+/**
+ * 获取 SQL 元数据缓存
+ */
+export function getSqlMetadata(username: string, projectName: string) {
+  const state = getState(username);
+  return state.sqlMetadata?.[projectName] || null;
+}
+
+/**
+ * 保存 SQL 元数据缓存
+ */
+export async function saveSqlMetadata(
+  username: string,
+  projectName: string,
+  metadata: {
+    databases: string[];
+    dbTables: Record<string, string[]>;
+    tableStats: Record<string, { rowCount: number; dataLength: number; indexLength?: number }>;
+    fields: Record<string, Array<{ caption: string; value: string; meta: string; comment?: string; score: number }>>;
+  }
+): Promise<void> {
+  const state = getState(username);
+  
+  if (!state.sqlMetadata) {
+    state.sqlMetadata = {};
+  }
+  
+  state.sqlMetadata[projectName] = {
+    ...metadata,
+    timestamp: Date.now(),
+    version: '1.0',
+  };
+  
+  await saveState(username, state);
+}
+
+/**
+ * 清除 SQL 元数据缓存
+ */
+export async function clearSqlMetadata(username: string, projectName: string): Promise<void> {
+  const state = getState(username);
+  
+  if (state.sqlMetadata && state.sqlMetadata[projectName]) {
+    delete state.sqlMetadata[projectName];
+    await saveState(username, state);
+  }
+}

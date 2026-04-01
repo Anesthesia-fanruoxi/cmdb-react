@@ -10,8 +10,18 @@ import HourlyDrawer from './components/HourlyDrawer';
 import PageDetailDialog from './components/PageDetailDialog';
 import './index.css';
 
-interface StatsItem { nick_name: string; execution_count: number; }
-interface PageItem { query_id: string; page_count: number; }
+interface StatsItem { 
+  nick_name: string; 
+  execution_count: number; 
+  web_count?: number; 
+  desktop_count?: number; 
+}
+interface PageItem { 
+  query_id: string; 
+  page_count: number; 
+  nick_name?: string; 
+  platform?: string; 
+}
 
 const AuditAnalysis = () => {
   const [loading, setLoading] = useState(false);
@@ -86,9 +96,18 @@ const AuditAnalysis = () => {
     setDetailVisible(true);
   };
 
-  const renderStatsTable = (list: StatsItem[], total: number) => (
+  const renderStatsTable = (list: StatsItem[], total: number, showPlatform = false) => (
     <table className="stats-table">
-      <thead><tr><th>排名</th><th>昵称</th><th>执行次数</th><th>占比</th></tr></thead>
+      <thead>
+        <tr>
+          <th>排名</th>
+          <th>昵称</th>
+          <th>执行次数</th>
+          {showPlatform && <th>Web端</th>}
+          {showPlatform && <th>客户端</th>}
+          <th>占比</th>
+        </tr>
+      </thead>
       <tbody>
         {list?.map((item, idx) => {
           const pct = total > 0 ? Math.round((item.execution_count / total) * 100) : 0;
@@ -97,11 +116,13 @@ const AuditAnalysis = () => {
               <td>{idx + 1}</td>
               <td>{item.nick_name}</td>
               <td>{item.execution_count}</td>
+              {showPlatform && <td>{item.web_count || 0}</td>}
+              {showPlatform && <td>{item.desktop_count || 0}</td>}
               <td><div className="progress-bar"><div className={`progress-fill ${pct > 50 ? 'danger' : pct > 30 ? 'warning' : ''}`} style={{ width: `${pct}%` }} /><span>{pct}%</span></div></td>
             </tr>
           );
         })}
-        {(!list || list.length === 0) && <tr><td colSpan={4} className="empty">暂无数据</td></tr>}
+        {(!list || list.length === 0) && <tr><td colSpan={showPlatform ? 6 : 4} className="empty">暂无数据</td></tr>}
       </tbody>
     </table>
   );
@@ -144,21 +165,55 @@ const AuditAnalysis = () => {
             <div className="section-grid">
               <div className="grid-item">
                 <div className="item-title">SQL查询统计 (总计: {getTotal(data.sql_search_stats)})</div>
-                {renderStatsTable(data.sql_search_stats, getTotal(data.sql_search_stats))}
+                <table className="stats-table">
+                  <thead>
+                    <tr>
+                      <th>排名</th>
+                      <th>昵称</th>
+                      <th>执行次数</th>
+                      <th>Web端</th>
+                      <th>客户端</th>
+                      <th>占比</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.sql_search_stats?.map((item: StatsItem, idx: number) => {
+                      const total = getTotal(data.sql_search_stats);
+                      const pct = total > 0 ? Math.round((item.execution_count / total) * 100) : 0;
+                      return (
+                        <tr key={idx}>
+                          <td>{idx + 1}</td>
+                          <td>{item.nick_name}</td>
+                          <td>{item.execution_count}</td>
+                          <td>{item.web_count || 0}</td>
+                          <td>{item.desktop_count || 0}</td>
+                          <td><div className="progress-bar"><div className={`progress-fill ${pct > 50 ? 'danger' : pct > 30 ? 'warning' : ''}`} style={{ width: `${pct}%` }} /><span>{pct}%</span></div></td>
+                        </tr>
+                      );
+                    })}
+                    {(!data.sql_search_stats || data.sql_search_stats.length === 0) && <tr><td colSpan={6} className="empty">暂无数据</td></tr>}
+                  </tbody>
+                </table>
               </div>
               <div className="grid-item">
                 <div className="item-title">SQL翻页统计</div>
                 <table className="stats-table">
-                  <thead><tr><th>查询ID</th><th>翻页次数</th><th>操作</th></tr></thead>
+                  <thead><tr><th>查询ID</th><th>昵称</th><th>来源</th><th>翻页次数</th><th>操作</th></tr></thead>
                   <tbody>
                     {data.sql_top_pages?.map((item: PageItem, idx: number) => (
                       <tr key={idx}>
                         <td title={item.query_id}>{item.query_id?.slice(0, 16)}...</td>
+                        <td>{item.nick_name || '-'}</td>
+                        <td>
+                          <span className={`tag ${item.platform === 'desktop' ? 'success' : 'info'}`}>
+                            {item.platform === 'desktop' ? '客户端' : '浏览器'}
+                          </span>
+                        </td>
                         <td><span className="tag success">{item.page_count}</span></td>
                         <td><button className="btn-link" onClick={() => handleViewDetail('sql', item.query_id)}>详情</button></td>
                       </tr>
                     ))}
-                    {(!data.sql_top_pages || data.sql_top_pages.length === 0) && <tr><td colSpan={3} className="empty">暂无数据</td></tr>}
+                    {(!data.sql_top_pages || data.sql_top_pages.length === 0) && <tr><td colSpan={5} className="empty">暂无数据</td></tr>}
                   </tbody>
                 </table>
               </div>

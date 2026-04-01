@@ -32,6 +32,7 @@ const SqlDetailDialog = ({ visible, data, operations, onClose }: Props) => {
             <div className="detail-item"><span className="label">运营商</span><span className="value">{data.district || '-'}</span></div>
             <div className="detail-item"><span className="label">地区</span><span className="value">{formatLocation(data)}</span></div>
             <div className="detail-item"><span className="label">数据库</span><span className="value">{data.db_name || '-'}</span></div>
+            <div className="detail-item"><span className="label">来源</span><span className="value"><span className={`tag ${data.platform === 'desktop' ? 'success' : 'info'}`}>{data.platform === 'desktop' ? '客户端' : '浏览器'}</span></span></div>
             <div className="detail-item"><span className="label">页码</span><span className="value">{data.Page || data.page || '-'}</span></div>
             <div className="detail-item"><span className="label">查询ID</span><span className="value">{data.query_id || '-'}</span></div>
             <div className="detail-item full"><span className="label">SQL语句</span><span className="value sql">{data.query_sql || '-'}</span></div>

@@ -4,15 +4,36 @@
 
 .table-meta {
   display: flex;
-  gap: 24px;
+  flex-wrap: wrap;
+  gap: 20px;
   padding: 12px 20px;
   background: var(--bg-color);
   border-bottom: 1px solid var(--border-color);
 }
 
-.meta-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
-.meta-label { color: var(--text-muted); }
-.meta-value { color: var(--text-color); }
+.meta-item { 
+  display: flex; 
+  align-items: center; 
+  gap: 8px; 
+  font-size: 13px; 
+}
+
+.meta-label { 
+  color: var(--text-muted); 
+  white-space: nowrap;
+}
+
+.meta-value { 
+  color: var(--text-color); 
+  font-weight: 500;
+}
+
+.meta-detail {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: normal;
+  margin-left: 4px;
+}
 
 /* 详情表格 */
 .detail-table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -71,6 +92,9 @@
 .preview-tab { display: flex; flex-direction: column; height: 100%; }
 
 .preview-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   color: var(--text-secondary);
   font-size: 14px;
   margin-bottom: 12px;
@@ -106,7 +130,7 @@
 .table-detail-content {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
   width: 100%;
   background: var(--bg-color);
   overflow: hidden;
@@ -133,6 +157,7 @@
 }
 
 .table-detail-content .detail-tabs .tab-btn { padding: 6px 12px; font-size: 12px; }
+.table-detail-content .detail-tabs .tab-btn.active { color: #fff !important; }
 
 .table-detail-content .detail-body {
   flex: 1;
@@ -159,7 +184,15 @@
 .table-detail-content .empty-state { height: 100%; min-height: 200px; font-size: 13px; }
 
 .table-detail-content .preview-tab { display: flex; flex-direction: column; }
-.table-detail-content .preview-info { padding: 6px 10px; font-size: 12px; margin-bottom: 8px; flex-shrink: 0; }
+.table-detail-content .preview-info { 
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px; 
+  font-size: 12px; 
+  margin-bottom: 8px; 
+  flex-shrink: 0; 
+}
 .table-detail-content .preview-table-wrapper { flex: 1; overflow: auto; max-height: none; }
 .table-detail-content .ddl-tab { display: flex; flex-direction: column; }
 .table-detail-content .ddl-actions { margin-bottom: 8px; flex-shrink: 0; }

@@ -71,7 +71,7 @@
 }
 
 .result-table th, .result-table td {
-  padding: 8px 12px;
+  padding: 6px 10px;
   text-align: left;
   border-bottom: 1px solid var(--border-color);
   white-space: nowrap;
@@ -87,9 +87,14 @@
   position: sticky;
   top: 0;
   z-index: 1;
+  padding: 6px 10px;
 }
 
-.result-table td { color: var(--text-color); }
+.result-table td { 
+  color: var(--text-color);
+  padding: 5px 10px;
+  line-height: 1.4;
+}
 .result-table tbody tr:hover { background: var(--bg-hover); }
 
 .row-num {
@@ -97,6 +102,7 @@
   text-align: center !important;
   color: var(--text-muted);
   background: var(--bg-secondary);
+  padding: 5px 8px !important;
 }
 
 .result-footer {

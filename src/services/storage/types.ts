@@ -92,12 +92,35 @@ export interface PageState {
   [key: string]: unknown;
 }
 
+/** SQL 元数据缓存（按项目存储） */
+export interface SqlMetadataCache {
+  [projectName: string]: {
+    databases: string[];                           // 数据库列表
+    dbTables: Record<string, string[]>;           // 数据库->表映射
+    tableStats: Record<string, {                  // 表统计信息
+      rowCount: number;
+      dataLength: number;
+      indexLength?: number;
+    }>;
+    fields: Record<string, Array<{                // 表->字段映射
+      caption: string;
+      value: string;
+      meta: string;
+      comment?: string;
+      score: number;
+    }>>;
+    timestamp: number;                            // 缓存时间戳
+    version: string;                              // 缓存版本
+  };
+}
+
 export interface StateData {
   visitedViews: ViewItem[];    // 已打开的标签页
   cachedViews: string[];       // 已缓存的页面
   activeRoute: string;         // 当前激活路由
   sidebarCollapsed: boolean;   // 侧边栏折叠状态
   pageStates: Record<string, PageState>; // 页面状态快照
+  sqlMetadata?: SqlMetadataCache; // SQL 元数据缓存
   lastSnapshot: number;        // 最后快照时间戳
 }
 

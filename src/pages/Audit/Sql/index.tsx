@@ -17,6 +17,7 @@ interface LogItem {
   city?: string;
   district?: string;
   db_name: string;
+  platform?: string;  // 添加来源字段
   Operation: string;
   operation_count: number;
   execution_time: number;
@@ -146,7 +147,7 @@ const AuditSql = () => {
               <thead>
                 <tr>
                   <th>序号</th><th>昵称</th><th>客户端IP</th><th>运营商</th><th>地区</th>
-                  <th>数据库</th><th>操作类型</th><th>操作次数</th><th>执行耗时</th>
+                  <th>数据库</th><th>来源</th><th>操作类型</th><th>操作次数</th><th>执行耗时</th>
                   <th>影响行数</th><th>状态</th><th>操作时间</th><th>操作</th>
                 </tr>
               </thead>
@@ -159,6 +160,7 @@ const AuditSql = () => {
                     <td>{row.district || '-'}</td>
                     <td>{formatLocation(row)}</td>
                     <td>{row.db_name}</td>
+                    <td><span className={`tag ${row.platform === 'desktop' ? 'success' : 'info'}`}>{row.platform === 'desktop' ? '客户端' : '浏览器'}</span></td>
                     <td><span className={`tag ${row.Operation === 'export' ? 'warning' : 'info'}`}>{row.Operation === 'export' ? '导出' : '查询'}</span></td>
                     <td><span className={`tag ${row.operation_count > 30 ? 'danger' : row.operation_count > 10 ? 'warning' : 'success'}`}>{row.operation_count || 0}</span></td>
                     <td><span className={`tag ${row.execution_time > 1000 ? 'warning' : 'success'}`}>{row.execution_time}ms</span></td>
@@ -168,7 +170,7 @@ const AuditSql = () => {
                     <td><button className="btn-link" onClick={() => handleViewDetail(row)}>详情</button></td>
                   </tr>
                 ))}
-                {logList.length === 0 && <tr><td colSpan={13} className="empty-cell">暂无数据</td></tr>}
+                {logList.length === 0 && <tr><td colSpan={14} className="empty-cell">暂无数据</td></tr>}
               </tbody>
             </table>
           )}

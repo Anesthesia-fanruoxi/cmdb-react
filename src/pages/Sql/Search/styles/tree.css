@@ -121,7 +121,7 @@
   font-size: 13px;
 }
 
-.tree-node { margin-bottom: 2px; }
+.tree-node { margin-bottom: 0; }
 
 .tree-node-header {
   display: flex;
@@ -134,9 +134,10 @@
 .tree-node-header:hover { background: var(--bg-hover); }
 
 .tree-icon {
-  font-size: 10px;
-  color: var(--text-muted);
-  margin-right: 6px;
+  display: flex;
+  align-items: center;
+  color: var(--text-secondary);
+  margin-right: 8px;
 }
 
 .table-icon { font-size: 14px; }

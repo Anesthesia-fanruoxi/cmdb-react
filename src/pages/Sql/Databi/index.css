@@ -20,7 +20,7 @@
 
 /* 左侧边栏 */
 .sql-databi-container .sidebar {
-  width: 280px;
+  width: 350px;
   border: 1px solid var(--border-color);
   border-radius: 8px;
   overflow: hidden;

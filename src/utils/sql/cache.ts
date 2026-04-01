@@ -115,51 +115,58 @@ export function getDbTables(dbName: string): string[] {
   return window.sqlMetadataCache.dbTables[dbName] || window.sqlMetadataCache.dbTables[dbName.toLowerCase()] || []
 }
 
-/** 持久化元数据到 localStorage */
-export function persistMetadataToStorage(projectName: string): void {
+/** 缓存表的统计信息 */
+export function cacheTableStats(tableName: string, stats: { rowCount: number; dataLength: number; indexLength?: number }): void {
+  if (!window.sqlMetadataCache) window.sqlMetadataCache = {}
+  if (!window.sqlMetadataCache.tableStats) window.sqlMetadataCache.tableStats = {}
+  
+  const key = tableName.toLowerCase()
+  window.sqlMetadataCache.tableStats[key] = stats
+  window.sqlMetadataCache.tableStats[tableName] = stats
+}
+
+/** 获取表的统计信息 */
+export function getTableStats(tableName: string): { rowCount: number; dataLength: number; indexLength?: number } | null {
+  if (!window.sqlMetadataCache?.tableStats) return null
+  
+  const key = tableName.toLowerCase()
+  return window.sqlMetadataCache.tableStats[key] || window.sqlMetadataCache.tableStats[tableName] || null
+}
+
+/** 持久化元数据到文件存储 */
+export async function persistMetadataToStorage(projectName: string, username: string): Promise<void> {
   if (!window.sqlMetadataCache) return
   
   const cacheData = {
     databases: window.sqlMetadataCache.databases || [],
     dbTables: window.sqlMetadataCache.dbTables || {},
+    tableStats: window.sqlMetadataCache.tableStats || {},
     fields: window.sqlFieldSuggestions || {},
-    timestamp: Date.now(),
-    version: '1.0'
   }
   
   try {
-    const key = `sql-metadata-${projectName}`
-    localStorage.setItem(key, JSON.stringify(cacheData))
-    console.log(`[缓存持久化] ✅ 已保存到 localStorage: ${key}`)
+    const { saveSqlMetadata } = await import('../../services/storage/stateStorage')
+    await saveSqlMetadata(username, projectName, cacheData)
+    console.log(`[缓存持久化] ✅ 已保存到 states.dat: 项目=${projectName}, 用户=${username}`)
   } catch (error) {
     console.error('[缓存持久化] ❌ 保存失败:', error)
   }
 }
 
-/** 从 localStorage 恢复元数据 */
-export function restoreMetadataFromStorage(projectName: string): boolean {
+/** 从文件存储恢复元数据 */
+export async function restoreMetadataFromStorage(projectName: string, username: string): Promise<boolean> {
   try {
-    const key = `sql-metadata-${projectName}`
-    const cached = localStorage.getItem(key)
+    const { getSqlMetadata } = await import('../../services/storage/stateStorage')
+    const cacheData = getSqlMetadata(username, projectName)
     
-    if (!cached) {
-      console.log(`[缓存恢复] ⚠️ 未找到缓存: ${key}`)
+    if (!cacheData) {
+      console.log(`[缓存恢复] ⚠️ 未找到缓存: 项目=${projectName}, 用户=${username}`)
       return false
     }
-    
-    const cacheData = JSON.parse(cached)
     
     // 检查缓存版本
     if (cacheData.version !== '1.0') {
       console.log('[缓存恢复] ⚠️ 缓存版本不匹配,忽略')
-      return false
-    }
-    
-    // 检查缓存时间(可选:超过24小时自动失效)
-    const age = Date.now() - (cacheData.timestamp || 0)
-    const maxAge = 24 * 60 * 60 * 1000 // 24小时
-    if (age > maxAge) {
-      console.log(`[缓存恢复] ⚠️ 缓存已过期 (${Math.floor(age / 1000 / 60 / 60)}小时前)`)
       return false
     }
     
@@ -169,14 +176,21 @@ export function restoreMetadataFromStorage(projectName: string): boolean {
     
     window.sqlMetadataCache.databases = cacheData.databases || []
     window.sqlMetadataCache.dbTables = cacheData.dbTables || {}
+    window.sqlMetadataCache.tableStats = cacheData.tableStats || {}
     window.sqlFieldSuggestions = cacheData.fields || {}
     
     const dbCount = cacheData.databases?.length || 0
     const tableCount = Object.keys(cacheData.dbTables || {}).length
     const fieldCount = Object.keys(cacheData.fields || {}).length
+    const statsCount = Object.keys(cacheData.tableStats || {}).length
     
-    console.log(`[缓存恢复] ✅ 已从 localStorage 恢复: ${dbCount} 个数据库, ${tableCount} 个表映射, ${fieldCount} 个表字段`)
-    console.log(`[缓存恢复] 📅 缓存时间: ${new Date(cacheData.timestamp).toLocaleString()}`)
+    const cacheAge = Date.now() - (cacheData.timestamp || 0)
+    const ageHours = Math.floor(cacheAge / 1000 / 60 / 60)
+    const ageDays = Math.floor(ageHours / 24)
+    const ageDisplay = ageDays > 0 ? `${ageDays}天前` : `${ageHours}小时前`
+    
+    console.log(`[缓存恢复] ✅ 已从 states.dat 恢复: ${dbCount} 个数据库, ${tableCount} 个表映射, ${fieldCount} 个表字段, ${statsCount} 个表统计`)
+    console.log(`[缓存恢复] 📅 缓存时间: ${new Date(cacheData.timestamp).toLocaleString()} (${ageDisplay})`)
     
     return true
   } catch (error) {
@@ -186,25 +200,22 @@ export function restoreMetadataFromStorage(projectName: string): boolean {
 }
 
 /** 清除指定项目的元数据缓存 */
-export function clearMetadataStorage(projectName: string): void {
+export async function clearMetadataStorage(projectName: string, username: string): Promise<void> {
   try {
-    const key = `sql-metadata-${projectName}`
-    localStorage.removeItem(key)
-    console.log(`[缓存清除] ✅ 已清除缓存: ${key}`)
+    const { clearSqlMetadata } = await import('../../services/storage/stateStorage')
+    await clearSqlMetadata(username, projectName)
+    console.log(`[缓存清除] ✅ 已清除缓存: 项目=${projectName}, 用户=${username}`)
   } catch (error) {
     console.error('[缓存清除] ❌ 清除失败:', error)
   }
 }
 
 /** 获取缓存的时间戳 */
-export function getMetadataCacheAge(projectName: string): number | null {
+export async function getMetadataCacheAge(projectName: string, username: string): Promise<number | null> {
   try {
-    const key = `sql-metadata-${projectName}`
-    const cached = localStorage.getItem(key)
-    if (!cached) return null
-    
-    const cacheData = JSON.parse(cached)
-    return cacheData.timestamp || null
+    const { getSqlMetadata } = await import('../../services/storage/stateStorage')
+    const cacheData = getSqlMetadata(username, projectName)
+    return cacheData?.timestamp || null
   } catch {
     return null
   }

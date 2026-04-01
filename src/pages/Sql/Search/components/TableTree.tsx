@@ -3,6 +3,7 @@
  */
 
 import { useState, useMemo } from 'react';
+import { Table } from 'lucide-react';
 import { type Project } from '../../../../services/sql/search';
 
 interface MenuOption {
@@ -176,7 +177,9 @@ const TableTree = ({
           filteredTables.map(tableName => (
             <div key={tableName} className="tree-node">
               <div className="tree-node-header" onClick={() => toggleTable(tableName)}>
-                <span className="tree-icon">{expandedTable === tableName ? '▼' : '▶'}</span>
+                <span className="tree-icon">
+                  <Table size={16} />
+                </span>
                 <span className="tree-label table-name">{tableName}</span>
               </div>
               {expandedTable === tableName && (

@@ -9,7 +9,7 @@ import {
   type Project
 } from '../../../services/sql/search';
 import { openComponentWindow, onReattachTab } from '../../../utils/window';
-import { usePageStateStore, useMessageStore, useUserPrefsStore } from '../../../stores';
+import { usePageStateStore, useMessageStore, useUserPrefsStore, useAuthStore } from '../../../stores';
 import { toast } from '../../../components/Toast';
 import { appNotification } from '../../../components/AppNotification';
 import TableTree from './components/TableTree';
@@ -18,6 +18,7 @@ import DraggableTabs from './components/DraggableTabs';
 import ShortcutSettings from './components/ShortcutSettings';
 import SqlHistoryPanel from './components/SqlHistoryPanel';
 import SaveSqlSharedDialog from './components/SaveSqlSharedDialog';
+import TableDetailContent from './components/TableDetailContent';
 import { handleQueryData } from './utils/handleQueryData';
 import './styles/index.css';
 
@@ -103,11 +104,17 @@ const SqlSearch = () => {
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [sqlHistoryPanelVisible, setSqlHistoryPanelVisible] = useState(false);
   const [saveSharedVisible, setSaveSharedVisible] = useState(false);
+  
+  // 表详情抽屉状态
+  const [tableDetailDrawerVisible, setTableDetailDrawerVisible] = useState(false);
+  const [drawerTableName, setDrawerTableName] = useState('');
+  const [drawerActiveTab, setDrawerActiveTab] = useState<'fields' | 'preview' | 'indexes' | 'ddl'>('fields');
 
   // 页面状态管理
   const { setPageState, getPageState, _hasHydrated } = usePageStateStore();
   const addMessage = useMessageStore(state => state.addMessage);
   const { sqlShortcuts } = useUserPrefsStore();
+  const userName = useAuthStore(state => state.userName);
   const hasRestored = useRef(false);
   const [isRestoring, setIsRestoring] = useState(true);
 
@@ -318,15 +325,15 @@ const SqlSearch = () => {
     updateTab(tabId, { project, dbName: '', dbList: [], tableList: [], metadataCacheAge: null });
     if (project) {
       try {
-        // 先尝试从 localStorage 恢复缓存
+        // 先尝试从文件存储恢复缓存
         const { restoreMetadataFromStorage, getMetadataCacheAge } = await import('../../../utils/sql/cache');
-        const restored = restoreMetadataFromStorage(project);
+        const restored = await restoreMetadataFromStorage(project, userName || '');
         
         if (restored) {
           // 缓存恢复成功,直接使用缓存数据
           const { getAllCachedDatabases } = await import('../../../utils/sql/cache');
           const cachedDbList = getAllCachedDatabases();
-          const cacheAge = getMetadataCacheAge(project);
+          const cacheAge = await getMetadataCacheAge(project, userName || '');
           
           console.log(`[项目切换] ✅ 使用缓存数据: ${cachedDbList.length} 个数据库`);
           updateTab(tabId, { dbList: cachedDbList, metadataCacheAge: cacheAge });
@@ -353,7 +360,7 @@ const SqlSearch = () => {
     console.log(`[元数据获取] 获取到 ${dbList.length} 个数据库:`, dbList);
     
     // 缓存数据库列表,用于跨库智能提示
-    const { cacheDatabases, cacheDbTables, cacheTableFields, initCache, persistMetadataToStorage, getMetadataCacheAge } = await import('../../../utils/sql/cache');
+    const { cacheDatabases, cacheDbTables, cacheTableFields, cacheTableStats, initCache, persistMetadataToStorage, getMetadataCacheAge } = await import('../../../utils/sql/cache');
     initCache();
     cacheDatabases(dbList);
     console.log(`[智能提示] 已缓存 ${dbList.length} 个数据库名称`);
@@ -362,8 +369,12 @@ const SqlSearch = () => {
     if (res.data?.metadata?.databases && Array.isArray(res.data.metadata.databases)) {
       const dbMetadataList = res.data.metadata.databases;
       
+      console.log('[元数据] 📊 后端返回的元数据结构:', dbMetadataList);
+      console.log('[元数据] 🔍 第一个数据库的表结构:', dbMetadataList[0]?.tables?.[0]);
+      
       let totalTables = 0;
       let totalFields = 0;
+      let totalStats = 0;
       
       dbMetadataList.forEach(dbMeta => {
         const dbName = dbMeta.db_name;
@@ -376,10 +387,24 @@ const SqlSearch = () => {
           totalTables += tableNames.length;
         }
         
-        // 缓存每个表的字段信息
+        // 缓存每个表的字段信息和统计信息
         tables.forEach(table => {
           const tableName = table.name;
           const columns = table.columns || [];
+          
+          // 缓存表统计信息
+          if (tableName && (table.row_count !== undefined || table.data_length !== undefined)) {
+            const statsToCache = {
+              rowCount: table.row_count || 0,
+              dataLength: table.data_length || 0,
+              indexLength: table.index_length
+            };
+            console.log(`[元数据缓存] 📊 缓存表 ${tableName} 的统计信息:`, statsToCache);
+            cacheTableStats(tableName, statsToCache);
+            totalStats++;
+          } else {
+            console.log(`[元数据缓存] ⚠️ 表 ${tableName} 没有统计信息`);
+          }
           
           if (tableName && columns.length > 0) {
             // 转换为补全建议格式
@@ -401,16 +426,16 @@ const SqlSearch = () => {
         });
       });
       
-      console.log(`[智能提示] ✅ 元数据缓存完成: ${dbMetadataList.length} 个数据库, ${totalTables} 个表, ${totalFields} 个字段`);
+      console.log(`[智能提示] ✅ 元数据缓存完成: ${dbMetadataList.length} 个数据库, ${totalTables} 个表, ${totalFields} 个字段, ${totalStats} 个表统计`);
       
-      // 持久化到 localStorage
-      persistMetadataToStorage(project);
+      // 持久化到文件存储
+      await persistMetadataToStorage(project, userName || '');
     } else {
       console.log(`[智能提示] ⚠️ 响应中没有元数据`);
     }
     
     // 更新标签页状态
-    const cacheAge = getMetadataCacheAge(project);
+    const cacheAge = await getMetadataCacheAge(project, userName || '');
     updateTab(tabId, { dbList, metadataCacheAge: cacheAge });
   };
 
@@ -459,15 +484,18 @@ const SqlSearch = () => {
   };
 
   // 执行查询
-  const handleExecute = async (sql: string, _isSelection: boolean = false) => {
+  const handleExecute = async (sql: string, _isSelection: boolean = false, targetTabId?: string) => {
+    // 使用传入的 tabId 或当前激活的 tabId
+    const executeTabId = targetTabId || activeTabId;
+    
     // 从 ref 获取最新的 tab 状态
-    const tab = tabsRef.current.find(t => t.id === activeTabId);
+    const tab = tabsRef.current.find(t => t.id === executeTabId);
     const tabProject = tab?.project || '';
     const tabDbName = tab?.dbName || '';
 
     console.log('='.repeat(60));
     console.log('[SQL查询] 🎯 开始执行查询');
-    console.log('[SQL查询] 📋 标签页ID:', activeTabId);
+    console.log('[SQL查询] 📋 标签页ID:', executeTabId);
     console.log('[SQL查询] 🏢 项目名称:', tabProject);
     console.log('[SQL查询] 💾 数据库名:', tabDbName);
     console.log('[SQL查询] 📝 SQL语句:', sql.substring(0, 100) + (sql.length > 100 ? '...' : ''));
@@ -480,7 +508,7 @@ const SqlSearch = () => {
       console.log('[SQL查询] SQL:', sql.trim() ? '有内容' : '(空)');
       console.log('='.repeat(60));
       
-      updateTab(activeTabId, { 
+      updateTab(executeTabId, { 
         messages: [{ type: 'warning', content: '请选择项目、数据库并输入SQL' }] 
       });
       return;
@@ -490,7 +518,7 @@ const SqlSearch = () => {
     const queryId = `qid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     console.log('[SQL查询] 🆔 生成 queryId:', queryId);
 
-    updateTab(activeTabId, { 
+    updateTab(executeTabId, { 
       queryLoading: true, 
       results: [], 
       columns: [], 
@@ -537,7 +565,7 @@ const SqlSearch = () => {
           结果集数量: processed.allResults.length
         });
         
-        updateTab(activeTabId, {
+        updateTab(executeTabId, {
           results: processed.queryResults,
           columns: processed.resultColumns,
           total: processed.total,
@@ -552,17 +580,17 @@ const SqlSearch = () => {
         console.log('[SQL查询] ✅ 状态已更新');
       } else {
         console.log('[SQL查询] ❌ 查询失败:', res.message);
-        updateTab(activeTabId, {
+        updateTab(executeTabId, {
           messages: [{ type: 'error', content: res.message || '查询失败' }]
         });
       }
     } catch (error) {
       console.error('[SQL查询] ❌ 请求异常:', error);
-      updateTab(activeTabId, {
+      updateTab(executeTabId, {
         messages: [{ type: 'error', content: '执行查询失败，请稍后重试' }]
       });
     } finally {
-      updateTab(activeTabId, { queryLoading: false });
+      updateTab(executeTabId, { queryLoading: false });
       console.log('[SQL查询] 🏁 查询流程结束');
       console.log('='.repeat(60));
     }
@@ -852,7 +880,7 @@ const SqlSearch = () => {
     }
   };
 
-  // 处理 TableDetail - 直接打开独立窗口
+  // 处理 TableDetail - 默认打开抽屉，提供在新窗口打开的选项
   const handleTableDetail = (tableName: string, command: string) => {
     const tabMap: Record<string, 'fields' | 'preview' | 'indexes' | 'ddl'> = {
       'fields': 'fields',
@@ -860,19 +888,94 @@ const SqlSearch = () => {
       'indexes': 'indexes',
       'ddl': 'ddl'
     };
+    
+    // 打开抽屉
+    setDrawerTableName(tableName);
+    setDrawerActiveTab(tabMap[command] || 'fields');
+    setTableDetailDrawerVisible(true);
+  };
+  
+  // 在新窗口打开表详情
+  const handleOpenInNewWindow = () => {
     openComponentWindow({
       type: 'table-detail',
-      label: `table-detail-${currentTab.dbName}-${tableName}`,
-      title: `表详情 - ${tableName}`,
+      label: `table-detail-${currentTab.dbName}-${drawerTableName}`,
+      title: `表详情 - ${drawerTableName}`,
       props: {
         agent: currentTab.project,
         dbName: currentTab.dbName,
-        tableName,
-        initialTab: tabMap[command] || 'fields'
+        tableName: drawerTableName,
+        initialTab: drawerActiveTab
       },
       width: 900,
       height: 700
     });
+    // 关闭抽屉
+    setTableDetailDrawerVisible(false);
+  };
+
+  // 在查询中打开表
+  const handleOpenInQuery = async (tableName: string, dbName: string, agent: string) => {
+    // 计算新标签页的编号:找到现有标签页中最大的编号
+    const maxNum = tabs.reduce((max, tab) => {
+      const match = tab.name.match(/查询\s+(\d+)/);
+      if (match) {
+        const num = parseInt(match[1]);
+        return num > max ? num : max;
+      }
+      return max;
+    }, 0);
+    
+    const newNum = maxNum + 1;
+    const newId = `tab-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // 从当前标签页复制数据库列表和表列表
+    const currentTabData = tabs.find(t => t.id === activeTabId);
+    
+    const newTab: Tab = {
+      ...createTab(newId),
+      name: `查询 ${newNum}`,
+      project: agent,
+      dbName: dbName,
+      sqlQuery: `SELECT * FROM ${tableName}`,
+      dbList: currentTabData?.dbList || [],
+      tableList: currentTabData?.tableList || [],
+    };
+    
+    console.log('[在查询中打开] 创建新标签页:', {
+      id: newId,
+      name: newTab.name,
+      project: agent,
+      dbName: dbName,
+      sql: `SELECT * FROM ${tableName}`,
+      dbListLength: newTab.dbList.length,
+      tableListLength: newTab.tableList.length
+    });
+    
+    // 添加新标签页
+    setTabs(prev => [...prev, newTab]);
+    
+    // 关闭抽屉
+    setTableDetailDrawerVisible(false);
+    
+    // 切换到新标签页并执行查询
+    setActiveTabId(newId);
+    
+    // 使用 useEffect 或者更长的延迟确保状态更新完成
+    setTimeout(() => {
+      console.log('[在查询中打开] 准备执行查询');
+      // 直接使用 tabsRef 获取最新状态
+      const latestTab = tabsRef.current.find(t => t.id === newId);
+      console.log('[在查询中打开] 最新标签页状态:', {
+        id: latestTab?.id,
+        project: latestTab?.project,
+        dbName: latestTab?.dbName,
+        sql: latestTab?.sqlQuery
+      });
+      
+      // 传递新标签页的ID给 handleExecute
+      handleExecute(`SELECT * FROM ${tableName}`, false, newId);
+    }, 200);
   };
 
   // 插入SQL
@@ -1035,6 +1138,37 @@ const SqlSearch = () => {
         onClose={() => setSaveSharedVisible(false)}
         onSuccess={() => addMessage({ type: 'success', title: '保存成功', content: 'SQL已保存到共享记录' })}
       />
+
+      {/* 表详情抽屉 */}
+      {tableDetailDrawerVisible && (
+        <>
+          <div className="drawer-overlay" onClick={() => setTableDetailDrawerVisible(false)} />
+          <div className="drawer table-detail-drawer" onClick={e => e.stopPropagation()}>
+            <div className="drawer-header">
+              <h4>📋 表详情 - {drawerTableName}</h4>
+              <div className="drawer-header-actions">
+                <button 
+                  className="open-window-btn" 
+                  onClick={handleOpenInNewWindow}
+                  title="在新窗口打开"
+                >
+                  🗗
+                </button>
+                <button className="close-btn" onClick={() => setTableDetailDrawerVisible(false)}>×</button>
+              </div>
+            </div>
+            <div className="drawer-body">
+              <TableDetailContent
+                agent={currentTab.project}
+                dbName={currentTab.dbName}
+                tableName={drawerTableName}
+                initialTab={drawerActiveTab}
+                onOpenInQuery={handleOpenInQuery}
+              />
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
