@@ -195,17 +195,23 @@ export function getApplyListSSE(
   onComplete?: () => void
 ) {
   // 构建查询参数
-  const queryParams = new URLSearchParams();
+  const queryParams: string[] = [];
   if (params.submitter_name) {
-    queryParams.append('submitter_name', params.submitter_name);
+    queryParams.push(`submitter_name=${encodeURIComponent(params.submitter_name)}`);
   }
   if (params.status !== undefined && params.status !== '') {
-    queryParams.append('status', params.status);
+    queryParams.push(`status=${encodeURIComponent(params.status)}`);
   }
   
-  const url = queryParams.toString() 
-    ? `/sql/apply/list?${queryParams.toString()}`
-    : '/sql/apply/list';
+  // 基础URL,createSSEConnection 会添加 ?token=xxx
+  // 如果有额外参数,需要用 & 连接
+  let url = '/sql/apply/list';
+  if (queryParams.length > 0) {
+    // 注意:createSSEConnection 会添加 ?token=xxx
+    // 所以我们需要在 token 参数后面添加其他参数
+    // 但 createSSEConnection 不支持这种方式,需要修改实现
+    url = `/sql/apply/list?${queryParams.join('&')}`;
+  }
   
   return createSSEConnection(url, (data) => {
     const result = data as { apply?: ApplyItem[]; total_count?: number };

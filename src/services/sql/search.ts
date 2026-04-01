@@ -177,7 +177,10 @@ export function createSSEConnection(
   const token = getToken();
   // SSE 使用独立的服务地址
   const baseUrl = import.meta.env.VITE_SSE_BASE_URL || import.meta.env.VITE_API_BASE_URL || '';
-  const fullUrl = `${baseUrl}${url}?token=${token}`;
+  
+  // 判断URL是否已经包含查询参数
+  const separator = url.includes('?') ? '&' : '?';
+  const fullUrl = `${baseUrl}${url}${separator}token=${token}`;
   
   console.log('SSE连接URL:', fullUrl);
   
