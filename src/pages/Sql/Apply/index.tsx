@@ -2,7 +2,7 @@
  * SQL变更申请页面 - 参考Vue版本
  */
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   getApplyListSSE, type ApplyItem, type ApplyDetail, getApplyDetail,
   APPLY_STATUS_MAP
@@ -25,23 +25,43 @@ const SqlApply = () => {
   // 筛选状态
   const [filterSubmitter, setFilterSubmitter] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<string>('');
+  
+  // 实际应用的筛选条件
+  const [appliedSubmitter, setAppliedSubmitter] = useState<string>('');
+  const [appliedStatus, setAppliedStatus] = useState<string>('');
 
   const fetchApplyListSSE = useCallback(() => {
     setLoading(true);
     if (sseRef.current) sseRef.current.close();
+    
+    // 使用实际应用的筛选条件
+    const params = {
+      submitter_name: appliedSubmitter,
+      status: appliedStatus
+    };
+    
     sseRef.current = getApplyListSSE(
+      params,
       (data) => { setApplyList(data); setLoading(false); },
       () => { setLoading(false); },
       () => setLoading(false)
     );
-  }, []);
+  }, [appliedSubmitter, appliedStatus]);
 
   const handleRefresh = useCallback(() => {
     if (refreshing) return;
     setRefreshing(true);
     const startTime = Date.now();
     if (sseRef.current) sseRef.current.close();
+    
+    // 使用实际应用的筛选条件
+    const params = {
+      submitter_name: appliedSubmitter,
+      status: appliedStatus
+    };
+    
     sseRef.current = getApplyListSSE(
+      params,
       (data) => {
         setApplyList(data);
         const remaining = Math.max(0, 1000 - (Date.now() - startTime));
@@ -50,12 +70,11 @@ const SqlApply = () => {
       () => setRefreshing(false),
       () => {}
     );
-  }, [refreshing]);
+  }, [refreshing, appliedSubmitter, appliedStatus]);
 
   useEffect(() => {
-    fetchApplyListSSE();
     return () => { if (sseRef.current) sseRef.current.close(); };
-  }, [fetchApplyListSSE]);
+  }, []);
 
   const handleViewDetail = async (item: ApplyItem) => {
     try {
@@ -80,26 +99,31 @@ const SqlApply = () => {
     return APPLY_STATUS_MAP[key] || APPLY_STATUS_MAP[Number(status)] || { text: status, type: 'info' };
   };
 
-  // 筛选后的列表
-  const filteredList = useMemo(() => {
-    return applyList.filter(item => {
-      // 按创建人筛选
-      if (filterSubmitter && !item.submitter_name?.toLowerCase().includes(filterSubmitter.toLowerCase())) {
-        return false;
-      }
-      // 按状态筛选
-      if (filterStatus && String(item.status) !== filterStatus) {
-        return false;
-      }
-      return true;
-    });
-  }, [applyList, filterSubmitter, filterStatus]);
+  // 执行搜索
+  const handleSearch = () => {
+    setAppliedSubmitter(filterSubmitter);
+    setAppliedStatus(filterStatus);
+  };
+
+  // 处理回车键
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
 
   // 重置筛选
   const handleResetFilter = () => {
     setFilterSubmitter('');
     setFilterStatus('');
+    setAppliedSubmitter('');
+    setAppliedStatus('');
   };
+
+  // 当应用的筛选条件变化时,重新获取数据
+  useEffect(() => {
+    fetchApplyListSSE();
+  }, [fetchApplyListSSE]);
 
   return (
     <div className="sql-apply-page">
@@ -113,6 +137,7 @@ const SqlApply = () => {
               placeholder="搜索创建人"
               value={filterSubmitter}
               onChange={e => setFilterSubmitter(e.target.value)}
+              onKeyPress={handleKeyPress}
             />
             <select 
               className="filter-select"
@@ -128,7 +153,10 @@ const SqlApply = () => {
               <option value="5">已驳回</option>
               <option value="6">已撤销</option>
             </select>
-            {(filterSubmitter || filterStatus) && (
+            <button className="btn btn-primary" onClick={handleSearch}>
+              搜索
+            </button>
+            {(appliedSubmitter || appliedStatus) && (
               <button className="btn btn-default" onClick={handleResetFilter}>
                 重置
               </button>
@@ -150,7 +178,6 @@ const SqlApply = () => {
                 <tr>
                   <th>申请ID</th>
                   <th>所属项目</th>
-                  <th>数据库</th>
                   <th>创建人</th>
                   <th>审批人</th>
                   <th>执行人</th>
@@ -163,13 +190,12 @@ const SqlApply = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredList.length === 0 ? (
-                  <tr><td colSpan={12} className="empty-row">暂无数据</td></tr>
-                ) : filteredList.map(item => (
+                {applyList.length === 0 ? (
+                  <tr><td colSpan={11} className="empty-row">暂无数据</td></tr>
+                ) : applyList.map(item => (
                   <tr key={item.id}>
                     <td>{item.id}</td>
                     <td>{item.project}</td>
-                    <td>{item.database_name || '-'}</td>
                     <td>{item.submitter_name}</td>
                     <td>{item.apply_name || '-'}</td>
                     <td>{item.executor_name || '-'}</td>

@@ -189,11 +189,25 @@ export function getProcessList() {
 
 // 获取SQL变更申请列表（SSE流式）
 export function getApplyListSSE(
+  params: { submitter_name?: string; status?: string } = {},
   onMessage: (data: ApplyItem[]) => void,
   onError?: (error: Event) => void,
   onComplete?: () => void
 ) {
-  return createSSEConnection('/sql/apply/list', (data) => {
+  // 构建查询参数
+  const queryParams = new URLSearchParams();
+  if (params.submitter_name) {
+    queryParams.append('submitter_name', params.submitter_name);
+  }
+  if (params.status !== undefined && params.status !== '') {
+    queryParams.append('status', params.status);
+  }
+  
+  const url = queryParams.toString() 
+    ? `/sql/apply/list?${queryParams.toString()}`
+    : '/sql/apply/list';
+  
+  return createSSEConnection(url, (data) => {
     const result = data as { apply?: ApplyItem[]; total_count?: number };
     onMessage(result.apply || []);
   }, onError, onComplete);

@@ -54,7 +54,7 @@
 /* 申请表格 */
 .apply-table {
   width: 100%;
-  min-width: 1400px; /* 设置最小宽度,确保所有列都能显示 */
+  min-width: 1300px; /* 调整最小宽度 */
   border-collapse: collapse;
   font-size: 14px;
   table-layout: fixed;
@@ -81,19 +81,18 @@
   font-size: 14px;
 }
 
-/* 列宽设置 - 12列布局 */
+/* 列宽设置 - 11列布局 */
 .apply-table th:nth-child(1), .apply-table td:nth-child(1) { width: 6%; } /* 申请ID */
-.apply-table th:nth-child(2), .apply-table td:nth-child(2) { width: 10%; } /* 所属项目 */
-.apply-table th:nth-child(3), .apply-table td:nth-child(3) { width: 8%; } /* 数据库 */
-.apply-table th:nth-child(4), .apply-table td:nth-child(4) { width: 7%; } /* 创建人 */
-.apply-table th:nth-child(5), .apply-table td:nth-child(5) { width: 7%; } /* 审批人 */
-.apply-table th:nth-child(6), .apply-table td:nth-child(6) { width: 7%; } /* 执行人 */
-.apply-table th:nth-child(7), .apply-table td:nth-child(7) { width: 8%; } /* 当前操作人 */
-.apply-table th:nth-child(8), .apply-table td:nth-child(8) { width: 18%; } /* 申请说明 */
-.apply-table th:nth-child(9), .apply-table td:nth-child(9) { width: 10%; } /* 执行时间 */
-.apply-table th:nth-child(10), .apply-table td:nth-child(10) { width: 10%; } /* 申请时间 */
-.apply-table th:nth-child(11), .apply-table td:nth-child(11) { width: 6%; } /* 状态 */
-.apply-table th:nth-child(12), .apply-table td:nth-child(12) { width: 6%; } /* 操作 */
+.apply-table th:nth-child(2), .apply-table td:nth-child(2) { width: 5%; } /* 所属项目 */
+.apply-table th:nth-child(3), .apply-table td:nth-child(3) { width: 8%; } /* 创建人 */
+.apply-table th:nth-child(4), .apply-table td:nth-child(4) { width: 8%; } /* 审批人 */
+.apply-table th:nth-child(5), .apply-table td:nth-child(5) { width: 8%; } /* 执行人 */
+.apply-table th:nth-child(6), .apply-table td:nth-child(6) { width: 9%; } /* 当前操作人 */
+.apply-table th:nth-child(7), .apply-table td:nth-child(7) { width: 25%; } /* 申请说明 */
+.apply-table th:nth-child(8), .apply-table td:nth-child(8) { width: 11%; } /* 执行时间 */
+.apply-table th:nth-child(9), .apply-table td:nth-child(9) { width: 11%; } /* 申请时间 */
+.apply-table th:nth-child(10), .apply-table td:nth-child(10) { width: 6%; } /* 状态 */
+.apply-table th:nth-child(11), .apply-table td:nth-child(11) { width: 6%; } /* 操作 */
 
 /* 筛选输入框 */
 .filter-input {
