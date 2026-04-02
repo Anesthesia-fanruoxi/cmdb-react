@@ -322,24 +322,25 @@ const SqlSearch = () => {
   const handleProjectChange = async (project: string, tabId: string) => {
     console.log(`[项目切换] 标签页 ${tabId}: 项目=${project}`);
     
+    // 先清空当前数据库和表列表
     updateTab(tabId, { project, dbName: '', dbList: [], tableList: [], metadataCacheAge: null });
+    
     if (project) {
       try {
-        // 先尝试从文件存储恢复缓存
-        const { restoreMetadataFromStorage, getMetadataCacheAge } = await import('../../../utils/sql/cache');
+        // 1. 尝试从文件存储恢复缓存
+        const { restoreMetadataFromStorage, getMetadataCacheAge, getAllCachedDatabases } = await import('../../../utils/sql/cache');
         const restored = await restoreMetadataFromStorage(project, userName || '');
         
         if (restored) {
-          // 缓存恢复成功,直接使用缓存数据
-          const { getAllCachedDatabases } = await import('../../../utils/sql/cache');
+          // ✅ 文件缓存存在,直接使用
           const cachedDbList = getAllCachedDatabases();
           const cacheAge = await getMetadataCacheAge(project, userName || '');
           
-          console.log(`[项目切换] ✅ 使用缓存数据: ${cachedDbList.length} 个数据库`);
+          console.log(`[项目切换] ✅ 从文件恢复: ${cachedDbList.length} 个数据库`);
           updateTab(tabId, { dbList: cachedDbList, metadataCacheAge: cacheAge });
         } else {
-          // 缓存不存在或已过期,调用 API 获取
-          console.log(`[项目切换] 📡 缓存不可用,调用 API 获取元数据`);
+          // ❌ 文件缓存不存在,调用API获取
+          console.log(`[项目切换] 📡 文件缓存不存在,调用API获取元数据`);
           await fetchAndCacheMetadata(project, tabId);
         }
       } catch (error) {
@@ -471,15 +472,101 @@ const SqlSearch = () => {
     
     console.log(`[数据库切换] 标签页 ${tabId}: 项目=${project}, 数据库=${dbName}`);
     
-    updateTab(tabId, { dbName, tableList: [] });
-    
     if (dbName && project) {
-      // 直接从缓存中读取表列表,无需调用 API
-      const { getDbTables } = await import('../../../utils/sql/cache');
-      const tableList = getDbTables(dbName);
+      // 1. 先从内存缓存读取
+      const { getDbTables, cacheDbTables } = await import('../../../utils/sql/cache');
+      let tableList = getDbTables(dbName);
       
-      console.log(`[数据库切换] 从缓存读取 ${tableList.length} 个表`);
-      updateTab(tabId, { tableList });
+      console.log(`[数据库切换] 内存缓存中有 ${tableList.length} 个表`);
+      
+      // 2. 如果内存缓存为空,尝试从文件缓存读取
+      if (tableList.length === 0) {
+        console.log(`[数据库切换] 内存缓存为空,尝试从文件恢复`);
+        
+        const { getSqlMetadata } = await import('../../../services/storage/stateStorage');
+        const cacheData = getSqlMetadata(userName || '', project);
+        
+        if (cacheData?.dbTables?.[dbName]) {
+          // 文件中有这个数据库的表列表
+          tableList = cacheData.dbTables[dbName];
+          console.log(`[数据库切换] ✅ 从文件恢复 ${tableList.length} 个表`);
+          
+          // 恢复到内存缓存
+          cacheDbTables(dbName, tableList);
+        } else {
+          // 3. 文件中也没有,调用API获取
+          console.log(`[数据库切换] 📡 文件缓存也为空,调用API获取`);
+          
+          try {
+            updateTab(tabId, { treeLoading: true });
+            
+            // 调用API获取单个数据库的元数据
+            const res = await getDatabases({ agent: project });
+            
+            if (res.code === 200 && res.data?.metadata?.databases) {
+              // 从完整元数据中找到当前数据库
+              const dbMetadata = res.data.metadata.databases.find(
+                (db: any) => db.db_name === dbName
+              );
+              
+              if (dbMetadata?.tables) {
+                tableList = dbMetadata.tables.map((t: any) => t.name).filter(Boolean);
+                console.log(`[数据库切换] ✅ API返回 ${tableList.length} 个表`);
+                
+                // 缓存到内存
+                cacheDbTables(dbName, tableList);
+                
+                // 同时缓存表的字段和统计信息
+                const { cacheTableFields, cacheTableStats } = await import('../../../utils/sql/cache');
+                dbMetadata.tables.forEach((table: any) => {
+                  const tableName = table.name;
+                  const columns = table.columns || [];
+                  
+                  // 缓存表统计信息
+                  if (tableName && (table.row_count !== undefined || table.data_length !== undefined)) {
+                    cacheTableStats(tableName, {
+                      rowCount: table.row_count || 0,
+                      dataLength: table.data_length || 0,
+                      indexLength: table.index_length
+                    });
+                  }
+                  
+                  // 缓存字段信息
+                  if (tableName && columns.length > 0) {
+                    const fieldSuggestions = columns.map((col: any, index: number) => ({
+                      caption: col.name,
+                      value: col.name,
+                      meta: col.data_type || col.column_type || 'field',
+                      comment: `[${tableName}] ${col.comment || ''}`,
+                      tableName: tableName,
+                      dbName: dbName,
+                      isPrimaryKey: col.column_key === 'PRI' || col.is_primary_key,
+                      score: 900 - index
+                    }));
+                    cacheTableFields(tableName, fieldSuggestions);
+                  }
+                });
+                
+                // 持久化到文件
+                const { persistMetadataToStorage } = await import('../../../utils/sql/cache');
+                await persistMetadataToStorage(project, userName || '');
+                console.log(`[数据库切换] ✅ 已持久化到文件`);
+              }
+            }
+          } catch (error) {
+            console.error('[数据库切换] API调用失败:', error);
+            toast.error('获取表列表失败');
+          } finally {
+            updateTab(tabId, { treeLoading: false });
+          }
+        }
+      }
+      
+      // 4. 更新状态
+      updateTab(tabId, { dbName, tableList });
+    } else {
+      // 没有数据库名或项目,清空
+      updateTab(tabId, { dbName, tableList: [] });
     }
   };
 
