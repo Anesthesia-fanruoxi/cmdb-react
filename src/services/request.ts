@@ -189,12 +189,7 @@ async function request<T>(
 
     if (data && (method === 'POST' || method === 'PUT')) {
       fetchOptions.body = JSON.stringify(data);
-      console.log('📤 [请求发送] 请求体:', fetchOptions.body);
     }
-    
-    console.log('📤 [请求发送] 方法:', method);
-    console.log('📤 [请求发送] URL:', fullUrl);
-    console.log('📤 [请求发送] Headers:', headers);
 
     const response = await fetch(fullUrl, fetchOptions);
     clearTimeout(timeoutId);
@@ -207,13 +202,8 @@ async function request<T>(
 
     // 获取响应文本并应用大整数保护
     const responseText = await response.text();
-    console.log('=== 响应信息 ===');
-    console.log('状态码:', response.status);
-    console.log('响应文本长度:', responseText.length);
-    console.log('响应文本前200字符:', responseText.substring(0, 200));
     
     const responseData = protectBigInt(responseText);
-    console.log('解析后数据:', responseData);
 
     // 处理 HTTP 错误状态
     if (!response.ok) {
@@ -306,13 +296,6 @@ export const apiClient = {
       : '';
     
     const urlWithParams = url + queryString;
-    const fullUrl = urlWithParams.startsWith('http') ? urlWithParams : `${BASE_URL}${urlWithParams}`;
-    
-    console.log('=== GET 请求 ===');
-    console.log('相对 URL:', urlWithParams);
-    console.log('完整 URL:', fullUrl);
-    console.log('BASE_URL:', BASE_URL);
-    console.log('参数:', params);
     
     return request<T>('GET', urlWithParams, undefined, config);
   },
@@ -321,23 +304,6 @@ export const apiClient = {
    * POST 请求
    */
   post<T>(url: string, data?: unknown, config?: RequestConfig) {
-    const fullUrl = url.startsWith('http') ? url : `${BASE_URL}${url}`;
-    
-    console.log('=== POST 请求 ===');
-    console.log('相对 URL:', url);
-    console.log('完整 URL:', fullUrl);
-    console.log('BASE_URL:', BASE_URL);
-    console.log('请求数据:', JSON.stringify(data, null, 2));
-    
-    // 如果是 SQL 查询请求，特别标注
-    if (url.includes('/sql/search/data')) {
-      console.log('🔍 [SQL查询请求] 这是一个SQL查询请求');
-      const sqlData = data as { agent?: string; dbName?: string; query?: string };
-      console.log('🔍 [SQL查询请求] agent:', sqlData.agent);
-      console.log('🔍 [SQL查询请求] dbName:', sqlData.dbName);
-      console.log('🔍 [SQL查询请求] query:', sqlData.query?.substring(0, 100));
-    }
-    
     return request<T>('POST', url, data, config);
   },
 

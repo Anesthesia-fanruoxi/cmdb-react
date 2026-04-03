@@ -74,6 +74,20 @@
   z-index: 1;
 }
 
+/* 行号列左侧固定 */
+.fullscreen-table th.row-num,
+.fullscreen-table td.row-num {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--bg-secondary);
+}
+
+/* 左上角交叉单元格层级最高 */
+.fullscreen-table th.row-num {
+  z-index: 3;
+}
+
 .fullscreen-table td {
   color: var(--text-color);
   line-height: 1.4;

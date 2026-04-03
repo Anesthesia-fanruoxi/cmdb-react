@@ -3,8 +3,9 @@
  * 支持多结果集切换、后端分页和导出功能
  */
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useAuthStore } from '../../../../stores/authStore';
+import { useUserPrefsStore } from '../../../../stores/userPrefsStore';
 import toast from '../../../../components/Toast';
 import type { ResultSet } from './SqlWorkspace';
 import FullscreenResultPanel from './FullscreenResultPanel';
@@ -71,6 +72,13 @@ const ResultPanel = ({
 }: Props) => {
   const [localPage, setLocalPage] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
+  const lastClickedRow = useRef<number | null>(null);
+
+  // 高亮颜色偏好
+  const { uiPrefs, setUiPref } = useUserPrefsStore();
+  const highlightColor = uiPrefs.sqlRowHighlightColor || '#8b5cf6';
+  const colorInputRef = useRef<HTMLInputElement>(null);
   
   // 检查导出权限 (sql:search:w)
   const hasPermission = useAuthStore((state) => state.hasPermission);
@@ -118,7 +126,7 @@ const ResultPanel = ({
     }
   };
 
-  useEffect(() => { setLocalPage(1); }, [total]);
+  useEffect(() => { setLocalPage(1); setSelectedRows(new Set()); lastClickedRow.current = null; }, [total]);
 
   const handleExport = () => {
     if (onExport && queryId) onExport();
@@ -133,6 +141,36 @@ const ResultPanel = ({
   const handleCopyColumn = (colIndex: number, colName: string) => {
     copyColumnData(results, colIndex, colName);
   };
+
+  // 行点击：普通=单选，Ctrl=切换，Shift=范围选
+  const handleRowClick = useCallback((absoluteIndex: number, e: React.MouseEvent) => {
+    if (e.shiftKey && lastClickedRow.current !== null) {
+      // Shift：范围选中
+      const start = Math.min(lastClickedRow.current, absoluteIndex);
+      const end = Math.max(lastClickedRow.current, absoluteIndex);
+      setSelectedRows(prev => {
+        const next = new Set(prev);
+        for (let i = start; i <= end; i++) next.add(i);
+        return next;
+      });
+    } else if (e.ctrlKey || e.metaKey) {
+      // Ctrl/Cmd：切换单行
+      setSelectedRows(prev => {
+        const next = new Set(prev);
+        if (next.has(absoluteIndex)) next.delete(absoluteIndex);
+        else next.add(absoluteIndex);
+        return next;
+      });
+      lastClickedRow.current = absoluteIndex;
+    } else {
+      // 普通点击：单选（再次点击取消）
+      setSelectedRows(prev => {
+        if (prev.size === 1 && prev.has(absoluteIndex)) return new Set();
+        return new Set([absoluteIndex]);
+      });
+      lastClickedRow.current = absoluteIndex;
+    }
+  }, []);
 
   // 行号起始位置
   const rowNumberStart = (currentPage - 1) * pageSize;
@@ -188,6 +226,18 @@ const ResultPanel = ({
         </div>
         <div className="header-right">
           {hasResults && (
+            <div className="row-highlight-picker" title="自定义选中行高亮颜色">
+              <span className="highlight-color-dot" style={{ background: highlightColor }} onClick={() => colorInputRef.current?.click()} />
+              <input
+                ref={colorInputRef}
+                type="color"
+                value={highlightColor}
+                onChange={(e) => setUiPref('sqlRowHighlightColor', e.target.value as string)}
+                className="highlight-color-input"
+              />
+            </div>
+          )}
+          {hasResults && (
             <button 
               className="btn btn-link"
               onClick={toggleFullscreen}
@@ -239,8 +289,20 @@ const ResultPanel = ({
               <tbody>
                 {currentData.map((row, idx) => {
                   const absoluteIndex = rowNumberStart + idx;
+                  const isSelected = selectedRows.has(absoluteIndex);
+                  // 将 hex 颜色转为带透明度的背景色
+                  const hex = highlightColor.replace('#', '');
+                  const r = parseInt(hex.slice(0, 2), 16);
+                  const g = parseInt(hex.slice(2, 4), 16);
+                  const b = parseInt(hex.slice(4, 6), 16);
+                  const selectedStyle = isSelected ? { background: `rgba(${r},${g},${b},0.18)` } : {};
                   return (
-                    <tr key={absoluteIndex}>
+                    <tr
+                      key={absoluteIndex}
+                      className={isSelected ? 'row-selected' : ''}
+                      style={{ ...selectedStyle, userSelect: 'none' }}
+                      onClick={(e) => handleRowClick(absoluteIndex, e)}
+                    >
                       <td className="row-num">{absoluteIndex + 1}</td>
                       {row.map((val, colIdx) => (
                         <td 

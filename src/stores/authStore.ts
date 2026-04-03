@@ -348,6 +348,9 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           if (state) {
             const menuStore = useMenuStore.getState();
             if (state.visitedViews?.length) {
+              // 先清空当前的 visitedViews，再从存储中恢复
+              // 这样可以避免重复添加已删除的标签
+              menuStore.clearVisitedViews();
               state.visitedViews.forEach(v => {
                 menuStore.addVisitedView({
                   path: v.path,

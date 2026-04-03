@@ -160,7 +160,6 @@ const FilePage = () => {
       return new Promise((resolve, reject) => {
         (entry as FileSystemFileEntry).file((file) => {
           const filePath = basePath || '';
-          console.log('[Upload] 添加文件:', file.name, '路径:', filePath);
           fileList.push({ file, path: filePath });
           resolve();
         }, (err) => {
@@ -169,7 +168,6 @@ const FilePage = () => {
         });
       });
     } else if (entry.isDirectory) {
-      console.log('[Upload] 进入目录:', entry.name, 'basePath:', basePath);
       const dirReader = (entry as FileSystemDirectoryEntry).createReader();
       return new Promise((resolve, reject) => {
         const allEntries: FileSystemEntry[] = [];
@@ -178,7 +176,6 @@ const FilePage = () => {
           dirReader.readEntries(async (entries) => {
             if (entries.length === 0) {
               const newBasePath = basePath ? `${basePath}/${entry.name}` : entry.name;
-              console.log('[Upload] 目录读取完成:', entry.name, '子项数:', allEntries.length, '新路径:', newBasePath);
               try {
                 for (const childEntry of allEntries) {
                   await traverseFileTree(childEntry, newBasePath, fileList);
@@ -189,7 +186,6 @@ const FilePage = () => {
               }
               return;
             }
-            console.log('[Upload] 读取到', entries.length, '个条目');
             allEntries.push(...entries);
             readEntries();
           }, reject);

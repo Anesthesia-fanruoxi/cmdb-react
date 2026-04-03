@@ -69,10 +69,6 @@ export function getTaskDetail(
   
   const eventSource = new EventSource(url);
   
-  eventSource.addEventListener('connected', () => {
-    console.log('[TaskDetail] SSE 连接成功');
-  });
-  
   eventSource.addEventListener('data', (event) => {
     try {
       const data = JSON.parse(event.data);

@@ -40,7 +40,6 @@ const TrafficSwitching = () => {
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
       eventSourceRef.current = null;
-      console.log('[流量监控] SSE 连接已关闭');
     }
   };
 
@@ -132,7 +131,6 @@ const TrafficSwitching = () => {
       return;
     }
 
-    console.log('[流量监控] 启动 SSE 连接');
     const eventSource = getMonitorMetricsSSE(
       {
         project: selectedProject,
@@ -231,7 +229,6 @@ const TrafficSwitching = () => {
   // 组件卸载时关闭 SSE
   useEffect(() => {
     return () => {
-      console.log('[流量监控] 组件卸载，关闭 SSE');
       closeSSE();
     };
   }, []);

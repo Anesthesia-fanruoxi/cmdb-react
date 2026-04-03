@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useUserPrefsStore } from '../../../../stores/userPrefsStore';
 
 interface Props {
   columns: string[];
@@ -25,6 +26,13 @@ const FullscreenResultPanel = ({
   const [accumulatedData, setAccumulatedData] = useState<unknown[][]>([]);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  // 多选
+  const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
+  const lastClickedRow = useRef<number | null>(null);
+  // 颜色选取器
+  const { uiPrefs, setUiPref } = useUserPrefsStore();
+  const highlightColor = uiPrefs.sqlRowHighlightColor || '#8b5cf6';
+  const colorInputRef = useRef<HTMLInputElement>(null);
   
   // 用于批量加载时收集数据
   const batchLoadingDataRef = useRef<unknown[][]>([]);
@@ -47,7 +55,6 @@ const FullscreenResultPanel = ({
   // 初始化：批量加载前3页
   useEffect(() => {
     if (currentPage === 1 && total > 20) {
-      console.log('[全屏初始化] 开始批量加载前3页数据');
       batchLoadingDataRef.current = [...results]; // 第1页
       batchLoadingPageRef.current = 1;
       
@@ -66,17 +73,14 @@ const FullscreenResultPanel = ({
     
     // 第2页数据到达
     if (currentPage === 2 && batchLoadingPageRef.current === 1 && results.length > 0) {
-      console.log('[批量加载] 第2页数据到达，追加到缓存');
       batchLoadingDataRef.current.push(...results);
       batchLoadingPageRef.current = 2;
       
       // 继续加载第3页
       if (total > 40) {
-        console.log('[批量加载] 触发加载第3页');
         onPageChange(3, pageSize);
       } else {
         // 只有2页，完成加载
-        console.log('[批量加载] 完成，总计:', batchLoadingDataRef.current.length);
         setAccumulatedData([...batchLoadingDataRef.current]);
         setIsInitialLoading(false);
         batchLoadingPageRef.current = 0;
@@ -84,11 +88,9 @@ const FullscreenResultPanel = ({
       
     // 第3页数据到达
     } else if (currentPage === 3 && batchLoadingPageRef.current === 2 && results.length > 0) {
-      console.log('[批量加载] 第3页数据到达，追加到缓存');
       batchLoadingDataRef.current.push(...results);
       
       // 完成批量加载
-      console.log('[批量加载] 完成，总计:', batchLoadingDataRef.current.length);
       setAccumulatedData([...batchLoadingDataRef.current]);
       setIsInitialLoading(false);
       batchLoadingPageRef.current = 0;
@@ -101,8 +103,6 @@ const FullscreenResultPanel = ({
     
     // 只处理滚动加载（页码 > 3）
     if (currentPage > 3 && results.length > 0) {
-      console.log(`[滚动加载] 第${currentPage}页数据到达，准备追加 ${results.length} 条`);
-      
       // 保存滚动位置
       const savedScrollTop = scrollContainerRef.current?.scrollTop || 0;
       
@@ -115,26 +115,46 @@ const FullscreenResultPanel = ({
         // 避免重复追加
         if (JSON.stringify(lastRow) !== JSON.stringify(firstNewRow)) {
           const newData = [...prev, ...results];
-          console.log(`[滚动加载] 追加后总计: ${newData.length} 条`);
           
           // 恢复滚动位置
           requestAnimationFrame(() => {
             if (scrollContainerRef.current) {
               scrollContainerRef.current.scrollTop = savedScrollTop;
-              console.log(`[滚动加载] 恢复滚动位置: ${savedScrollTop}px`);
             }
           });
           
           return newData;
         }
         
-        console.log(`[滚动加载] 数据重复，跳过追加`);
         return prev;
       });
       
       setIsLoadingMore(false);
     }
   }, [isInitialLoading, isLoadingMore, currentPage, results]);
+
+  // 行点击：普通=单选，Ctrl=切换，Shift=范围选
+  const handleRowClick = useCallback((idx: number, e: React.MouseEvent) => {
+    if (e.shiftKey && lastClickedRow.current !== null) {
+      const start = Math.min(lastClickedRow.current, idx);
+      const end = Math.max(lastClickedRow.current, idx);
+      setSelectedRows(prev => {
+        const next = new Set(prev);
+        for (let i = start; i <= end; i++) next.add(i);
+        return next;
+      });
+    } else if (e.ctrlKey || e.metaKey) {
+      setSelectedRows(prev => {
+        const next = new Set(prev);
+        if (next.has(idx)) next.delete(idx); else next.add(idx);
+        return next;
+      });
+      lastClickedRow.current = idx;
+    } else {
+      setSelectedRows(prev => (prev.size === 1 && prev.has(idx) ? new Set() : new Set([idx])));
+      lastClickedRow.current = idx;
+    }
+  }, []);
 
   // 处理滚动事件
   const handleScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
@@ -153,7 +173,6 @@ const FullscreenResultPanel = ({
       
       // 滚动到底部且未在加载且还有更多数据
       if (distanceToBottom < threshold && !isLoadingMore && hasMore && !isInitialLoading) {
-        console.log('[触发加载] 开始加载下一页');
         setIsLoadingMore(true);
         onPageChange(currentPage + 1, pageSize);
       }
@@ -227,6 +246,16 @@ const FullscreenResultPanel = ({
           <span className="header-title">查询结果（全屏）</span>
         </div>
         <div className="header-right">
+          <div className="row-highlight-picker" title="自定义选中行高亮颜色">
+            <span className="highlight-color-dot" style={{ background: highlightColor }} onClick={() => colorInputRef.current?.click()} />
+            <input
+              ref={colorInputRef}
+              type="color"
+              value={highlightColor}
+              onChange={(e) => setUiPref('sqlRowHighlightColor', e.target.value as string)}
+              className="highlight-color-input"
+            />
+          </div>
           <button className="btn btn-link" onClick={onClose} title="退出全屏">
             ⤢
           </button>
@@ -253,16 +282,28 @@ const FullscreenResultPanel = ({
                 </tr>
               </thead>
               <tbody>
-                {accumulatedData.map((row, idx) => (
-                  <tr key={idx}>
-                    <td className="row-num">{idx + 1}</td>
-                    {row.map((val, colIdx) => (
-                      <td key={colIdx}>
-                        {formatValue(val)}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
+                {accumulatedData.map((row, idx) => {
+                  const isSelected = selectedRows.has(idx);
+                  const hex = highlightColor.replace('#', '');
+                  const r = parseInt(hex.slice(0, 2), 16);
+                  const g = parseInt(hex.slice(2, 4), 16);
+                  const b = parseInt(hex.slice(4, 6), 16);
+                  return (
+                    <tr
+                      key={idx}
+                      className={isSelected ? 'row-selected' : ''}
+                      style={{ background: isSelected ? `rgba(${r},${g},${b},0.18)` : undefined, userSelect: 'none' }}
+                      onClick={(e) => handleRowClick(idx, e)}
+                    >
+                      <td className="row-num">{idx + 1}</td>
+                      {row.map((val, colIdx) => (
+                        <td key={colIdx}>
+                          {formatValue(val)}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
             

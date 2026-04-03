@@ -236,8 +236,6 @@ const ElfkSearch = () => {
       const saved = getPageState<{ tabs: Partial<TabData>[]; activeTabId: string; tabCounter: number }>(PAGE_KEY);
       const detached = getPageState<{ tabs: Partial<TabData>[] }>(DETACHED_KEY);
 
-      console.log('[ELFK] 尝试恢复状态:', saved, '独立窗口:', detached);
-
       let restoredTabs: TabData[] = [];
       
       // 恢复主窗口标签页
@@ -251,16 +249,12 @@ const ElfkSearch = () => {
         restoredTabs = [...restoredTabs, ...detachedTabs];
         // 清空独立窗口状态
         setPageState(DETACHED_KEY, { tabs: [] });
-        console.log('[ELFK] 恢复独立窗口标签页:', detachedTabs.length);
       }
 
       if (restoredTabs.length > 0) {
         setTabs(restoredTabs);
         setActiveTabId(saved?.activeTabId || restoredTabs[0].id);
         tabCounter.current = saved?.tabCounter || restoredTabs.length;
-        console.log('[ELFK] 恢复成功, 标签页数:', restoredTabs.length);
-      } else {
-        console.log('[ELFK] 没有保存的状态');
       }
     } catch (error) {
       console.error('恢复 ELFK 页面状态失败:', error);
@@ -295,7 +289,6 @@ const ElfkSearch = () => {
       
       setTabs(prev => [...prev, newTab]);
       setActiveTabId(newTab.id);
-      console.log('[ELFK] 放回标签页:', newTab.name);
     });
 
     return () => { unlisten.then(fn => fn()); };
@@ -373,29 +366,19 @@ const ElfkSearch = () => {
     const searchKeyword = params.keyword as string || '';
     updateTab(activeTab.id, { loading: true, keyword: searchKeyword });
     
-    console.log('[ELFK Search] ========== 开始搜索 ==========');
-    console.log('[ELFK Search] 原始参数:', params);
-    console.log('[ELFK Search] 当前标签页时间范围:', activeTab.timeRange);
-    
     try {
       // 如果有相对时间标签（快捷选择或过去时间），需要重新计算时间范围
       let searchParams: Record<string, unknown> = { ...params, sort_order: activeTab.sortOrder };
       
       const timeLabel = params.time_label as string || activeTab.timeRange?.label || '';
-      console.log('[ELFK Search] 时间标签:', timeLabel);
-      console.log('[ELFK Search] 是否为相对时间:', isRelativeTimeLabel(timeLabel));
       
       if (timeLabel && isRelativeTimeLabel(timeLabel)) {
         // 重新计算相对时间范围，确保使用最新的时间
-        console.log('[ELFK Search] 开始重新计算相对时间...');
         const actualRange = calculateRelativeTime(timeLabel);
-        console.log('[ELFK Search] 计算后的时间范围:', actualRange);
         
         if (actualRange) {
           const formattedStart = formatSearchTime(actualRange.start);
           const formattedEnd = formatSearchTime(actualRange.end);
-          console.log('[ELFK Search] 格式化后的开始时间:', formattedStart);
-          console.log('[ELFK Search] 格式化后的结束时间:', formattedEnd);
           
           searchParams = {
             ...searchParams,
@@ -403,14 +386,7 @@ const ElfkSearch = () => {
             end_time: formattedEnd,
           };
         }
-      } else {
-        console.log('[ELFK Search] 使用固定时间范围，不重新计算');
-        console.log('[ELFK Search] start_time:', params.start_time);
-        console.log('[ELFK Search] end_time:', params.end_time);
       }
-      
-      console.log('[ELFK Search] 最终搜索参数:', searchParams);
-      console.log('[ELFK Search] ========== 搜索参数准备完成 ==========');
       
       const res = await searchLogs(searchParams as any);
       if (res.code === 200 && res.data) {
@@ -421,7 +397,6 @@ const ElfkSearch = () => {
           highlightKeyword: searchKeyword, // 只有搜索成功后才更新高亮关键字
           lastParams: { ...searchParams, query_id: res.data.query_id, pages: res.data.pages, page: res.data.page || 1 } 
         });
-        console.log('[ELFK Search] 搜索成功，结果数量:', res.data.total_hits);
       }
     } catch (err) { 
       console.error('[ELFK Search] 搜索失败:', err); 
@@ -454,7 +429,6 @@ const ElfkSearch = () => {
     if (!activeTab?.autoRefresh || !activeTab?.lastParams?.project) return;
 
     const timer = setInterval(() => {
-      console.log('[ELFK] 自动刷新触发, lastParams:', activeTab.lastParams);
       handleSearch(activeTab.lastParams);
     }, 5000);
 

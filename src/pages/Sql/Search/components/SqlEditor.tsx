@@ -18,7 +18,7 @@ import '../styles/ace.css'  // 引入ACE编辑器自定义样式
 
 interface Props {
   value: string
-  onChange: (value: string) => void
+  onChange: (value: string) => void  // 失焦或防抖时触发，不在每次输入时触发
   onExecute: () => void
   onNewTab?: () => void
   onShowHistory?: () => void
@@ -34,6 +34,7 @@ interface Props {
 export interface SqlEditorRef {
   format: () => void
   getSelectedText: () => string
+  getValue: () => string  // 获取当前最新值（不依赖 React 状态）
   showFind: () => void
   showReplace: () => void
   getEditor: () => ace.Ace.Editor | null
@@ -48,6 +49,14 @@ const SqlEditor = forwardRef<SqlEditorRef, Props>(({
   const completerRef = useRef<any>(null)
   const tablesRef = useRef<TableInfo[]>(tables)
   const loadTableStructureRef = useRef(loadTableStructure)
+  const isInternalChange = useRef(false)
+  // 内部 SQL 值 ref，输入时只更新这里，不触发 React 重渲染
+  const sqlValueRef = useRef(value)
+  // 防抖定时器
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // 稳定的 onChange ref
+  const onChangeRef = useRef(onChange)
+  onChangeRef.current = onChange
   
   // 查找/替换对话框状态
   const [showFindDialog, setShowFindDialog] = useState(false)
@@ -99,24 +108,14 @@ const SqlEditor = forwardRef<SqlEditorRef, Props>(({
     }
   }, [fontSize])
 
-  // 暴露方法给父组件
   useImperativeHandle(ref, () => ({
     format: () => {
-      if (aceEditorRef.current) {
-        formatSqlContent(aceEditorRef.current)
-      }
+      if (aceEditorRef.current) formatSqlContent(aceEditorRef.current)
     },
-    getSelectedText: () => {
-      return aceEditorRef.current?.getSelectedText() || ''
-    },
-    showFind: () => {
-      setShowReplaceDialog(false)
-      setShowFindDialog(true)
-    },
-    showReplace: () => {
-      setShowFindDialog(false)
-      setShowReplaceDialog(true)
-    },
+    getSelectedText: () => aceEditorRef.current?.getSelectedText() || '',
+    getValue: () => aceEditorRef.current?.getValue() ?? sqlValueRef.current,
+    showFind: () => { setShowReplaceDialog(false); setShowFindDialog(true) },
+    showReplace: () => { setShowFindDialog(false); setShowReplaceDialog(true) },
     getEditor: () => aceEditorRef.current
   }))
 
@@ -164,7 +163,9 @@ const SqlEditor = forwardRef<SqlEditorRef, Props>(({
       enableSnippets: false,
       showPrintMargin: false,
       showFoldWidgets: true,
-      useSoftTabs: true
+      useSoftTabs: true,
+      liveAutocompletionDelay: 150,
+      liveAutocompletionThreshold: 1
     })
 
     // 初始化 SQL 补全器
@@ -177,114 +178,36 @@ const SqlEditor = forwardRef<SqlEditorRef, Props>(({
         return Promise.resolve(null)
       }
     })
-    
-    // 自定义补全弹窗渲染器
-    const setupCustomRenderer = () => {
-      const langTools = ace.require('ace/ext/language_tools')
-      const Autocomplete = langTools.Autocomplete
-      
-      if (Autocomplete && !Autocomplete.prototype.$customRendererSetup) {
-        Autocomplete.prototype.$customRendererSetup = true
-        
-        // 重写渲染逻辑
-        Autocomplete.prototype.renderer = {
-          ...Autocomplete.prototype.renderer,
-          $textLayer: {
-            ...Autocomplete.prototype.renderer?.$textLayer,
-            renderLine: function(row: number) {
-              const item = this.editor?.completer?.popup?.data?.[row]
-              if (!item) return ''
-              
-              // 构建自定义 HTML
-              const icon = item.iconText || '•'
-              const color = item.iconColor || '#888'
-              const name = item.caption
-              const typeLabel = item.typeLabel || item.meta || ''
-              
-              // 只有表和字段显示库名
-              let dbNameText = ''
-              if (item.dbName && (item.meta === 'field' || item.meta === 'table')) {
-                dbNameText = `<span style="margin-left:8px;opacity:0.7">[${item.dbName}]</span>`
-              }
-              
-              return `<div class="ace_line" style="display:flex;align-items:center;padding:6px 10px;">
-                        <span style="color:${color};margin-right:8px;">${icon}</span>
-                        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;">${name}</span>
-                        <span style="margin-left:auto;font-size:11px;color:#888;opacity:0.7;padding-left:8px;">${typeLabel}${dbNameText}</span>
-                      </div>`
-            }
-          }
-        }
-      }
-    }
-    
-    // 初始化自定义渲染器
-    setupCustomRenderer()
 
-    // 监听内容变化
+    // 监听内容变化 — 只更新内部 ref + 防抖，不触发 React 重渲染
     editor.on('change', (delta: any) => {
+      isInternalChange.current = true
       const newValue = editor.getValue()
-      onChange(newValue)
-      
-      // 如果是回车键，关闭补全弹窗
+      sqlValueRef.current = newValue
+
+      // 防抖 500ms 同步到 React 状态（用于自动保存）
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+      saveTimerRef.current = setTimeout(() => {
+        onChangeRef.current(sqlValueRef.current)
+      }, 500)
+
+      // 回车键关闭补全弹窗
       if (delta.action === 'insert' && delta.lines && delta.lines[0] === '') {
         const completer = (editor as any).completer
-        if (completer?.popup?.isOpen) {
-          completer.detach()
-          return
-        }
+        if (completer?.popup?.isOpen) completer.detach()
       }
-      
-      // 如果补全弹窗已打开，强制重新触发补全
-      const completer = (editor as any).completer
-      if (completer?.popup?.isOpen) {
-        setTimeout(() => {
-          editor.execCommand('startAutocomplete')
-        }, 10)
-      }
-      
-      // 延迟修改 DOM（无论弹窗是否已打开）
-      setTimeout(() => {
-        const completer = (editor as any).completer
-        if (completer?.popup?.isOpen && completer.popup.data) {
-          const popup = completer.popup
-          const rows = popup.renderer.container.querySelectorAll('.ace_line')
-          
-          popup.data.forEach((item: any, index: number) => {
-            const row = rows[index]
-            if (row && item.iconText) {
-              // 清空原有内容
-              row.innerHTML = ''
-              
-              // 构建自定义 HTML
-              const icon = item.iconText || '•'
-              const color = item.iconColor || '#888'
-              const name = item.caption
-              const typeLabel = item.typeLabel || ''
-              
-              // 只有表和字段显示库名
-              let dbNameText = ''
-              if (item.dbName && (item.meta === 'field' || item.meta === 'table')) {
-                dbNameText = ` [${item.dbName}]`
-              }
-              
-              row.innerHTML = `
-                <span style="color:${color};margin-right:8px;flex-shrink:0;">${icon}</span>
-                <span style="flex:1;overflow:hidden;text-overflow:ellipsis;">${name}</span>
-                <span style="margin-left:auto;font-size:11px;color:#888;opacity:0.7;padding-left:8px;white-space:nowrap;">${typeLabel}${dbNameText}</span>
-              `
-              row.style.display = 'flex'
-              row.style.alignItems = 'center'
-              row.style.padding = '6px 10px'
-            }
-          })
-        }
-      }, 150)
+
+      isInternalChange.current = false
     })
-    
-    // 监听焦点事件
+
+    // 失焦时立即同步到 React 状态
+    editor.on('blur', () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+      onChangeRef.current(sqlValueRef.current)
+      onBlur?.()
+    })
+
     editor.on('focus', () => onFocus?.())
-    editor.on('blur', () => onBlur?.())
 
     // 添加点号处理器（用于 table.field 补全）
     createDotHandler(editor, loadTableStructure)
@@ -353,21 +276,17 @@ const SqlEditor = forwardRef<SqlEditorRef, Props>(({
       if (editorContainer) {
         editorContainer.removeEventListener('wheel', handleWheel)
       }
-      // 清理定时器
-      if (fontSizeTimerRef.current) {
-        clearTimeout(fontSizeTimerRef.current)
-      }
-      if (fontSizeSaveTimerRef.current) {
-        clearTimeout(fontSizeSaveTimerRef.current)
-      }
+      if (fontSizeTimerRef.current) clearTimeout(fontSizeTimerRef.current)
+      if (fontSizeSaveTimerRef.current) clearTimeout(fontSizeSaveTimerRef.current)
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
       editor.destroy()
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 同步外部 value 变化
+  // 同步外部 value 变化（仅处理外部赋值，如历史记录插入，跳过用户输入触发的回环）
   useEffect(() => {
     const editor = aceEditorRef.current
-    if (editor && editor.getValue() !== value) {
+    if (editor && !isInternalChange.current && editor.getValue() !== value) {
       const cursorPos = editor.getCursorPosition()
       editor.setValue(value, 1)
       editor.moveCursorToPosition(cursorPos)

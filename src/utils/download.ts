@@ -103,22 +103,12 @@ function extractFilename(url: string, contentDisposition?: string | null): strin
 export async function downloadWithProgress(options: DownloadOptions): Promise<void> {
   const { url, filename, onProgress, onSuccess, onError } = options;
   
-  console.log('========== 下载调试信息 ==========');
-  console.log('下载 URL:', url);
-  console.log('指定文件名:', filename);
-  
   try {
     const response = await fetch(url);
     
     if (!response.ok) {
       throw new Error(`下载失败: ${response.status} ${response.statusText}`);
     }
-    
-    // 打印所有响应头
-    console.log('响应头:');
-    response.headers.forEach((value, key) => {
-      console.log(`  ${key}: ${value}`);
-    });
     
     const contentLength = response.headers.get('content-length');
     const total = contentLength ? parseInt(contentLength, 10) : 0;
@@ -169,23 +159,15 @@ export async function downloadWithProgress(options: DownloadOptions): Promise<vo
     const contentDisposition = response.headers.get('content-disposition');
     let finalFilename = filename || extractFilename(url, contentDisposition);
     
-    console.log('Content-Disposition:', contentDisposition);
-    console.log('从 extractFilename 提取的文件名:', finalFilename);
-    
     // 如果文件名包含路径，只保留文件名部分
     if (finalFilename.includes('/')) {
       const parts = finalFilename.split('/');
       finalFilename = parts[parts.length - 1];
-      console.log('去除路径后的文件名:', finalFilename);
     }
     if (finalFilename.includes('\\')) {
       const parts = finalFilename.split('\\');
       finalFilename = parts[parts.length - 1];
-      console.log('去除路径后的文件名:', finalFilename);
     }
-    
-    console.log('最终使用的文件名:', finalFilename);
-    console.log('====================================');
     
     // 创建下载链接
     const blobUrl = URL.createObjectURL(blob);

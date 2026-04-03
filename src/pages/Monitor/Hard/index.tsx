@@ -37,7 +37,6 @@ const HardwareMonitor = () => {
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
       eventSourceRef.current = null;
-      console.log('[硬件监控] SSE 连接已关闭');
     }
   };
 
@@ -128,7 +127,7 @@ const HardwareMonitor = () => {
       return;
     }
 
-    console.log('[硬件监控] 启动 SSE 连接');
+
     const eventSource = getMonitorMetricsSSE(
       {
         project: selectedProject,
@@ -213,7 +212,6 @@ const HardwareMonitor = () => {
   // 组件卸载时关闭 SSE
   useEffect(() => {
     return () => {
-      console.log('[硬件监控] 组件卸载，关闭 SSE');
       closeSSE();
     };
   }, []);

@@ -180,32 +180,14 @@ const SqlDatabi = () => {
     closeContextMenu();
     
     try {
-      console.log('=== 开始获取字段列表 ===');
-      console.log('项目:', currentProject);
-      console.log('表名:', fullTableName);
-      
       const res = await getDatabiColumnList(currentProject, fullTableName);
       
-      console.log('=== API 响应 ===');
-      console.log('完整响应:', res);
-      console.log('响应 code:', res.code);
-      console.log('响应 data:', res.data);
-      console.log('data 类型:', typeof res.data);
-      console.log('data 是否为数组:', Array.isArray(res.data));
-      
       if (res.code === 200 && res.data) {
-        console.log('=== 开始处理数据 ===');
-        console.log('原始数据长度:', res.data.length);
-        console.log('第一条数据:', res.data[0]);
-        
         const columnData = res.data.map(col => ({
           ...col,
           comment: col.comment || '',
           originalComment: col.comment || ''
         }));
-        
-        console.log('处理后数据长度:', columnData.length);
-        console.log('处理后第一条:', columnData[0]);
         
         setColumnDialog(prev => ({
           ...prev,
@@ -214,18 +196,11 @@ const SqlDatabi = () => {
           loading: false
         }));
       } else {
-        console.error('=== 响应异常 ===');
-        console.error('code:', res.code);
-        console.error('message:', res.message);
         toast.error(res.message || '获取字段列表失败');
         setColumnDialog(prev => ({ ...prev, loading: false }));
       }
     } catch (error) {
-      console.error('=== 捕获异常 ===');
-      console.error('错误类型:', error?.constructor?.name);
-      console.error('错误对象:', error);
-      console.error('错误消息:', error instanceof Error ? error.message : String(error));
-      console.error('错误堆栈:', error instanceof Error ? error.stack : '无堆栈');
+      console.error('获取字段列表失败:', error);
       toast.error('获取字段列表失败');
       setColumnDialog(prev => ({ ...prev, loading: false }));
     }

@@ -4,16 +4,16 @@
   line-height: 1.5;
   font-weight: 400;
 
-  /* 主题变量 - 亮色模式 */
-  --bg-color: #ffffff;           /* 主背景色（卡片、弹窗） */
-  --bg-secondary: #fafafa;       /* 次级背景（标签栏、表头） */
-  --bg-hover: #f5f5f5;           /* 悬停背景 */
-  --bg-page: #f0f2f5;            /* 页面底色 */
-  --text-color: #333333;         /* 主文字颜色 */
-  --text-secondary: #666666;     /* 次级文字（描述、标签） */
-  --text-muted: #999999;         /* 弱化文字（占位符、禁用） */
-  --border-color: #f0f0f0;       /* 边框颜色（浅） */
-  --border-color-dark: #d9d9d9;  /* 边框颜色（深） */
+  /* 主题变量 - 亮色模式（柔和灰色调） */
+  --bg-color: #f8f9fa;           /* 主背景色（卡片、弹窗）- 柔和灰白 */
+  --bg-secondary: #e9ecef;       /* 次级背景（标签栏、表头）- 浅灰 */
+  --bg-hover: #dee2e6;           /* 悬停背景 - 中浅灰 */
+  --bg-page: #e9ecef;            /* 页面底色 - 浅灰 */
+  --text-color: #2d3748;         /* 主文字颜色 - 深灰蓝 */
+  --text-secondary: #4a5568;     /* 次级文字（描述、标签）- 中灰 */
+  --text-muted: #718096;         /* 弱化文字（占位符、禁用）- 浅灰 */
+  --border-color: #dee2e6;       /* 边框颜色（浅）- 浅灰 */
+  --border-color-dark: #ced4da;  /* 边框颜色（深）- 中灰 */
   --primary-color: #667eea;      /* 主色调（按钮、链接） */
   --primary-hover: #764ba2;      /* 主色调悬停 */
   --danger-color: #ff4d4f;       /* 危险色（删除、错误） */
@@ -37,17 +37,17 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* 暗色模式 */
+/* 暗色模式（柔和深灰调） */
 :root.dark {
-  --bg-color: #1f1f1f;           /* 主背景色（卡片、弹窗） */
-  --bg-secondary: #2a2a2a;       /* 次级背景（标签栏、表头） */
-  --bg-hover: #333333;           /* 悬停背景 */
-  --bg-page: #141414;            /* 页面底色 */
-  --text-color: #e5e5e5;         /* 主文字颜色 */
-  --text-secondary: #a0a0a0;     /* 次级文字（描述、标签） */
-  --text-muted: #666666;         /* 弱化文字（占位符、禁用） */
-  --border-color: #333333;       /* 边框颜色（浅） */
-  --border-color-dark: #444444;  /* 边框颜色（深） */
+  --bg-color: #2d3748;           /* 主背景色（卡片、弹窗）- 深灰蓝 */
+  --bg-secondary: #1a202c;       /* 次级背景（标签栏、表头）- 更深灰 */
+  --bg-hover: #4a5568;           /* 悬停背景 - 中灰 */
+  --bg-page: #1a202c;            /* 页面底色 - 深灰蓝 */
+  --text-color: #e2e8f0;         /* 主文字颜色 - 浅灰白 */
+  --text-secondary: #a0aec0;     /* 次级文字（描述、标签）- 中浅灰 */
+  --text-muted: #718096;         /* 弱化文字（占位符、禁用）- 中灰 */
+  --border-color: #4a5568;       /* 边框颜色（浅）- 中灰 */
+  --border-color-dark: #2d3748;  /* 边框颜色（深）- 深灰 */
   --primary-color: #818cf8;      /* 主色调（按钮、链接） */
   --primary-hover: #a78bfa;      /* 主色调悬停 */
   --danger-color: #a61d24;       /* 危险色（删除、错误） */

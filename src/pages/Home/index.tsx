@@ -55,7 +55,6 @@ const Home = () => {
 
     // 如果有保存的路由且不是当前路由，则跳转
     if (lastRoute && lastRoute !== location.pathname && lastRoute !== '/') {
-      console.log('恢复到最后访问的页面:', lastRoute);
       navigate(lastRoute, { replace: true });
     }
   }, [_hasHydrated, lastRoute, location.pathname, navigate]);

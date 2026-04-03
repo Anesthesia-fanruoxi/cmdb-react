@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { Search, RefreshCw, Loader2 } from 'lucide-react';
 import { getKeyAuditLog } from '../../../services/audit/audit';
 import toast from '../../../components/Toast';
+import AuditDateRangePicker from '../components/AuditDateRangePicker';
 import './index.css';
 
 interface LogItem {
@@ -107,9 +108,10 @@ const AuditKey = () => {
             <option value="success">成功</option>
             <option value="failed">失败</option>
           </select>
-          <input type="datetime-local" value={startTime.slice(0, 16)} onChange={e => setStartTime(e.target.value + ':00+08:00')} className="search-input datetime" />
-          <span className="date-sep">至</span>
-          <input type="datetime-local" value={endTime.slice(0, 16)} onChange={e => setEndTime(e.target.value + ':59+08:00')} className="search-input datetime" />
+          <AuditDateRangePicker
+            value={{ start: startTime, end: endTime }}
+            onChange={(start, end) => { setStartTime(start); setEndTime(end); }}
+          />
           <button className="btn-primary" onClick={handleSearch}><Search size={14} /> 搜索</button>
           <button className="btn-default" onClick={handleReset}><RefreshCw size={14} /> 重置</button>
         </div>

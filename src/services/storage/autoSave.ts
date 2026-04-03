@@ -136,8 +136,6 @@ export async function startAutoSave(): Promise<void> {
   } catch (e) {
     console.warn('[AutoSave] 注册窗口关闭事件失败:', e);
   }
-  
-  // console.log('[AutoSave] 自动保存已启动');
 }
 
 /**
@@ -165,5 +163,4 @@ export function stopAutoSave(): void {
   }
   
   isInitialized = false;
-  console.log('[AutoSave] 自动保存已停止');
 }

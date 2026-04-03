@@ -32,6 +32,8 @@ const TagsView = ({ collapsed, onToggleCollapse }: TagsViewProps) => {
     tag: TagView | null;
   }>({ visible: false, x: 0, y: 0, tag: null });
 
+
+
   // 根据路径查找菜单标题
   const findMenuTitle = (path: string): string => {
     if (path === '/' || path === '/dashboard') return '首页';
@@ -55,9 +57,8 @@ const TagsView = ({ collapsed, onToggleCollapse }: TagsViewProps) => {
     if (path === '/login') return;
     if (path === '/') path = '/dashboard';
     
-    const exists = visitedViews.some(v => v.path === path);
-    if (exists) return;
-    
+    // 使用 ref 来追踪当前路径，避免闭包问题
+    // 同时利用 addVisitedView 内部的去重检查
     const title = findMenuTitle(path);
     addVisitedView({
       path,
@@ -65,7 +66,8 @@ const TagsView = ({ collapsed, onToggleCollapse }: TagsViewProps) => {
       title,
       meta: { title, affix: path === '/dashboard' },
     });
-  }, [location.pathname, menuList, addVisitedView, visitedViews]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
 
   // 拖拽开始
   const handleDragStart = (e: React.DragEvent, index: number) => {
@@ -111,44 +113,35 @@ const TagsView = ({ collapsed, onToggleCollapse }: TagsViewProps) => {
 
   // 关闭标签
   const handleClose = (e: React.MouseEvent, tag: TagView) => {
-    console.log('[TagsView] 关闭标签被点击:', tag.path);
     e.stopPropagation();
     if (tag.meta?.affix) {
-      console.log('[TagsView] 标签是固定的，无法关闭');
       return;
     }
 
-    console.log('[TagsView] 当前路径:', location.pathname);
-    console.log('[TagsView] 当前标签数量:', visitedViews.length);
-
     if (tag.path === location.pathname) {
       const index = visitedViews.findIndex(v => v.path === tag.path);
-      console.log('[TagsView] 当前标签索引:', index);
       
       // 优先显示右边的标签，如果是最后一个则显示左边的
       let nextTag: TagView | undefined;
       if (index < visitedViews.length - 1) {
         // 不是最后一个，显示右边的
         nextTag = visitedViews[index + 1];
-        console.log('[TagsView] 显示右边的标签:', nextTag?.path);
       } else if (index > 0) {
         // 是最后一个，显示左边的
         nextTag = visitedViews[index - 1];
-        console.log('[TagsView] 显示左边的标签:', nextTag?.path);
       }
       
-      // 先删除标签
-      console.log('[TagsView] 执行删除操作');
-      delVisitedView(tag);
-      
-      // 再跳转到下一个标签
+      // 先跳转到下一个标签，再删除当前标签
+      // 这样可以避免 useEffect 在删除后重新添加当前路径
       if (nextTag) {
         navigate(nextTag.path);
       } else {
         navigate('/dashboard');
       }
+      
+      // 导航后再删除标签
+      delVisitedView(tag);
     } else {
-      console.log('[TagsView] 关闭非当前标签');
       delVisitedView(tag);
     }
   };

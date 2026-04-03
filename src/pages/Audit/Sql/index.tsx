@@ -8,6 +8,7 @@ import { getSqlLog, getSqlDetail } from '../../../services/audit/audit';
 import { getDictDetail } from '../../../services/system/dict';
 import toast from '../../../components/Toast';
 import SqlDetailDialog from './components/SqlDetailDialog';
+import AuditDateRangePicker from '../components/AuditDateRangePicker';
 import './index.css';
 
 interface LogItem {
@@ -95,6 +96,14 @@ const AuditSql = () => {
     setPage(1); 
     fetchListWithParams(startTime, endTime, 1); 
   };
+  
+  // 支持回车键搜索
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+  
   const handleReset = () => {
     setProject(''); setQueryId(''); setUserName('');
     const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -124,15 +133,16 @@ const AuditSql = () => {
     <div className="audit-sql-page">
       <div className="page-card">
         <div className="search-bar">
-          <select value={project} onChange={e => setProject(e.target.value)} className="search-select">
+          <select value={project} onChange={e => setProject(e.target.value)} className="search-select" onKeyPress={handleKeyPress}>
             <option value="">选择项目</option>
             {projects.map(p => <option key={p.key} value={p.key}>{p.value}</option>)}
           </select>
-          <input type="text" value={queryId} onChange={e => setQueryId(e.target.value)} placeholder="查询ID" className="search-input" />
-          <input type="text" value={userName} onChange={e => setUserName(e.target.value)} placeholder="用户名" className="search-input" />
-          <input type="datetime-local" value={startTime.replace(' ', 'T').slice(0, 16)} onChange={e => setStartTime(e.target.value.replace('T', ' ') + ':00')} className="search-input datetime" />
-          <span className="date-sep">至</span>
-          <input type="datetime-local" value={endTime.replace(' ', 'T').slice(0, 16)} onChange={e => setEndTime(e.target.value.replace('T', ' ') + ':59')} className="search-input datetime" />
+          <input type="text" value={queryId} onChange={e => setQueryId(e.target.value)} placeholder="查询ID" className="search-input" onKeyPress={handleKeyPress} />
+          <input type="text" value={userName} onChange={e => setUserName(e.target.value)} placeholder="用户名" className="search-input" onKeyPress={handleKeyPress} />
+          <AuditDateRangePicker
+            value={{ start: startTime, end: endTime }}
+            onChange={(start, end) => { setStartTime(start); setEndTime(end); }}
+          />
           <button className="btn-primary" onClick={handleSearch}><Search size={14} /> 查询</button>
           <button className="btn-default" onClick={handleReset}><RefreshCw size={14} /> 重置</button>
         </div>

@@ -8,6 +8,7 @@ import { getSearchLog, getSearchDetail } from '../../../services/audit/audit';
 import { getDictDetail } from '../../../services/system/dict';
 import toast from '../../../components/Toast';
 import DetailDialog from './components/DetailDialog';
+import AuditDateRangePicker from '../components/AuditDateRangePicker';
 import './index.css';
 
 interface LogItem {
@@ -135,9 +136,10 @@ const AuditSearch = () => {
           </select>
           <input type="text" value={queryId} onChange={e => setQueryId(e.target.value)} placeholder="查询ID" className="search-input" />
           <input type="text" value={userName} onChange={e => setUserName(e.target.value)} placeholder="用户名" className="search-input" />
-          <input type="datetime-local" value={startTime.replace(' ', 'T').slice(0, 16)} onChange={e => setStartTime(e.target.value.replace('T', ' ') + ':00')} className="search-input datetime" />
-          <span className="date-sep">至</span>
-          <input type="datetime-local" value={endTime.replace(' ', 'T').slice(0, 16)} onChange={e => setEndTime(e.target.value.replace('T', ' ') + ':59')} className="search-input datetime" />
+          <AuditDateRangePicker
+            value={{ start: startTime, end: endTime }}
+            onChange={(start, end) => { setStartTime(start); setEndTime(end); }}
+          />
           <button className="btn-primary" onClick={handleSearch}><Search size={14} /> 查询</button>
           <button className="btn-default" onClick={handleReset}><RefreshCw size={14} /> 重置</button>
         </div>

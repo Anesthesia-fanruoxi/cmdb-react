@@ -2,7 +2,7 @@
  * SQL工作区组件 - 包含编辑器和结果面板
  */
 
-import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo, memo } from 'react';
 import SqlEditor, { type SqlEditorRef } from './SqlEditor';
 import ResultPanel from './ResultPanel';
 import { getTableStructure } from '@/services/sql/search';
@@ -84,6 +84,14 @@ const SqlWorkspace = ({
   tableList = [],
   project = ''
 }: Props) => {
+  // 用 ref 持有最新回调，避免 memo 因回调引用变化而失效
+  const onSqlChangeRef = useRef(onSqlChange);
+  onSqlChangeRef.current = onSqlChange;
+  const stableSqlChange = useCallback((sql: string) => onSqlChangeRef.current(sql), []);
+
+  const onExecuteRef = useRef(onExecute);
+  onExecuteRef.current = onExecute;
+
   // 从用户偏好获取编辑器高度百分比
   const { uiPrefs, setUiPref, _hasHydrated } = useUserPrefsStore();
   const [editorHeightPercent, setEditorHeightPercent] = useState(50); // 默认50%
@@ -190,14 +198,14 @@ const SqlWorkspace = ({
     return null;
   }, [project, dbName]);
 
-  // 执行 SQL - 使用编辑器的选中文本
+  // 执行 SQL - 从编辑器直接取最新值，不依赖 React 状态（避免防抖延迟导致执行旧 SQL）
   const handleExecute = useCallback(() => {
-    const selectedText = sqlEditorRef.current?.getSelectedText()?.trim();
-    const isSelection = !!selectedText;
-    const sqlToExecute = selectedText || sql;
-    setIsExecuting(true);  // 开始执行，启动计时器
-    onExecute(sqlToExecute, isSelection);
-  }, [sql, onExecute]);
+    const selectedText = sqlEditorRef.current?.getSelectedText()?.trim()
+    const isSelection = !!selectedText
+    const sqlToExecute = selectedText || sqlEditorRef.current?.getValue() || sql
+    setIsExecuting(true)
+    onExecuteRef.current(sqlToExecute, isSelection)
+  }, [sql])
 
   // 格式化 SQL
   const handleFormat = useCallback(() => {
@@ -296,7 +304,7 @@ const SqlWorkspace = ({
           <button className="btn btn-default" onClick={handleReplace} disabled={!sql.trim()}>
             替换
           </button>
-          <button className="btn btn-default" onClick={() => onSqlChange('')} disabled={!sql}>
+          <button className="btn btn-default" onClick={() => stableSqlChange('')} disabled={!sql}>
             清空
           </button>
         </div>
@@ -311,7 +319,7 @@ const SqlWorkspace = ({
         <SqlEditor
           ref={sqlEditorRef}
           value={sql}
-          onChange={onSqlChange}
+          onChange={stableSqlChange}
           onExecute={handleExecute}
           onNewTab={onNewTab}
           onShowHistory={onShowHistory}
@@ -366,4 +374,4 @@ const SqlWorkspace = ({
   );
 };
 
-export default SqlWorkspace;
+export default memo(SqlWorkspace);

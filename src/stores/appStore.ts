@@ -129,6 +129,26 @@ export const useAppStore = create<AppState>()((set, get) => ({
   toggleTheme: () => {
     const newTheme = get().theme === 'light' ? 'dark' : 'light';
     get().setTheme(newTheme);
+    
+    // 保存主题到用户偏好设置
+    import('../stores/authStore').then(({ useAuthStore }) => {
+      const userName = useAuthStore.getState().userName;
+      if (userName) {
+        // 已登录 - 保存到用户偏好
+        import('../services/storage').then(({ updatePreferences }) => {
+          updatePreferences(userName, { theme: newTheme }).catch(err => {
+            console.error('保存用户主题失败:', err);
+          });
+        });
+      } else {
+        // 未登录 - 保存到公共配置
+        import('../services/storage').then(({ setDefaultTheme }) => {
+          setDefaultTheme(newTheme).catch(err => {
+            console.error('保存默认主题失败:', err);
+          });
+        });
+      }
+    });
   },
 
   // 初始化主题（从存储读取）

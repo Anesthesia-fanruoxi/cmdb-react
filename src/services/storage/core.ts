@@ -96,14 +96,12 @@ async function encryptAndSave(file: StorageFile, data: Record<string, unknown>):
   }
 
   try {
-    // console.log(`[Storage] 保存 ${file}:`, data);
     const store = await loadStoreFile(file);
     const jsonStr = JSON.stringify(data);
     const encrypted = await encryptData(jsonStr);
     
     await store.set('data', encrypted);
     await store.save();
-    // console.log(`[Storage] ${file} 保存成功`);
   } catch (error) {
     console.error(`保存 ${file} 失败:`, error);
     throw error;

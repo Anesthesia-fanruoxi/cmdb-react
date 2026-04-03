@@ -8,6 +8,7 @@ import { getAuditAnalysis } from '../../../services/audit/audit';
 import toast from '../../../components/Toast';
 import HourlyDrawer from './components/HourlyDrawer';
 import PageDetailDialog from './components/PageDetailDialog';
+import AuditDateRangePicker from '../components/AuditDateRangePicker';
 import './index.css';
 
 interface StatsItem { 
@@ -149,9 +150,13 @@ const AuditAnalysis = () => {
   return (
     <div className="audit-analysis-page">
       <div className="search-card">
-        <input type="datetime-local" value={startTime.replace(' ', 'T').slice(0, 16)} onChange={e => setStartTime(e.target.value.replace('T', ' ') + ':00')} className="search-input" />
-        <span className="date-sep">至</span>
-        <input type="datetime-local" value={endTime.replace(' ', 'T').slice(0, 16)} onChange={e => setEndTime(e.target.value.replace('T', ' ') + ':59')} className="search-input" />
+        <AuditDateRangePicker
+          value={{ start: startTime, end: endTime }}
+          onChange={(start, end) => {
+            setStartTime(start);
+            setEndTime(end);
+          }}
+        />
         <button className="btn-primary" onClick={handleSearch}><Search size={14} /> 搜索</button>
         <button className="btn-default" onClick={handleReset}><RefreshCw size={14} /> 重置</button>
       </div>

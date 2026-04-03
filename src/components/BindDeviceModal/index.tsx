@@ -85,13 +85,11 @@ const BindDeviceModal = ({ visible, onClose, onSuccess }: BindDeviceModalProps) 
       return;
     }
 
-    console.log('[BindDevice] 开始绑定设备');
     setLoading(true);
     setError('');
 
     try {
       await bindDevice(totpCode);
-      console.log('[BindDevice] 绑定成功');
       onSuccess();
       onClose();
     } catch (err) {

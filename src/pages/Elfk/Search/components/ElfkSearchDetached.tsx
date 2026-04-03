@@ -58,7 +58,6 @@ const ElfkSearchDetached = ({ initialTab }: Props) => {
       existing.tabs.push(stateToSave);
     }
     setPageState(DETACHED_KEY, existing);
-    console.log('[ElfkDetached] 保存状态:', tab.name);
   }, [tab, setPageState, getPageState]);
 
   // 定时保存 + 窗口关闭前保存
@@ -69,7 +68,6 @@ const ElfkSearchDetached = ({ initialTab }: Props) => {
     // 窗口关闭前保存
     const currentWindow = getCurrentWebviewWindow();
     const unlisten = currentWindow.onCloseRequested(() => {
-      console.log('[ElfkDetached] 窗口关闭，保存状态');
       saveDetachedState();
       // 同步执行，不阻止关闭
     });

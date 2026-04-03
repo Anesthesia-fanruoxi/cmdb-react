@@ -14,22 +14,50 @@
 .main-content {
   flex: 1;
   display: flex;
-  gap: 16px;
   padding: 16px;
+  gap: 0;
   min-height: 0;
   overflow: hidden;
 }
 
 /* 左侧边栏 */
 .sidebar {
-  width: 350px;
   flex-shrink: 0;
   background: var(--bg-color);
-  border-radius: 8px;
+  border-radius: 8px 0 0 8px;
   border: 1px solid var(--border-color);
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-width: 180px;
+  max-width: 600px;
+}
+
+/* sidebar 拖拽分隔条 */
+.sidebar-resize-handle {
+  width: 6px;
+  flex-shrink: 0;
+  cursor: col-resize;
+  background: transparent;
+  position: relative;
+  z-index: 10;
+  transition: background 0.15s;
+}
+.sidebar-resize-handle::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 2px;
+  width: 2px;
+  background: var(--border-color);
+  border-radius: 1px;
+  transition: background 0.15s, width 0.15s, left 0.15s;
+}
+.sidebar-resize-handle:hover::after,
+.sidebar-resize-handle:active::after {
+  left: 1px;
+  width: 4px;
+  background: var(--primary-color);
 }
 
 /* 右侧内容 */
@@ -40,8 +68,9 @@
   min-width: 0;
   overflow: hidden;
   background: var(--bg-color);
-  border-radius: 8px;
+  border-radius: 0 8px 8px 0;
   border: 1px solid var(--border-color);
+  border-left: none;
 }
 
 /* SQL工作区 */

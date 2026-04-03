@@ -45,6 +45,7 @@ interface MenuState {
   addCachedView: (name: string) => void;
   delCachedView: (name: string) => void;
   reorderViews: (fromIndex: number, toIndex: number) => void;
+  clearVisitedViews: () => void;
 
   // 状态恢复（由 authStore 调用）
   restoreState: (state: { visitedViews?: TagView[]; cachedViews?: string[]; collapsed?: boolean }) => void;
@@ -137,17 +138,27 @@ export const useMenuStore = create<MenuState>()((set, get) => ({
     });
   },
 
+  // 清空 visitedViews（用于恢复状态时）
+  clearVisitedViews: () => {
+    set({ visitedViews: [] });
+    markDirty();
+  },
+
   addVisitedView: (view) => {
-    set((state) => {
-      const normalizedPath = view.path === '/' ? '/dashboard' : view.path;
-      const normalizedView = { ...view, path: normalizedPath };
-      
-      if (state.visitedViews.some((v) => v.path === normalizedPath)) {
-        return state;
-      }
-      markDirty();
-      return { visitedViews: [...state.visitedViews, normalizedView] };
-    });
+    // 使用 get() 获取最新状态，避免闭包问题
+    const currentViews = get().visitedViews;
+    const normalizedPath = view.path === '/' ? '/dashboard' : view.path;
+    
+    // 检查是否已存在
+    if (currentViews.some((v) => v.path === normalizedPath)) {
+      return;
+    }
+    
+    const normalizedView = { ...view, path: normalizedPath };
+    set((state) => ({
+      visitedViews: [...state.visitedViews, normalizedView],
+    }));
+    markDirty();
 
     if (!view.meta?.noCache) {
       get().addCachedView(view.name);
@@ -155,11 +166,8 @@ export const useMenuStore = create<MenuState>()((set, get) => ({
   },
 
   delVisitedView: (view) => {
-    console.log('[MenuStore] delVisitedView 被调用:', view.path);
     set((state) => {
       const newViews = state.visitedViews.filter((v) => v.path !== view.path);
-      console.log('[MenuStore] 删除前标签数量:', state.visitedViews.length);
-      console.log('[MenuStore] 删除后标签数量:', newViews.length);
       return { visitedViews: newViews };
     });
     get().delCachedView(view.name);

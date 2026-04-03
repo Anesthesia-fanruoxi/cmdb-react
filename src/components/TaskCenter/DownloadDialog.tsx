@@ -96,8 +96,6 @@ const DownloadDialog = ({ visible, downloadUrl, taskType, taskId, onClose }: Dow
     const id = taskId || 'unknown';
     const filename = `${type}-${id}-${timestamp}.xlsx`;
     
-    console.log('生成的文件名:', filename);
-    
     // 立即关闭对话框
     onClose();
     
@@ -176,7 +174,6 @@ const DownloadDialog = ({ visible, downloadUrl, taskType, taskId, onClose }: Dow
     }
     
     try {
-      console.log('打开下载目录:', downloadDir);
       await openFolder(downloadDir);
     } catch (error) {
       console.error('打开文件夹失败:', error);
@@ -198,7 +195,6 @@ const DownloadDialog = ({ visible, downloadUrl, taskType, taskId, onClose }: Dow
         filePath = downloadResult.filePath;
       }
       
-      console.log('在文件夹中显示，路径:', filePath);
       await showInFolder(filePath);
     } catch (error) {
       console.error('在文件夹中显示失败:', error);
@@ -220,7 +216,6 @@ const DownloadDialog = ({ visible, downloadUrl, taskType, taskId, onClose }: Dow
         filePath = downloadResult.filePath;
       }
       
-      console.log('打开文件，路径:', filePath);
       await openFile(filePath);
     } catch (error) {
       console.error('打开文件失败:', error);

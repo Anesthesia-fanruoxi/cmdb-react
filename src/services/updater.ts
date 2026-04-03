@@ -93,7 +93,6 @@ const cleanUpdateDir = async (): Promise<void> => {
   try {
     await invoke('clean_update_dir');
     await clearUpdateInfo();
-    console.log('[更新] 已清理下载目录');
   } catch (e) {
     console.error('[更新] 清理下载目录失败:', e);
   }
@@ -106,7 +105,6 @@ export const cleanupOldUpdate = async (): Promise<void> => {
     const update = getUpdateInfo();
     
     if (update.downloadedVersion && update.downloadedVersion === appVersion) {
-      console.log('[更新] 检测到已完成更新，清理下载目录');
       await cleanUpdateDir();
     }
   } catch (e) {
@@ -120,7 +118,6 @@ export const saveInstallPath = async (): Promise<void> => {
     const path = await invoke<string>('get_exe_path');
     if (path) {
       await setInstallPath(path);
-      console.log('[更新] 已保存安装路径:', path);
     }
   } catch (e) {
     console.error('[更新] 保存安装路径失败:', e);
@@ -143,15 +140,11 @@ export const checkAndDownloadUpdate = async (): Promise<UpdateInfo | null> => {
     const remoteInfo = await fetchLatestVersion();
     
     if (!remoteInfo) {
-      console.log('[更新] 无法获取版本信息');
       return null;
     }
     
-    console.log(`[更新] 当前版本: ${appVersion}, 最新版本: ${remoteInfo.version}`);
-    
     // 2. 检查是否有新版本
     if (!isNewerVersion(appVersion, remoteInfo.version)) {
-      console.log('[更新] 已是最新版本');
       return null;
     }
     
@@ -163,7 +156,6 @@ export const checkAndDownloadUpdate = async (): Promise<UpdateInfo | null> => {
     ) {
       // 调用后端准备更新（会检查 MSI 并生成脚本）
       const msiPath = await prepareUpdateFile(remoteInfo.version, remoteInfo.changelog);
-      console.log('[更新] 更新准备完成:', msiPath);
       return {
         ...update,
         downloadedPath: msiPath,
@@ -173,7 +165,6 @@ export const checkAndDownloadUpdate = async (): Promise<UpdateInfo | null> => {
     }
     
     // 4. 开始下载（或使用已存在的 MSI）
-    console.log(`[更新] 发现新版本 ${remoteInfo.version}，准备更新...`);
     await saveUpdateInfo({
       latestVersion: remoteInfo.version,
       changelog: remoteInfo.changelog,
@@ -195,7 +186,6 @@ export const checkAndDownloadUpdate = async (): Promise<UpdateInfo | null> => {
     };
     
     await saveUpdateInfo(newUpdate);
-    console.log(`[更新] 下载完成: ${filePath}`);
     
     return getUpdateInfo();
   } catch (e) {

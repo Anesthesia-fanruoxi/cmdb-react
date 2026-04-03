@@ -158,22 +158,15 @@ export const getMonitorMetricsSSE = (
   const queryParams = new URLSearchParams(queryObj);
   const url = `${baseUrl}/monitor/metrics/list?${queryParams.toString()}`;
   
-  console.log('[SSE] 连接地址:', url);
   const eventSource = new EventSource(url);
-  
-  eventSource.addEventListener('connected', () => {
-    console.log('[SSE] 监控数据流已连接');
-  });
   
   eventSource.addEventListener('data', (event) => {
     try {
       const response = JSON.parse(event.data);
-      console.log('[SSE] 收到原始响应:', response);
       
       // 如果响应有 data 字段，说明是包装过的数据
       const data = response.data || response;
       
-      console.log('[SSE] 解析后的数据:', data);
       if (Array.isArray(data)) {
         onMessage(data);
       } else {

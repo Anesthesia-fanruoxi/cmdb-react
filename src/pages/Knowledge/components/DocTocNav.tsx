@@ -41,12 +41,10 @@ const DocTocNav = ({ content, contentSelector = '.markdown-content', containerSe
   const addIdsToHeadings = useCallback((parsedHeadings: Heading[]) => {
     const container = document.querySelector(contentSelector);
     if (!container || !parsedHeadings.length) {
-      console.log('Container not found or no headings:', contentSelector);
       return false;
     }
     const headingElements = container.querySelectorAll('h1, h2, h3, h4, h5, h6');
     if (headingElements.length === 0) {
-      console.log('No heading elements found in container');
       return false;
     }
     headingElements.forEach((el, index) => {
@@ -54,7 +52,6 @@ const DocTocNav = ({ content, contentSelector = '.markdown-content', containerSe
         el.id = parsedHeadings[index].id;
       }
     });
-    console.log('Added IDs to', headingElements.length, 'headings');
     return true;
   }, [contentSelector]);
 
@@ -62,7 +59,6 @@ const DocTocNav = ({ content, contentSelector = '.markdown-content', containerSe
   const scrollToHeading = useCallback((id: string) => {
     const element = document.getElementById(id);
     if (!element) {
-      console.log('Element not found:', id);
       return;
     }
     

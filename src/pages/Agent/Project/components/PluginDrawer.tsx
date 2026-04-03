@@ -54,10 +54,8 @@ const PluginDrawer = ({ visible, project, detail, loading, onClose, onRefresh }:
     if (action === 'uninstall' && !confirm(`确定要卸载插件 "${plugin.name}" 吗？`)) return;
 
     setOperating(`${plugin.name}-${action}`);
-    console.log('操作插件:', { project: project.project, name: plugin.name, action });
     try {
       const res = await operatePlugin({ project: project.project, name: plugin.name, action });
-      console.log('操作结果:', res);
       if (res.code === 200) {
         toast.success(`${actionText[action]}成功`);
         onRefresh();

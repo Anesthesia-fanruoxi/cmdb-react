@@ -24,7 +24,7 @@ import './App.css';
 
 function App() {
   const { isAuthenticated, initFromStorage, userName } = useAuthStore();
-  const { initTheme, theme, setTheme } = useAppStore();
+  const { theme, setTheme } = useAppStore();
   const initRef = useRef(false);
   
   const [ready, setReady] = useState(false);
@@ -133,18 +133,12 @@ function App() {
     if (initRef.current) return;
     initRef.current = true;
 
-    const startup = async () => {
+const startup = async () => {
       const params = new URLSearchParams(window.location.search);
       const from = params.get('from');
       const clear = params.get('clear');
       const isDetached = window.location.pathname === '/detached';
-      
-      console.log('[App] 启动检测:', { 
-        pathname: window.location.pathname, 
-        isDetached, 
-        from, 
-        clear 
-      });
+
       
       if (from || clear) {
         window.history.replaceState({}, '', window.location.pathname);
@@ -152,9 +146,7 @@ function App() {
       
       // 独立窗口 - 快速初始化
       if (isDetached) {
-        console.log('[App] 独立窗口模式，跳过动画');
         initSecurity();
-        initTheme();
         await initFromStorage();
         setReady(true);
         return;
@@ -200,13 +192,9 @@ function App() {
 
       // ========== 登录成功 - 直接播放 login 动画（跳过 init）==========
       if (from === 'login') {
-        console.log('[App] 检测到 from=login，跳过 init 动画');
-        
-        // 从 URL 读取主题
-        const themeParam = params.get('theme') as 'light' | 'dark' | null;
-        if (themeParam) {
-          setTheme(themeParam);
-        }
+
+        // 不再从 URL 读取主题，让 initFromStorage 从用户偏好恢复
+        // 主题由用户在应用中切换，保存到 preferences.dat
         
         // 设置 flowType 为 login
         setFlowType('login');
@@ -238,13 +226,11 @@ function App() {
       }
 
       // ========== 场景1：初始化（首次启动）==========
-      console.log('[App] 执行 init 动画，from:', from);
+
       await runFlow('init', [
         async () => {
-          // 读取主题
+          // 初始化存储
           await initAllStorage();
-          const defaultTheme = getDefaultTheme();
-          setTheme(defaultTheme);
           
           // 读取登录历史（Rust 后端）
           if (isTauriEnv()) {
@@ -263,7 +249,7 @@ function App() {
           }
         },
         async () => {
-          // 准备就绪 - 初始化存储
+          // 准备就绪 - 初始化存储并恢复用户数据（包括主题）
           await initFromStorage();
         },
       ]);
@@ -292,6 +278,9 @@ function App() {
 
       // ========== 场景2：Token 自动登录 ==========
       if (hasToken) {
+        // 恢复用户数据（包括主题）
+        await initFromStorage();
+        
         await runFlow('token', [
           async () => {},
           async () => {
@@ -310,7 +299,7 @@ function App() {
     };
 
     startup();
-  }, [initFromStorage, initTheme, setTheme]);
+  }, [initFromStorage, setTheme]);
 
   const router = useMemo(
     () => createAppRouter(isAuthenticated),

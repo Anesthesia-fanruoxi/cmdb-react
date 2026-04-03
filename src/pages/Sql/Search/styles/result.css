@@ -97,12 +97,55 @@
 }
 .result-table tbody tr:hover { background: var(--bg-hover); }
 
+/* 亮色主题：淡紫高亮（fallback，实际由 inline style 控制） */
+.result-table tbody tr.row-selected { background: rgba(139, 92, 246, 0.18); }
+.result-table tbody tr.row-selected .row-num { font-weight: 600; }
+
+/* 暗色主题 fallback */
+.dark .result-table tbody tr.row-selected { background: rgba(139, 92, 246, 0.22); }
+.dark .result-table tbody tr.row-selected .row-num { font-weight: 600; }
+
+/* 颜色选取器 */
+.row-highlight-picker {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.highlight-color-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--border-color);
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s;
+  flex-shrink: 0;
+}
+.highlight-color-dot:hover {
+  border-color: var(--primary-color);
+  transform: scale(1.15);
+}
+.highlight-color-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .row-num {
   width: 50px;
   text-align: center !important;
   color: var(--text-muted);
   background: var(--bg-secondary);
   padding: 5px 8px !important;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+
+/* 左上角 th.row-num 同时 sticky top + left */
+.result-table th.row-num {
+  z-index: 3;
 }
 
 .result-footer {

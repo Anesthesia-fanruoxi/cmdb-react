@@ -47,7 +47,9 @@ export interface UiPrefs {
   tablePageSize: number;
   codeEditorFontSize: number;
   sqlEditorHeight: number;
-  sqlEditorHeightPercent: number; // 新增：编辑器高度百分比
+  sqlEditorHeightPercent: number; // 编辑器高度百分比
+  sqlSidebarWidth: number; // SQL 左侧 TableTree 宽度（px）
+  sqlRowHighlightColor: string; // 查询结果选中行高亮颜色
 }
 
 /** 默认值 */
@@ -85,9 +87,11 @@ const DEFAULT_ES_PREFS: EsSearchPrefs = {
 const DEFAULT_UI_PREFS: UiPrefs = {
   sidebarCollapsed: false,
   tablePageSize: 20,
-  codeEditorFontSize: 16, // 默认16px
+  codeEditorFontSize: 16,
   sqlEditorHeight: 200,
-  sqlEditorHeightPercent: 50, // 默认50%
+  sqlEditorHeightPercent: 50,
+  sqlSidebarWidth: 260,
+  sqlRowHighlightColor: '#8b5cf6',
 };
 
 interface UserPrefsState {
@@ -105,7 +109,7 @@ interface UserPrefsState {
   setMonitorDefault: (key: keyof MonitorDefaults, value: number | string) => void;
   addRecentSearch: (search: string) => void;
   clearRecentSearches: () => void;
-  setUiPref: (key: keyof UiPrefs, value: boolean | number) => void;
+  setUiPref: (key: keyof UiPrefs, value: boolean | number | string) => void;
   restorePrefs: (prefs: Partial<UserPrefsState>) => void;
   reset: () => void;
   getPrefsForSave: () => Partial<UserPrefsState>;
@@ -169,7 +173,7 @@ export const useUserPrefsStore = create<UserPrefsState>()((set) => ({
     markDirty();
   },
 
-  setUiPref: (key, value) => {
+  setUiPref: (key: keyof UiPrefs, value: boolean | number | string) => {
     set((state) => ({
       uiPrefs: { ...state.uiPrefs, [key]: value },
     }));

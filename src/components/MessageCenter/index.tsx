@@ -45,15 +45,6 @@ const MessageCenter = ({ visible: externalVisible, onClose }: MessageCenterProps
   const isDrawerMode = onClose !== undefined;
   const visible = isDrawerMode ? externalVisible : internalVisible;
 
-  // 调试信息
-  useEffect(() => {
-    if (visible) {
-      console.log('[MessageCenter] 显示模式:', isDrawerMode ? '抽屉模式' : '下拉模式');
-      console.log('[MessageCenter] visible:', visible);
-      console.log('[MessageCenter] onClose:', onClose);
-    }
-  }, [visible, isDrawerMode, onClose]);
-
   useEffect(() => { rehydrate(); }, []);
 
   // 点击外部关闭（仅下拉模式）

@@ -71,10 +71,12 @@ const SqlDetailDialog = ({ visible, data, operations, onClose }: Props) => {
         </div>
       </div>
       <style>{`
-        .sql-detail-dialog { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 800px; max-width: 90%; max-height: 80vh; background: var(--bg-color); border-radius: 8px; z-index: 1101; display: flex; flex-direction: column; }
-        .dialog-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
-        .dialog-header h3 { margin: 0; font-size: 16px; color: var(--text-color); }
-        .dialog-close { background: none; border: none; cursor: pointer; color: var(--text-secondary); }
+        .dialog-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.6); z-index: 1100; backdrop-filter: blur(2px); }
+        .sql-detail-dialog { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 800px; max-width: 90%; max-height: 80vh; background: var(--bg-color); border-radius: 8px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); border: 1px solid var(--border-color); z-index: 1101; display: flex; flex-direction: column; }
+        .dialog-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); background: var(--bg-secondary); }
+        .dialog-header h3 { margin: 0; font-size: 16px; font-weight: 600; color: var(--text-color); }
+        .dialog-close { background: none; border: none; cursor: pointer; color: var(--text-secondary); padding: 4px; border-radius: 4px; transition: all 0.2s; }
+        .dialog-close:hover { background: var(--bg-hover); color: var(--text-color); }
         .dialog-body { padding: 20px; overflow: auto; flex: 1; }
         .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--border-color); border-radius: 4px; }
         .detail-item { display: flex; border-bottom: 1px solid var(--border-color); border-right: 1px solid var(--border-color); }

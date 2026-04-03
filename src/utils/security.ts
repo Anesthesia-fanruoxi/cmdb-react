@@ -50,6 +50,4 @@ export function initSecurity() {
       e.preventDefault();
     }
   });
-
-  console.log('安全设置已启用');
 }

@@ -219,7 +219,6 @@ export interface ReattachTabEvent {
 export async function emitReattachTab(data: ReattachTabEvent): Promise<void> {
   try {
     await emit('reattach-tab', data);
-    console.log('[Window] 发送放回事件:', data.type);
   } catch (error) {
     console.error('发送放回事件失败:', error);
   }
@@ -230,7 +229,6 @@ export async function emitReattachTab(data: ReattachTabEvent): Promise<void> {
  */
 export function onReattachTab(callback: (data: ReattachTabEvent) => void): Promise<UnlistenFn> {
   return listen<ReattachTabEvent>('reattach-tab', (event) => {
-    console.log('[Window] 收到放回事件:', event.payload);
     callback(event.payload);
   });
 }

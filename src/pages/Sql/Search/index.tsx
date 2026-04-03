@@ -105,6 +105,46 @@ const SqlSearch = () => {
   const [sqlHistoryPanelVisible, setSqlHistoryPanelVisible] = useState(false);
   const [saveSharedVisible, setSaveSharedVisible] = useState(false);
   
+  // sidebar 宽度拖拽
+  const { uiPrefs, setUiPref, _hasHydrated: prefsHydrated } = useUserPrefsStore();
+  const [sidebarWidth, setSidebarWidth] = useState(260);
+  const sidebarDragging = useRef(false);
+  const sidebarDragStartX = useRef(0);
+  const sidebarDragStartWidth = useRef(0);
+  const sidebarWidthRef = useRef(sidebarWidth);
+  sidebarWidthRef.current = sidebarWidth;
+
+  // hydration 后同步 sidebar 宽度
+  useEffect(() => {
+    if (prefsHydrated && uiPrefs.sqlSidebarWidth) {
+      setSidebarWidth(Math.max(180, Math.min(600, uiPrefs.sqlSidebarWidth)));
+    }
+  }, [prefsHydrated, uiPrefs.sqlSidebarWidth]);
+
+  const handleSidebarDragStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    sidebarDragging.current = true;
+    sidebarDragStartX.current = e.clientX;
+    sidebarDragStartWidth.current = sidebarWidthRef.current;
+
+    const onMouseMove = (ev: MouseEvent) => {
+      if (!sidebarDragging.current) return;
+      const delta = ev.clientX - sidebarDragStartX.current;
+      const next = Math.max(180, Math.min(600, sidebarDragStartWidth.current + delta));
+      setSidebarWidth(next);
+    };
+
+    const onMouseUp = () => {
+      sidebarDragging.current = false;
+      setUiPref('sqlSidebarWidth', Math.round(sidebarWidthRef.current));
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }, [setUiPref]);
+  
   // 表详情抽屉状态
   const [tableDetailDrawerVisible, setTableDetailDrawerVisible] = useState(false);
   const [drawerTableName, setDrawerTableName] = useState('');
@@ -126,6 +166,11 @@ const SqlSearch = () => {
 
   const updateTab = useCallback((tabId: string, updates: Partial<Tab>) => {
     setTabs(prev => prev.map(t => t.id === tabId ? { ...t, ...updates } : t));
+  }, []);
+
+  // 稳定的 SQL 变更回调，避免每次渲染创建新函数导致 SqlWorkspace 重渲染
+  const handleSqlChange = useCallback((tabId: string, sql: string) => {
+    setTabs(prev => prev.map(t => t.id === tabId ? { ...t, sqlQuery: sql } : t));
   }, []);
 
   // ESC 关闭弹框
@@ -320,7 +365,7 @@ const SqlSearch = () => {
 
   // 项目变更
   const handleProjectChange = async (project: string, tabId: string) => {
-    console.log(`[项目切换] 标签页 ${tabId}: 项目=${project}`);
+
     
     // 先清空当前数据库和表列表
     updateTab(tabId, { project, dbName: '', dbList: [], tableList: [], metadataCacheAge: null });
@@ -336,11 +381,11 @@ const SqlSearch = () => {
           const cachedDbList = getAllCachedDatabases();
           const cacheAge = await getMetadataCacheAge(project, userName || '');
           
-          console.log(`[项目切换] ✅ 从文件恢复: ${cachedDbList.length} 个数据库`);
+
           updateTab(tabId, { dbList: cachedDbList, metadataCacheAge: cacheAge });
         } else {
           // ❌ 文件缓存不存在,调用API获取
-          console.log(`[项目切换] 📡 文件缓存不存在,调用API获取元数据`);
+
           await fetchAndCacheMetadata(project, tabId);
         }
       } catch (error) {
@@ -358,57 +403,48 @@ const SqlSearch = () => {
     }
     
     const dbList = res.data?.databases || [];
-    console.log(`[元数据获取] 获取到 ${dbList.length} 个数据库:`, dbList);
+    console.log(`[元数据] 加载项目 "${project}" 元数据，共 ${dbList.length} 个库`);
     
-    // 缓存数据库列表,用于跨库智能提示
-    const { cacheDatabases, cacheDbTables, cacheTableFields, cacheTableStats, initCache, persistMetadataToStorage, getMetadataCacheAge } = await import('../../../utils/sql/cache');
+    // 缓存数据库列表
+    const { cacheDatabases, cacheDbTables, cacheTableFields, cacheTableStats, initCache, persistMetadataToStorage, getMetadataCacheAge, rebuildL1 } = await import('../../../utils/sql/cache');
     initCache();
     cacheDatabases(dbList);
-    console.log(`[智能提示] 已缓存 ${dbList.length} 个数据库名称`);
-    
+
     // 处理元数据:缓存所有数据库的表和字段信息
     if (res.data?.metadata?.databases && Array.isArray(res.data.metadata.databases)) {
       const dbMetadataList = res.data.metadata.databases;
-      
-      console.log('[元数据] 📊 后端返回的元数据结构:', dbMetadataList);
-      console.log('[元数据] 🔍 第一个数据库的表结构:', dbMetadataList[0]?.tables?.[0]);
-      
       let totalTables = 0;
       let totalFields = 0;
       let totalStats = 0;
-      
+
+      // 构建 L1 数据
+      const l1Data: Array<{ dbName: string; tables: string[] }> = [];
+
       dbMetadataList.forEach(dbMeta => {
         const dbName = dbMeta.db_name;
         const tables = dbMeta.tables || [];
-        
-        // 缓存数据库->表的映射
         const tableNames = tables.map(t => t.name).filter(Boolean);
+
         if (dbName && tableNames.length > 0) {
           cacheDbTables(dbName, tableNames);
+          l1Data.push({ dbName, tables: tableNames });
           totalTables += tableNames.length;
         }
-        
-        // 缓存每个表的字段信息和统计信息
+
         tables.forEach(table => {
           const tableName = table.name;
           const columns = table.columns || [];
-          
-          // 缓存表统计信息
+
           if (tableName && (table.row_count !== undefined || table.data_length !== undefined)) {
-            const statsToCache = {
+            cacheTableStats(tableName, {
               rowCount: table.row_count || 0,
               dataLength: table.data_length || 0,
               indexLength: table.index_length
-            };
-            console.log(`[元数据缓存] 📊 缓存表 ${tableName} 的统计信息:`, statsToCache);
-            cacheTableStats(tableName, statsToCache);
+            });
             totalStats++;
-          } else {
-            console.log(`[元数据缓存] ⚠️ 表 ${tableName} 没有统计信息`);
           }
-          
+
           if (tableName && columns.length > 0) {
-            // 转换为补全建议格式
             const fieldSuggestions = columns.map((col, index) => ({
               caption: col.name,
               value: col.name,
@@ -419,20 +455,18 @@ const SqlSearch = () => {
               isPrimaryKey: col.column_key === 'PRI' || col.is_primary_key,
               score: 900 - index
             }));
-            
-            // 缓存到全局(表名作为 key)
             cacheTableFields(tableName, fieldSuggestions);
             totalFields += fieldSuggestions.length;
           }
         });
       });
-      
-      console.log(`[智能提示] ✅ 元数据缓存完成: ${dbMetadataList.length} 个数据库, ${totalTables} 个表, ${totalFields} 个字段, ${totalStats} 个表统计`);
-      
+
+      // 重建 L1 全量池
+      rebuildL1(l1Data);
+
       // 持久化到文件存储
       await persistMetadataToStorage(project, userName || '');
-    } else {
-      console.log(`[智能提示] ⚠️ 响应中没有元数据`);
+      console.log(`[元数据] 项目 "${project}" 缓存完成，共 ${totalTables} 张表，${totalFields} 个字段`);
     }
     
     // 更新标签页状态
@@ -450,13 +484,12 @@ const SqlSearch = () => {
       return;
     }
     
-    console.log(`[刷新元数据] 🔄 开始刷新项目 ${project} 的元数据`);
+
     updateTab(activeTabId, { metadataRefreshing: true });
     
     try {
       await fetchAndCacheMetadata(project, activeTabId);
       toast.success('元数据刷新成功');
-      console.log(`[刷新元数据] ✅ 刷新完成`);
     } catch (error) {
       console.error('[刷新元数据] ❌ 刷新失败:', error);
       toast.error('刷新失败，请稍后重试');
@@ -470,18 +503,21 @@ const SqlSearch = () => {
     const tab = tabsRef.current.find(t => t.id === tabId);
     const project = tab?.project || '';
     
-    console.log(`[数据库切换] 标签页 ${tabId}: 项目=${project}, 数据库=${dbName}`);
+
     
     if (dbName && project) {
       // 1. 先从内存缓存读取
-      const { getDbTables, cacheDbTables } = await import('../../../utils/sql/cache');
+      const { getDbTables, cacheDbTables, rebuildL2 } = await import('../../../utils/sql/cache');
       let tableList = getDbTables(dbName);
+      console.log(`[库切换] 选择库 "${dbName}"，内存缓存表数: ${tableList.length}`);
       
-      console.log(`[数据库切换] 内存缓存中有 ${tableList.length} 个表`);
+      // 重建 L2 当前库池
+      rebuildL2(dbName);
+
       
       // 2. 如果内存缓存为空,尝试从文件缓存读取
       if (tableList.length === 0) {
-        console.log(`[数据库切换] 内存缓存为空,尝试从文件恢复`);
+
         
         const { getSqlMetadata } = await import('../../../services/storage/stateStorage');
         const cacheData = getSqlMetadata(userName || '', project);
@@ -489,13 +525,13 @@ const SqlSearch = () => {
         if (cacheData?.dbTables?.[dbName]) {
           // 文件中有这个数据库的表列表
           tableList = cacheData.dbTables[dbName];
-          console.log(`[数据库切换] ✅ 从文件恢复 ${tableList.length} 个表`);
+
           
           // 恢复到内存缓存
           cacheDbTables(dbName, tableList);
         } else {
           // 3. 文件中也没有,调用API获取
-          console.log(`[数据库切换] 📡 文件缓存也为空,调用API获取`);
+
           
           try {
             updateTab(tabId, { treeLoading: true });
@@ -511,7 +547,7 @@ const SqlSearch = () => {
               
               if (dbMetadata?.tables) {
                 tableList = dbMetadata.tables.map((t: any) => t.name).filter(Boolean);
-                console.log(`[数据库切换] ✅ API返回 ${tableList.length} 个表`);
+
                 
                 // 缓存到内存
                 cacheDbTables(dbName, tableList);
@@ -550,7 +586,7 @@ const SqlSearch = () => {
                 // 持久化到文件
                 const { persistMetadataToStorage } = await import('../../../utils/sql/cache');
                 await persistMetadataToStorage(project, userName || '');
-                console.log(`[数据库切换] ✅ 已持久化到文件`);
+
               }
             }
           } catch (error) {
@@ -563,6 +599,13 @@ const SqlSearch = () => {
       }
       
       // 4. 更新状态
+      console.log(`[库切换] 库 "${dbName}" 最终加载表数: ${tableList.length}`);
+      
+      // 重要：表数据加载完成后，重新同步 L2 池子
+      if (tableList.length > 0) {
+        rebuildL2(dbName);
+      }
+      
       updateTab(tabId, { dbName, tableList });
     } else {
       // 没有数据库名或项目,清空
@@ -580,20 +623,7 @@ const SqlSearch = () => {
     const tabProject = tab?.project || '';
     const tabDbName = tab?.dbName || '';
 
-    console.log('='.repeat(60));
-    console.log('[SQL查询] 🎯 开始执行查询');
-    console.log('[SQL查询] 📋 标签页ID:', executeTabId);
-    console.log('[SQL查询] 🏢 项目名称:', tabProject);
-    console.log('[SQL查询] 💾 数据库名:', tabDbName);
-    console.log('[SQL查询] 📝 SQL语句:', sql.substring(0, 100) + (sql.length > 100 ? '...' : ''));
-    console.log('[SQL查询] ✂️ 是否选中执行:', _isSelection);
-
     if (!tabProject || !tabDbName || !sql.trim()) {
-      console.log('[SQL查询] ❌ 参数验证失败');
-      console.log('[SQL查询] 项目:', tabProject || '(空)');
-      console.log('[SQL查询] 数据库:', tabDbName || '(空)');
-      console.log('[SQL查询] SQL:', sql.trim() ? '有内容' : '(空)');
-      console.log('='.repeat(60));
       
       updateTab(executeTabId, { 
         messages: [{ type: 'warning', content: '请选择项目、数据库并输入SQL' }] 
@@ -603,7 +633,6 @@ const SqlSearch = () => {
 
     // 生成唯一的 query_id (前端生成,传给后端)
     const queryId = `qid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    console.log('[SQL查询] 🆔 生成 queryId:', queryId);
 
     updateTab(executeTabId, { 
       queryLoading: true, 
@@ -626,31 +655,11 @@ const SqlSearch = () => {
         query_id: queryId // 传递给后端
       };
       
-      console.log('[SQL查询] 📤 发送请求参数:', queryParams);
-      
       const res = await executeQuery(queryParams);
       
-      console.log('[SQL查询] 📥 收到响应:', {
-        code: res.code,
-        message: res.message,
-        hasData: !!res.data,
-        queryId: res.data?.query_id
-      });
-      
       if (res.code === 200 && res.data) {
-        console.log('[SQL查询] ✅ 查询成功');
-        
         // 使用 handleQueryData 处理查询结果
         const processed = handleQueryData(res.data, tabDbName, sql);
-        
-        console.log('[SQL查询] 📊 处理后的结果:', {
-          结果行数: processed.queryResults.length,
-          列数: processed.resultColumns.length,
-          总数: processed.total,
-          耗时: processed.took + 'ms',
-          查询ID: processed.queryId,
-          结果集数量: processed.allResults.length
-        });
         
         updateTab(executeTabId, {
           results: processed.queryResults,
@@ -663,10 +672,7 @@ const SqlSearch = () => {
           currentPage: 1,
           messages: []
         });
-        
-        console.log('[SQL查询] ✅ 状态已更新');
       } else {
-        console.log('[SQL查询] ❌ 查询失败:', res.message);
         updateTab(executeTabId, {
           messages: [{ type: 'error', content: res.message || '查询失败' }]
         });
@@ -678,8 +684,6 @@ const SqlSearch = () => {
       });
     } finally {
       updateTab(executeTabId, { queryLoading: false });
-      console.log('[SQL查询] 🏁 查询流程结束');
-      console.log('='.repeat(60));
     }
   };
 
@@ -689,23 +693,17 @@ const SqlSearch = () => {
     const queryId = tab?.queryId;
     const project = tab?.project;
     
-    console.log('[取消查询] 🛑 尝试取消查询');
-    console.log('[取消查询] queryId:', queryId);
-    console.log('[取消查询] project:', project);
-    
     if (!queryId) {
-      console.warn('[取消查询] ⚠️ 没有 queryId,无法取消');
       toast.warning('查询尚未开始,无法取消');
       return;
     }
     
     if (!project) {
-      console.warn('[取消查询] ⚠️ 没有 project,无法取消');
       toast.warning('无法确定项目,取消失败');
       return;
     }
     
-    console.log('[取消查询] 📤 发送取消请求,等待后端确认:', { agent: project, query_id: queryId });
+
     toast.info('正在取消查询,请稍候...');
     
     try {
@@ -713,10 +711,7 @@ const SqlSearch = () => {
       // 同步等待后端响应
       const res = await cancelQuery({ agent: project, query_id: queryId });
       
-      console.log('[取消查询] 📥 收到后端响应:', res);
-      
       if (res.code === 200) {
-        console.log('[取消查询] ✅ 后端确认取消成功');
         toast.success('查询已取消');
         // 只有后端确认成功后才重置状态
         updateTab(activeTabId, {
@@ -724,7 +719,7 @@ const SqlSearch = () => {
           messages: [{ type: 'warning', content: '查询已被取消' }]
         });
       } else {
-        console.log('[取消查询] ❌ 后端取消失败:', res.message);
+
         toast.error(res.message || '取消失败');
         // 取消失败,保持 loading 状态
       }
@@ -822,19 +817,9 @@ const SqlSearch = () => {
 
   // 后端导出（异步导出，创建任务并监听完成状态）
   const handleExport = async () => {
-    console.log('='.repeat(60));
-    console.log('[导出] 🎯 开始处理导出请求');
-    console.log('[导出] ⏰ 请求时间:', new Date().toLocaleString());
-    
     const tab = currentTab;
-    console.log('[导出] 📋 当前标签页:', {
-      queryId: tab.queryId,
-      dbName: tab.dbName,
-      project: tab.project
-    });
     
     if (!tab.queryId) {
-      console.log('[导出] ❌ 缺少查询ID');
       updateTab(activeTabId, {
         messages: [{ type: 'warning', content: '无法导出：缺少查询ID' }]
       });
@@ -842,27 +827,19 @@ const SqlSearch = () => {
     }
 
     updateTab(activeTabId, { exportLoading: true });
-    console.log('[导出] ⏳ 设置加载状态为 true');
     
     try {
-      console.log('[导出] 📤 发送导出请求');
       const res = await exportQueryResult({
         query_id: tab.queryId,
         db_name: tab.dbName
       });
       
-      console.log('[导出] 📥 收到响应:', res);
-      
       if (res.code === 200) {
-        console.log('[导出] ✅ 导出请求成功');
-        
         // 检查是否返回了任务ID
         const taskId = (res as any).data?.task_id;
-        console.log('[导出] 📋 任务ID:', taskId);
         
         if (taskId) {
           // 有任务ID，开始监听任务状态
-          console.log('[导出] 🔄 开始监听任务状态');
           
           // 使用 toast 提示请求已提交
           toast.success('导出请求已提交，正在处理中...');
@@ -875,13 +852,8 @@ const SqlSearch = () => {
             taskId,
             (data) => {
               messageCount++;
-              console.log('─'.repeat(60));
-              console.log(`[导出] 📨 收到第 ${messageCount} 条任务状态消息`);
-              console.log('[导出] 📊 任务数据:', data);
-              console.log('[导出] 🔍 任务状态:', data.status);
               
               if (data.status === 'success') {
-                console.log('[导出] ✅ 任务完成！');
                 eventSource.close();
                 
                 // 1. 发送带按钮的系统通知（5秒后自动关闭）
@@ -894,19 +866,16 @@ const SqlSearch = () => {
                       text: '点击查看',
                       primary: true,
                       onClick: () => {
-                        console.log('[导出] 🖱️ 用户点击"点击查看"');
                         import('../../../stores/taskCenterStore').then(({ useTaskCenterStore }) => {
                           const { open, setActiveType } = useTaskCenterStore.getState();
                           setActiveType('sql_export');
                           open();
-                          console.log('[导出] ✅ 任务中心已打开');
                         });
                       }
                     }
                   ],
                   5000
                 );
-                console.log('[导出] 📢 带按钮的通知已发送（5秒后自动关闭）');
                 
                 // 2. 同时添加到消息中心（铃铛显示未读）
                 addMessage({
@@ -917,9 +886,7 @@ const SqlSearch = () => {
                     type: 'task-center'
                   }
                 });
-                console.log('[导出] 📢 消息中心通知已添加');
               } else if (data.status === 'failed') {
-                console.log('[导出] ❌ 任务失败');
                 eventSource.close();
                 
                 addMessage({
@@ -927,34 +894,19 @@ const SqlSearch = () => {
                   title: '导出失败',
                   content: data.error_message || '导出任务执行失败',
                 });
-                console.log('[导出] 📢 失败通知已发送');
-              } else if (data.status === 'running') {
-                console.log('[导出] ⚙️ 任务运行中...');
-                if (data.progress) {
-                  console.log('[导出] 📈 进度:', data.progress);
-                }
-              } else if (data.status === 'pending') {
-                console.log('[导出] ⏳ 任务等待中...');
               }
-              console.log('─'.repeat(60));
             },
             () => {
               console.error('[导出] ❌ SSE连接错误');
             },
             () => {
-              console.log('[导出] 🔒 SSE连接已关闭');
-              console.log('[导出] 📊 总共收到消息数:', messageCount);
             }
           );
-          
-          console.log('[导出] ✅ 任务监听已启动');
         } else {
           // 没有任务ID，使用旧的通知方式
-          console.log('[导出] ⚠️ 响应中没有任务ID，使用旧的通知方式');
           toast.success(res.message || '导出任务已提交，请稍后查收邮件');
         }
       } else {
-        console.log('[导出] ❌ 导出请求失败:', res.message);
         toast.error(res.message || '导出失败');
       }
     } catch (error) {
@@ -962,8 +914,6 @@ const SqlSearch = () => {
       toast.error('导出失败，请稍后重试');
     } finally {
       updateTab(activeTabId, { exportLoading: false });
-      console.log('[导出] ⏳ 设置加载状态为 false');
-      console.log('='.repeat(60));
     }
   };
 
@@ -1029,16 +979,6 @@ const SqlSearch = () => {
       tableList: currentTabData?.tableList || [],
     };
     
-    console.log('[在查询中打开] 创建新标签页:', {
-      id: newId,
-      name: newTab.name,
-      project: agent,
-      dbName: dbName,
-      sql: `SELECT * FROM ${tableName}`,
-      dbListLength: newTab.dbList.length,
-      tableListLength: newTab.tableList.length
-    });
-    
     // 添加新标签页
     setTabs(prev => [...prev, newTab]);
     
@@ -1050,16 +990,6 @@ const SqlSearch = () => {
     
     // 使用 useEffect 或者更长的延迟确保状态更新完成
     setTimeout(() => {
-      console.log('[在查询中打开] 准备执行查询');
-      // 直接使用 tabsRef 获取最新状态
-      const latestTab = tabsRef.current.find(t => t.id === newId);
-      console.log('[在查询中打开] 最新标签页状态:', {
-        id: latestTab?.id,
-        project: latestTab?.project,
-        dbName: latestTab?.dbName,
-        sql: latestTab?.sqlQuery
-      });
-      
       // 传递新标签页的ID给 handleExecute
       handleExecute(`SELECT * FROM ${tableName}`, false, newId);
     }, 200);
@@ -1151,7 +1081,7 @@ const SqlSearch = () => {
       />
 
       <div className="main-content">
-        <div className="sidebar">
+        <div className="sidebar" style={{ width: sidebarWidth, flexShrink: 0 }}>
           <TableTree
             projects={projects}
             projectLoading={projectLoading}
@@ -1169,6 +1099,7 @@ const SqlSearch = () => {
             metadataCacheAge={currentTab.metadataCacheAge}
           />
         </div>
+        <div className="sidebar-resize-handle" onMouseDown={handleSidebarDragStart} />
         <div className="content">
           {/* 渲染所有标签页的工作区，用 display 控制显示隐藏，避免重新挂载 */}
           {tabs.map(tab => (

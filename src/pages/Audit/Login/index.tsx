@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Search, RefreshCw, Loader2 } from 'lucide-react';
 import { getLoginLog, LoginLogItem } from '../../../services/audit';
 import toast from '../../../components/Toast';
+import AuditDateRangePicker from '../components/AuditDateRangePicker';
 import './index.css';
 
 const formatDate = (date: Date, isEnd = false) => {
@@ -65,11 +66,11 @@ const AuditLogin = () => {
             <option value="1">登录成功</option>
             <option value="0">登录失败</option>
           </select>
-          <input type="date" value={dateRange.start.slice(0, 10)} 
-            onChange={e => setDateRange(r => ({ ...r, start: formatDate(new Date(e.target.value)) }))} className="search-date" />
-          <span className="date-sep">至</span>
-          <input type="date" value={dateRange.end.slice(0, 10)} 
-            onChange={e => setDateRange(r => ({ ...r, end: formatDate(new Date(e.target.value), true) }))} className="search-date" />
+          <AuditDateRangePicker
+            value={{ start: dateRange.start, end: dateRange.end }}
+            onChange={(start, end) => setDateRange({ start, end })}
+            showTime={false}
+          />
           <button className="btn-default" onClick={handleSearch}><Search size={14} /> 搜索</button>
           <button className="btn-default" onClick={handleReset}><RefreshCw size={14} /> 重置</button>
         </div>

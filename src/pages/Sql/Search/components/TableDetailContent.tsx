@@ -97,7 +97,6 @@ const TableDetailContent = ({ agent, dbName, tableName, initialTab = 'fields', w
     setError('');
     try {
       const res = await getTableStructure({ agent, dbName, tbName: tableName });
-      console.log('[表详情] 📥 API 返回的原始数据:', res.data);
       
       if (res.code === 200 && res.data) {
         const data = res.data as unknown as TableInfo;
@@ -106,27 +105,12 @@ const TableDetailContent = ({ agent, dbName, tableName, initialTab = 'fields', w
         const { getTableStats } = await import('../../../../utils/sql/cache');
         const stats = getTableStats(tableName);
         
-        console.log('[表详情] 📊 从缓存获取的统计信息:', stats);
-        console.log('[表详情] 🔍 表名:', tableName);
-        
         if (stats) {
-          console.log('[表详情] ✅ 合并统计信息到 tableInfo');
           // 合并统计信息到 tableInfo
           data.rows = stats.rowCount;
           data.data_length = stats.dataLength;
           data.index_length = stats.indexLength;
-        } else {
-          console.log('[表详情] ⚠️ 缓存中没有找到统计信息');
         }
-        
-        console.log('[表详情] 📋 最终的 tableInfo:', {
-          rows: data.rows,
-          data_length: data.data_length,
-          index_length: data.index_length,
-          create_time: data.create_time,
-          engine: data.engine,
-          collation: data.collation
-        });
         
         setTableInfo(data);
       } else {
@@ -171,8 +155,7 @@ const TableDetailContent = ({ agent, dbName, tableName, initialTab = 'fields', w
         // 将 ASCII 码转换为字符串
         const dateStr = String.fromCharCode(...numbers);
         return new Date(dateStr).toLocaleString('zh-CN');
-      } catch (e) {
-        console.error('[日期格式化] 转换失败:', e);
+      } catch {
         return '-';
       }
     }

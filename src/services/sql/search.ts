@@ -113,13 +113,6 @@ export function getTableStructure(data: { agent: string; dbName: string; tbName:
 
 // 执行SQL查询
 export function executeQuery(data: { agent: string; dbName: string; query: string; query_id?: string }) {
-  console.log('🚀 [API请求] executeQuery 被调用');
-  console.log('📦 [API请求] 请求参数:', JSON.stringify(data, null, 2));
-  console.log('🏢 [API请求] agent:', data.agent);
-  console.log('💾 [API请求] dbName:', data.dbName);
-  console.log('📝 [API请求] query:', data.query.substring(0, 100));
-  console.log('🆔 [API请求] query_id:', data.query_id);
-  
   // React 项目固定为桌面端
   return apiClient.post<QueryResult>('/sql/search/data', { ...data, platform: 'desktop' }, { timeout: 600000 });
 }
@@ -182,13 +175,7 @@ export function createSSEConnection(
   const separator = url.includes('?') ? '&' : '?';
   const fullUrl = `${baseUrl}${url}${separator}token=${token}`;
   
-  console.log('SSE连接URL:', fullUrl);
-  
   const eventSource = new EventSource(fullUrl);
-  
-  eventSource.addEventListener('connected', () => {
-    console.log('SSE连接成功');
-  });
   
   eventSource.addEventListener('data', (event) => {
     try {
