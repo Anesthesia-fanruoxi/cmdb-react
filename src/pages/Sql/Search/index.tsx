@@ -168,10 +168,6 @@ const SqlSearch = () => {
     setTabs(prev => prev.map(t => t.id === tabId ? { ...t, ...updates } : t));
   }, []);
 
-  // 稳定的 SQL 变更回调，避免每次渲染创建新函数导致 SqlWorkspace 重渲染
-  const handleSqlChange = useCallback((tabId: string, sql: string) => {
-    setTabs(prev => prev.map(t => t.id === tabId ? { ...t, sqlQuery: sql } : t));
-  }, []);
 
   // ESC 关闭弹框
   useEffect(() => {
@@ -406,7 +402,7 @@ const SqlSearch = () => {
     console.log(`[元数据] 加载项目 "${project}" 元数据，共 ${dbList.length} 个库`);
     
     // 缓存数据库列表
-    const { cacheDatabases, cacheDbTables, cacheTableFields, cacheTableStats, initCache, persistMetadataToStorage, getMetadataCacheAge, rebuildL1 } = await import('../../../utils/sql/cache');
+    const { cacheDatabases, cacheDbTables, cacheTableFields, cacheTableStats, initCache, persistMetadataToStorage, getMetadataCacheAge } = await import('../../../utils/sql/cache');
     initCache();
     cacheDatabases(dbList);
 
@@ -461,8 +457,7 @@ const SqlSearch = () => {
         });
       });
 
-      // 重建 L1 全量池
-      rebuildL1(l1Data);
+      // 重建 L1 全量池（已移除，cache 不支持）
 
       // 持久化到文件存储
       await persistMetadataToStorage(project, userName || '');
@@ -507,12 +502,9 @@ const SqlSearch = () => {
     
     if (dbName && project) {
       // 1. 先从内存缓存读取
-      const { getDbTables, cacheDbTables, rebuildL2 } = await import('../../../utils/sql/cache');
+      const { getDbTables, cacheDbTables } = await import('../../../utils/sql/cache');
       let tableList = getDbTables(dbName);
       console.log(`[库切换] 选择库 "${dbName}"，内存缓存表数: ${tableList.length}`);
-      
-      // 重建 L2 当前库池
-      rebuildL2(dbName);
 
       
       // 2. 如果内存缓存为空,尝试从文件缓存读取
@@ -601,10 +593,7 @@ const SqlSearch = () => {
       // 4. 更新状态
       console.log(`[库切换] 库 "${dbName}" 最终加载表数: ${tableList.length}`);
       
-      // 重要：表数据加载完成后，重新同步 L2 池子
-      if (tableList.length > 0) {
-        rebuildL2(dbName);
-      }
+      // 重要：表数据加载完成后，重新同步 L2 池子（rebuildL2 已移除）
       
       updateTab(tabId, { dbName, tableList });
     } else {

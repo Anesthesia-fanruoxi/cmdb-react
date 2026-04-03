@@ -174,6 +174,8 @@ export interface UiPrefs {
   codeEditorFontSize: number;
   sqlEditorHeight: number;
   sqlEditorHeightPercent: number; // 编辑器高度百分比
+  sqlSidebarWidth: number; // SQL 左侧 TableTree 宽度（px）
+  sqlRowHighlightColor: string; // 查询结果选中行高亮颜色
 }
 
 export interface PreferencesData {

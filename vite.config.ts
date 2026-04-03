@@ -37,6 +37,12 @@ export default defineConfig({
     minify: 'esbuild',
     // 分块策略
     rollupOptions: {
+      onwarn(warning, warn) {
+        // 忽略动态/静态混合 import 的 chunk 优化警告（循环依赖架构导致，不影响功能）
+        if (warning.code === 'MIXED_EXPORTS') return;
+        if (warning.message?.includes('dynamic import will not move module into another chunk')) return;
+        warn(warning);
+      },
       output: {
         // 手动分块，优化加载性能
         manualChunks(id) {
