@@ -4,9 +4,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, RefreshCw, Loader2 } from 'lucide-react';
-import { getTaskList, deleteTask, updateTask, Task } from '../../../services/job/task';
-import toast from '../../../components/Toast';
-import { confirm } from '../../../components/ConfirmModal';
+import { getTaskList, deleteTask, updateTask, Task } from '@/services/job/task';
+import toast from '@/components/Toast';
+import { confirm } from '@/components/ConfirmModal';
 import TaskForm from './components/TaskForm';
 import TaskBindDialog from './components/TaskBindDialog';
 import TaskDetailDialog from './components/TaskDetailDialog';
@@ -34,14 +34,21 @@ const TaskManagement = () => {
     try {
       const res = await getTaskList();
       if (res.code === 200) {
-        const list = Array.isArray(res.data) ? res.data : (res.data as any)?.list || [];
+        const list = Array.isArray(res.data) 
+          ? res.data 
+          : (res.data as { list?: Task[] })?.list || [];
         setTaskList(list as Task[]);
       }
-    } catch { toast.error('获取任务列表失败'); }
-    finally { setLoading(false); }
+    } catch { 
+      toast.error('获取任务列表失败'); 
+    } finally { 
+      setLoading(false); 
+    }
   }, []);
 
-  useEffect(() => { fetchList(); }, [fetchList]);
+  useEffect(() => { 
+    void fetchList(); 
+  }, [fetchList]);
 
   const filteredList = taskList.filter(t => 
     !keyword || t.name?.includes(keyword) || t.task_key?.includes(keyword)
@@ -70,12 +77,24 @@ const TaskManagement = () => {
     if (!await confirm({ content: `确定要删除任务 "${task.name}" 吗？`, type: 'danger' })) return;
     try {
       const res = await deleteTask(task.id);
-      if (res.code === 200) { toast.success('删除成功'); fetchList(); }
-    } catch { toast.error('删除失败'); }
+      if (res.code === 200) { 
+        toast.success('删除成功'); 
+        void fetchList(); 
+      }
+    } catch { 
+      toast.error('删除失败'); 
+    }
   };
 
-  const handleFormSuccess = () => { setFormVisible(false); fetchList(); };
-  const handleBindSuccess = () => { setBindVisible(false); fetchList(); };
+  const handleFormSuccess = () => { 
+    setFormVisible(false); 
+    void fetchList(); 
+  };
+  
+  const handleBindSuccess = () => { 
+    setBindVisible(false); 
+    void fetchList(); 
+  };
 
   return (
     <div className="task-page">

@@ -4,8 +4,8 @@
 
 import { useState, useEffect } from 'react';
 import { X, Loader2, Plus, Trash2 } from 'lucide-react';
-import { installPlugin, StorePlugin, StoreProject, InstallPluginData } from '../../../../services/agent/store';
-import toast from '../../../../components/Toast';
+import { installPlugin, StorePlugin, StoreProject, InstallPluginData } from '@/services/agent/store';
+import toast from '@/components/Toast';
 
 interface ConfigItem { key: string; value: string; }
 
@@ -43,6 +43,57 @@ const PLUGIN_DEFAULT_CONFIGS: Record<string, ConfigItem[]> = {
     { key: 'REDIS_DB', value: '0' },
     { key: 'REDIS_PASSWORD', value: '123456' }
   ],
+  'al-plugs': [
+    { key: 'ALIBABA_CLOUD_ACCESS_KEY_ID', value: '' },
+    { key: 'ALIBABA_CLOUD_ACCESS_KEY_SECRET', value: '' },
+    { key: 'ALIBABA_CLOUD_REGION_ID', value: 'cn-hangzhou' },
+    { key: 'ALERT_WEBHOOK_URL', value: '' },
+    { key: 'ALERT_PROJECT', value: '' },
+    { key: 'ALERT_BALANCE_THRESHOLD', value: '' },
+    { key: 'ALERT_SUPPRESS_HOURS', value: '' },
+    { key: 'ALERT_CHECK_INTERVAL_MINUTES', value: '' }
+  ],
+};
+
+// 配置项中文说明
+const CONFIG_DESCRIPTIONS: Record<string, string> = {
+  // 阿里云插件
+  'ALIBABA_CLOUD_ACCESS_KEY_ID': '阿里云访问密钥 ID',
+  'ALIBABA_CLOUD_ACCESS_KEY_SECRET': '阿里云访问密钥',
+  'ALIBABA_CLOUD_REGION_ID': '阿里云区域 ID（如：cn-hangzhou）',
+  'ALERT_WEBHOOK_URL': '告警 Webhook URL',
+  'ALERT_PROJECT': '告警项目名称',
+  'ALERT_BALANCE_THRESHOLD': '余额告警阈值（如：100）',
+  'ALERT_SUPPRESS_HOURS': '告警抑制时长（小时，如：24）',
+  'ALERT_CHECK_INTERVAL_MINUTES': '告警检查间隔（分钟，如：60）',
+  
+  // MySQL 插件
+  'MYSQL_ADDR': 'MySQL 服务器地址',
+  'MYSQL_PORT': 'MySQL 端口号',
+  'MYSQL_DB': 'MySQL 数据库名',
+  'MYSQL_USER': 'MySQL 用户名',
+  'MYSQL_PASSWORD': 'MySQL 密码',
+  
+  // ES 插件
+  'ES_HOST': 'Elasticsearch 地址',
+  'ES_USERNAME': 'Elasticsearch 用户名',
+  'ES_PASSWORD': 'Elasticsearch 密码',
+  'LIMIT_MAX_SIZE': '查询结果最大数量',
+  
+  // Redis 插件
+  'REDIS_HOST': 'Redis 服务器地址',
+  'REDIS_PORT': 'Redis 端口号',
+  'REDIS_DB': 'Redis 数据库编号',
+  'REDIS_PASSWORD': 'Redis 密码',
+  
+  // 通用
+  'LOG_LEVEL': '日志级别（如：error、info、debug）',
+  'key': '密钥',
+};
+
+// 获取配置项的中文说明
+const getConfigDescription = (key: string): string => {
+  return CONFIG_DESCRIPTIONS[key] || '请输入参数值';
 };
 
 // 获取插件默认配置
@@ -76,10 +127,36 @@ const InstallDrawer = ({ visible, plugin, projects, onClose, onSuccess }: Props)
     }
   }, [visible, plugin]);
 
+  // ESC 键关闭抽屉
+  useEffect(() => {
+    if (!visible) return;
+
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [visible, onClose]);
+
   const handleAddConfig = () => setConfigList(prev => [...prev, { key: '', value: '' }]);
   const handleRemoveConfig = (index: number) => setConfigList(prev => prev.filter((_, i) => i !== index));
   const handleConfigChange = (index: number, field: 'key' | 'value', value: string) => {
     setConfigList(prev => prev.map((item, i) => i === index ? { ...item, [field]: value } : item));
+  };
+
+  // 构建配置对象
+  const buildConfig = (): Record<string, string> | undefined => {
+    if (!enableConfig || configList.length === 0) return undefined;
+    
+    const config: Record<string, string> = {};
+    configList.forEach(item => {
+      if (item.key && item.value) config[item.key] = item.value;
+    });
+    return Object.keys(config).length > 0 ? config : undefined;
   };
 
   const handleInstall = async () => {
@@ -97,22 +174,16 @@ const InstallDrawer = ({ visible, plugin, projects, onClose, onSuccess }: Props)
 
     setLoading(true);
     try {
-      const data: Record<string, any> = {
+      const data: InstallPluginData = {
         plugin_id: plugin.id,
         project: selectedProject
       };
 
       if (plugin.plugin_type === 'container') {
         data.container_port = containerPort || 8080;
-        
-        if (enableConfig && configList.length > 0) {
-          const config: Record<string, string> = {};
-          configList.forEach(item => {
-            if (item.key && item.value) config[item.key] = item.value;
-          });
-          if (Object.keys(config).length > 0) {
-            data.config = config;
-          }
+        const config = buildConfig();
+        if (config) {
+          data.config = config;
         }
       } else if (plugin.plugin_type === 'binary') {
         if (command) {
@@ -120,15 +191,19 @@ const InstallDrawer = ({ visible, plugin, projects, onClose, onSuccess }: Props)
         }
       }
 
-      const res = await installPlugin(data as InstallPluginData);
+      const res = await installPlugin(data);
 
       if (res.code === 200) {
         onSuccess();
       } else { 
         toast.error(res.message || '安装失败'); 
       }
-    } catch (error: any) { 
-      const errorMsg = error?.message || error?.details || String(error);
+    } catch (error: unknown) { 
+      const errorMsg = error instanceof Error 
+        ? error.message 
+        : (error && typeof error === 'object' && 'details' in error)
+          ? String((error as { details: unknown }).details)
+          : String(error);
       toast.error(errorMsg || '安装失败'); 
     } finally { 
       setLoading(false); 
@@ -202,7 +277,7 @@ const InstallDrawer = ({ visible, plugin, projects, onClose, onSuccess }: Props)
                       <div key={index} className="config-row">
                         <input type="text" value={item.key} onChange={e => handleConfigChange(index, 'key', e.target.value)} placeholder="参数名" />
                         <span className="sep">=</span>
-                        <input type="text" value={item.value} onChange={e => handleConfigChange(index, 'value', e.target.value)} placeholder="参数值" />
+                        <input type="text" value={item.value} onChange={e => handleConfigChange(index, 'value', e.target.value)} placeholder={getConfigDescription(item.key)} />
                         <button className="btn-icon" onClick={() => handleRemoveConfig(index)}><Trash2 size={14} /></button>
                       </div>
                     ))}

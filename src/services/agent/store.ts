@@ -41,6 +41,7 @@ export interface InstallPluginData {
   project: string;
   container_port?: number;
   config?: Record<string, string>;
+  command?: string;
 }
 
 export interface StoreProject {
