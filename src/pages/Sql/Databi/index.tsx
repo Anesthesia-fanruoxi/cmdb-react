@@ -97,14 +97,9 @@ const SqlDatabi = () => {
   } = useDatabiTables();
 
   const {
-    queryLoading,
-    resultData,
-    resultColumns,
-    took,
     executeQuery,
     handleCopyColumn,
-    handleCopyRow,
-    clearResults
+    handleCopyRow
   } = useDatabiQuery();
 
   // CSV 上传
@@ -614,13 +609,6 @@ const SqlDatabi = () => {
     }, 500);
     return () => clearTimeout(timer);
   }, [tabs, activeTabId, tabCounter, currentProject, setPageState, _hasHydrated]);
-
-  // 同步查询结果到当前标签页
-  useEffect(() => {
-    if (queryLoading !== currentTab.queryLoading) {
-      updateTab(activeTabId, { queryLoading });
-    }
-  }, [queryLoading]);
 
   return (
     <div className="sql-databi-container" onClick={closeContextMenu}>

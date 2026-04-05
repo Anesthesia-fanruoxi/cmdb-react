@@ -2,7 +2,7 @@
  * BI 查询标签页组件
  */
 
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 
 interface Tab {
   id: string;

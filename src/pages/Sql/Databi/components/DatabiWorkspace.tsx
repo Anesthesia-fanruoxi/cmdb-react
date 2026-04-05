@@ -5,7 +5,7 @@
 import { useRef, useEffect, useState } from 'react';
 import SqlEditor, { type SqlEditorRef } from '../../Search/components/SqlEditor';
 import { QueryResult } from './QueryResult';
-import type { DatabiTab, TreeNode } from '../types';
+import type { DatabiTab } from '../types';
 
 interface DatabiWorkspaceProps {
   tab: DatabiTab;
