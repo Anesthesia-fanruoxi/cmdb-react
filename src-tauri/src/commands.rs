@@ -102,6 +102,27 @@ pub fn decrypt_data(encrypted: String) -> Result<String, String> {
     crypto::decrypt(&encrypted)
 }
 
+/// 后台异步保存：加密并写入 tauri-plugin-store 文件，不阻塞 JS 主线程
+/// JS 侧直接 invoke 不 await，Rust 在 tokio 后台线程处理
+#[tauri::command]
+pub async fn save_store_async(
+    app_handle: AppHandle,
+    file: String,
+    plaintext: String,
+) -> Result<(), String> {
+    use tauri_plugin_store::StoreExt;
+
+    // 加密
+    let encrypted = crypto::encrypt(&plaintext)?;
+
+    // 写入 store
+    let store = app_handle.store(&file).map_err(|e| e.to_string())?;
+    store.set("data", serde_json::Value::String(encrypted));
+    store.save().map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
 /// 绑定设备（登录成功后调用，需要双因子验证）
 #[tauri::command]
 pub async fn bind_device(

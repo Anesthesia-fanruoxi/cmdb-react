@@ -168,6 +168,48 @@ const SqlSearch = () => {
     setTabs(prev => prev.map(t => t.id === tabId ? { ...t, ...updates } : t));
   }, []);
 
+  // 切换标签页时，后台静默检查并恢复元数据
+  // 场景：恢复工作区后 project/dbName 有值，但内存元数据为空
+  useEffect(() => {
+    const tab = tabsRef.current.find(t => t.id === activeTabId);
+    if (!tab?.project || !userName) return;
+
+    const project = tab.project;
+    const dbName = tab.dbName;
+
+    // 后台异步，不阻塞 UI
+    (async () => {
+      try {
+        const { getAllCachedDatabases, restoreMetadataFromStorage, getTableFields, cacheTableFields } = await import('../../../utils/sql/cache');
+        
+        // 检查内存里有没有这个 project 的数据库列表
+        const cachedDbs = getAllCachedDatabases();
+        if (cachedDbs.length > 0) return; // 内存已有，不需要恢复
+
+        // 从持久化存储恢复
+        const restored = await restoreMetadataFromStorage(project, userName);
+        if (!restored) return;
+
+        // 如果当前 tab 有 dbName，额外确保字段也恢复了
+        if (dbName) {
+          const { getSqlMetadata } = await import('../../../services/storage/stateStorage');
+          const cacheData = getSqlMetadata(userName, project);
+          if (cacheData?.fields && tab.tableList?.length > 0) {
+            tab.tableList.forEach((tableName: string) => {
+              const key = tableName.toLowerCase();
+              if (getTableFields(tableName).length === 0) {
+                const fields = cacheData.fields[key] || cacheData.fields[tableName];
+                if (fields?.length > 0) cacheTableFields(tableName, fields);
+              }
+            });
+          }
+        }
+      } catch (e) {
+        // 静默失败，不影响用户
+      }
+    })();
+  }, [activeTabId, userName]);
+
 
   // ESC 关闭弹框
   useEffect(() => {
@@ -506,6 +548,23 @@ const SqlSearch = () => {
       let tableList = getDbTables(dbName);
       console.log(`[库切换] 选择库 "${dbName}"，内存缓存表数: ${tableList.length}`);
 
+      // 内存有表列表但字段可能没恢复，检查并从文件补充字段
+      if (tableList.length > 0) {
+        const sampleTable = tableList[0];
+        const { getTableFields, cacheTableFields } = await import('../../../utils/sql/cache');
+        if (getTableFields(sampleTable).length === 0) {
+          const { getSqlMetadata } = await import('../../../services/storage/stateStorage');
+          const cacheData = getSqlMetadata(userName || '', project);
+          if (cacheData?.fields) {
+            tableList.forEach((tableName: string) => {
+              const key = tableName.toLowerCase();
+              const fields = cacheData.fields[key] || cacheData.fields[tableName];
+              if (fields?.length > 0) cacheTableFields(tableName, fields);
+            });
+          }
+        }
+      }
+
       
       // 2. 如果内存缓存为空,尝试从文件缓存读取
       if (tableList.length === 0) {
@@ -517,10 +576,21 @@ const SqlSearch = () => {
         if (cacheData?.dbTables?.[dbName]) {
           // 文件中有这个数据库的表列表
           tableList = cacheData.dbTables[dbName];
-
-          
           // 恢复到内存缓存
           cacheDbTables(dbName, tableList);
+
+          // 同时恢复字段到内存（如果 window.sqlFieldSuggestions 里还没有）
+          if (cacheData.fields) {
+            const { cacheTableFields } = await import('../../../utils/sql/cache');
+            tableList.forEach((tableName: string) => {
+              const key = tableName.toLowerCase();
+              if (!window.sqlFieldSuggestions?.[key] && cacheData.fields[key]) {
+                cacheTableFields(tableName, cacheData.fields[key]);
+              } else if (!window.sqlFieldSuggestions?.[key] && cacheData.fields[tableName]) {
+                cacheTableFields(tableName, cacheData.fields[tableName]);
+              }
+            });
+          }
         } else {
           // 3. 文件中也没有,调用API获取
 

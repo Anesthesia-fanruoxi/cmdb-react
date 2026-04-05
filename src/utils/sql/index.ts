@@ -69,34 +69,21 @@ export function createSqlCompleter(ace: any, { getTables, loadTableStructure: _l
         // 判断是否在 WHERE 子句中
         const isInWhereClause = context.clause === 'WHERE'
         
-        // 获取当前 SQL 中涉及的表名集合（用于优先提示）
-        const currentSqlTableNames = new Set(context.tables.map(t => t.name.toLowerCase()))
-        
-        // 1. SQL关键字（所有类型）
+        // 1. SQL关键字
         const allKeywords = [
-          ...SQL_KEYWORDS.INITIAL,
-          ...SQL_KEYWORDS.SELECT,
-          ...SQL_KEYWORDS.FROM,
-          ...SQL_KEYWORDS.WHERE,
-          ...SQL_KEYWORDS.JOIN,
-          ...SQL_KEYWORDS.ORDER_BY,
-          ...SQL_KEYWORDS.GROUP_BY,
-          ...SQL_KEYWORDS.OPERATORS
+          ...SQL_KEYWORDS.INITIAL, ...SQL_KEYWORDS.SELECT, ...SQL_KEYWORDS.FROM,
+          ...SQL_KEYWORDS.WHERE, ...SQL_KEYWORDS.JOIN, ...SQL_KEYWORDS.ORDER_BY,
+          ...SQL_KEYWORDS.GROUP_BY, ...SQL_KEYWORDS.OPERATORS
         ]
-        
-        // 去重关键字
         const uniqueKeywords = Array.from(new Set(allKeywords))
         uniqueKeywords.forEach(keyword => {
           const matchResult = fuzzyMatch(prefix, keyword)
           if (matchResult.match) {
-            // 使用关键字优先级权重
             const priorityBonus = KEYWORD_PRIORITY[keyword] || 50
-            // WHERE 子句中降低关键字优先级
-            const baseScore = isInWhereClause ? 7000 : 10000
+            // WHERE 子句中关键字评分大幅降低，让字段优先
+            const baseScore = isInWhereClause ? 3000 : 10000
             allSuggestions.push({ 
-              caption: keyword, 
-              value: keyword, 
-              meta: 'keyword', 
+              caption: keyword, value: keyword, meta: 'keyword', 
               score: baseScore + (priorityBonus * 10) + matchResult.score
             })
           }
@@ -106,12 +93,10 @@ export function createSqlCompleter(ace: any, { getTables, loadTableStructure: _l
         SQL_KEYWORDS.FUNCTIONS.forEach(func => {
           const matchResult = fuzzyMatch(prefix, func)
           if (matchResult.match) {
-            // WHERE 子句中函数优先级略微降低
-            const baseScore = isInWhereClause ? 8000 : 9000
+            // WHERE 子句中函数评分也降低
+            const baseScore = isInWhereClause ? 4000 : 9000
             allSuggestions.push({ 
-              caption: func, 
-              value: func + '()', 
-              meta: 'function', 
+              caption: func, value: func + '()', meta: 'function', 
               score: baseScore + matchResult.score
             })
           }
@@ -148,37 +133,27 @@ export function createSqlCompleter(ace: any, { getTables, loadTableStructure: _l
           }
         })
         
-        // 5. 所有已加载的字段（来自所有表）
-        // 注意：字段信息已在项目切换时通过元数据缓存，不再需要异步加载
-        tables.forEach(table => {
-          const fields = getTableFields(table.name)
+        // 5. 只提示 FROM 里出现的表的字段，不加载其他无关表
+        context.tables.forEach((tableInfo, tableIdx) => {
+          const shortName = tableInfo.name.includes('.')
+            ? tableInfo.name.split('.').pop()!
+            : tableInfo.name
+          const fields = getTableFields(shortName) || getTableFields(tableInfo.name)
           if (fields && fields.length > 0) {
+            const scoreBonus = isInWhereClause
+              ? (tableIdx === 0 ? 12000 : 11000)
+              : (tableIdx === 0 ? 9000 : 8000)
             fields.forEach(field => {
               const matchResult = fuzzyMatch(prefix, field.caption)
               if (matchResult.match) {
-                // 判断字段是否来自当前 SQL 涉及的表
-                const isFromCurrentSqlTable = currentSqlTableNames.has(table.name.toLowerCase())
-                
-                // WHERE 子句中，当前 SQL 涉及的表的字段获得最高优先级
-                let baseScore = 7000
-                if (isInWhereClause && isFromCurrentSqlTable) {
-                  baseScore = 9500 // WHERE 中当前表的字段优先级最高
-                } else if (isInWhereClause) {
-                  baseScore = 6500 // WHERE 中其他表的字段优先级较低
-                }
-                
-                // 添加表名前缀到注释，方便识别
-                const fieldWithTable = {
+                allSuggestions.push({
                   ...field,
-                  comment: `${table.name}.${field.caption}`,
-                  score: baseScore + matchResult.score
-                }
-                
-                allSuggestions.push(fieldWithTable)
+                  comment: `${shortName}.${field.caption}`,
+                  score: matchResult.score + scoreBonus
+                })
               }
             })
           }
-          // 移除了异步加载逻辑，因为元数据已在项目切换时全部缓存
         })
         
         // 6. 如果有上下文中的表别名，提供别名建议

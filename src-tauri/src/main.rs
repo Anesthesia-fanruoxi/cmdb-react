@@ -48,6 +48,7 @@ fn main() {
             get_system_info,
             encrypt_data,
             decrypt_data,
+            save_store_async,
             bind_device,
             unbind_device,
             auto_login,

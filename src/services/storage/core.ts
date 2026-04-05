@@ -88,6 +88,22 @@ async function loadAndDecrypt(file: StorageFile): Promise<Record<string, unknown
 }
 
 /**
+ * 加密并保存数据到文件（异步后台，不等待返回，不阻塞主线程）
+ */
+export function saveStorageDataAsync(file: StorageFile, data: Record<string, unknown>): void {
+  if (!isTauriEnv()) return;
+
+  // 先更新内存缓存
+  memoryCache.set(file, data);
+
+  const jsonStr = JSON.stringify(data);
+  // fire-and-forget：invoke 不 await，Rust 后台线程处理加密+写文件
+  invoke('save_store_async', { file, plaintext: jsonStr }).catch((err) => {
+    console.error(`[AsyncSave] 后台保存 ${file} 失败:`, err);
+  });
+}
+
+/**
  * 加密并保存数据到文件
  */
 async function encryptAndSave(file: StorageFile, data: Record<string, unknown>): Promise<void> {

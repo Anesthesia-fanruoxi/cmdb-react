@@ -31,7 +31,12 @@ export function parseTableAliases(sql: string): Record<string, string> {
     const fromMatch = currentSql.match(/\bFROM\b\s+(.*?)(?:\bWHERE\b|\bGROUP BY\b|\bHAVING\b|\bORDER BY\b|\bLIMIT\b|$)/is)
     if (!fromMatch) return aliases
     
-    const fromClause = fromMatch[1].trim()
+    const rawFromClause2 = fromMatch[1]
+    const endsWithSpace2 = /\s$/.test(rawFromClause2)
+    let fromClause = rawFromClause2.trim()
+    if (!endsWithSpace2) {
+      fromClause = fromClause.replace(/\s+\S+$/, '').trim()
+    }
     
     // 处理显式别名 (使用AS关键字)
     const explicitAsPattern = /\b([a-zA-Z0-9_\.]+)\s+AS\s+([a-zA-Z0-9_]+)(?:\s*,|\s+|$)/gi
@@ -91,6 +96,16 @@ export function extractTablesFromSql(sql: string): TableInfo[] {
     
     let fromClause = fromMatch[1].trim()
     
+    // 如果 FROM 子句末尾没有空格，说明最后一个词还在输入中，去掉它
+    // 例：`app_customer whe` → 去掉 `whe`，只保留 `app_customer`
+    // 例：`app_customer ` → 末尾有空格，保留完整（别名已确认）
+    const rawFromClause = fromMatch[1] // 不 trim，保留末尾空格信息
+    const endsWithSpace = /\s$/.test(rawFromClause)
+    if (!endsWithSpace) {
+      // 去掉末尾正在输入的词
+      fromClause = fromClause.replace(/\s+\S+$/, '').trim()
+    }
+    
     // 处理简单的表列表
     if (!fromClause.toUpperCase().includes('JOIN')) {
       const tableList = fromClause.split(',')
@@ -104,15 +119,15 @@ export function extractTablesFromSql(sql: string): TableInfo[] {
           return
         }
         
-        // 处理"表名 别名"格式
+        // 处理"表名 别名"格式（第二个词不能是 SQL 关键字）
         const parts = entry.split(/\s+/)
-        if (parts.length === 2) {
+        if (parts.length === 2 && !SQL_KEYWORDS_LIST.includes(parts[1].toUpperCase())) {
           tables.push({ name: parts[0], alias: parts[1] })
           return
         }
         
-        // 单独的表名
-        if (parts.length === 1 && parts[0]) {
+        // 单独的表名（或第二个词是关键字，只取第一个词）
+        if (parts.length >= 1 && parts[0]) {
           tables.push({ name: parts[0], alias: null })
         }
       })
