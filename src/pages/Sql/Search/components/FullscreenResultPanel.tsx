@@ -188,9 +188,16 @@ const FullscreenResultPanel = ({
     };
   }, []);
 
-  // 键盘方向键控制滚动
+  // 键盘方向键控制滚动 + ESC 退出全屏
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // ESC 键退出全屏
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      
       if (!scrollContainerRef.current) return;
       
       const scrollStep = 100; // 每次滚动的像素
@@ -236,7 +243,7 @@ const FullscreenResultPanel = ({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  }, [onClose]);
 
   return (
     <div className="fullscreen-result-panel">

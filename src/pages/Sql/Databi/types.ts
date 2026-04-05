@@ -51,3 +51,16 @@ export interface CsvRow {
   col_name: string;
   comment: string;
 }
+
+/** 标签页类型 */
+export interface DatabiTab {
+  id: string;
+  name: string;
+  project: string;
+  sqlQuery: string;
+  queryLoading: boolean;
+  resultData: unknown[][];
+  resultColumns: string[];
+  took: number;
+  editorHeightPercent: number;
+}

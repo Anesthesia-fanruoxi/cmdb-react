@@ -17,12 +17,12 @@ export const useDatabiQuery = () => {
     const trimmedSql = sql.trim();
     if (!trimmedSql) {
       toast.warning('请输入SQL查询语句');
-      return;
+      return { resultData: [], resultColumns: [], took: 0 };
     }
 
     if (!project) {
       toast.warning('请先选择项目');
-      return;
+      return { resultData: [], resultColumns: [], took: 0 };
     }
 
     setQueryLoading(true);
@@ -40,8 +40,11 @@ export const useDatabiQuery = () => {
 
       if (res.code === 200 && res.data) {
         const { head, table } = res.data;
+        let columns: string[] = [];
+        let data: unknown[][] = [];
 
         if (head && head.length > 0) {
+          columns = head;
           setResultColumns(head);
         }
 
@@ -56,20 +59,27 @@ export const useDatabiQuery = () => {
               });
               return obj;
             });
+            data = convertedData as any;
             setResultData(convertedData as any);
           } else {
             // 已经是对象数组格式
+            data = table;
             setResultData(table);
           }
         }
 
-        setTook(Date.now() - startTime);
+        const elapsedTime = Date.now() - startTime;
+        setTook(elapsedTime);
+        
+        return { resultData: data, resultColumns: columns, took: elapsedTime };
       } else {
         toast.error(res.message || '查询失败');
+        return { resultData: [], resultColumns: [], took: 0 };
       }
     } catch (error) {
       console.error('查询失败:', error);
       toast.error('查询失败');
+      return { resultData: [], resultColumns: [], took: 0 };
     } finally {
       setQueryLoading(false);
     }
