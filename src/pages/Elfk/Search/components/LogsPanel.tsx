@@ -27,7 +27,8 @@ interface LogsPanelProps {
   onSortChange?: (sortOrder: string) => void;
   onPageData?: (data: { logs: LogHit[]; page: number; pages: number; append?: boolean }) => void;
   onLoadingChange?: (loading: boolean) => void;
-  onScrollPositionChange?: (position: number) => void; // 新增：滚动位置变化回调
+  onScrollPositionChange?: (position: number) => void;
+  onAddFilter?: (field: string, value: string) => void; // 点击字段值追加 AND 条件
   onAnalysis?: () => void;
 }
 
@@ -36,7 +37,7 @@ const typeColors: Record<string, string> = {
   date: '#c45656', array: '#737579', object: '#8b5da7',
 };
 
-const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields, searchParams, sortOrder: externalSortOrder = 'desc', scrollPosition = 0, onSortChange, onPageData, onLoadingChange, onScrollPositionChange, onAnalysis }: LogsPanelProps) => {
+const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields, searchParams, sortOrder: externalSortOrder = 'desc', scrollPosition = 0, onSortChange, onPageData, onLoadingChange, onScrollPositionChange, onAddFilter, onAnalysis }: LogsPanelProps) => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(externalSortOrder);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageLoading, setPageLoading] = useState(false);
@@ -50,7 +51,84 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
   const [shouldResetScroll, setShouldResetScroll] = useState(false); // 新增：标记是否需要重置滚动
   const contentRef = useRef<HTMLDivElement>(null);
   const scrollTimerRef = useRef<number | null>(null);
-  const lastQueryIdRef = useRef<string>(''); // 新增：记录上次的 query_id
+  const scrollSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null); // 位置回传防抖
+  const lastQueryIdRef = useRef<string>('');
+  const isKeyScrolling = useRef(false);
+  const keyScrollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // 选中文本浮动按钮
+  const [selectionPopup, setSelectionPopup] = useState<{ x: number; y: number; text: string } | null>(null);
+
+  useEffect(() => {
+    const handleMouseUp = (e: MouseEvent) => {
+      // 如果点击的是浮动按钮本身，不处理
+      if ((e.target as HTMLElement).closest('.selection-add-btn')) return;
+
+      setTimeout(() => {
+        const selection = window.getSelection();
+        const text = selection?.toString().trim();
+        if (!text || !contentRef.current?.contains(selection?.anchorNode ?? null)) {
+          setSelectionPopup(null);
+          return;
+        }
+        const range = selection!.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        setSelectionPopup({ x: rect.left + rect.width / 2, y: rect.top - 8, text });
+      }, 10);
+    };
+
+    const handleMouseDown = (e: MouseEvent) => {
+      if (!(e.target as HTMLElement).closest('.selection-add-btn')) {
+        setSelectionPopup(null);
+      }
+    };
+
+    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => {
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mousedown', handleMouseDown);
+    };
+  }, []);
+
+  // 键盘上下键滚动：单次 instant，长按用 interval 控速（每 50ms 滚 40px = 800px/s）
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+
+    const startScroll = (dir: 1 | -1) => {
+      isKeyScrolling.current = true;
+      el.scrollBy({ top: dir * 80 });
+      if (keyScrollTimer.current) return;
+      // 500ms 后才算长按，开始持续滚动
+      keyScrollTimer.current = setTimeout(() => {
+        keyScrollTimer.current = setInterval(() => {
+          el.scrollBy({ top: dir * 80 });
+        }, 50);
+      }, 500) as unknown as ReturnType<typeof setInterval>;
+    };
+
+    const stopScroll = () => {
+      if (keyScrollTimer.current) { clearTimeout(keyScrollTimer.current); clearInterval(keyScrollTimer.current); keyScrollTimer.current = null; }
+      setTimeout(() => { isKeyScrolling.current = false; }, 50);
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowDown') { e.preventDefault(); startScroll(1); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); startScroll(-1); }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') stopScroll();
+    };
+
+    el.addEventListener('keydown', handleKeyDown);
+    el.addEventListener('keyup', handleKeyUp);
+    return () => {
+      el.removeEventListener('keydown', handleKeyDown);
+      el.removeEventListener('keyup', handleKeyUp);
+      if (keyScrollTimer.current) clearInterval(keyScrollTimer.current);
+    };
+  }, []); // 新增：记录上次的 query_id
 
   const hasPermission = useAuthStore(s => s.hasPermission);
   const addMessage = useMessageStore(s => s.addMessage);
@@ -62,22 +140,22 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
   const queryId = searchParams?.query_id as string || '';
   const hasMore = currentPage < totalPages;
 
-  // 恢复滚动位置
+  // 恢复滚动位置 — 只在 logs 数据切换时执行，不监听 scrollPosition 避免滚动循环
+  const scrollPositionRef = useRef(scrollPosition);
+  scrollPositionRef.current = scrollPosition;
+
   useEffect(() => {
     if (!contentRef.current) return;
-    
-    // 如果需要重置滚动（新搜索），滚动到顶部
     if (shouldResetScroll) {
       contentRef.current.scrollTop = 0;
       setShouldResetScroll(false);
       return;
     }
-    
-    // 否则恢复保存的滚动位置
-    if (scrollPosition > 0) {
-      contentRef.current.scrollTop = scrollPosition;
+    // 切换标签页恢复位置（只在 logs 变化时触发一次）
+    if (scrollPositionRef.current > 0) {
+      contentRef.current.scrollTop = scrollPositionRef.current;
     }
-  }, [logs, scrollPosition, shouldResetScroll]);
+  }, [logs, shouldResetScroll]); // 不依赖 scrollPosition，避免每次滚动都重置
 
   // 监听外部 sortOrder 变化，同步到本地状态
   useEffect(() => {
@@ -226,14 +304,9 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
   // 处理滚动事件
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const target = e.target as HTMLDivElement;
-    
-    // 保存滚动位置
-    onScrollPositionChange?.(target.scrollTop);
-    
-    if (scrollTimerRef.current) {
-      cancelAnimationFrame(scrollTimerRef.current);
-    }
 
+    // 底部检测：用 rAF 去重，避免高频触发
+    if (scrollTimerRef.current) cancelAnimationFrame(scrollTimerRef.current);
     scrollTimerRef.current = requestAnimationFrame(() => {
       const { scrollTop, scrollHeight, clientHeight } = target;
       const distanceToBottom = scrollHeight - scrollTop - clientHeight;
@@ -241,18 +314,21 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
 
       if (distanceToBottom < threshold && !isLoadingMore && hasMore && queryId) {
         if (!hasReachedBottom) {
-          // 第一次到达底部，标记
           setHasReachedBottom(true);
         } else {
-          // 第二次滚动，触发加载
           setHasReachedBottom(false);
           loadMoreData();
         }
-      } else if (distanceToBottom > threshold + 50) {
-        // 离开底部区域，重置标记
-        if (hasReachedBottom) {
-          setHasReachedBottom(false);
-        }
+      } else if (distanceToBottom > threshold + 50 && hasReachedBottom) {
+        setHasReachedBottom(false);
+      }
+
+      // 滚动位置回传防抖：键盘滚动期间跳过，鼠标滚动停止 300ms 后才回传，避免高频 setState
+      if (!isKeyScrolling.current) {
+        if (scrollSaveTimer.current) clearTimeout(scrollSaveTimer.current);
+        scrollSaveTimer.current = setTimeout(() => {
+          onScrollPositionChange?.(target.scrollTop);
+        }, 300);
       }
     });
   }, [isLoadingMore, hasMore, queryId, hasReachedBottom, loadMoreData, onScrollPositionChange]);
@@ -282,6 +358,21 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
 
   return (
     <div className="logs-panel">
+      {/* 选中文本浮动按钮 */}
+      {selectionPopup && (
+        <div
+          className="selection-add-btn"
+          style={{ position: 'fixed', left: selectionPopup.x, top: selectionPopup.y, transform: 'translate(-50%, -100%)', zIndex: 9999 }}
+          onMouseDown={e => e.preventDefault()}
+          onClick={() => {
+            onAddFilter?.('', selectionPopup.text);
+            setSelectionPopup(null);
+            window.getSelection()?.removeAllRanges();
+          }}
+        >
+          AND "{selectionPopup.text.length > 20 ? selectionPopup.text.slice(0, 20) + '…' : selectionPopup.text}"
+        </div>
+      )}
       <div className="logs-header">
         <div className="header-left">
           <span className="title">查询结果</span>
@@ -302,7 +393,7 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
         </div>
       </div>
 
-      <div className="logs-content" ref={contentRef} onScroll={handleScroll}>
+      <div className="logs-content" ref={contentRef} tabIndex={0} onScroll={handleScroll}>
         {isLoading && logs.length === 0 ? (
           <div className="logs-loading">加载中...</div>
         ) : logs.length === 0 ? (
@@ -339,7 +430,10 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
                         return (
                           <div key={key} className="field-pair">
                             <span className="field-name" style={{ color }}>{key}:</span>
-                            <span className="field-value" dangerouslySetInnerHTML={{ __html: highlightText(formatValue(value)) }} />
+                            <span
+                              className="field-value"
+                              dangerouslySetInnerHTML={{ __html: highlightText(formatValue(value)) }}
+                            />
                           </div>
                         );
                       })}

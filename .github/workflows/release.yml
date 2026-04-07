@@ -163,7 +163,11 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"
-          DESCRIPTION="1、优化了sql查询的提示逻辑"
+          DESCRIPTION="1、优化了sql标签页，双击修改标签页名称，右键支持新增删除，复制等功能。
+          2、优化了es查询中的滚动，支持上下键进行滚动长按超过500ms后，会滚动的飞起。
+          3、支持es查询中，在日志里面进行提词，选中之后会提示新增and。
+          4、修复sql查询的高亮。"
+
 
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \

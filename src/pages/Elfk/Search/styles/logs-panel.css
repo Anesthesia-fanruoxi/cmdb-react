@@ -152,6 +152,35 @@
   white-space: pre-wrap;
 }
 
+.log-body .field-value-clickable {
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 0 2px;
+  transition: background 0.15s;
+}
+
+.log-body .field-value-clickable:hover {
+  background: var(--primary-color-light, rgba(24, 144, 255, 0.12));
+  color: var(--primary-color, #1890ff);
+}
+
+/* 选中文本浮动按钮 */
+.selection-add-btn {
+  background: var(--primary-color, #1890ff);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  user-select: none;
+}
+
+.selection-add-btn:hover {
+  background: var(--primary-hover, #40a9ff);
+}
+
 /* 日志操作按钮 */
 .log-actions {
   flex-shrink: 0;

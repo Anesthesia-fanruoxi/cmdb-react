@@ -290,7 +290,12 @@ const SqlSearch = () => {
       if (restoredTabs.length > 0) {
         setTabs(restoredTabs);
         setActiveTabId(saved?.activeTabId || restoredTabs[0].id);
-        setTabCounter(saved?.tabCounter || restoredTabs.length);
+        // 取已有 tab id 中最大的数值，避免序号重复
+        const maxIdNum = restoredTabs.reduce((max, t) => {
+          const n = parseInt(t.id, 10);
+          return isNaN(n) ? max : Math.max(max, n);
+        }, 0);
+        setTabCounter(saved?.tabCounter || Math.max(maxIdNum, restoredTabs.length));
       }
     } catch (error) {
       console.error('恢复 SQL 页面状态失败:', error);
@@ -387,10 +392,34 @@ const SqlSearch = () => {
   }
 
   const addTab = () => {
-    const newId = String(tabCounter + 1);
-    setTabCounter(tabCounter + 1);
-    setTabs(prev => [...prev, createTab(newId)]);
-    setActiveTabId(newId);
+    setTabCounter(prev => {
+      const newCounter = prev + 1;
+      const newId = String(newCounter);
+      setTabs(tabs => [...tabs, createTab(newId)]);
+      setActiveTabId(newId);
+      return newCounter;
+    });
+  };
+
+  const duplicateTab = (sourceId: string) => {
+    const source = tabs.find(t => t.id === sourceId);
+    if (!source) return;
+    setTabCounter(prev => {
+      const newCounter = prev + 1;
+      const newId = String(newCounter);
+      const newTab: Tab = {
+        ...createTab(newId),
+        name: `${source.name} 副本`,
+        project: source.project,
+        dbName: source.dbName,
+        dbList: source.dbList,
+        tableList: source.tableList,
+        sqlQuery: source.sqlQuery,
+      };
+      setTabs(tabs => [...tabs, newTab]);
+      setActiveTabId(newId);
+      return newCounter;
+    });
   };
 
   const removeTab = (id: string) => {
@@ -1137,6 +1166,8 @@ const SqlSearch = () => {
         onAddTab={addTab}
         onShowHistory={showHistory}
         onShowSettings={() => setSettingsVisible(true)}
+        onTabRename={(id, name) => updateTab(id, { name })}
+        onTabDuplicate={duplicateTab}
       />
 
       <div className="main-content">

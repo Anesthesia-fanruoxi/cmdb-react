@@ -317,7 +317,17 @@ const ElfkSearch = () => {
     const tab = tabs.find(t => t.id === tabId);
     if (!tab) return;
     tabCounter.current += 1;
-    setTabs(prev => [...prev, { ...tab, id: `tab-${Date.now()}`, name: `${tab.name} 副本`, logs: [], total: 0, highlightKeyword: '', lastParams: {} }]);
+    const newId = `tab-${Date.now()}`;
+    setTabs(prev => [...prev, {
+      ...tab,
+      id: newId,
+      name: `${tab.name} 副本`,
+      logs: [], total: 0, highlightKeyword: '', lastParams: {},
+      projectInfo: tab.projectInfo,
+      initialized: tab.initialized,
+      currentView: tab.currentView,
+    }]);
+    setActiveTabId(newId);
   };
 
   const handleTabsReorder = (newTabs: { id: string; name: string }[]) => {
@@ -511,6 +521,12 @@ const ElfkSearch = () => {
                   onPageData={handlePageData}
                   onLoadingChange={(l: boolean) => updateTab(activeTab.id, { loading: l })}
                   onScrollPositionChange={(pos: number) => updateTab(activeTab.id, { scrollPosition: pos })}
+                  onAddFilter={(_field, value) => {
+                    const current = activeTab.keyword?.trim();
+                    const newKeyword = current ? `${current} AND ${value}` : value;
+                    updateTab(activeTab.id, { keyword: newKeyword });
+                    handleSearch({ ...activeTab.lastParams, keyword: newKeyword });
+                  }}
                   onAnalysis={() => setAnalysisVisible(true)}
                 />
               </div>

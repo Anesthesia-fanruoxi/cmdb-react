@@ -66,6 +66,10 @@ fn generate_script_internal(msi_path: &str) -> Result<(), String> {
     let script = updater_script::get_update_script(exe_name, &msi_dir, &exe_path);
     
     let script_path = download_dir.join("cmdb_update.bat");
+    // 用 UTF-16 LE with BOM 写入 bat，支持中文路径
+    #[cfg(target_os = "windows")]
+    write_utf16le(&script_path, &script).map_err(|e| e.to_string())?;
+    #[cfg(not(target_os = "windows"))]
     fs::write(&script_path, &script).map_err(|e| e.to_string())?;
     
     println!("[更新] 脚本已生成: {}", script_path.display());
@@ -222,16 +226,17 @@ pub async fn install_update(app: AppHandle, file_path: String, _install_path: St
         const CREATE_NO_WINDOW: u32 = 0x08000000;
         
         // 创建 VBS 脚本来静默提权
+        // 使用 UTF-16 LE 写入 VBS，确保中文路径不乱码
         let script_path_str = script_path.to_string_lossy().to_string();
-        // VBS 中路径不需要额外转义，直接用原始路径
         let vbs_content = format!(
             r#"Set UAC = CreateObject("Shell.Application")
-UAC.ShellExecute "cmd.exe", "/c ""{0}""", "", "runas", 0"#,
+UAC.ShellExecute "cmd.exe", "/u /c ""{0}""", "", "runas", 0"#,
             script_path_str
         );
         
         let vbs_path = get_download_dir().join("elevate.vbs");
-        fs::write(&vbs_path, &vbs_content).map_err(|e| e.to_string())?;
+        // 用 UTF-16 LE with BOM 写入，VBScript 原生支持 Unicode，中文路径不乱码
+        write_utf16le(&vbs_path, &vbs_content).map_err(|e| e.to_string())?;
         
         println!("[更新] VBS 路径: {}", vbs_path.display());
         println!("[更新] 脚本路径: {}", script_path_str);
@@ -316,6 +321,20 @@ pub fn read_update_log() -> Result<String, String> {
     } else {
         Ok("日志文件不存在".to_string())
     }
+}
+
+/// 将字符串以 UTF-16 LE with BOM 写入文件（支持中文路径）
+#[cfg(target_os = "windows")]
+fn write_utf16le(path: &std::path::Path, content: &str) -> std::io::Result<()> {
+    use std::io::Write;
+    let mut bytes: Vec<u8> = Vec::new();
+    // BOM: FF FE
+    bytes.extend_from_slice(&[0xFF, 0xFE]);
+    for c in content.encode_utf16() {
+        bytes.extend_from_slice(&c.to_le_bytes());
+    }
+    let mut file = fs::File::create(path)?;
+    file.write_all(&bytes)
 }
 
 /// 获取更新目录信息（用于调试）

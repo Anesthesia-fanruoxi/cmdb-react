@@ -290,26 +290,27 @@ const ResultPanel = ({
                 {currentData.map((row, idx) => {
                   const absoluteIndex = rowNumberStart + idx;
                   const isSelected = selectedRows.has(absoluteIndex);
-                  // 将 hex 颜色转为带透明度的背景色
+                  // 将 hex 颜色转为带透明度的背景色（应用到 td，避免被 td 背景覆盖）
                   const hex = highlightColor.replace('#', '');
                   const r = parseInt(hex.slice(0, 2), 16);
                   const g = parseInt(hex.slice(2, 4), 16);
                   const b = parseInt(hex.slice(4, 6), 16);
-                  const selectedStyle = isSelected ? { background: `rgba(${r},${g},${b},0.18)` } : {};
+                  const selectedTdStyle = isSelected ? { background: `rgba(${r},${g},${b},0.18)` } : {};
                   return (
                     <tr
                       key={absoluteIndex}
                       className={isSelected ? 'row-selected' : ''}
-                      style={{ ...selectedStyle, userSelect: 'none' }}
+                      style={{ userSelect: 'none' }}
                       onClick={(e) => handleRowClick(absoluteIndex, e)}
                     >
-                      <td className="row-num">{absoluteIndex + 1}</td>
-                      {row.map((val, colIdx) => (
-                        <td 
-                          key={colIdx} 
+                      <td className="row-num" style={selectedTdStyle}>{absoluteIndex + 1}</td>
+                      {Array.isArray(row) && row.map((val, colIdx) => (
+                        <td
+                          key={colIdx}
                           title={`双击复制: ${formatValue(val)}`}
                           onDoubleClick={() => copyCellValue(val)}
                           className="cell-copyable"
+                          style={selectedTdStyle}
                         >
                           {formatValue(val)}
                         </td>
