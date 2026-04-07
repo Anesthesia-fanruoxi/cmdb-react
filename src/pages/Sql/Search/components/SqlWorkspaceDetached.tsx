@@ -247,7 +247,7 @@ const SqlWorkspaceDetached = ({ detachKey, project, dbName, initialTab }: Props)
             onTableDetail={handleTableDetail} />
         </div>
         <div className="content">
-          <SqlWorkspace sql={tab.sqlQuery} onSqlChange={(sql: string) => updateTab({ sqlQuery: sql })}
+          <SqlWorkspace tabId={detachKey} sql={tab.sqlQuery} onSqlChange={(sql: string) => updateTab({ sqlQuery: sql })}
             onExecute={handleExecute} loading={tab.queryLoading} exportLoading={tab.exportLoading}
             results={tab.results} columns={tab.columns} total={tab.total} took={tab.took}
             dbName={tab.dbName} queryId={tab.queryId} allResults={tab.allResults}

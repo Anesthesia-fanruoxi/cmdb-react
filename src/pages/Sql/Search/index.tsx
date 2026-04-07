@@ -1164,6 +1164,7 @@ const SqlSearch = () => {
           {tabs.map(tab => (
             <div key={tab.id} style={{ display: tab.id === activeTabId ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
               <SqlWorkspace
+                tabId={tab.id}
                 sql={tab.sqlQuery}
                 onSqlChange={(sql: string) => updateTab(tab.id, { sqlQuery: sql })}
                 onExecute={handleExecute}

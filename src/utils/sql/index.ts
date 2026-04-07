@@ -8,6 +8,7 @@ import { fuzzyMatch, deduplicateSuggestions } from './matcher'
 import { initCache, getTableFields } from './cache'
 import { getDocTooltip, createCustomRenderer, getIconForType, getColorForType, getTypeLabel } from './renderer'
 import { getDotCompletions } from './completers'
+import { getTablesNearCursor } from './tableExtractor'
 import type { Suggestion, TableInfo, FieldInfo } from './types'
 
 interface CompleterOptions {
@@ -133,28 +134,29 @@ export function createSqlCompleter(ace: any, { getTables, loadTableStructure: _l
           }
         })
         
-        // 5. 只提示 FROM 里出现的表的字段，不加载其他无关表
-        context.tables.forEach((tableInfo, tableIdx) => {
-          const shortName = tableInfo.name.includes('.')
-            ? tableInfo.name.split('.').pop()!
-            : tableInfo.name
-          const fields = getTableFields(shortName) || getTableFields(tableInfo.name)
-          if (fields && fields.length > 0) {
-            const scoreBonus = isInWhereClause
-              ? (tableIdx === 0 ? 12000 : 11000)
-              : (tableIdx === 0 ? 9000 : 8000)
-            fields.forEach(field => {
-              const matchResult = fuzzyMatch(prefix, field.caption)
-              if (matchResult.match) {
-                allSuggestions.push({
-                  ...field,
-                  comment: `${shortName}.${field.caption}`,
-                  score: matchResult.score + scoreBonus
-                })
-              }
-            })
-          }
-        })
+        // 5. 按光标距离分配字段权重
+        // primary = 最近的表（最高权重），secondary = 同语句其他表，rest = 其他语句的表
+        const { primary, secondary, rest } = getTablesNearCursor(fullSql, pos.row)
+
+        const addFieldsForTable = (tableName: string, baseScore: number) => {
+          const shortName = tableName.includes('.') ? tableName.split('.').pop()! : tableName
+          const fields = getTableFields(shortName) || getTableFields(tableName)
+          if (!fields || fields.length === 0) return
+          fields.forEach(field => {
+            const matchResult = fuzzyMatch(prefix, field.caption)
+            if (matchResult.match) {
+              allSuggestions.push({
+                ...field,
+                comment: `${shortName}.${field.caption}`,
+                score: matchResult.score + baseScore
+              })
+            }
+          })
+        }
+
+        if (primary) addFieldsForTable(primary, isInWhereClause ? 14000 : 11000)
+        secondary.forEach(t => addFieldsForTable(t, isInWhereClause ? 12000 : 9000))
+        rest.forEach(t => addFieldsForTable(t, isInWhereClause ? 10000 : 7000))
         
         // 6. 如果有上下文中的表别名，提供别名建议
         if (context.tableAliases && Object.keys(context.tableAliases).length > 0) {
@@ -217,4 +219,5 @@ export function createSqlCompleter(ace: any, { getTables, loadTableStructure: _l
 export { fuzzyMatch } from './matcher'
 export { getTableFields, cacheTableFields, initCache } from './cache'
 export { analyzeContext, extractTablesFromSql, parseTableAliases } from './parser'
+export { getCurrentStatement } from './tableExtractor'
 export type { Suggestion, TableInfo, FieldInfo, SqlContext } from './types'

@@ -28,6 +28,7 @@ export interface Message {
 }
 
 interface Props {
+  tabId?: string  // 标签页唯一键
   sql: string;
   onSqlChange: (sql: string) => void;
   onExecute: (sql: string, isSelection: boolean) => void;
@@ -60,6 +61,7 @@ interface Props {
 }
 
 const SqlWorkspace = ({
+  tabId,
   sql,
   onSqlChange,
   onExecute,
@@ -312,6 +314,7 @@ const SqlWorkspace = ({
           tables={tables}
           currentDb={dbName}
           loadTableStructure={loadTableStructure}
+          tabId={tabId}
         />
       </div>
 

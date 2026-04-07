@@ -9,6 +9,7 @@ import 'ace-builds/src-noconflict/theme-xcode'
 import 'ace-builds/src-noconflict/theme-tomorrow_night'
 import 'ace-builds/src-noconflict/ext-language_tools'
 import { createSqlCompleter } from '@/utils/sql'
+import { updateTabTables } from '@/utils/sql/tableExtractor'
 import { useUserPrefsStore } from '@/stores/userPrefsStore'
 import { formatSqlContent, createDotHandler } from './sqlEditorUtils'
 import SearchDialog from './SearchDialog'
@@ -28,6 +29,7 @@ interface Props {
   tables?: TableInfo[]
   currentDb?: string
   loadTableStructure?: (tableName: string) => Promise<FieldInfo[] | null>
+  tabId?: string  // 标签页唯一键，用于表名注册表
 }
 
 /** 暴露给父组件的方法 */
@@ -42,7 +44,7 @@ export interface SqlEditorRef {
 
 const SqlEditor = forwardRef<SqlEditorRef, Props>(({ 
   value, onChange, onExecute, onNewTab, onShowHistory, loading, onFocus, onBlur,
-  tables = [], loadTableStructure 
+  tables = [], loadTableStructure, tabId
 }, ref) => {
   const editorRef = useRef<HTMLDivElement>(null)
   const aceEditorRef = useRef<ace.Ace.Editor | null>(null)
@@ -180,10 +182,14 @@ const SqlEditor = forwardRef<SqlEditorRef, Props>(({
     })
 
     // 监听内容变化 — 只更新内部 ref + 防抖，不触发 React 重渲染
+    let isInitializing = true
     editor.on('change', (delta: any) => {
       isInternalChange.current = true
       const newValue = editor.getValue()
       sqlValueRef.current = newValue
+
+      // 跳过初始化时的 setValue 触发，只响应用户真实输入
+      if (!isInitializing && tabId) updateTabTables(tabId, newValue)
 
       // 防抖 500ms 同步到 React 状态（用于自动保存）
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
@@ -212,10 +218,12 @@ const SqlEditor = forwardRef<SqlEditorRef, Props>(({
     // 添加点号处理器（用于 table.field 补全）
     createDotHandler(editor, loadTableStructure)
 
-    // 设置初始值
+    // 设置初始值（在 change 监听之后，但标记初始化中，不触发表名提取）
     if (value) {
       editor.setValue(value, 1)
     }
+    // 初始化完成，后续 change 事件才触发表名提取
+    isInitializing = false
 
     // 添加鼠标滚轮缩放功能
     const handleWheel = (e: WheelEvent) => {

@@ -163,10 +163,7 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"
-          DESCRIPTION="1、优化了sql查询部分bug
-          2、优化了es部分已知bug
-          3、优化了sql部分ui不美观
-          4、优化了监控部分ui不美观"
+          DESCRIPTION="1、优化了sql查询的提示逻辑"
 
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \
