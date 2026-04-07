@@ -163,13 +163,10 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"
-          DESCRIPTION="1、优化了sql查询逻辑，如果发现无法提示字段，刷新一下缓存
-          2、添加了自定义选中行的颜色，可以根据洗好自己定义选中高亮
-          3、支持ctrl+左键点击多选，也支持shift+左键范围选中
-          4、sql查询时间过长的时候支持点击停止进行终止查询
-          5、优化了sql编辑器输入时候的卡顿
-          6、支持表展示的宽度自定义
-          7、修复了部分已知bug"
+          DESCRIPTION="1、优化了sql查询部分bug
+          2、优化了es部分已知bug
+          3、优化了sql部分ui不美观
+          4、优化了监控部分ui不美观"
 
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \

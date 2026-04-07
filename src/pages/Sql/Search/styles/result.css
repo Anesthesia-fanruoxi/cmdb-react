@@ -65,9 +65,10 @@
 }
 
 .result-table {
-  width: 100%;
+  width: auto;
   border-collapse: collapse;
   font-size: 13px;
+  table-layout: auto;
 }
 
 .result-table th, .result-table td {
@@ -75,27 +76,34 @@
   text-align: left;
   border-bottom: 1px solid var(--border-color);
   white-space: nowrap;
-  max-width: 300px;
+  max-width: 320px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .result-table th {
-  background: var(--bg-secondary);
+  background: #2d3748;
   font-weight: 500;
   color: var(--text-secondary);
   position: sticky;
   top: 0;
   z-index: 1;
   padding: 6px 10px;
+  border-bottom: 2px solid var(--border-color-dark);
 }
 
 .result-table td { 
   color: var(--text-color);
+  background: #374151;
   padding: 5px 10px;
   line-height: 1.4;
 }
-.result-table tbody tr:hover { background: var(--bg-hover); }
+
+.result-table tbody tr:nth-child(even) td {
+  background: #2d3748;
+}
+
+.result-table tbody tr:hover td { background: #4a5568; }
 
 /* 亮色主题：淡紫高亮（fallback，实际由 inline style 控制） */
 .result-table tbody tr.row-selected { background: rgba(139, 92, 246, 0.18); }
@@ -133,19 +141,38 @@
 }
 
 .row-num {
-  width: 50px;
+  width: 1px;
+  white-space: nowrap;
   text-align: center !important;
   color: var(--text-muted);
-  background: var(--bg-secondary);
-  padding: 5px 8px !important;
+  background: #2d3748 !important;
+  padding: 5px 10px !important;
   position: sticky;
   left: 0;
   z-index: 2;
+  border-right: 1px solid var(--border-color-dark) !important;
 }
 
 /* 左上角 th.row-num 同时 sticky top + left */
 .result-table th.row-num {
   z-index: 3;
+}
+
+/* 亮色模式覆盖 - 使用变量 */
+:root:not(.dark) .result-table th {
+  background: var(--bg-secondary);
+}
+:root:not(.dark) .result-table td {
+  background: var(--bg-color);
+}
+:root:not(.dark) .result-table tbody tr:nth-child(even) td {
+  background: var(--bg-secondary);
+}
+:root:not(.dark) .result-table tbody tr:hover td {
+  background: var(--bg-hover);
+}
+:root:not(.dark) .row-num {
+  background: var(--bg-secondary) !important;
 }
 
 .result-footer {

@@ -79,7 +79,7 @@ const ExportDialog = ({ visible, currentView, searchParams, onClose, onSuccess }
 
     setLoading(true);
     try {
-      const filePath = await invoke<string>('export_elfk_logs', {
+      const result = await invoke<string>('export_elfk_logs', {
         apiBase: API_BASE,
         token,
         params: {
@@ -94,7 +94,12 @@ const ExportDialog = ({ visible, currentView, searchParams, onClose, onSuccess }
           include_fields: selectedFields,
         }
       });
-      onSuccess(filePath);
+      // 后端可能是异步任务模式（返回消息）或直接返回文件路径
+      if (result && (result.includes('/') || result.includes('\\'))) {
+        onSuccess(result);
+      } else {
+        toast.success(result || '导出任务已创建，请稍后查看');
+      }
       onClose();
     } catch (err) {
       console.error('导出失败:', err);

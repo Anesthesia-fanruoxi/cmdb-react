@@ -127,6 +127,22 @@ export function getIndices(project: string): Promise<ApiResponse<string[]>> {
   return apiClient.get<string[]>('/elfk/search/indices', { project });
 }
 
+/** 索引字段匹配结果 */
+export interface IndexFieldsResult {
+  fields?: {
+    properties: Record<string, FieldInfo & { fields?: Record<string, FieldInfo> }>;
+  };
+}
+
+// 匹配索引字段（用于视图创建/编辑，传 index_pattern 模糊匹配）
+export function matchIndexFields(params: {
+  project: string;
+  index: string;
+  log_type?: string;
+}): Promise<ApiResponse<IndexFieldsResult>> {
+  return apiClient.get<IndexFieldsResult>('/elfk/search/indices', params);
+}
+
 // 获取索引字段结构
 export function getFields(
   project: string,

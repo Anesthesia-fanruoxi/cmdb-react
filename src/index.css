@@ -47,7 +47,7 @@
   --text-secondary: #a0aec0;     /* 次级文字（描述、标签）- 中浅灰 */
   --text-muted: #718096;         /* 弱化文字（占位符、禁用）- 中灰 */
   --border-color: #4a5568;       /* 边框颜色（浅）- 中灰 */
-  --border-color-dark: #2d3748;  /* 边框颜色（深）- 深灰 */
+  --border-color-dark: #5a6a82;  /* 边框颜色（深）- 比背景亮，确保可见 */
   --primary-color: #818cf8;      /* 主色调（按钮、链接） */
   --primary-hover: #a78bfa;      /* 主色调悬停 */
   --danger-color: #a61d24;       /* 危险色（删除、错误） */

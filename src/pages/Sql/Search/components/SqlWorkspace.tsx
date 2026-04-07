@@ -266,21 +266,6 @@ const SqlWorkspace = ({
     };
   }, [isDragging, setUiPref]);
 
-  // Ctrl+E 快捷键执行
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'e') {
-        e.preventDefault();
-        if (!loading) {
-          handleExecute();
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [loading, handleExecute]);
-
   return (
     <div ref={containerRef} className="sql-workspace" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* 工具栏 */}

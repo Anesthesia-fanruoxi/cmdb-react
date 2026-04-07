@@ -33,6 +33,53 @@
   box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
 }
 
+/* 索引匹配输入框 + 按钮 */
+.input-with-btn {
+  display: flex;
+  gap: 8px;
+}
+
+.input-with-btn input {
+  flex: 1;
+}
+
+.btn-match {
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--primary-color);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--primary-color);
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.btn-match:hover:not(:disabled) {
+  background: var(--primary-color);
+  color: #fff;
+}
+
+.btn-match:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.match-hint {
+  font-size: 12px;
+  color: var(--success-color, #52c41a);
+  margin-top: 4px;
+  display: block;
+}
+
+input.readonly {
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  cursor: default;
+}
+
 .btn-cancel,
 .btn-submit {
   height: 36px;

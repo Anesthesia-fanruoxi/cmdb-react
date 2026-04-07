@@ -36,8 +36,19 @@ export interface CreateViewParams {
   category?: string;
   index_pattern: string;
   time_field: string;
+  time_format?: string;
   description?: string;
   log_type?: string;
+  fields?: FieldItem[];
+}
+
+/** 字段列表项（用于提交） */
+export interface FieldItem {
+  path: string;
+  type: string;
+  format?: string;
+  aggregatable?: boolean;
+  searchable?: boolean;
 }
 
 /** 更新视图参数 */

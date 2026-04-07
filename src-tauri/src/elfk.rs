@@ -89,10 +89,14 @@ pub async fn export_logs(
         .and_then(|v| v.to_str().ok())
         .unwrap_or("");
     
-    // 如果是 JSON，说明是错误响应
+    // 如果是 JSON，检查是否是成功的任务创建响应
     if content_type.contains("application/json") {
         let result: ApiResponse = resp.json().await
             .map_err(|e| format!("解析响应失败: {}", e))?;
+        if result.code == 200 {
+            // 后端异步任务模式，返回成功消息
+            return Ok(result.message.unwrap_or("导出任务已创建".to_string()));
+        }
         return Err(result.message.unwrap_or("导出失败".to_string()));
     }
     
