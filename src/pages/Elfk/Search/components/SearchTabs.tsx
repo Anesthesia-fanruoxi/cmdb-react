@@ -22,99 +22,59 @@ interface SearchTabsProps {
 }
 
 const SearchTabs = ({
-  tabs,
-  activeTabId,
-  onTabChange,
-  onAddTab,
-  onCloseTab,
-  onDuplicateTab,
-  onTabsReorder,
-  onTabDetach
+  tabs, activeTabId, onTabChange, onAddTab, onCloseTab,
+  onDuplicateTab, onTabsReorder, onTabDetach
 }: SearchTabsProps) => {
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const dragStartPos = useRef<{ x: number; y: number } | null>(null);
   const tabsContainerRef = useRef<HTMLDivElement>(null);
 
-  // 开始拖拽
   const handleDragStart = useCallback((e: React.DragEvent, tabId: string) => {
     setDraggedId(tabId);
     dragStartPos.current = { x: e.clientX, y: e.clientY };
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', tabId);
-    
     const target = e.currentTarget as HTMLElement;
-    if (target) {
-      e.dataTransfer.setDragImage(target, target.offsetWidth / 2, target.offsetHeight / 2);
-    }
+    if (target) e.dataTransfer.setDragImage(target, target.offsetWidth / 2, target.offsetHeight / 2);
   }, []);
 
-  // 拖拽经过
   const handleDragOver = useCallback((e: React.DragEvent, tabId: string) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    if (draggedId && tabId !== draggedId) {
-      setDragOverId(tabId);
-    }
+    if (draggedId && tabId !== draggedId) setDragOverId(tabId);
   }, [draggedId]);
 
-  // 拖拽离开
-  const handleDragLeave = useCallback(() => {
-    setDragOverId(null);
-  }, []);
+  const handleDragLeave = useCallback(() => setDragOverId(null), []);
 
-  // 放置
   const handleDrop = useCallback((e: React.DragEvent, targetId: string) => {
     e.preventDefault();
-    
-    if (!draggedId || draggedId === targetId || !onTabsReorder) {
-      setDraggedId(null);
-      setDragOverId(null);
-      return;
+    if (!draggedId || draggedId === targetId || !onTabsReorder) { setDraggedId(null); setDragOverId(null); return; }
+    const di = tabs.findIndex(t => t.id === draggedId);
+    const ti = tabs.findIndex(t => t.id === targetId);
+    if (di !== -1 && ti !== -1) {
+      const next = [...tabs];
+      const [removed] = next.splice(di, 1);
+      next.splice(ti, 0, removed);
+      onTabsReorder(next.map(t => ({ id: t.id, name: t.name })));
     }
-
-    const draggedIndex = tabs.findIndex(t => t.id === draggedId);
-    const targetIndex = tabs.findIndex(t => t.id === targetId);
-    
-    if (draggedIndex !== -1 && targetIndex !== -1) {
-      const newTabs = [...tabs];
-      const [removed] = newTabs.splice(draggedIndex, 1);
-      newTabs.splice(targetIndex, 0, removed);
-      onTabsReorder(newTabs.map(t => ({ id: t.id, name: t.name })));
-    }
-
-    setDraggedId(null);
-    setDragOverId(null);
+    setDraggedId(null); setDragOverId(null);
   }, [draggedId, tabs, onTabsReorder]);
 
-  // 拖拽结束
   const handleDragEnd = useCallback((e: React.DragEvent) => {
     const startPos = dragStartPos.current;
     const container = tabsContainerRef.current;
-    
     if (startPos && container && draggedId && onTabDetach) {
-      const containerRect = container.getBoundingClientRect();
-      const endX = e.clientX;
-      const endY = e.clientY;
-      
-      // 检查是否拖出了标签栏区域
-      const isOutside = 
-        endY > containerRect.bottom + 50 ||
-        endY < containerRect.top - 50 ||
-        endX < containerRect.left - 100 ||
-        endX > containerRect.right + 100;
-      
+      const rect = container.getBoundingClientRect();
+      const isOutside =
+        e.clientY > rect.bottom + 50 || e.clientY < rect.top - 50 ||
+        e.clientX < rect.left - 100 || e.clientX > rect.right + 100;
       if (isOutside) {
         const tab = tabs.find(t => t.id === draggedId);
-        if (tab) {
-          onTabDetach({ id: tab.id, name: tab.name });
-        }
+        if (tab) onTabDetach({ id: tab.id, name: tab.name });
       }
     }
-    
-    setDraggedId(null);
-    setDragOverId(null);
-    dragStartPos.current = null;
+    setDraggedId(null); setDragOverId(null); dragStartPos.current = null;
   }, [draggedId, tabs, onTabDetach]);
 
   return (
@@ -135,12 +95,7 @@ const SearchTabs = ({
           >
             <span className="tab-name">{tab.name}</span>
             {tabs.length > 1 && (
-              <button
-                className="tab-close"
-                onClick={e => { e.stopPropagation(); onCloseTab(tab.id); }}
-              >
-                ×
-              </button>
+              <button className="tab-close" onClick={e => { e.stopPropagation(); onCloseTab(tab.id); }}>×</button>
             )}
           </div>
         ))}

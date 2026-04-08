@@ -75,10 +75,16 @@
   padding: 6px 10px;
   text-align: left;
   border-bottom: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
   white-space: nowrap;
   max-width: 320px;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.result-table th:last-child,
+.result-table td:last-child {
+  border-right: none;
 }
 
 .result-table th {
@@ -89,7 +95,7 @@
   top: 0;
   z-index: 1;
   padding: 6px 10px;
-  border-bottom: 2px solid var(--border-color-dark);
+  border-bottom: 3px solid var(--border-color-dark, #4a5568);
 }
 
 .result-table td { 
@@ -319,7 +325,31 @@
   border-top-color: #1a202c;
 }
 
-/* 右键菜单 */
+/* 列宽调整手柄 */
+.col-resize-handle {
+  position: absolute;
+  right: -6px;
+  top: 0;
+  bottom: 0;
+  width: 12px;
+  cursor: col-resize;
+  z-index: 10;
+  border-right: 3px solid var(--border-color-dark, #4a5568);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.col-resize-handle:hover {
+  border-right-color: var(--primary-color);
+  background: rgba(99, 102, 241, 0.1);
+  cursor: grab;
+}
+
+.col-resize-handle:active {
+  border-right-color: var(--primary-color);
+  background: rgba(99, 102, 241, 0.15);
+  cursor: grabbing;
+}
+
 .row-context-menu {
   position: fixed;
   z-index: 9999;
@@ -347,4 +377,29 @@
 
 .row-context-menu button:hover {
   background: var(--bg-hover);
+}
+
+/* 表格滚动条加粗 */
+.result-table-wrapper::-webkit-scrollbar {
+  width: 8px;
+  height: 15px;
+}
+
+.result-table-wrapper::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+.result-table-wrapper::-webkit-scrollbar-thumb {
+  background: var(--border-color-dark, #4a5568);
+  border-radius: 4px;
+  cursor: grab;
+}
+
+.result-table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-color);
+  cursor: grab;
+}
+
+.result-table-wrapper::-webkit-scrollbar-thumb:active {
+  cursor: grabbing;
 }

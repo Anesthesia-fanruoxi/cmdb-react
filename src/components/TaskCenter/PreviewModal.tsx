@@ -47,7 +47,7 @@ const PreviewModal = ({ visible, loading, data, currentTask, onClose, onPageChan
   const isAnalysisPreview = currentTask?.type === 'analysis';
   
   // 转换表格数据（SQL/ES导出）
-  const previewTableData = data.rows?.map(row => {
+  const previewTableData = data?.rows?.map(row => {
     const obj: Record<string, any> = {};
     row.forEach((val, idx) => {
       obj[`col${idx}`] = val;
@@ -69,14 +69,16 @@ const PreviewModal = ({ visible, loading, data, currentTask, onClose, onPageChan
             <>
               {/* 数据分析预览 */}
               {isAnalysisPreview && data.items && data.items.length > 0 && (
-                <table className="preview-table">
-                  <thead><tr><th>值</th><th>数量</th></tr></thead>
-                  <tbody>
-                    {data.items.map((item, i) => (
-                      <tr key={i}><td>{item.value}</td><td>{item.count}</td></tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="preview-table-wrapper">
+                  <table className="preview-table">
+                    <thead><tr><th>值</th><th>数量</th></tr></thead>
+                    <tbody>
+                      {data.items.map((item, i) => (
+                        <tr key={i}><td>{item.value}</td><td>{item.count}</td></tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
               
               {/* SQL/ES导出预览 */}
@@ -107,24 +109,26 @@ const PreviewModal = ({ visible, loading, data, currentTask, onClose, onPageChan
               <div className="preview-pagination">
                 <div className="preview-info">
                   <span className="preview-total">
-                    总数: {isAnalysisPreview ? data.total : data.total_rows}
+                    总数: {isAnalysisPreview
+                      ? (data.total ?? data.total_rows ?? 0)
+                      : (data.total_rows ?? data.total ?? 0)}
                   </span>
-                  {((isAnalysisPreview ? data.total : data.total_rows) || 0) > 100 && (
+                  {((data.total || data.total_rows) || 0) > 100 && (
                     <span className="preview-tip">
                       ⚠️ 预览只展示前 100 条数据，完整数据请下载
                     </span>
                   )}
                 </div>
                 <div className="pagination-btns">
-                  <button 
-                    disabled={data.page <= 1} 
+                  <button
+                    disabled={data.page <= 1}
                     onClick={() => currentTask && onPageChange(currentTask, data.page - 1)}
                   >上一页</button>
                   <span>
-                    第 {data.page} / {Math.ceil((isAnalysisPreview ? (data.cache_total || 0) : Math.min(data.total_rows || 0, 100)) / data.page_size)} 页
+                    第 {data.page} / {Math.ceil(Math.min((data.cache_total || data.total_rows || data.total || 0), 100) / data.page_size)} 页
                   </span>
-                  <button 
-                    disabled={data.page * data.page_size >= (isAnalysisPreview ? data.cache_total || 0 : Math.min(data.total_rows || 0, 100))}
+                  <button
+                    disabled={data.page * data.page_size >= Math.min((data.cache_total || data.total_rows || data.total || 0), 100)}
                     onClick={() => currentTask && onPageChange(currentTask, data.page + 1)}
                   >下一页</button>
                 </div>

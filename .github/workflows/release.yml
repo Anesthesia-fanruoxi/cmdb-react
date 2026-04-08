@@ -163,9 +163,10 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"
-          DESCRIPTION="1、优化sql复制行逻辑，支持右键复制选中行。
-          2、支持es提词支持其他or和not。
-          3、sql查询的时候悬浮表头，会显示备注。"
+          DESCRIPTION="1、全屏展示sql的时候，支持复制单个单元格内容。
+          2、全屏和正常展示的时候都支持动态调整列宽。
+          3、sql查询结果加粗底部和侧边滚动条。
+          4、"
 
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \
