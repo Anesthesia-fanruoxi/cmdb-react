@@ -8,6 +8,7 @@ import ResultPanel from './ResultPanel';
 import { getTableStructure } from '@/services/sql/search';
 import { useUserPrefsStore } from '@/stores/userPrefsStore';
 import type { TableInfo, FieldInfo } from '@/utils/sql';
+import { useColumnComments } from '../hooks/useColumnComments';
 
 /** 结果集类型 */
 export interface ResultSet {
@@ -155,6 +156,9 @@ const SqlWorkspace = ({
   const tables: TableInfo[] = useMemo(() => 
     tableList.map(name => ({ name, dbName })), [tableList, dbName]
   );
+
+  // 获取列备注（根据当前 SQL 中涉及的表）
+  const columnComments = useColumnComments(sql, project, dbName, queryId);
 
   // 加载表结构的回调 - 与 Vue 版本对齐
   const loadTableStructure = useCallback(async (tableName: string): Promise<FieldInfo[] | null> => {
@@ -356,6 +360,7 @@ const SqlWorkspace = ({
           exportLoading={exportLoading}
           onExport={onExport}
           queryId={queryId}
+          columnComments={columnComments}
         />
       </div>
     </div>

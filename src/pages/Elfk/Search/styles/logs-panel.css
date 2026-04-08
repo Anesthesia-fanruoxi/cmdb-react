@@ -164,22 +164,31 @@
   color: var(--primary-color, #1890ff);
 }
 
-/* 选中文本浮动按钮 */
+/* 选中文本浮动按钮容器 */
 .selection-add-btn {
-  background: var(--primary-color, #1890ff);
-  color: #fff;
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 12px;
-  cursor: pointer;
-  white-space: nowrap;
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  border-radius: 4px;
+  overflow: hidden;
   user-select: none;
 }
 
-.selection-add-btn:hover {
-  background: var(--primary-hover, #40a9ff);
+.selection-op-btn {
+  color: #fff;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  border: none;
+  border-right: 1px solid rgba(255,255,255,0.2);
 }
+.selection-op-btn:last-child { border-right: none; }
+
+.selection-op-and  { background: #1890ff; }
+.selection-op-and:hover  { background: #40a9ff; }
+.selection-op-or   { background: #52c41a; }
+.selection-op-or:hover   { background: #73d13d; }
+.selection-op-not  { background: #ff4d4f; }
+.selection-op-not:hover  { background: #ff7875; }
 
 /* 日志操作按钮 */
 .log-actions {

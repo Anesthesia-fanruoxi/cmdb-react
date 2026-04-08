@@ -28,7 +28,7 @@ interface LogsPanelProps {
   onPageData?: (data: { logs: LogHit[]; page: number; pages: number; append?: boolean }) => void;
   onLoadingChange?: (loading: boolean) => void;
   onScrollPositionChange?: (position: number) => void;
-  onAddFilter?: (field: string, value: string) => void; // 点击字段值追加 AND 条件
+  onAddFilter?: (field: string, value: string, operator?: 'AND' | 'OR' | 'NOT') => void;
   onAnalysis?: () => void;
 }
 
@@ -362,15 +362,16 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
       {selectionPopup && (
         <div
           className="selection-add-btn"
-          style={{ position: 'fixed', left: selectionPopup.x, top: selectionPopup.y, transform: 'translate(-50%, -100%)', zIndex: 9999 }}
+          style={{ position: 'fixed', left: selectionPopup.x, top: selectionPopup.y, transform: 'translate(-50%, -100%)', zIndex: 9999, display: 'flex', gap: '4px' }}
           onMouseDown={e => e.preventDefault()}
-          onClick={() => {
-            onAddFilter?.('', selectionPopup.text);
-            setSelectionPopup(null);
-            window.getSelection()?.removeAllRanges();
-          }}
         >
-          AND "{selectionPopup.text.length > 20 ? selectionPopup.text.slice(0, 20) + '…' : selectionPopup.text}"
+          {(['AND', 'OR', 'NOT'] as const).map(op => (
+            <button key={op} className={`selection-op-btn selection-op-${op.toLowerCase()}`} onClick={() => {
+              onAddFilter?.('', selectionPopup.text, op);
+              setSelectionPopup(null);
+              window.getSelection()?.removeAllRanges();
+            }}>{op}</button>
+          ))}
         </div>
       )}
       <div className="logs-header">

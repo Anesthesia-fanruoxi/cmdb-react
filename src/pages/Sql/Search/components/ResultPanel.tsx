@@ -9,6 +9,7 @@ import { useUserPrefsStore } from '../../../../stores/userPrefsStore';
 import toast from '../../../../components/Toast';
 import type { ResultSet } from './SqlWorkspace';
 import FullscreenResultPanel from './FullscreenResultPanel';
+import type { CommentMap } from '../hooks/useColumnComments';
 import '../styles/fullscreen-result.css';
 
 interface Props {
@@ -28,6 +29,7 @@ interface Props {
   exportLoading?: boolean;
   onExport?: () => void;
   queryId?: string;
+  columnComments?: CommentMap;
 }
 
 /** 格式化单元格值用于复制 */
@@ -68,12 +70,17 @@ const ResultPanel = ({
   columns, results, total, took, loading, isExecuting = false, elapsedTime = 0, dbName,
   allResults = [], currentResultIndex = 0, onResultChange,
   currentPage: externalPage, onPageChange,
-  exportLoading = false, onExport, queryId
+  exportLoading = false, onExport, queryId,
+  columnComments = new Map()
 }: Props) => {
   const [localPage, setLocalPage] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
   const lastClickedRow = useRef<number | null>(null);
+  const tableWrapperRef = useRef<HTMLDivElement>(null);
+
+  // 右键菜单状态
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
   // 高亮颜色偏好
   const { uiPrefs, setUiPref } = useUserPrefsStore();
@@ -128,6 +135,45 @@ const ResultPanel = ({
 
   useEffect(() => { setLocalPage(1); setSelectedRows(new Set()); lastClickedRow.current = null; }, [total]);
 
+  // 键盘左右键横向滚动表格（长按匀速，松开停止）
+  useEffect(() => {
+    const el = tableWrapperRef.current;
+    if (!el) return;
+
+    let rafId: number | null = null;
+    const speed = 8; // px per frame
+
+    const startScroll = (dir: 1 | -1) => {
+      if (rafId !== null) return;
+      const step = () => {
+        el.scrollLeft += dir * speed;
+        rafId = requestAnimationFrame(step);
+      };
+      rafId = requestAnimationFrame(step);
+    };
+
+    const stopScroll = () => {
+      if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') { e.preventDefault(); startScroll(-1); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); startScroll(1); }
+    };
+
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') stopScroll();
+    };
+
+    el.addEventListener('keydown', onKeyDown);
+    el.addEventListener('keyup', onKeyUp);
+    return () => {
+      stopScroll();
+      el.removeEventListener('keydown', onKeyDown);
+      el.removeEventListener('keyup', onKeyUp);
+    };
+  }, []);
+
   const handleExport = () => {
     if (onExport && queryId) onExport();
   };
@@ -172,6 +218,38 @@ const ResultPanel = ({
     }
   }, []);
 
+  // 右键：若当前行未选中则先选中，再弹菜单
+  const handleRowContextMenu = useCallback((absoluteIndex: number, e: React.MouseEvent) => {
+    e.preventDefault();
+    setSelectedRows(prev => {
+      if (!prev.has(absoluteIndex)) return new Set([absoluteIndex]);
+      return prev;
+    });
+    lastClickedRow.current = absoluteIndex;
+    setContextMenu({ x: e.clientX, y: e.clientY });
+  }, []);
+
+  // 复制选中行（tab 分隔列，换行分隔行）
+  const handleCopySelectedRows = useCallback(async () => {
+    if (selectedRows.size === 0) return;
+    const rowStart = (currentPage - 1) * pageSize;
+    const sorted = [...selectedRows].sort((a, b) => a - b);
+    const lines = sorted.map(absIdx => {
+      // absIdx 是全局行号，需转换为当前页数据索引
+      const pageIdx = absIdx - rowStart;
+      const row = currentData[pageIdx];
+      if (!Array.isArray(row)) return '';
+      return row.map(v => formatValueForCopy(v)).join('\t');
+    }).filter(Boolean);
+    try {
+      await navigator.clipboard.writeText(lines.join('\n'));
+      toast.success(`已复制 ${lines.length} 行`);
+    } catch {
+      toast.error('复制失败');
+    }
+    setContextMenu(null);
+  }, [selectedRows, currentData, currentPage, pageSize]);
+
   // 行号起始位置
   const rowNumberStart = (currentPage - 1) * pageSize;
 
@@ -198,7 +276,19 @@ const ResultPanel = ({
   }
 
   return (
-    <div className={`result-panel ${isFullscreen ? 'fullscreen' : ''}`}>
+    <div className={`result-panel ${isFullscreen ? 'fullscreen' : ''}`} onClick={() => setContextMenu(null)}>
+      {/* 右键菜单 */}
+      {contextMenu && (
+        <div
+          className="row-context-menu"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+          onClick={e => e.stopPropagation()}
+        >
+          <button onClick={handleCopySelectedRows}>
+            📋 复制选中行 ({selectedRows.size})
+          </button>
+        </div>
+      )}
       {/* 顶部：结果集选择器 + 导出按钮 */}
       <div className="result-header">
         <div className="header-left">
@@ -259,7 +349,7 @@ const ResultPanel = ({
       </div>
 
       {/* 中间：表格 */}
-      <div className="result-table-wrapper">
+      <div className="result-table-wrapper" ref={tableWrapperRef} tabIndex={0}>
         {loading ? (
           <div className="result-loading">查询中...</div>
         ) : columns.length === 0 ? (
@@ -270,20 +360,35 @@ const ResultPanel = ({
               <thead>
                 <tr>
                   <th className="row-num">#</th>
-                  {columns.map((col, colIdx) => (
-                    <th key={col}>
-                      <div className="column-header">
-                        <span>{col}</span>
-                        <button 
-                          className="copy-col-btn" 
-                          title="复制此列数据"
-                          onClick={() => handleCopyColumn(colIdx, col)}
-                        >
-                          📋
-                        </button>
-                      </div>
-                    </th>
-                  ))}
+                  {columns.map((col, colIdx) => {
+                    const comment = columnComments.get(col.toLowerCase()) || '';
+                    return (
+                      <th key={col} style={{ overflow: 'visible' }}>
+                        <div className="column-header">
+                          <span
+                            className={comment ? 'col-name-has-comment' : ''}
+                            onMouseEnter={comment ? (e) => {
+                              const popup = (e.currentTarget as HTMLElement).querySelector('.col-comment-popup') as HTMLElement;
+                              if (!popup) return;
+                              const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                              popup.style.left = `${rect.left + rect.width / 2}px`;
+                              popup.style.top = `${rect.top - 6}px`;
+                            } : undefined}
+                          >
+                            {col}
+                            {comment && <span className="col-comment-popup">{comment}</span>}
+                          </span>
+                          <button
+                            className="copy-col-btn"
+                            title="复制此列数据"
+                            onClick={() => handleCopyColumn(colIdx, col)}
+                          >
+                            📋
+                          </button>
+                        </div>
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
               <tbody>
@@ -302,6 +407,7 @@ const ResultPanel = ({
                       className={isSelected ? 'row-selected' : ''}
                       style={{ userSelect: 'none' }}
                       onClick={(e) => handleRowClick(absoluteIndex, e)}
+                      onContextMenu={(e) => handleRowContextMenu(absoluteIndex, e)}
                     >
                       <td className="row-num" style={selectedTdStyle}>{absoluteIndex + 1}</td>
                       {Array.isArray(row) && row.map((val, colIdx) => (

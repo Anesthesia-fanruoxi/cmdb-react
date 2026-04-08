@@ -521,9 +521,9 @@ const ElfkSearch = () => {
                   onPageData={handlePageData}
                   onLoadingChange={(l: boolean) => updateTab(activeTab.id, { loading: l })}
                   onScrollPositionChange={(pos: number) => updateTab(activeTab.id, { scrollPosition: pos })}
-                  onAddFilter={(_field, value) => {
+                  onAddFilter={(_field, value, operator = 'AND') => {
                     const current = activeTab.keyword?.trim();
-                    const newKeyword = current ? `${current} AND ${value}` : value;
+                    const newKeyword = current ? `${current} ${operator} ${value}` : (operator === 'NOT' ? `NOT ${value}` : value);
                     updateTab(activeTab.id, { keyword: newKeyword });
                     handleSearch({ ...activeTab.lastParams, keyword: newKeyword });
                   }}
