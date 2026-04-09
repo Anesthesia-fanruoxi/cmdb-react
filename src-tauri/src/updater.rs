@@ -67,7 +67,7 @@ fn generate_script_internal(new_exe_path: &str) -> Result<(), String> {
     fs::write(&script_path, &script).map_err(|e| e.to_string())?;
     
     println!("[更新] 脚本已生成: {}", script_path.display());
-    println!("[更新] 程序路径: {}", exe_path);
+    println!("[更新] 程序路径: {}", target_exe_path);
     Ok(())
 }
 

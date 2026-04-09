@@ -26,12 +26,23 @@ aes-gcm = "0.10"
 rand = "0.8"
 base64 = "0.22"
 reqwest = { version = "0.12", features = ["json", "stream"] }
-chrono = "0.4"
+# 优化：精简时间库
+chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
 dirs = "5.0"
-sysinfo = "0.32"
+# 优化：精简系统信息库，仅保留必要功能
+sysinfo = { version = "0.32", default-features = false, features = ["system"] }
 futures-util = "0.3"
 tokio = { version = "1", features = ["time"] }
 
 [features]
 default = ["custom-protocol"]
 custom-protocol = ["tauri/custom-protocol"]
+
+# 针对 GitHub Actions 冷启动优化的 Release 配置
+[profile.release]
+opt-level = 3
+lto = "thin"          # 快速链接优化
+codegen-units = 16    # 提高并行编译效率
+strip = true          # 移除符号表，显著减小体积
+panic = "abort"       # 减小二进制开销
+incremental = true    # 开启增量支持（配合 Action 缓存）
