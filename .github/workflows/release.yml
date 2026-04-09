@@ -74,7 +74,6 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path release
           Get-ChildItem -Path "src-tauri/target/release/bundle" -Recurse -Filter "*.msi" | Copy-Item -Destination "release/CMDB-Desktop-windows-x64.msi"
-          Copy-Item -Path "src-tauri/target/release/cmdb-desktop.exe" -Destination "release/CMDB-Desktop-windows-x64.exe"
         shell: powershell
 
       - name: Upload artifacts
@@ -164,7 +163,7 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"
-          DESCRIPTION="1、无更新，请忽略本次更新。"
+          DESCRIPTION="1、修改更新逻辑为，直接运行下载的msi文件，去掉了静默安装，此后的每次更新都是重新运行msi文件进行升级"
 
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \

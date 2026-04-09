@@ -2,7 +2,7 @@
 name = "cmdb-desktop"
 version = "1.0.0"
 description = "CMDB Desktop Application"
-authors = ["you"]
+authors = ["Anesthesia"]
 edition = "2021"
 
 [build-dependencies]

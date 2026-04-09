@@ -7,7 +7,6 @@ mod auth;
 mod elfk;
 mod commands;
 mod updater;
-mod updater_script;
 mod updater_checker;
 mod window;
 mod login_history;
@@ -67,14 +66,9 @@ fn main() {
             updater::download_update,
             updater::install_update,
             updater::get_app_version,
-            updater::get_exe_path,
             updater::check_file_exists,
             updater::clean_update_dir,
-            updater::generate_update_script,
-            updater::regenerate_script_if_msi_exists,
             updater::prepare_update,
-            updater::read_update_log,
-            updater::get_update_dir_info,
             window::request_attention,
             window::cancel_attention,
             window::set_window_theme,

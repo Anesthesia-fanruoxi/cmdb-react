@@ -193,7 +193,7 @@ const InstallDrawer = ({ visible, plugin, projects, onClose, onSuccess }: Props)
 
       const res = await installPlugin(data);
 
-      if (res.code === 200) {
+      if (res.code === 200) { 
         onSuccess();
       } else { 
         toast.error(res.message || '安装失败'); 
@@ -210,7 +210,7 @@ const InstallDrawer = ({ visible, plugin, projects, onClose, onSuccess }: Props)
     }
   };
 
-  if (!visible) return null;
+  if (!visible) return null; 
 
   return (
     <>
