@@ -46,24 +46,18 @@ fn get_download_dir() -> PathBuf {
 }
 
 /// 内部生成更新脚本（下载完成时调用）
-fn generate_script_internal(msi_path: &str) -> Result<(), String> {
+fn generate_script_internal(new_exe_path: &str) -> Result<(), String> {
     let download_dir = get_download_dir();
     fs::create_dir_all(&download_dir).map_err(|e| e.to_string())?;
     
     let exe_name = "cmdb-desktop.exe";
     
     // 动态获取当前程序路径，如果获取失败则使用默认路径
-    let exe_path = std::env::current_exe()
+    let target_exe_path = std::env::current_exe()
         .map(|p| p.to_string_lossy().to_string())
         .unwrap_or_else(|_| r"C:\Program Files\CMDB Desktop\cmdb-desktop.exe".to_string());
     
-    // 获取 MSI 目录
-    let msi_dir = std::path::Path::new(msi_path)
-        .parent()
-        .map(|p| p.to_string_lossy().to_string())
-        .unwrap_or_else(|| download_dir.to_string_lossy().to_string());
-    
-    let script = updater_script::get_update_script(exe_name, &msi_dir, &exe_path);
+    let script = updater_script::get_update_script(exe_name, new_exe_path, &target_exe_path);
     
     let script_path = download_dir.join("cmdb_update.bat");
     // 用 UTF-16 LE with BOM 写入 bat，支持中文路径
@@ -77,64 +71,64 @@ fn generate_script_internal(msi_path: &str) -> Result<(), String> {
     Ok(())
 }
 
-/// 检查 MSI 文件是否存在，存在则重新生成脚本
-/// 返回 MSI 文件路径（如果存在）
+/// 检查 EXE 文件是否存在，存在则重新生成脚本
+/// 返回 EXE 文件路径（如果存在）
 #[tauri::command]
 pub fn regenerate_script_if_msi_exists() -> Result<Option<String>, String> {
     let download_dir = get_download_dir();
     
-    // 查找 MSI 文件
-    let msi_file = fs::read_dir(&download_dir)
+    // 查找 EXE 文件
+    let exe_file = fs::read_dir(&download_dir)
         .ok()
         .and_then(|entries| {
             entries
                 .filter_map(|e| e.ok())
-                .find(|e| e.path().extension().map(|ext| ext == "msi").unwrap_or(false))
+                .find(|e| e.path().extension().map(|ext| ext == "exe").unwrap_or(false))
                 .map(|e| e.path())
         });
     
-    match msi_file {
+    match exe_file {
         Some(path) => {
             let path_str = path.to_string_lossy().to_string();
             // 重新生成脚本
             generate_script_internal(&path_str)?;
-            println!("[更新] MSI 存在，已重新生成脚本: {}", path_str);
+            println!("[更新] EXE 存在，已重新生成脚本: {}", path_str);
             Ok(Some(path_str))
         }
         None => {
-            println!("[更新] MSI 不存在，需要重新下载");
+            println!("[更新] EXE 不存在，需要重新下载");
             Ok(None)
         }
     }
 }
 
-/// 准备更新（检查 MSI 是否存在，存在则生成脚本，不存在则下载）
+/// 准备更新（检查 EXE 是否存在，存在则生成脚本，不存在则下载）
 /// 前端只需调用这一个命令
 #[tauri::command]
 pub async fn prepare_update(app: AppHandle, info: VersionInfo) -> Result<String, String> {
     let download_dir = get_download_dir();
     fs::create_dir_all(&download_dir).map_err(|e| e.to_string())?;
     
-    // 1. 查找已存在的 MSI 文件
-    let existing_msi = fs::read_dir(&download_dir)
+    // 1. 查找已存在的 EXE 文件
+    let existing_exe = fs::read_dir(&download_dir)
         .ok()
         .and_then(|entries| {
             entries
                 .filter_map(|e| e.ok())
-                .find(|e| e.path().extension().map(|ext| ext == "msi").unwrap_or(false))
+                .find(|e| e.path().extension().map(|ext| ext == "exe").unwrap_or(false))
                 .map(|e| e.path())
         });
     
-    // 2. 如果 MSI 存在，只生成脚本
-    if let Some(msi_path) = existing_msi {
-        let path_str = msi_path.to_string_lossy().to_string();
+    // 2. 如果 EXE 存在，只生成脚本
+    if let Some(exe_path) = existing_exe {
+        let path_str = exe_path.to_string_lossy().to_string();
         generate_script_internal(&path_str)?;
-        println!("[更新] MSI 已存在，重新生成脚本: {}", path_str);
+        println!("[更新] EXE 已存在，重新生成脚本: {}", path_str);
         return Ok(path_str);
     }
     
-    // 3. MSI 不存在，下载新文件
-    println!("[更新] MSI 不存在，开始下载...");
+    // 3. EXE 不存在，开始下载新文件
+    println!("[更新] EXE 不存在，开始下载...");
     download_update(app, info).await
 }
 
@@ -147,7 +141,7 @@ fn emit_status(app: &AppHandle, status: UpdateStatus) {
 #[tauri::command]
 pub async fn download_update(app: AppHandle, info: VersionInfo) -> Result<String, String> {
     let (filename, local_filename) = if cfg!(target_os = "windows") {
-        ("CMDB-Desktop-windows-x64.msi", format!("cmdb-desktop-{}.msi", info.version))
+        ("CMDB-Desktop-windows-x64.exe", format!("cmdb-desktop-{}.exe", info.version))
     } else if cfg!(target_os = "macos") {
         if cfg!(target_arch = "aarch64") {
             ("CMDB-Desktop-macos-arm64.dmg", format!("cmdb-desktop-{}-arm64.dmg", info.version))
@@ -303,9 +297,9 @@ pub fn clean_update_dir() -> Result<(), String> {
 /// 生成更新脚本（用于预览和调试）
 /// 注意：此函数现在使用统一的 generate_script_internal
 #[tauri::command]
-pub fn generate_update_script(msi_path: String, _install_path: String) -> Result<String, String> {
+pub fn generate_update_script(exe_path: String, _install_path: String) -> Result<String, String> {
     // 使用统一的脚本生成函数
-    generate_script_internal(&msi_path)?;
+    generate_script_internal(&exe_path)?;
     
     let script_path = get_download_dir().join("cmdb_update.bat");
     Ok(script_path.to_string_lossy().to_string())
