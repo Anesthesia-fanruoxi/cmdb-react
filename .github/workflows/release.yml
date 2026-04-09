@@ -163,10 +163,9 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"
-          DESCRIPTION="1、全屏展示sql的时候，支持复制单个单元格内容。
-          2、全屏和正常展示的时候都支持动态调整列宽。
-          3、sql查询结果加粗底部和侧边滚动条。
-          4、"
+          DESCRIPTION="1、修复sql查询结果的自定义颜色。
+          2、sql查询结果的在翻页的时候保留滚动条的位置。
+          3、新增sql编辑器中快速删除整行，默认为ctrl +q 可以再设置里面自定义，请勿和常用快捷键冲突。"
 
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \

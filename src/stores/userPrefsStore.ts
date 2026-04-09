@@ -17,6 +17,7 @@ export interface SqlShortcuts {
   history: string;
   saveShared: string;
   duplicateLine: string;
+  deleteLine: string;
 }
 
 /** ELFK 日志搜索快捷键配置 */
@@ -63,6 +64,7 @@ const DEFAULT_SQL_SHORTCUTS: SqlShortcuts = {
   history: 'Ctrl-Shift-H',
   saveShared: 'Ctrl-Shift-S',
   duplicateLine: 'Ctrl-D',
+  deleteLine: 'Ctrl-Q',
 };
 
 const DEFAULT_ELFK_SHORTCUTS: ElfkShortcuts = {
@@ -182,8 +184,12 @@ export const useUserPrefsStore = create<UserPrefsState>()((set) => ({
 
   // 状态恢复
   restorePrefs: (prefs) => {
+    // 过滤掉 undefined 值，避免旧数据覆盖新字段默认值
+    const cleanShortcuts = prefs.sqlShortcuts
+      ? Object.fromEntries(Object.entries(prefs.sqlShortcuts).filter(([, v]) => v !== undefined))
+      : {};
     set(() => ({
-      sqlShortcuts: { ...DEFAULT_SQL_SHORTCUTS, ...prefs.sqlShortcuts },
+      sqlShortcuts: { ...DEFAULT_SQL_SHORTCUTS, ...cleanShortcuts },
       elfkShortcuts: { ...DEFAULT_ELFK_SHORTCUTS, ...prefs.elfkShortcuts },
       monitorDefaults: { ...DEFAULT_MONITOR, ...prefs.monitorDefaults },
       esSearchPrefs: { ...DEFAULT_ES_PREFS, ...prefs.esSearchPrefs },

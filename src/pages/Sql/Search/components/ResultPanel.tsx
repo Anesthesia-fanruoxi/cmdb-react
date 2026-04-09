@@ -3,7 +3,7 @@
  * 支持多结果集切换、后端分页、导出、列宽拖拽调整
  */
 
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useState, useMemo, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { useAuthStore } from '../../../../stores/authStore';
 import { useUserPrefsStore } from '../../../../stores/userPrefsStore';
 import toast from '../../../../components/Toast';
@@ -119,6 +119,27 @@ const ResultPanel = ({
     if (typeof value === 'object') return JSON.stringify(value);
     return String(value);
   };
+
+  // 横向滚动位置独立管理：实时记录，每次渲染后恢复
+  const scrollLeftRef = useRef<number>(0);
+  const isRestoringRef = useRef<boolean>(false);
+
+  const handleTableScroll = useCallback(() => {
+    if (isRestoringRef.current) return;
+    if (tableWrapperRef.current) {
+      scrollLeftRef.current = tableWrapperRef.current.scrollLeft;
+    }
+  }, []);
+
+  useLayoutEffect(() => {
+    const el = tableWrapperRef.current;
+    if (!el || scrollLeftRef.current === 0) return;
+    isRestoringRef.current = true;
+    requestAnimationFrame(() => {
+      if (el) el.scrollLeft = scrollLeftRef.current;
+      setTimeout(() => { isRestoringRef.current = false; }, 50);
+    });
+  });
 
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > totalPages) return;
@@ -300,7 +321,7 @@ const ResultPanel = ({
       </div>
 
 
-      <div className="result-table-wrapper" ref={tableWrapperRef} tabIndex={0}>
+      <div className="result-table-wrapper" ref={tableWrapperRef} tabIndex={0} onScroll={handleTableScroll}>
         {loading ? (
           <div className="result-loading">查询中...</div>
         ) : columns.length === 0 ? (

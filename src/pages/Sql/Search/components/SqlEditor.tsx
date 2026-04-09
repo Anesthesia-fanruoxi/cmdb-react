@@ -404,6 +404,39 @@ const SqlEditor = forwardRef<SqlEditorRef, Props>(({
         }
       }
     })
+
+    // 删除整行快捷键
+    editor.commands.removeCommand('deleteLine')
+    editor.commands.addCommand({
+      name: 'deleteLine',
+      bindKey: {
+        win: sqlShortcuts.deleteLine || 'Ctrl-Q',
+        mac: (sqlShortcuts.deleteLine || 'Ctrl-Q').replace('Ctrl', 'Command')
+      },
+      exec: (ed) => {
+        const session = ed.getSession()
+        const row = ed.getCursorPosition().row
+        const lastRow = session.getLength() - 1
+
+        if (lastRow === 0) {
+          // 只有一行，清空
+          session.doc.removeLines(0, 0)
+        } else if (row < lastRow) {
+          // 非最后一行：删除当前行（含换行），光标移到上一行末尾
+          session.doc.removeLines(row, row)
+          if (row > 0) {
+            ed.moveCursorTo(row - 1, session.getLine(row - 1).length)
+          } else {
+            ed.moveCursorTo(0, 0)
+          }
+        } else {
+          // 最后一行：删除上一行的换行符 + 当前行，光标移到上一行末尾
+          session.doc.removeLines(row, row)
+          const prevLen = session.getLine(row - 1).length
+          ed.moveCursorTo(row - 1, prevLen)
+        }
+      }
+    })
   }, [sqlShortcuts, loading, onExecute, onNewTab, onShowHistory])
 
   return (

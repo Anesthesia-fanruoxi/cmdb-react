@@ -111,12 +111,8 @@
 
 .result-table tbody tr:hover td { background: #4a5568; }
 
-/* 亮色主题：淡紫高亮（fallback，实际由 inline style 控制） */
-.result-table tbody tr.row-selected td { background: rgba(139, 92, 246, 0.18) !important; }
+/* 选中行高亮由 inline style 控制，font-weight 保留 */
 .result-table tbody tr.row-selected .row-num { font-weight: 600; }
-
-/* 暗色主题 fallback */
-.dark .result-table tbody tr.row-selected td { background: rgba(139, 92, 246, 0.22) !important; }
 .dark .result-table tbody tr.row-selected .row-num { font-weight: 600; }
 
 /* 颜色选取器 */

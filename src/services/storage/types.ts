@@ -143,6 +143,7 @@ export interface SqlShortcuts {
   history: string;
   saveShared: string;
   duplicateLine: string;
+  deleteLine: string;
 }
 
 /** ELFK 日志搜索快捷键配置 */

@@ -23,6 +23,7 @@ const SHORTCUT_ITEMS: { key: keyof SqlShortcuts; label: string; description: str
   { key: 'history', label: '历史记录', description: '打开历史记录面板' },
   { key: 'saveShared', label: '保存共享', description: '保存当前SQL到共享记录' },
   { key: 'duplicateLine', label: '复制当前行', description: '复制当前行或选中内容到下一行' },
+  { key: 'deleteLine', label: '删除整行', description: '删除光标所在整行' },
 ];
 
 const ShortcutSettings = ({ visible, onClose }: Props) => {
