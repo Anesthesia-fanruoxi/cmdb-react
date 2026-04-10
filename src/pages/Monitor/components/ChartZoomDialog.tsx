@@ -49,7 +49,7 @@ const ChartZoomDialog = ({ metric, onClose }: ChartZoomDialogProps) => {
           </button>
         </div>
         <div className="chart-zoom-body">
-          <MetricChart metric={metric} height={400} isDetailed />
+          <MetricChart metric={metric} height={650} isDetailed />
         </div>
       </div>
     </div>

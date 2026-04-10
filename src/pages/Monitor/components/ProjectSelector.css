@@ -49,21 +49,33 @@
   border-radius: 4px;
   background-color: var(--bg-color);
   cursor: pointer;
-  transition: all 0.2s;
-  font-size: 16px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--text-muted);
 }
 
 .default-btn:hover:not(:disabled) {
   border-color: var(--warning-color);
   background-color: rgba(250, 173, 20, 0.1);
+  color: var(--warning-color);
+  transform: scale(1.1);
+}
+
+.default-btn:active:not(:disabled) {
+  transform: scale(0.95);
 }
 
 .default-btn.active {
-  background-color: rgba(250, 173, 20, 0.1);
+  background-color: rgba(250, 173, 20, 0.2);
   border-color: var(--warning-color);
+  color: var(--warning-color);
 }
 
 .default-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.3;
   cursor: not-allowed;
+}
+
+/* 确保内部 SVG 图标颜色跟随 button */
+.default-btn svg {
+  transition: all 0.2s;
 }

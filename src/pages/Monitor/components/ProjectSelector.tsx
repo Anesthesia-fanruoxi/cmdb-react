@@ -3,6 +3,7 @@
  */
 
 import { useEffect, useState, useCallback } from 'react';
+import { StarOutlined, StarFilled } from '@ant-design/icons';
 import { getMetricsProjects, getAlertProjects } from '../../../services/monitor';
 import type { ProjectOption } from '../../../services/monitor';
 import toast from '../../../components/Toast';
@@ -107,7 +108,7 @@ const ProjectSelector = ({
         disabled={!value}
         title={isDefault ? '当前项目已设为默认' : '设为默认项目'}
       >
-        {isDefault ? '⭐' : '☆'}
+        {isDefault ? <StarFilled style={{ fontSize: '16px' }} /> : <StarOutlined style={{ fontSize: '16px' }} />}
       </button>
     </div>
   );

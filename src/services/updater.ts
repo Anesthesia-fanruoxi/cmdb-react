@@ -112,16 +112,9 @@ export const cleanupOldUpdate = async (): Promise<void> => {
   }
 };
 
-/** 保存当前安装路径 */
+/** 保存当前安装路径（get_exe_path 命令未实现，跳过） */
 export const saveInstallPath = async (): Promise<void> => {
-  try {
-    const path = await invoke<string>('get_exe_path');
-    if (path) {
-      await setInstallPath(path);
-    }
-  } catch (e) {
-    console.error('[更新] 保存安装路径失败:', e);
-  }
+  // Rust 端未提供 get_exe_path 命令，install_update 也不依赖此路径，直接跳过
 };
 
 /** 获取已保存的安装路径 */

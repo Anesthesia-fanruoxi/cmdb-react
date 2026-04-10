@@ -80,82 +80,43 @@ const MetricChart = memo(({
   const currentMode = useRef<string>('all');
   const allLegends = useRef<string[]>([]);
 
-  useEffect(() => {
-    if (!chartRef.current) return;
+  // 处理图例单选逻辑
+  const onLegendClick = (params: { name: string }) => {
+    const { name } = params;
+    const chart = chartInstance.current;
+    if (!chart || !allLegends.current.length) return;
 
-    // 检查容器尺寸，避免在尺寸为0时初始化
-    const { clientWidth, clientHeight } = chartRef.current;
-    if (clientWidth === 0 || clientHeight === 0) {
+    if (currentMode.current === 'all') {
+      showOnlyOneLegend(name);
+      currentMode.current = name;
       return;
     }
 
-    // 初始化或重用图表实例
+    if (currentMode.current === name) {
+      showAllLegends();
+      currentMode.current = 'all';
+      return;
+    }
+
+    showOnlyOneLegend(name);
+    currentMode.current = name;
+  };
+
+  // 1. 初始化实例与基础绑定 (仅在挂载时执行一次)
+  useEffect(() => {
+    if (!chartRef.current) return;
+
     if (!chartInstance.current) {
-      chartInstance.current = echarts.init(chartRef.current, null, { renderer: 'svg' });
+      // 使用默认 Canvas 渲染器，兼容性更好
+      chartInstance.current = echarts.init(chartRef.current);
     }
 
-    // 检查是否需要强制重载（手动刷新或首次加载）
-    const shouldReload = (metric as MonitorMetric & { forceReload?: boolean }).forceReload;
-    
-    if (shouldReload) {
-      // 强制重载：清空图表，触发完整的加载动画
-      chartInstance.current.clear();
-    }
-
-    // 创建图表配置
-    const option = createChartOption(metric, isDetailed, shouldReload);
-    
-    // 使用增量更新模式（SSE 更新时）或完整更新模式（手动刷新时）
-    chartInstance.current.setOption(option, {
-      notMerge: shouldReload, // 强制重载时完全替换，否则合并
-      lazyUpdate: !shouldReload, // 强制重载时立即更新，否则延迟更新
-    });
-
-    // 保存所有图例名称
-    if (option.legend && Array.isArray(option.legend.data)) {
-      allLegends.current = [...option.legend.data];
-    }
-
-    // 重置模式
-    currentMode.current = 'all';
-
-    // 处理图例点击
-    const onLegendClick = (params: { name: string }) => {
-      const { name } = params;
-      const chart = chartInstance.current;
-      if (!chart || !allLegends.current.length) return;
-
-      if (currentMode.current === 'all') {
-        showOnlyOneLegend(name);
-        currentMode.current = name;
-        return;
-      }
-
-      if (currentMode.current === name) {
-        showAllLegends();
-        currentMode.current = 'all';
-        return;
-      }
-
-      showOnlyOneLegend(name);
-      currentMode.current = name;
-    };
-
-    // 监听图例点击事件
-    chartInstance.current.off('legendselectchanged');
-    // @ts-expect-error echarts 类型定义不完整
-    chartInstance.current.on('legendselectchanged', onLegendClick);
-
-    // 使用 ResizeObserver 监听容器大小变化（比 window resize 更可靠）
-    const resizeObserver = new ResizeObserver((entries) => {
-      const { width, height } = entries[0].contentRect;
-      if (width > 0 && height > 0) {
-        chartInstance.current?.resize();
-      }
+    // 绑定大小变化监听
+    const resizeObserver = new ResizeObserver(() => {
+      chartInstance.current?.resize();
     });
     resizeObserver.observe(chartRef.current);
 
-    // 窗口大小变化时也调整图表
     const handleResize = () => chartInstance.current?.resize();
     window.addEventListener('resize', handleResize);
 
@@ -163,6 +124,41 @@ const MetricChart = memo(({
       window.removeEventListener('resize', handleResize);
       resizeObserver.disconnect();
     };
+  }, []);
+
+  // 2. 响应数据与模式变化更新图表
+  useEffect(() => {
+    if (!chartInstance.current) return;
+
+    const shouldReload = (metric as MonitorMetric & { forceReload?: boolean }).forceReload;
+    if (shouldReload) {
+      chartInstance.current.clear();
+    }
+
+    const option = createChartOption(metric, isDetailed, shouldReload);
+    
+    chartInstance.current.setOption(option, {
+      notMerge: shouldReload || isDetailed,
+      lazyUpdate: !shouldReload,
+    });
+
+    // 更新图例缓存
+    if (option.legend && Array.isArray(option.legend.data)) {
+      allLegends.current = [...option.legend.data];
+    }
+    if (!currentMode.current) currentMode.current = 'all';
+
+    // 重新绑定图例点击事件
+    chartInstance.current.off('legendselectchanged');
+    // @ts-expect-error echarts type
+    chartInstance.current.on('legendselectchanged', onLegendClick);
+
+    // 关键修正：针对 Modal 弹窗渲染时机，增加小延迟强制重算一次尺寸
+    const timer = setTimeout(() => {
+      chartInstance.current?.resize();
+    }, 50);
+
+    return () => clearTimeout(timer);
   }, [metric, isDetailed]);
 
   // 只显示一个图例

@@ -272,6 +272,16 @@ const TrafficSwitching = () => {
     };
   }, [metrics]);
 
+  // 当 metrics 更新时同步更新 zoomMetric，确保全屏图表实时更新
+  useEffect(() => {
+    if (zoomMetric) {
+      const updated = metrics.find(m => m.view_id === zoomMetric.view_id);
+      if (updated && updated !== zoomMetric) {
+        setZoomMetric(updated);
+      }
+    }
+  }, [metrics, zoomMetric]);
+
   return (
     <div className="monitor-page traffic-monitor">
       <div className="monitor-header">
