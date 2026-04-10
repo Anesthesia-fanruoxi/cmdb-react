@@ -42,3 +42,30 @@ export function getAlBalanceConfig() {
 export function updateAlBalanceConfig(projects: string[]) {
   return apiClient.post('/assets/alBalance/config/update', { projects });
 }
+
+// ECS 实例
+export interface EcsInstance {
+  instance_id: string;
+  instance_name: string;
+  status: string;
+  expired_time: string;
+  region_id: string;
+  instance_type: string;
+  charge_type: string;
+}
+
+export interface EcsProjectData {
+  region_id: string;
+  total: number;
+  instances: EcsInstance[];
+}
+
+export interface EcsItem {
+  project: string;
+  data: EcsProjectData;
+}
+
+// 获取 ECS 实例列表
+export function getAlBalanceEcsList() {
+  return apiClient.get<EcsItem[]>('/assets/alBalance/ecs/list');
+}

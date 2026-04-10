@@ -50,16 +50,56 @@ const AgentPlugins = () => {
     } catch { toast.error('删除失败'); }
   };
 
-  const handleFormSubmit = async (data: PluginFormData, isEdit: boolean, id?: number) => {
+  const handleFormSubmit = async (data: PluginFormData, isEdit: boolean, id?: number, original?: PluginItem) => {
     try {
-      const res = isEdit ? await updatePlugin({ ...data, id: id! }) : await createPlugin(data);
+      let res;
+      if (isEdit && id !== undefined) {
+        // 编辑模式：只传修改的字段，与 Vue 端保持一致
+        const payload: Record<string, unknown> = { id };
+        if (data.version !== original?.version) payload.version = data.version;
+        if (data.display_name !== original?.display_name) payload.display_name = data.display_name;
+        if (data.description !== original?.description) payload.description = data.description;
+        const newPort = data.port && data.port > 0 ? data.port : null;
+        const oldPort = original?.port && original.port > 0 ? original.port : null;
+        if (newPort !== oldPort) payload.port = newPort;
+        console.log('[plugins] updatePlugin payload:', payload);
+        res = await updatePlugin(payload as Parameters<typeof updatePlugin>[0]);
+      } else {
+        const payload: Record<string, unknown> = {
+          name: data.name,
+          version: data.version,
+          display_name: data.display_name,
+          plugin_type: data.plugin_type,
+        };
+        if (data.description) payload.description = data.description;
+        if (data.port && data.port > 0) payload.port = data.port;
+        console.log('[plugins] createPlugin payload:', payload);
+        res = await createPlugin(payload as PluginFormData);
+      }
+      console.log('[plugins] response:', res);
       if (res.code === 200) {
         toast.success(isEdit ? '更新成功' : '创建成功');
         setFormVisible(false);
         fetchPlugins();
         return true;
-      } else { toast.error(res.message || '操作失败'); return false; }
-    } catch { toast.error('操作失败'); return false; }
+      } else {
+        console.error('[plugins] 业务失败 code:', res.code, 'message:', res.message);
+        toast.error(res.message || '操作失败');
+        return false;
+      }
+    } catch (e) {
+      console.error('[plugins] 操作失败 error:', e);
+      if (e instanceof Error) {
+        console.error('[plugins] error.message:', e.message);
+        console.error('[plugins] error.name:', e.name);
+        // RequestError 有 code 和 details 字段
+        const re = e as Error & { code?: number; details?: string };
+        if (re.code !== undefined) console.error('[plugins] error.code:', re.code);
+        if (re.details) console.error('[plugins] error.details:', re.details);
+      }
+      toast.error('操作失败');
+      return false;
+    }
   };
 
   return (
@@ -112,7 +152,7 @@ const AgentPlugins = () => {
         </div>
       </div>
 
-      <PluginFormDialog visible={formVisible} plugin={editingPlugin} onClose={() => setFormVisible(false)} onSubmit={handleFormSubmit} />
+      <PluginFormDialog visible={formVisible} plugin={editingPlugin} onClose={() => setFormVisible(false)} onSubmit={(data, isEdit, id) => handleFormSubmit(data, isEdit, id, editingPlugin ?? undefined)} />
     </div>
   );
 };

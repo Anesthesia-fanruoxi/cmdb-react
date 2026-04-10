@@ -38,13 +38,16 @@ const PluginFormDialog = ({ visible, plugin, onClose, onSubmit }: Props) => {
   }, [visible, plugin]);
 
   const handleSubmit = async () => {
-    if (!form.name?.trim()) { toast.warning('请输入插件名称'); return; }
-    if (!isEdit && !/^[a-z0-9-]+$/.test(form.name)) { toast.warning('插件名称只能包含小写字母、数字和连字符'); return; }
-    if (!form.version?.trim()) { toast.warning('请输入版本号'); return; }
-    if (!form.display_name?.trim()) { toast.warning('请输入显示名称'); return; }
+    console.log('[PluginFormDialog] handleSubmit called, isEdit:', isEdit, 'form:', form);
+    if (!form.name?.trim()) { console.warn('[PluginFormDialog] 验证失败: name 为空'); toast.warning('请输入插件名称'); return; }
+    if (!isEdit && !/^[a-z0-9-]+$/.test(form.name)) { console.warn('[PluginFormDialog] 验证失败: name 格式不对', form.name); toast.warning('插件名称只能包含小写字母、数字和连字符'); return; }
+    if (!form.version?.trim()) { console.warn('[PluginFormDialog] 验证失败: version 为空'); toast.warning('请输入版本号'); return; }
+    if (!form.display_name?.trim()) { console.warn('[PluginFormDialog] 验证失败: display_name 为空'); toast.warning('请输入显示名称'); return; }
 
+    console.log('[PluginFormDialog] 验证通过，调用 onSubmit');
     setLoading(true);
     const success = await onSubmit(form, isEdit, plugin?.id);
+    console.log('[PluginFormDialog] onSubmit 返回:', success);
     setLoading(false);
     if (success) onClose();
   };

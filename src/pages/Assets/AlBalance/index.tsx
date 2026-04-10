@@ -12,6 +12,7 @@ import {
 } from '../../../services/assets/alBalance';
 import type { BalanceItem, ProjectItem } from '../../../services/assets/alBalance';
 import toast from '../../../components/Toast';
+import EcsListModal from './EcsListModal';
 import './index.css';
 
 const AlBalancePage = () => {
@@ -23,6 +24,17 @@ const AlBalancePage = () => {
   const [allProjects, setAllProjects] = useState<ProjectItem[]>([]);
   const [settingSelected, setSettingSelected] = useState<string[]>([]);
   const [saveLoading, setSaveLoading] = useState(false);
+
+  // ECS 弹框
+  const [ecsVisible, setEcsVisible] = useState(false);
+  const [ecsProject, setEcsProject] = useState('');
+  const [ecsProjectName, setEcsProjectName] = useState('');
+
+  const openEcsModal = (item: BalanceItem) => {
+    setEcsProject(item.project);
+    setEcsProjectName(item.project_name || item.project);
+    setEcsVisible(true);
+  };
 
   // 根据金额返回颜色 class
   const getAmountClass = (amountStr?: string) => {
@@ -149,7 +161,7 @@ const AlBalancePage = () => {
                 </div>
               ) : (
                 <div className="balance-card-body">
-                  <div className="balance-main-row">
+                  <div className="balance-main-row clickable" onClick={() => openEcsModal(item)} title="点击查看 ECS 实例">
                     <span className="balance-label">可用余额</span>
                     <span className={`balance-amount-value ${getAmountClass(item.data?.available_amount)}`}>
                       ¥ {item.data?.available_amount}
@@ -174,6 +186,14 @@ const AlBalancePage = () => {
           <span>暂无数据，请先配置项目</span>
         </div>
       )}
+
+      {/* ECS 实例弹框 */}
+      <EcsListModal
+        visible={ecsVisible}
+        project={ecsProject}
+        projectName={ecsProjectName}
+        onClose={() => setEcsVisible(false)}
+      />
 
       {/* 设置弹窗 */}
       {settingVisible && (

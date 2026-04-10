@@ -40,25 +40,82 @@ const PluginEditDialog = ({ visible, plugin, project, onClose, onSuccess }: Prop
 
   const handleSubmit = async () => {
     if (!plugin || !project) return;
+
+    // 验证配置参数
+    const hasEmpty = configList.some(item => (item.key && !item.value) || (!item.key && item.value));
+    if (hasEmpty) { toast.warning('请填写完整的配置信息或删除空配置'); return; }
+
     setLoading(true);
     try {
-      const config: Record<string, string> = {};
-      configList.forEach(item => { if (item.key && item.value) config[item.key] = item.value; });
-      
-      const res = await operatePlugin({
+      // 构建 config diff，与 Vue 端保持一致
+      const currentConfigMap: Record<string, string> = {};
+      configList.forEach(item => { if (item.key && item.value) currentConfigMap[item.key] = item.value; });
+
+      const originalConfigMap = plugin.config || {};
+      console.log('[PluginEditDialog] currentConfigMap:', currentConfigMap);
+      console.log('[PluginEditDialog] originalConfigMap:', originalConfigMap);
+      const configChanges: { add: Record<string, string>; update: Record<string, string>; delete: string[] } = {
+        add: {}, update: {}, delete: []
+      };
+
+      Object.keys(currentConfigMap).forEach(key => {
+        const cur = currentConfigMap[key];
+        const orig = originalConfigMap[key];
+        if (orig === undefined) {
+          configChanges.add[key] = cur;
+        } else if (orig !== cur && !(orig === '******' && cur === '******')) {
+          configChanges.update[key] = cur;
+        }
+      });
+      Object.keys(originalConfigMap).forEach(key => {
+        if (currentConfigMap[key] === undefined) configChanges.delete.push(key);
+      });
+
+      const hasConfigChange =
+        Object.keys(configChanges.add).length > 0 ||
+        Object.keys(configChanges.update).length > 0 ||
+        configChanges.delete.length > 0;
+
+      const portChanged = containerPort !== plugin.container_port;
+
+      if (!hasConfigChange && !portChanged) {
+        toast.warning('没有任何修改');
+        setLoading(false);
+        return;
+      }
+
+      const payload: Record<string, unknown> = {
         project: project.project,
         name: plugin.name,
-        action: 'edit',
-        container_port: containerPort,
-        config
-      });
-      
+        action: 'update',
+      };
+      if (plugin.plugin_type === 'container' && containerPort) {
+        payload.container_port = containerPort;
+      }
+      if (hasConfigChange) {
+        payload.config = configChanges;
+      }
+      console.log('[PluginEditDialog] configChanges:', configChanges, 'hasConfigChange:', hasConfigChange);
+
+      console.log('[PluginEditDialog] operatePlugin payload:', payload);
+      const res = await operatePlugin(payload as Parameters<typeof operatePlugin>[0]);
+      console.log('[PluginEditDialog] response:', res);
+
       if (res.code === 200) {
         toast.success('保存成功');
         onSuccess();
-      } else { toast.error(res.message || '保存失败'); }
-    } catch { toast.error('保存失败'); }
-    finally { setLoading(false); }
+        onClose();
+      } else {
+        toast.error(res.message || '保存失败');
+      }
+    } catch (e) {
+      console.error('[PluginEditDialog] 保存失败:', e);
+      const err = e as Error & { code?: number; details?: string };
+      console.error('[PluginEditDialog] message:', err.message, 'code:', err.code, 'details:', err.details);
+      toast.error('保存失败');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!visible) return null;
