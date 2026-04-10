@@ -145,7 +145,7 @@ const AlBalancePage = () => {
       {balanceList.length > 0 ? (
         <div className="balance-card-grid">
           {balanceList.map(item => (
-            <div key={item.project} className="balance-card">
+            <div key={item.project} className="balance-card clickable" onClick={() => !item.error && openEcsModal(item)} title={item.error ? '' : '点击查看 ECS 实例'}>
               <div className="balance-card-header">
                 <span className="balance-card-title" title={item.project_name || item.project}>
                   {item.project_name || item.project}
@@ -161,7 +161,7 @@ const AlBalancePage = () => {
                 </div>
               ) : (
                 <div className="balance-card-body">
-                  <div className="balance-main-row clickable" onClick={() => openEcsModal(item)} title="点击查看 ECS 实例">
+                  <div className="balance-main-row">
                     <span className="balance-label">可用余额</span>
                     <span className={`balance-amount-value ${getAmountClass(item.data?.available_amount)}`}>
                       ¥ {item.data?.available_amount}
