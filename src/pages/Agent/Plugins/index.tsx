@@ -74,7 +74,7 @@ const AgentPlugins = () => {
         if (data.description) payload.description = data.description;
         if (data.port && data.port > 0) payload.port = data.port;
         console.log('[plugins] createPlugin payload:', payload);
-        res = await createPlugin(payload as PluginFormData);
+        res = await createPlugin(payload as unknown as PluginFormData);
       }
       console.log('[plugins] response:', res);
       if (res.code === 200) {

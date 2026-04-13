@@ -4,7 +4,7 @@
  */
 
 import { invoke } from '@tauri-apps/api/core';
-import { getUpdateInfo, saveUpdateInfo, clearUpdateInfo, getInstallPath, setInstallPath } from './storage';
+import { getUpdateInfo, saveUpdateInfo, clearUpdateInfo, getInstallPath } from './storage';
 import { formatDate } from '../utils/datetime';
 import type { UpdateInfo } from './storage';
 
