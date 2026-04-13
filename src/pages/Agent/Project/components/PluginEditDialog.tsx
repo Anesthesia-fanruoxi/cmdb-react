@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, Loader2, Plus, Trash2 } from 'lucide-react';
-import { operatePlugin, Project, Plugin } from '../../../../services/agent/project';
+import { updatePluginConfig, Project, Plugin } from '../../../../services/agent/project';
 import toast from '../../../../components/Toast';
 
 interface Props {
@@ -47,35 +47,27 @@ const PluginEditDialog = ({ visible, plugin, project, onClose, onSuccess }: Prop
 
     setLoading(true);
     try {
-      // 构建 config diff，与 Vue 端保持一致
       const currentConfigMap: Record<string, string> = {};
       configList.forEach(item => { if (item.key && item.value) currentConfigMap[item.key] = item.value; });
 
       const originalConfigMap = plugin.config || {};
-      console.log('[PluginEditDialog] currentConfigMap:', currentConfigMap);
-      console.log('[PluginEditDialog] originalConfigMap:', originalConfigMap);
-      const configChanges: { add: Record<string, string>; update: Record<string, string>; delete: string[] } = {
-        add: {}, update: {}, delete: []
-      };
+      const config_set: Record<string, string> = {};
+      const config_delete: string[] = [];
 
       Object.keys(currentConfigMap).forEach(key => {
         const cur = currentConfigMap[key];
         const orig = originalConfigMap[key];
         if (orig === undefined) {
-          configChanges.add[key] = cur;
+          config_set[key] = cur;
         } else if (orig !== cur && !(orig === '******' && cur === '******')) {
-          configChanges.update[key] = cur;
+          config_set[key] = cur;
         }
       });
       Object.keys(originalConfigMap).forEach(key => {
-        if (currentConfigMap[key] === undefined) configChanges.delete.push(key);
+        if (currentConfigMap[key] === undefined) config_delete.push(key);
       });
 
-      const hasConfigChange =
-        Object.keys(configChanges.add).length > 0 ||
-        Object.keys(configChanges.update).length > 0 ||
-        configChanges.delete.length > 0;
-
+      const hasConfigChange = Object.keys(config_set).length > 0 || config_delete.length > 0;
       const portChanged = containerPort !== plugin.container_port;
 
       if (!hasConfigChange && !portChanged) {
@@ -84,22 +76,12 @@ const PluginEditDialog = ({ visible, plugin, project, onClose, onSuccess }: Prop
         return;
       }
 
-      const payload: Record<string, unknown> = {
+      const res = await updatePluginConfig({
         project: project.project,
         name: plugin.name,
-        action: 'update',
-      };
-      if (plugin.plugin_type === 'container' && containerPort) {
-        payload.container_port = containerPort;
-      }
-      if (hasConfigChange) {
-        payload.config = configChanges;
-      }
-      console.log('[PluginEditDialog] configChanges:', configChanges, 'hasConfigChange:', hasConfigChange);
-
-      console.log('[PluginEditDialog] operatePlugin payload:', payload);
-      const res = await operatePlugin(payload as Parameters<typeof operatePlugin>[0]);
-      console.log('[PluginEditDialog] response:', res);
+        ...(Object.keys(config_set).length > 0 && { config_set }),
+        ...(config_delete.length > 0 && { config_delete }),
+      });
 
       if (res.code === 200) {
         toast.success('保存成功');
@@ -109,9 +91,8 @@ const PluginEditDialog = ({ visible, plugin, project, onClose, onSuccess }: Prop
         toast.error(res.message || '保存失败');
       }
     } catch (e) {
-      console.error('[PluginEditDialog] 保存失败:', e);
-      const err = e as Error & { code?: number; details?: string };
-      console.error('[PluginEditDialog] message:', err.message, 'code:', err.code, 'details:', err.details);
+      const err = e as Error & { code?: number };
+      console.error('[PluginEditDialog] 保存失败:', err.message, 'code:', err.code);
       toast.error('保存失败');
     } finally {
       setLoading(false);

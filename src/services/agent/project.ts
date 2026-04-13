@@ -8,17 +8,36 @@ import { apiClient } from '../request';
 export const getProjectPluginList = () => apiClient.get('/agent/project/list');
 
 // 获取项目插件详情
-export const getProjectPluginDetail = (project: string) => 
+export const getProjectPluginDetail = (project: string) =>
   apiClient.get('/agent/project/list/detail', { project });
 
-// 操作插件（启动/停止/重启/卸载/更新/编辑）
-export const operatePlugin = (data: PluginOperateData) => 
-  apiClient.post('/agent/project/operate', {
+// 插件控制（启动/停止/重启/卸载）
+export const controlPlugin = (data: { project: string; name: string; action: 'start' | 'stop' | 'restart' | 'uninstall' }) =>
+  apiClient.post('/agent/project/control', {
     project: data.project,
     plugin_name: data.name,
     action: data.action,
-    ...(data.container_port && { container_port: data.container_port }),
-    ...(data.config && { config: data.config }),
+  });
+
+// 插件版本升级
+export const upgradePlugin = (data: { project: string; name: string }) =>
+  apiClient.post('/agent/project/upgrade', {
+    project: data.project,
+    plugin_name: data.name,
+  });
+
+// 插件配置更新
+export const updatePluginConfig = (data: {
+  project: string;
+  name: string;
+  config_set?: Record<string, string>;
+  config_delete?: string[];
+}) =>
+  apiClient.post('/agent/project/config', {
+    project: data.project,
+    plugin_name: data.name,
+    ...(data.config_set && Object.keys(data.config_set).length > 0 && { config_set: data.config_set }),
+    ...(data.config_delete && data.config_delete.length > 0 && { config_delete: data.config_delete }),
   });
 
 // 类型定义
@@ -38,14 +57,6 @@ export interface Plugin {
   uptime?: string;
   installed_at?: string;
   is_update?: boolean;
-  config?: Record<string, string>;
-}
-
-export interface PluginOperateData {
-  project: string;
-  name: string;
-  action: 'start' | 'stop' | 'restart' | 'uninstall' | 'update' | 'edit';
-  container_port?: number;
   config?: Record<string, string>;
 }
 

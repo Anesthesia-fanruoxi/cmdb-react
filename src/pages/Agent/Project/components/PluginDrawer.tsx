@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { X, RefreshCw, Loader2, Box, Play, Pause, RotateCw, Edit2, FileText, Trash2, Upload } from 'lucide-react';
-import { operatePlugin, Project, Plugin, ProjectDetail, PluginOperateData } from '@/services/agent/project.ts';
+import { controlPlugin, upgradePlugin, Project, Plugin, ProjectDetail } from '@/services/agent/project.ts';
 import toast from '../../../../components/Toast';
 import PluginEditDialog from './PluginEditDialog';
 import PluginLogsDialog from './PluginLogsDialog';
@@ -48,24 +48,38 @@ const PluginDrawer = ({ visible, project, detail, loading, onClose, onRefresh }:
 
   const formatTime = (time?: string) => time ? time.replace('T', ' ').slice(0, 19) : '-';
 
-  const handleOperate = async (plugin: Plugin, action: PluginOperateData['action']) => {
+  const handleOperate = async (plugin: Plugin, action: 'start' | 'stop' | 'restart' | 'uninstall') => {
     if (!project) return;
-    const actionText: Record<string, string> = { start: '启动', stop: '停止', restart: '重启', uninstall: '卸载', update: '更新' };
+    const actionText: Record<string, string> = { start: '启动', stop: '停止', restart: '重启', uninstall: '卸载' };
     if (action === 'uninstall' && !confirm(`确定要卸载插件 "${plugin.name}" 吗？`)) return;
 
     setOperating(`${plugin.name}-${action}`);
     try {
-      const res = await operatePlugin({ project: project.project, name: plugin.name, action });
+      const res = await controlPlugin({ project: project.project, name: plugin.name, action });
       if (res.code === 200) {
         toast.success(`${actionText[action]}成功`);
         onRefresh();
       } else { toast.error(res.message || `${actionText[action]}失败`); }
-    } catch (err: any) { 
+    } catch (err: any) {
       console.error('操作失败:', err);
-      const errMsg = err?.message || `${actionText[action]}失败`;
-      toast.error(errMsg); 
-    }
-    finally { setOperating(null); }
+      toast.error(err?.message || `${actionText[action]}失败`);
+    } finally { setOperating(null); }
+  };
+
+  const handleUpgrade = async (plugin: Plugin) => {
+    if (!project) return;
+    if (!confirm(`确定要更新插件 "${plugin.name}" 到最新版本吗？`)) return;
+    setOperating(`${plugin.name}-update`);
+    try {
+      const res = await upgradePlugin({ project: project.project, name: plugin.name });
+      if (res.code === 200) {
+        toast.success('更新成功');
+        onRefresh();
+      } else { toast.error(res.message || '更新失败'); }
+    } catch (err: any) {
+      console.error('更新失败:', err);
+      toast.error(err?.message || '更新失败');
+    } finally { setOperating(null); }
   };
 
   if (!visible) return null;
@@ -113,7 +127,7 @@ const PluginDrawer = ({ visible, project, detail, loading, onClose, onRefresh }:
                           {plugin.is_update && (
                             <>
                               <span className="update-tag">NEW</span>
-                              <button className="btn-update" onClick={() => handleOperate(plugin, 'update')}>
+                              <button className="btn-update" onClick={() => handleUpgrade(plugin)}>
                                 <Upload size={12} /> 更新
                               </button>
                             </>
