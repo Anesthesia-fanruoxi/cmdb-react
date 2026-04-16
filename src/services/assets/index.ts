@@ -8,3 +8,4 @@ export * from './key';
 export * from './kubeService';
 export * from './kubePod';
 export * from './proUpdate';
+export * from './securityGroup';
