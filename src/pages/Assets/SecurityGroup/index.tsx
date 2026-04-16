@@ -10,6 +10,7 @@ import {
 } from '@/services/assets/securityGroup';
 import type { SecurityGroupInfo, SecurityGroupRule } from '@/services/assets/securityGroup';
 import toast from '@/components/Toast';
+import { useAuthStore } from '@/stores/authStore';
 import RuleFormModal from './RuleFormModal';
 import './index.css';
 
@@ -26,6 +27,15 @@ const SecurityGroupPage = () => {
 
   // 搜索关键词
   const [keyword, setKeyword] = useState('');
+
+  // 屏蔽开关（仅管理员可用）：过滤掉备注为「自动更新 - IP监控工具」的规则
+  const MONITOR_DESC = '自动更新 - IP监控工具';
+  const [hideMonitor, setHideMonitor] = useState(false);
+
+  // 角色判断：role_id 为 1 或 2 时为管理员
+  const user = useAuthStore(s => s.user);
+  const roleId = user?.role_id ? Number(user.role_id) : 0;
+  const isAdmin = roleId === 1 || roleId === 2;
 
   useEffect(() => {
     fetchData();
@@ -106,9 +116,18 @@ const SecurityGroupPage = () => {
 
   const rules = sgInfo?.ingress_rules ?? [];
 
-  // 前端过滤：匹配协议、端口、源IP、描述
+  // 普通用户只能操作端口为 80 或 443 的规则
+  const isAllowedPort = (portRange: string) => {
+    return portRange === '80/80' || portRange === '443/443';
+  };
+
+  // 前端过滤：屏蔽开关 + 关键词搜索
+  const baseRules = (isAdmin && hideMonitor)
+    ? rules.filter(r => r.description !== MONITOR_DESC)
+    : rules;
+
   const filteredRules = keyword.trim()
-    ? rules.filter(r => {
+    ? baseRules.filter(r => {
         const kw = keyword.trim().toLowerCase();
         return (
           r.ip_protocol?.toLowerCase().includes(kw) ||
@@ -118,7 +137,7 @@ const SecurityGroupPage = () => {
           r.policy?.toLowerCase().includes(kw)
         );
       })
-    : rules;
+    : baseRules;
 
   return (
     <div className="sg-page">
@@ -150,7 +169,9 @@ const SecurityGroupPage = () => {
           入站规则
           {rules.length > 0 && (
             <span className="sg-count">
-              {keyword.trim() ? `${filteredRules.length} / ${rules.length}` : rules.length}
+              {(keyword.trim() || (isAdmin && hideMonitor))
+                ? `${filteredRules.length} / ${rules.length}`
+                : rules.length}
             </span>
           )}
         </span>
@@ -167,6 +188,16 @@ const SecurityGroupPage = () => {
               <button className="sg-search-clear" onClick={() => setKeyword('')}>×</button>
             )}
           </div>
+          {isAdmin && (
+            <button
+              className={`btn btn-default sg-btn-shield ${hideMonitor ? 'active' : ''}`}
+              onClick={() => setHideMonitor(v => !v)}
+              title={hideMonitor ? '已屏蔽自动更新规则，点击取消' : '点击屏蔽自动更新规则'}
+            >
+              <ShieldCheck size={14} />
+              {hideMonitor ? '已屏蔽自动更新' : '屏蔽自动更新'}
+            </button>
+          )}
           <button className="btn btn-default" onClick={fetchData} disabled={loading} title="刷新">
             <RefreshCw size={14} className={loading ? 'spin' : ''} />
             刷新
@@ -220,21 +251,27 @@ const SecurityGroupPage = () => {
                   </td>
                   <td>
                     <div className="sg-actions">
-                      <button
-                        className="sg-btn-action"
-                        onClick={() => handleEdit(rule)}
-                      >
-                        <Edit2 size={13} />
-                        编辑
-                      </button>
-                      <button
-                        className="sg-btn-action sg-btn-action-danger"
-                        disabled={deletingId === rule.security_group_rule_id}
-                        onClick={() => handleDelete(rule)}
-                      >
-                        <Trash2 size={13} />
-                        {deletingId === rule.security_group_rule_id ? '删除中...' : '删除'}
-                      </button>
+                      {(isAdmin || isAllowedPort(rule.port_range)) ? (
+                        <>
+                          <button
+                            className="sg-btn-action"
+                            onClick={() => handleEdit(rule)}
+                          >
+                            <Edit2 size={13} />
+                            编辑
+                          </button>
+                          <button
+                            className="sg-btn-action sg-btn-action-danger"
+                            disabled={deletingId === rule.security_group_rule_id}
+                            onClick={() => handleDelete(rule)}
+                          >
+                            <Trash2 size={13} />
+                            {deletingId === rule.security_group_rule_id ? '删除中...' : '删除'}
+                          </button>
+                        </>
+                      ) : (
+                        <span className="sg-no-action">-</span>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -248,6 +285,7 @@ const SecurityGroupPage = () => {
       <RuleFormModal
         visible={modalVisible}
         editRule={editRule}
+        isAdmin={isAdmin}
         onClose={() => setModalVisible(false)}
         onSuccess={() => {
           setModalVisible(false);

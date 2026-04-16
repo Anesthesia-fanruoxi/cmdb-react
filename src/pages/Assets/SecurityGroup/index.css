@@ -272,6 +272,24 @@
   cursor: not-allowed;
 }
 
+.sg-no-action {
+  color: var(--text-secondary, #999);
+  font-size: 13px;
+}
+
+/* 屏蔽按钮激活态 */
+.sg-btn-shield.active {
+  border-color: #faad14;
+  color: #faad14;
+  background: rgba(250, 173, 20, 0.08);
+}
+
+.sg-btn-shield.active:hover {
+  border-color: #faad14;
+  color: #faad14;
+  background: rgba(250, 173, 20, 0.14);
+}
+
 /* 加载 / 空状态 */
 .sg-loading,
 .sg-empty {
