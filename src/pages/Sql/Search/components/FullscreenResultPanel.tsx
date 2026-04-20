@@ -1,15 +1,26 @@
 /**
  * 全屏结果面板组件
  * 支持无限滚动加载、列宽拖拽调整
+ *
+ * 加载状态机（loadPhase）：
+ *   init   → 组件挂载，等待第1页数据
+ *   batch  → 自动预加载第2、3页（最多 PRELOAD_PAGES 页）
+ *   scroll → 用户滚动到底部时按需加载
+ *   done   → 全部数据已加载完毕
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useUserPrefsStore } from '../../../../stores/userPrefsStore';
-import toast from '../../../../components/Toast';
+import { useUserPrefsStore } from '@/stores/userPrefsStore';
+import toast from '@/components/Toast';
 
 const copyCellValue = async (value: unknown) => {
   try {
-    const text = value === null || value === undefined ? '' : typeof value === 'object' ? JSON.stringify(value) : String(value);
+    const text =
+      value === null || value === undefined
+        ? ''
+        : typeof value === 'object'
+        ? JSON.stringify(value)
+        : String(value);
     await navigator.clipboard.writeText(text);
     const display = text.length > 20 ? text.substring(0, 20) + '...' : text;
     toast.success(`已复制: ${display}`);
@@ -29,15 +40,24 @@ interface Props {
   onClose: () => void;
 }
 
-const pageSize = 20;
+const PAGE_SIZE = 20;
 const MIN_COL_WIDTH = 40;
+// 初始化时自动预加载的最大页数
+const PRELOAD_PAGES = 3;
+
+type LoadPhase = 'init' | 'batch' | 'scroll' | 'done';
 
 const FullscreenResultPanel = ({
-  columns, results, total, took, dbName, currentPage, onPageChange, onClose
+  columns,
+  results,
+  total,
+  took,
+  dbName,
+  onPageChange,
+  onClose,
 }: Props) => {
   const [accumulatedData, setAccumulatedData] = useState<unknown[][]>([]);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [loadPhase, setLoadPhase] = useState<LoadPhase>('init');
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
   const lastClickedRow = useRef<number | null>(null);
 
@@ -45,8 +65,13 @@ const FullscreenResultPanel = ({
   const highlightColor = uiPrefs.sqlRowHighlightColor || '#8b5cf6';
   const colorInputRef = useRef<HTMLInputElement>(null);
 
-  const batchLoadingDataRef = useRef<unknown[][]>([]);
-  const batchLoadingPageRef = useRef<number>(0);
+  // 当前已发出请求、等待响应的页码
+  const pendingPageRef = useRef<number>(1);
+  // 批量预加载阶段的数据缓冲区
+  const batchBufferRef = useRef<unknown[][]>([]);
+  // 防止滚动事件重复触发加载
+  const isScrollLoadingRef = useRef(false);
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const theadWrapperRef = useRef<HTMLDivElement>(null);
   const scrollTimerRef = useRef<number | null>(null);
@@ -54,13 +79,20 @@ const FullscreenResultPanel = ({
   // 列宽
   const [colWidths, setColWidths] = useState<number[]>([]);
   const colWidthsRef = useRef<number[]>([]);
-  const resizingCol = useRef<{ colIdx: number; startX: number; startWidth: number } | null>(null);
+  const resizingCol = useRef<{
+    colIdx: number;
+    startX: number;
+    startWidth: number;
+  } | null>(null);
 
+  const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+
+  // 根据列名自动计算初始列宽
   useEffect(() => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (ctx) ctx.font = '500 12px sans-serif';
-    const widths = columns.map(col => {
+    const widths = columns.map((col) => {
       const textWidth = ctx ? ctx.measureText(col).width : col.length * 8;
       return Math.max(MIN_COL_WIDTH, Math.ceil(textWidth) + 62);
     });
@@ -68,36 +100,42 @@ const FullscreenResultPanel = ({
     setColWidths(widths);
   }, [columns]);
 
-  const handleResizeMouseDown = useCallback((colIdx: number, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const startWidth = colWidthsRef.current[colIdx] ?? 120;
-    resizingCol.current = { colIdx, startX: e.clientX, startWidth };
+  // 列宽拖拽
+  const handleResizeMouseDown = useCallback(
+    (colIdx: number, e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const startWidth = colWidthsRef.current[colIdx] ?? 120;
+      resizingCol.current = { colIdx, startX: e.clientX, startWidth };
 
-    const onMouseMove = (ev: MouseEvent) => {
-      if (!resizingCol.current) return;
-      const delta = ev.clientX - resizingCol.current.startX;
-      const newWidth = Math.max(MIN_COL_WIDTH, resizingCol.current.startWidth + delta);
-      colWidthsRef.current = colWidthsRef.current.map((w, i) => i === colIdx ? newWidth : w);
-      setColWidths([...colWidthsRef.current]);
-    };
+      const onMouseMove = (ev: MouseEvent) => {
+        if (!resizingCol.current) return;
+        const delta = ev.clientX - resizingCol.current.startX;
+        const newWidth = Math.max(
+          MIN_COL_WIDTH,
+          resizingCol.current.startWidth + delta
+        );
+        colWidthsRef.current = colWidthsRef.current.map((w, i) =>
+          i === colIdx ? newWidth : w
+        );
+        setColWidths([...colWidthsRef.current]);
+      };
 
-    const onMouseUp = () => {
-      resizingCol.current = null;
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-    };
+      const onMouseUp = () => {
+        resizingCol.current = null;
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      };
 
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
-  }, []);
-
-  const totalPages = Math.ceil(total / pageSize) || 1;
-  const hasMore = currentPage < totalPages;
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    },
+    []
+  );
 
   const formatValue = (value: unknown): string => {
     if (value === null || value === undefined) return 'NULL';
@@ -105,118 +143,188 @@ const FullscreenResultPanel = ({
     return String(value);
   };
 
+  // ─── 初始化：挂载时处理第1页数据（仅执行一次）────────────────────────────
   useEffect(() => {
-    if (currentPage === 1 && total > 20) {
-      batchLoadingDataRef.current = [...results];
-      batchLoadingPageRef.current = 1;
-      onPageChange(2, pageSize);
+    if (results.length === 0) {
+      setLoadPhase('done');
+      return;
+    }
+
+    if (totalPages > 1) {
+      // 缓存第1页，进入批量预加载阶段
+      batchBufferRef.current = [...results];
+      pendingPageRef.current = 2;
+      setLoadPhase('batch');
+      onPageChange(2, PAGE_SIZE);
     } else {
+      // 只有一页，直接完成
       setAccumulatedData([...results]);
-      setIsInitialLoading(false);
+      setLoadPhase('done');
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 仅挂载时执行一次，不依赖任何变量
 
+  // ─── 统一响应 results 变化（init 阶段由上面的 effect 处理，这里跳过）──────
   useEffect(() => {
-    if (!isInitialLoading || batchLoadingPageRef.current === 0) return;
-    if (currentPage === 2 && batchLoadingPageRef.current === 1 && results.length > 0) {
-      batchLoadingDataRef.current.push(...results);
-      batchLoadingPageRef.current = 2;
-      if (total > 40) {
-        onPageChange(3, pageSize);
+    if (loadPhase === 'init') return;
+    if (results.length === 0) return;
+
+    // ── 批量预加载阶段 ──
+    if (loadPhase === 'batch') {
+      const receivedPage = pendingPageRef.current;
+      batchBufferRef.current.push(...results);
+
+      const nextPage = receivedPage + 1;
+      const canContinue = nextPage <= PRELOAD_PAGES && nextPage <= totalPages;
+
+      if (canContinue) {
+        pendingPageRef.current = nextPage;
+        onPageChange(nextPage, PAGE_SIZE);
+        // 继续等待，不改变 loadPhase
       } else {
-        setAccumulatedData(batchLoadingDataRef.current.slice(0, total));
-        setIsInitialLoading(false);
-        batchLoadingPageRef.current = 0;
-      }
-    } else if (currentPage === 3 && batchLoadingPageRef.current === 2 && results.length > 0) {
-      batchLoadingDataRef.current.push(...results);
-      setAccumulatedData(batchLoadingDataRef.current.slice(0, total));
-      setIsInitialLoading(false);
-      batchLoadingPageRef.current = 0;
-    }
-  }, [isInitialLoading, currentPage, results, total, onPageChange]);
+        // 预加载完成，展示数据
+        const finalData = batchBufferRef.current.slice(0, total);
+        batchBufferRef.current = [];
+        setAccumulatedData(finalData);
 
-  useEffect(() => {
-    if (isInitialLoading || !isLoadingMore) return;
-    if (currentPage > 3 && results.length > 0) {
-      const savedScrollTop = scrollContainerRef.current?.scrollTop || 0;
-      setAccumulatedData(prev => {
-        if (prev.length === 0) return prev;
-        const lastRow = prev[prev.length - 1];
-        const firstNewRow = results[0];
-        if (JSON.stringify(lastRow) !== JSON.stringify(firstNewRow)) {
-          const newData = [...prev, ...results].slice(0, total);
-          requestAnimationFrame(() => {
-            if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = savedScrollTop;
-          });
-          return newData;
+        if (finalData.length >= total) {
+          setLoadPhase('done');
+        } else {
+          // 还有更多数据，等待用户滚动
+          pendingPageRef.current = receivedPage + 1;
+          isScrollLoadingRef.current = false;
+          setLoadPhase('scroll');
         }
-        return prev;
-      });
-      setIsLoadingMore(false);
+      }
+      return;
     }
-  }, [isInitialLoading, isLoadingMore, currentPage, results]);
 
+    // ── 滚动加载阶段 ──
+    if (loadPhase === 'scroll') {
+      const savedScrollTop = scrollContainerRef.current?.scrollTop ?? 0;
+
+      setAccumulatedData((prev) => {
+        const merged = [...prev, ...results].slice(0, total);
+        // 恢复滚动位置，防止追加数据后页面跳动
+        requestAnimationFrame(() => {
+          if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTop = savedScrollTop;
+          }
+        });
+        return merged;
+      });
+
+      // 更新下一次请求的页码，解锁滚动加载
+      pendingPageRef.current = pendingPageRef.current + 1;
+      isScrollLoadingRef.current = false;
+
+      // 判断是否还有更多
+      if (pendingPageRef.current > totalPages) {
+        setLoadPhase('done');
+      }
+      return;
+    }
+  // results 变化是唯一触发条件；loadPhase 作为读取值，不作为触发条件
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [results]);
+
+  // ─── 行选中 ────────────────────────────────────────────────────────────────
   const handleRowClick = useCallback((idx: number, e: React.MouseEvent) => {
     if (e.shiftKey && lastClickedRow.current !== null) {
       const start = Math.min(lastClickedRow.current, idx);
       const end = Math.max(lastClickedRow.current, idx);
-      setSelectedRows(prev => { const next = new Set(prev); for (let i = start; i <= end; i++) next.add(i); return next; });
+      setSelectedRows((prev) => {
+        const next = new Set(prev);
+        for (let i = start; i <= end; i++) next.add(i);
+        return next;
+      });
     } else if (e.ctrlKey || e.metaKey) {
-      setSelectedRows(prev => { const next = new Set(prev); if (next.has(idx)) next.delete(idx); else next.add(idx); return next; });
+      setSelectedRows((prev) => {
+        const next = new Set(prev);
+        if (next.has(idx)) next.delete(idx);
+        else next.add(idx);
+        return next;
+      });
       lastClickedRow.current = idx;
     } else {
-      setSelectedRows(prev => (prev.size === 1 && prev.has(idx) ? new Set() : new Set([idx])));
+      setSelectedRows((prev) =>
+        prev.size === 1 && prev.has(idx) ? new Set() : new Set([idx])
+      );
       lastClickedRow.current = idx;
     }
   }, []);
 
-  const handleScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
-    const target = event.currentTarget;
-    // 同步表头横向滚动
-    if (theadWrapperRef.current) {
-      theadWrapperRef.current.scrollLeft = target.scrollLeft;
-    }
-    if (scrollTimerRef.current) cancelAnimationFrame(scrollTimerRef.current);
-    scrollTimerRef.current = requestAnimationFrame(() => {
-      const distanceToBottom = target.scrollHeight - target.scrollTop - target.clientHeight;
-      if (distanceToBottom < 100 && !isLoadingMore && hasMore && !isInitialLoading) {
-        setIsLoadingMore(true);
-        onPageChange(currentPage + 1, pageSize);
+  // ─── 滚动处理 ──────────────────────────────────────────────────────────────
+  const handleScroll = useCallback(
+    (event: React.UIEvent<HTMLDivElement>) => {
+      const target = event.currentTarget;
+
+      // 同步表头横向滚动
+      if (theadWrapperRef.current) {
+        theadWrapperRef.current.scrollLeft = target.scrollLeft;
       }
-    }) as unknown as number;
-  }, [isLoadingMore, hasMore, isInitialLoading, currentPage, onPageChange]);
+
+      if (scrollTimerRef.current) cancelAnimationFrame(scrollTimerRef.current);
+      scrollTimerRef.current = requestAnimationFrame(() => {
+        const distanceToBottom =
+          target.scrollHeight - target.scrollTop - target.clientHeight;
+
+        // 只有在 scroll 阶段、未在加载中、距底部 < 150px 时才触发
+        if (
+          distanceToBottom < 150 &&
+          loadPhase === 'scroll' &&
+          !isScrollLoadingRef.current
+        ) {
+          isScrollLoadingRef.current = true;
+          onPageChange(pendingPageRef.current, PAGE_SIZE);
+        }
+      }) as unknown as number;
+    },
+    [loadPhase, onPageChange]
+  );
 
   useEffect(() => {
-    return () => { if (scrollTimerRef.current) cancelAnimationFrame(scrollTimerRef.current); };
+    return () => {
+      if (scrollTimerRef.current) cancelAnimationFrame(scrollTimerRef.current);
+    };
   }, []);
 
+  // ─── 键盘快捷键 ────────────────────────────────────────────────────────────
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { e.preventDefault(); onClose(); return; }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+        return;
+      }
       if (!scrollContainerRef.current) return;
       const c = scrollContainerRef.current;
       const step = 100;
       switch (e.key) {
-        case 'ArrowUp': e.preventDefault(); c.scrollTop -= step; break;
-        case 'ArrowDown': e.preventDefault(); c.scrollTop += step; break;
-        case 'ArrowLeft': e.preventDefault(); c.scrollLeft -= step; break;
+        case 'ArrowUp':    e.preventDefault(); c.scrollTop -= step; break;
+        case 'ArrowDown':  e.preventDefault(); c.scrollTop += step; break;
+        case 'ArrowLeft':  e.preventDefault(); c.scrollLeft -= step; break;
         case 'ArrowRight': e.preventDefault(); c.scrollLeft += step; break;
-        case 'PageUp': e.preventDefault(); c.scrollTop -= c.clientHeight; break;
-        case 'PageDown': e.preventDefault(); c.scrollTop += c.clientHeight; break;
-        case 'Home': e.preventDefault(); c.scrollTop = 0; break;
-        case 'End': e.preventDefault(); c.scrollTop = c.scrollHeight; break;
+        case 'PageUp':     e.preventDefault(); c.scrollTop -= c.clientHeight; break;
+        case 'PageDown':   e.preventDefault(); c.scrollTop += c.clientHeight; break;
+        case 'Home':       e.preventDefault(); c.scrollTop = 0; break;
+        case 'End':        e.preventDefault(); c.scrollTop = c.scrollHeight; break;
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
+  // ─── 高亮颜色解析 ──────────────────────────────────────────────────────────
   const hex = highlightColor.replace('#', '');
   const hr = parseInt(hex.slice(0, 2), 16);
   const hg = parseInt(hex.slice(2, 4), 16);
   const hb = parseInt(hex.slice(4, 6), 16);
 
+  const isInitialLoading = loadPhase === 'init' || loadPhase === 'batch';
+  const isLoadingMore = isScrollLoadingRef.current && loadPhase === 'scroll';
+
+  // ─── 渲染 ──────────────────────────────────────────────────────────────────
   return (
     <div className="fullscreen-result-panel">
       <div className="fullscreen-header">
@@ -225,28 +333,56 @@ const FullscreenResultPanel = ({
         </div>
         <div className="header-right">
           <div className="row-highlight-picker" title="自定义选中行高亮颜色">
-            <span className="highlight-color-dot" style={{ background: highlightColor }} onClick={() => colorInputRef.current?.click()} />
-            <input ref={colorInputRef} type="color" value={highlightColor}
-              onChange={(e) => setUiPref('sqlRowHighlightColor', e.target.value as string)}
-              className="highlight-color-input" />
+            <span
+              className="highlight-color-dot"
+              style={{ background: highlightColor }}
+              onClick={() => colorInputRef.current?.click()}
+            />
+            <input
+              ref={colorInputRef}
+              type="color"
+              value={highlightColor}
+              onChange={(e) =>
+                setUiPref('sqlRowHighlightColor', e.target.value as string)
+              }
+              className="highlight-color-input"
+            />
           </div>
-          <button className="btn btn-link" onClick={onClose} title="退出全屏">⤢</button>
+          <button className="btn btn-link" onClick={onClose} title="退出全屏">
+            ⤢
+          </button>
         </div>
       </div>
 
       {/* 固定表头 */}
       <div ref={theadWrapperRef} className="fullscreen-thead-wrapper">
         {!isInitialLoading && (
-          <table className="fullscreen-table" style={{ tableLayout: 'fixed', minWidth: 'max-content' }}>
+          <table
+            className="fullscreen-table"
+            style={{ tableLayout: 'fixed', minWidth: 'max-content' }}
+          >
             <thead>
               <tr>
-                <th className="row-num" style={{ width: 48, minWidth: 48 }}>#</th>
+                <th className="row-num" style={{ width: 48, minWidth: 48 }}>
+                  #
+                </th>
                 {columns.map((col, colIdx) => {
                   const w = colWidths[colIdx] ?? 120;
                   return (
-                    <th key={col} style={{ width: w, minWidth: w, maxWidth: w, position: 'relative' }}>
+                    <th
+                      key={col}
+                      style={{
+                        width: w,
+                        minWidth: w,
+                        maxWidth: w,
+                        position: 'relative',
+                      }}
+                    >
                       {col}
-                      <div className="col-resize-handle" onMouseDown={(e) => handleResizeMouseDown(colIdx, e)} />
+                      <div
+                        className="col-resize-handle"
+                        onMouseDown={(e) => handleResizeMouseDown(colIdx, e)}
+                      />
                     </th>
                   );
                 })}
@@ -257,28 +393,56 @@ const FullscreenResultPanel = ({
       </div>
 
       {/* 滚动内容区 */}
-      <div ref={scrollContainerRef} className="fullscreen-table-wrapper" onScroll={handleScroll}>
+      <div
+        ref={scrollContainerRef}
+        className="fullscreen-table-wrapper"
+        onScroll={handleScroll}
+      >
         {isInitialLoading ? (
           <div className="result-loading">加载中...</div>
         ) : (
           <>
-            <table className="fullscreen-table" style={{ tableLayout: 'fixed', minWidth: 'max-content' }}>
+            <table
+              className="fullscreen-table"
+              style={{ tableLayout: 'fixed', minWidth: 'max-content' }}
+            >
               <tbody>
                 {accumulatedData.map((row, idx) => {
                   const isSelected = selectedRows.has(idx);
-                  const selectedStyle = isSelected ? { background: `rgba(${hr},${hg},${hb},0.18)` } : {};
+                  const selectedStyle = isSelected
+                    ? { background: `rgba(${hr},${hg},${hb},0.18)` }
+                    : {};
                   return (
-                    <tr key={idx} className={isSelected ? 'row-selected' : ''}
+                    <tr
+                      key={idx}
+                      className={isSelected ? 'row-selected' : ''}
                       style={{ userSelect: 'none' }}
-                      onClick={(e) => handleRowClick(idx, e)}>
-                      <td className="row-num" style={{ ...selectedStyle, width: 48, minWidth: 48 }}>{idx + 1}</td>
+                      onClick={(e) => handleRowClick(idx, e)}
+                    >
+                      <td
+                        className="row-num"
+                        style={{ ...selectedStyle, width: 48, minWidth: 48 }}
+                      >
+                        {idx + 1}
+                      </td>
                       {(row as unknown[]).map((val, colIdx) => {
                         const w = colWidths[colIdx] ?? 120;
                         return (
-                          <td key={colIdx} title="双击复制"
-                            onDoubleClick={(e) => { e.stopPropagation(); copyCellValue(val); }}
+                          <td
+                            key={colIdx}
+                            title="双击复制"
+                            onDoubleClick={(e) => {
+                              e.stopPropagation();
+                              copyCellValue(val);
+                            }}
                             className="cell-copyable"
-                            style={{ ...selectedStyle, width: w, minWidth: w, maxWidth: w }}>
+                            style={{
+                              ...selectedStyle,
+                              width: w,
+                              minWidth: w,
+                              maxWidth: w,
+                            }}
+                          >
                             {formatValue(val)}
                           </td>
                         );
@@ -288,9 +452,16 @@ const FullscreenResultPanel = ({
                 })}
               </tbody>
             </table>
-            {isLoadingMore && <div className="loading-more"><span>加载中...</span></div>}
-            {!hasMore && accumulatedData.length > 0 && (
-              <div className="no-more-data"><span>已加载全部数据 (共 {accumulatedData.length} 条)</span></div>
+
+            {isLoadingMore && (
+              <div className="loading-more">
+                <span>加载中...</span>
+              </div>
+            )}
+            {loadPhase === 'done' && accumulatedData.length > 0 && (
+              <div className="no-more-data">
+                <span>已加载全部数据 (共 {accumulatedData.length} 条)</span>
+              </div>
             )}
           </>
         )}
@@ -301,7 +472,9 @@ const FullscreenResultPanel = ({
           <span>总行数: {total}</span>
           <span>耗时: {took}ms</span>
           {dbName && <span>数据库: {dbName}</span>}
-          <span>已加载: {accumulatedData.length} 条 / 共 {total} 条</span>
+          <span>
+            已加载: {accumulatedData.length} 条 / 共 {total} 条
+          </span>
         </div>
       </div>
     </div>

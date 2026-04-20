@@ -1,52 +1,3 @@
-.rule-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.rule-modal {
-  background: var(--bg-color, #fff);
-  border-radius: 8px;
-  width: 520px;
-  max-width: 95vw;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
-}
-
-.rule-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border-color, #f0f0f0);
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-color, #333);
-  flex-shrink: 0;
-}
-
-.rule-modal-close {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-secondary, #999);
-  display: flex;
-  align-items: center;
-  padding: 4px;
-  border-radius: 4px;
-}
-
-.rule-modal-close:hover {
-  color: var(--text-color, #333);
-  background: var(--bg-hover, #f5f5f5);
-}
-
 .rule-modal-body {
   padding: 20px;
   overflow-y: auto;
@@ -109,6 +60,57 @@
   width: 120px;
 }
 
+.rule-form-textarea {
+  height: auto;
+  padding: 7px 10px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+/* 标签页 */
+.rule-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-color, #f0f0f0);
+  padding: 0 20px;
+  gap: 4px;
+}
+
+.rule-tab {
+  padding: 10px 16px;
+  font-size: 13px;
+  color: var(--text-secondary, #999);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: -1px;
+}
+
+.rule-tab:hover {
+  color: var(--text-color, #333);
+}
+
+.rule-tab.active {
+  color: var(--primary-color, #1890ff);
+  border-bottom-color: var(--primary-color, #1890ff);
+  font-weight: 500;
+}
+
+/* 备注拼接预览 */
+.rule-desc-preview {
+  font-size: 12px;
+  color: var(--text-secondary, #999);
+  padding: 6px 10px;
+  background: var(--bg-secondary, #f5f5f5);
+  border-radius: 4px;
+  border-left: 3px solid var(--primary-color, #1890ff);
+}
+
+.rule-desc-preview span {
+  color: var(--primary-color, #1890ff);
+  font-weight: 500;
+}
 /* 单选按钮组 */
 .rule-radio-group {
   display: flex;
@@ -155,60 +157,4 @@
   flex-shrink: 0;
 }
 
-/* 端口勾选组（普通用户模式） */
-.rule-port-check-group {
-  display: flex;
-  gap: 10px;
-}
 
-.rule-port-check-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  border: 1px solid var(--border-color, #d9d9d9);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s;
-  user-select: none;
-  min-width: 100px;
-}
-
-.rule-port-check-item input[type="checkbox"] {
-  width: 15px;
-  height: 15px;
-  cursor: pointer;
-  accent-color: var(--primary-color, #1890ff);
-  flex-shrink: 0;
-}
-
-.rule-port-check-item:hover {
-  border-color: var(--primary-color, #1890ff);
-}
-
-.rule-port-check-item.active {
-  border-color: var(--primary-color, #1890ff);
-  background: rgba(24, 144, 255, 0.06);
-}
-
-.rule-port-check-label {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.rule-port-num {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-color, #333);
-  line-height: 1;
-}
-
-.rule-port-check-item.active .rule-port-num {
-  color: var(--primary-color, #1890ff);
-}
-
-.rule-port-desc {
-  font-size: 11px;
-  color: var(--text-secondary, #999);
-}
