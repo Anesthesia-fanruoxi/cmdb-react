@@ -236,7 +236,8 @@ const RuleFormModal = ({ visible, editRule, isAdmin = true, onClose, onSuccess }
         visible={visible}
         title={isEdit ? '编辑规则' : '新增入站规则'}
         width={460}
-        onClose={() => {}}
+        onClose={onClose}
+        showCloseBtn={false}
       >
         <div className="rule-modal-body">
           {/* 源 IP 段 */}
@@ -330,7 +331,8 @@ const RuleFormModal = ({ visible, editRule, isAdmin = true, onClose, onSuccess }
       visible={visible}
       title={isEdit ? '编辑入站规则' : '新增入站规则'}
       width={500}
-      onClose={() => {}}
+      onClose={onClose}
+      showCloseBtn={false}
     >
       {/* 标签页（仅新增时显示） */}
       {!isEdit && (

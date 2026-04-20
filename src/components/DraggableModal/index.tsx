@@ -4,7 +4,7 @@
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { createDetachedWindow } from '../../utils/window';
+import { createDetachedWindow } from '@/utils/window.ts';
 import './style.css';
 
 interface Props {
@@ -13,6 +13,8 @@ interface Props {
   width?: number;
   onClose: () => void;
   children: React.ReactNode;
+  /** 是否显示右上角关闭按钮，默认 true */
+  showCloseBtn?: boolean;
   /** 分离窗口配置 */
   detachConfig?: {
     label: string;
@@ -22,7 +24,7 @@ interface Props {
   };
 }
 
-const DraggableModal = ({ visible, title, width = 480, onClose, children, detachConfig }: Props) => {
+const DraggableModal = ({ visible, title, width = 480, onClose, children, showCloseBtn = true, detachConfig }: Props) => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [isNearEdge, setIsNearEdge] = useState(false);
@@ -36,6 +38,16 @@ const DraggableModal = ({ visible, title, width = 480, onClose, children, detach
       setIsNearEdge(false);
     }
   }, [visible]);
+
+  // ESC 键关闭
+  useEffect(() => {
+    if (!visible) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [visible, onClose]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.modal-header')) {
@@ -102,7 +114,7 @@ const DraggableModal = ({ visible, title, width = 480, onClose, children, detach
       >
         <div className="modal-header">
           <h4>{title}</h4>
-          <button className="close-btn" onClick={onClose}>×</button>
+          {showCloseBtn && <button className="close-btn" onClick={onClose}>×</button>}
         </div>
         <div className="modal-body">{children}</div>
       </div>
