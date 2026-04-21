@@ -9,11 +9,12 @@ import SearchForm from './components/SearchForm';
 import FieldList from './components/FieldList';
 import LogsPanel from './components/LogsPanel';
 import AnalysisModal from './components/AnalysisModal';
-import { usePageStateStore } from '../../../stores/pageStateStore';
-import { openComponentWindow, onReattachTab } from '../../../utils/window';
-import type { LogHit } from '../../../services/elfk/search';
-import type { ViewDetail } from '../../../services/elfk/view';
-import { searchLogs } from '../../../services/elfk/search';
+import { usePageStateStore } from '@/stores/pageStateStore';
+import { openComponentWindow, onReattachTab } from '@/utils/window';
+import type { LogHit } from '@/services/elfk/search';
+import type { ViewDetail } from '@/services/elfk/view';
+import { searchLogs } from '@/services/elfk/search';
+import type { SearchParams } from '@/services/elfk/search';
 import './styles/index.css';
 
 const PAGE_KEY = 'elfk/search';
@@ -119,7 +120,7 @@ const calculateRelativeTime = (label: string): { start: string; end: string } | 
     '过去15分钟': 15 * 60 * 1000,
     '过去30分钟': 30 * 60 * 1000,
     '过去45分钟': 45 * 60 * 1000,
-    '近1小时': 1 * 3600 * 1000,
+    '近1小时': 3600 * 1000,
     '近3小时': 3 * 3600 * 1000,
     '近6小时': 6 * 3600 * 1000,
     '近12小时': 12 * 3600 * 1000,
@@ -371,50 +372,41 @@ const ElfkSearch = () => {
     updateTab(activeTab.id, { currentView: view, name: activeTab.projectInfo ? `${activeTab.projectInfo.projectName} - ${view.name}` : view.name, logs: [], total: 0, lastParams: {}, selectedFields: [], timeRange: getTodayRange() });
   };
 
-  const handleSearch = async (params: Record<string, unknown>) => {
+  const handleSearch = useCallback(async (params: Record<string, unknown>) => {
     if (!activeTab) return;
     const searchKeyword = params.keyword as string || '';
     updateTab(activeTab.id, { loading: true, keyword: searchKeyword });
     
     try {
-      // 如果有相对时间标签（快捷选择或过去时间），需要重新计算时间范围
       let searchParams: Record<string, unknown> = { ...params, sort_order: activeTab.sortOrder };
-      
       const timeLabel = params.time_label as string || activeTab.timeRange?.label || '';
       
       if (timeLabel && isRelativeTimeLabel(timeLabel)) {
-        // 重新计算相对时间范围，确保使用最新的时间
         const actualRange = calculateRelativeTime(timeLabel);
-        
         if (actualRange) {
-          const formattedStart = formatSearchTime(actualRange.start);
-          const formattedEnd = formatSearchTime(actualRange.end);
-          
           searchParams = {
             ...searchParams,
-            start_time: formattedStart,
-            end_time: formattedEnd,
+            start_time: formatSearchTime(actualRange.start),
+            end_time: formatSearchTime(actualRange.end),
           };
         }
       }
       
-      const res = await searchLogs(searchParams as any);
+      const res = await searchLogs(searchParams as SearchParams);
       if (res.code === 200 && res.data) {
-        // 搜索成功后才更新 highlightKeyword，用于高亮显示
         updateTab(activeTab.id, { 
           logs: res.data.hits || [], 
           total: res.data.total_hits || 0, 
-          highlightKeyword: searchKeyword, // 只有搜索成功后才更新高亮关键字
+          highlightKeyword: searchKeyword,
           lastParams: { ...searchParams, query_id: res.data.query_id, pages: res.data.pages, page: res.data.page || 1 } 
         });
       }
     } catch (err) { 
       console.error('[ELFK Search] 搜索失败:', err); 
-    }
-    finally { 
+    } finally { 
       updateTab(activeTab.id, { loading: false }); 
     }
-  };
+  }, [activeTab, updateTab]);
 
   const handleTimeRangeChange = (range: { start: string; end: string; label: string }) => {
     if (!activeTab) return;
@@ -523,7 +515,16 @@ const ElfkSearch = () => {
                   onScrollPositionChange={(pos: number) => updateTab(activeTab.id, { scrollPosition: pos })}
                   onAddFilter={(_field, value, operator = 'AND') => {
                     const current = activeTab.keyword?.trim();
-                    const newKeyword = current ? `${current} ${operator} ${value}` : (operator === 'NOT' ? `NOT ${value}` : value);
+                    // 值使用单引号包裹（短语匹配）
+                    const quoted = `'${value}'`;
+                    // 当前无条件（空或 *）时，AND/OR 直接填入值，NOT 加前缀
+                    const isEmpty = !current || current === '*';
+                    let newKeyword: string;
+                    if (isEmpty) {
+                      newKeyword = operator === 'NOT' ? `NOT ${quoted}` : quoted;
+                    } else {
+                      newKeyword = `${current} ${operator} ${quoted}`;
+                    }
                     updateTab(activeTab.id, { keyword: newKeyword });
                     handleSearch({ ...activeTab.lastParams, keyword: newKeyword });
                   }}

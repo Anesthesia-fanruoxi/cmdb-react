@@ -1,0 +1,81 @@
+/* ELFK 日志条目 - JSON 展示模式 */
+
+.log-entry-json {
+  display: flex;
+  border-bottom: 1px solid var(--border-color, #f0f0f0);
+  padding: 10px 16px;
+}
+
+.log-entry-json:hover {
+  background: var(--bg-hover, #fafafa);
+}
+
+.log-entry-json .log-time {
+  width: 160px;
+  flex-shrink: 0;
+  color: var(--text-secondary, #666);
+  padding-right: 16px;
+  font-size: 12px;
+  font-family: 'Consolas', 'Monaco', 'Menlo', monospace;
+}
+
+.log-entry-json .log-body {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.6;
+  font-family: 'Consolas', 'Monaco', 'Menlo', monospace;
+  font-size: 12px;
+}
+
+.log-entry-json .field-pair {
+  margin-bottom: 4px;
+  word-break: break-all;
+}
+
+.log-entry-json .field-pair.tag-path {
+  color: var(--text-secondary, #909399);
+  font-style: italic;
+}
+
+.log-entry-json .field-pair.tag-path .field-name,
+.log-entry-json .field-pair.tag-path .field-value {
+  color: var(--text-secondary, #909399) !important;
+}
+
+.log-entry-json .field-name {
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+.log-entry-json .field-value {
+  color: var(--text-color, #333);
+  white-space: pre-wrap;
+}
+
+.log-entry-json .log-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  padding-left: 12px;
+}
+
+.log-entry-json .btn-context {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid #1890ff;
+  border-radius: 4px;
+  background: rgba(24, 144, 255, 0.1);
+  color: #1890ff;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.log-entry-json .btn-context:hover {
+  background: #1890ff;
+  color: #fff;
+}

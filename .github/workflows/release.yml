@@ -163,8 +163,7 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"
-          DESCRIPTION="1、优化白名单ip填写支持方式，支持中英文逗号，中英文分号，空格，中线，换行，各种混搭。
-          2、优化备注逻辑，为了方便识别维护，填写规则变成了需要输入项目名，提交人，以及用途，最后自动合并成一段备注。"
+          DESCRIPTION="1、es查询日志添加了行展示功能，支持行展示和json展示两种。"
 
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \

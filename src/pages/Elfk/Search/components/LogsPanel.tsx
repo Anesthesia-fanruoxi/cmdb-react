@@ -1,18 +1,24 @@
 /**
- * 日志列表面板 - JSON 格式展示
- * 支持滚动自动加载和分页
+ * 日志列表面板
+ * 支持行展示 / JSON 展示两种模式，滚动自动加载和分页
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { ArrowUp, ArrowDown, BarChart3, Download, Loader2, FileText } from 'lucide-react';
-import { useAuthStore } from '../../../../stores/authStore';
-import { useMessageStore } from '../../../../stores/messageStore';
-import { searchLogsPage } from '../../../../services/elfk/search';
+import { ArrowUp, ArrowDown, BarChart3, Download, Loader2, AlignLeft, Braces } from 'lucide-react';
+import { useAuthStore } from '@/stores/authStore';
+import { useMessageStore } from '@/stores/messageStore';
+import { searchLogsPage } from '@/services/elfk/search';
 import ExportDialog from './ExportDialog';
 import ContextDrawer from './ContextDrawer';
-import toast from '../../../../components/Toast';
-import type { LogHit } from '../../../../services/elfk/search';
-import type { ViewDetail } from '../../../../services/elfk/view';
+import LogEntryJson from './LogEntryJson';
+import LogEntryLine from './LogEntryLine';
+import toast from '@/components/Toast';
+import type { LogHit } from '@/services/elfk/search';
+import type { ViewDetail } from '@/services/elfk/view';
+
+/** 展示模式：行模式 | JSON 模式 */
+type DisplayMode = 'line' | 'json';
+const DISPLAY_MODE_KEY = 'elfk:log-display-mode';
 
 interface LogsPanelProps {
   loading: boolean;
@@ -22,8 +28,8 @@ interface LogsPanelProps {
   currentView: ViewDetail | null;
   selectedFields: string[];
   searchParams?: Record<string, unknown>;
-  sortOrder?: 'asc' | 'desc'; // 新增：外部传入的排序状态
-  scrollPosition?: number; // 新增：滚动位置
+  sortOrder?: 'asc' | 'desc';
+  scrollPosition?: number;
   onSortChange?: (sortOrder: string) => void;
   onPageData?: (data: { logs: LogHit[]; page: number; pages: number; append?: boolean }) => void;
   onLoadingChange?: (loading: boolean) => void;
@@ -32,26 +38,34 @@ interface LogsPanelProps {
   onAnalysis?: () => void;
 }
 
-const typeColors: Record<string, string> = {
-  string: '#3a8ee6', number: '#529b2e', boolean: '#b88230',
-  date: '#c45656', array: '#737579', object: '#8b5da7',
-};
-
-const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields, searchParams, sortOrder: externalSortOrder = 'desc', scrollPosition = 0, onSortChange, onPageData, onLoadingChange, onScrollPositionChange, onAddFilter, onAnalysis }: LogsPanelProps) => {
+const LogsPanel = ({
+  loading, logs, total, keyword, currentView, selectedFields, searchParams,
+  sortOrder: externalSortOrder = 'desc', scrollPosition = 0,
+  onSortChange, onPageData, onLoadingChange, onScrollPositionChange, onAddFilter, onAnalysis,
+}: LogsPanelProps) => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(externalSortOrder);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageLoading, setPageLoading] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [jumpPage, setJumpPage] = useState('');
   const [contextLog, setContextLog] = useState<LogHit | null>(null);
-  
+
+  // 展示模式，读取用户上次偏好
+  const [displayMode, setDisplayMode] = useState<DisplayMode>(() => {
+    try {
+      return (localStorage.getItem(DISPLAY_MODE_KEY) as DisplayMode) || 'json';
+    } catch {
+      return 'json';
+    }
+  });
+
   // 滚动加载相关状态
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasReachedBottom, setHasReachedBottom] = useState(false);
-  const [shouldResetScroll, setShouldResetScroll] = useState(false); // 新增：标记是否需要重置滚动
+  const [shouldResetScroll, setShouldResetScroll] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const scrollTimerRef = useRef<number | null>(null);
-  const scrollSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null); // 位置回传防抖
+  const scrollSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastQueryIdRef = useRef<string>('');
   const isKeyScrolling = useRef(false);
   const keyScrollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -61,9 +75,7 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
 
   useEffect(() => {
     const handleMouseUp = (e: MouseEvent) => {
-      // 如果点击的是浮动按钮本身，不处理
       if ((e.target as HTMLElement).closest('.selection-add-btn')) return;
-
       setTimeout(() => {
         const selection = window.getSelection();
         const text = selection?.toString().trim();
@@ -91,7 +103,7 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
     };
   }, []);
 
-  // 键盘上下键滚动：单次 instant，长按用 interval 控速（每 50ms 滚 40px = 800px/s）
+  // 键盘上下键滚动
   useEffect(() => {
     const el = contentRef.current;
     if (!el) return;
@@ -100,7 +112,6 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
       isKeyScrolling.current = true;
       el.scrollBy({ top: dir * 80 });
       if (keyScrollTimer.current) return;
-      // 500ms 后才算长按，开始持续滚动
       keyScrollTimer.current = setTimeout(() => {
         keyScrollTimer.current = setInterval(() => {
           el.scrollBy({ top: dir * 80 });
@@ -109,7 +120,11 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
     };
 
     const stopScroll = () => {
-      if (keyScrollTimer.current) { clearTimeout(keyScrollTimer.current); clearInterval(keyScrollTimer.current); keyScrollTimer.current = null; }
+      if (keyScrollTimer.current) {
+        clearTimeout(keyScrollTimer.current);
+        clearInterval(keyScrollTimer.current);
+        keyScrollTimer.current = null;
+      }
       setTimeout(() => { isKeyScrolling.current = false; }, 50);
     };
 
@@ -128,19 +143,19 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
       el.removeEventListener('keyup', handleKeyUp);
       if (keyScrollTimer.current) clearInterval(keyScrollTimer.current);
     };
-  }, []); // 新增：记录上次的 query_id
+  }, []);
 
   const hasPermission = useAuthStore(s => s.hasPermission);
   const addMessage = useMessageStore(s => s.addMessage);
   const hasExportPermission = hasPermission('elfk:search:w');
-  // SLS 类型固定使用 __time__ 字段，ELFK 使用视图配置的时间字段
+
   const logType = currentView?.log_type;
   const timeField = logType === 'sls' ? '__time__' : (currentView?.time_field || '@timestamp');
   const totalPages = searchParams?.pages as number || 1;
   const queryId = searchParams?.query_id as string || '';
   const hasMore = currentPage < totalPages;
 
-  // 恢复滚动位置 — 只在 logs 数据切换时执行，不监听 scrollPosition 避免滚动循环
+  // 恢复滚动位置
   const scrollPositionRef = useRef(scrollPosition);
   scrollPositionRef.current = scrollPosition;
 
@@ -151,87 +166,73 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
       setShouldResetScroll(false);
       return;
     }
-    // 切换标签页恢复位置（只在 logs 变化时触发一次）
     if (scrollPositionRef.current > 0) {
       contentRef.current.scrollTop = scrollPositionRef.current;
     }
-  }, [logs, shouldResetScroll]); // 不依赖 scrollPosition，避免每次滚动都重置
+  }, [logs, shouldResetScroll]);
 
-  // 监听外部 sortOrder 变化，同步到本地状态
   useEffect(() => {
-    if (externalSortOrder) {
-      setSortOrder(externalSortOrder);
-    }
+    if (externalSortOrder) setSortOrder(externalSortOrder);
   }, [externalSortOrder]);
 
-  // 监听 searchParams 变化，重置分页状态
   useEffect(() => {
     if (searchParams?.page) {
       setCurrentPage(searchParams.page as number);
-      if (searchParams.page === 1) {
-        setHasReachedBottom(false);
-      }
+      if (searchParams.page === 1) setHasReachedBottom(false);
     }
-    
-    // 检测是否是新的搜索（query_id 变化）
     const currentQueryId = searchParams?.query_id as string || '';
     if (currentQueryId && currentQueryId !== lastQueryIdRef.current) {
       lastQueryIdRef.current = currentQueryId;
-      setShouldResetScroll(true); // 标记需要重置滚动
+      setShouldResetScroll(true);
     }
   }, [searchParams?.query_id, searchParams?.page]);
 
-  const formatTime = (value: unknown) => {
+  // 切换展示模式并持久化
+  const handleDisplayModeChange = (mode: DisplayMode) => {
+    setDisplayMode(mode);
+    try { localStorage.setItem(DISPLAY_MODE_KEY, mode); } catch { /* ignore */ }
+  };
+
+  // 时间格式化（供子组件使用）
+  const formatTime = useCallback((value: unknown): string => {
     if (!value) return '-';
     try {
       let date: Date;
       const strValue = String(value);
-      
-      // SLS 时间戳是秒级（10位数字），需要 * 1000
       if (logType === 'sls' || (strValue.length === 10 && !isNaN(Number(strValue)))) {
         date = new Date(Number(strValue) * 1000);
       } else if (typeof value === 'number') {
-        // 毫秒级时间戳
         date = new Date(value);
       } else {
-        // ISO8601 或其他字符串格式
         date = new Date(value as string);
       }
-      
       if (isNaN(date.getTime())) return String(value);
       return date.toLocaleString('zh-CN', { hour12: false });
     } catch { return String(value); }
-  };
+  }, [logType]);
 
-  const highlightText = (text: string) => {
+  // 关键字高亮（供子组件使用）
+  const highlightText = useCallback((text: string): string => {
     if (!keyword || !text) return text;
-    const keywords = keyword.split(/\s+(?:and|or|not)\s+/i).filter(Boolean);
+
+    // 按 AND/OR/NOT 拆分，得到各个搜索词片段
+    const parts = keyword.split(/\s+(?:and|or|not)\s+/i).filter(Boolean);
+    // 处理开头的 NOT xxx（split 会丢掉它）
+    const notMatch = keyword.match(/^NOT\s+(.+)/i);
+    const allParts = notMatch ? [notMatch[1], ...parts] : parts;
+
     let result = text;
-    keywords.forEach(kw => {
-      const cleanKw = kw.replace(/^["']|["']$/g, '').replace(/^\w+:/, '');
-      if (cleanKw) {
-        const regex = new RegExp(`(${cleanKw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-        result = result.replace(regex, '<mark class="highlight">$1</mark>');
-      }
+    allParts.forEach(kw => {
+      // 只去掉首尾引号，不剥离 field: 前缀（md5:xxx 整体是搜索词）
+      const cleanKw = kw.replace(/^['"]|['"]$/g, '').trim();
+      if (!cleanKw || cleanKw === '*') return;
+      // 转义正则特殊字符
+      const escaped = cleanKw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`(${escaped})`, 'gi');
+      result = result.replace(regex, '<mark class="highlight">$1</mark>');
     });
     return result;
-  };
-
-  const getFieldType = (value: unknown): string => {
-    if (value === null || value === undefined) return 'string';
-    if (Array.isArray(value)) return 'array';
-    return typeof value;
-  };
-
-  const formatValue = (value: unknown): string => {
-    if (value === null || value === undefined) return '-';
-    if (typeof value === 'object') return JSON.stringify(value);
-    return String(value);
-  };
-
-  const processLog = (log: LogHit): Record<string, unknown> => {
-    return log._source ? { ...log._source, _id: log._id, _index: log._index } : { ...log } as Record<string, unknown>;
-  };
+  }, [keyword]);
 
   const handleSortToggle = () => {
     const newOrder = sortOrder === 'asc' ? 'desc' : 'asc';
@@ -239,21 +240,16 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
     onSortChange?.(newOrder);
   };
 
-  // 获取分页数据
   const fetchPageData = useCallback(async (page: number, append: boolean) => {
     if (!queryId || pageLoading || isLoadingMore) return;
-    
-    if (append) {
-      setIsLoadingMore(true);
-    } else {
-      setPageLoading(true);
-    }
+    if (append) setIsLoadingMore(true);
+    else setPageLoading(true);
     onLoadingChange?.(true);
 
     try {
-      const res = await searchLogsPage({ 
-        query_id: queryId, 
-        page, 
+      const res = await searchLogsPage({
+        query_id: queryId,
+        page,
         project: searchParams?.project as string || '',
         index_pattern: searchParams?.index_pattern as string || '',
         time_field: searchParams?.time_field as string || '',
@@ -263,19 +259,9 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
 
       if (res.code === 200 && res.data) {
         setCurrentPage(page);
-        onPageData?.({ 
-          logs: res.data.hits || [], 
-          page, 
-          pages: res.data.pages || 1,
-          append 
-        });
-        
-        if (append) {
-          setHasReachedBottom(false);
-        } else {
-          // 点击分页按钮时，标记需要重置滚动
-          setShouldResetScroll(true);
-        }
+        onPageData?.({ logs: res.data.hits || [], page, pages: res.data.pages || 1, append });
+        if (append) setHasReachedBottom(false);
+        else setShouldResetScroll(true);
       }
     } catch (err) {
       console.error('分页查询失败:', err);
@@ -286,26 +272,32 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
     }
   }, [queryId, searchParams, pageLoading, isLoadingMore, onPageData, onLoadingChange]);
 
-  // 点击分页按钮（清空替换）
   const handlePageChange = (page: number) => {
     if (page < 1 || page > totalPages) return;
     fetchPageData(page, false);
   };
 
-  // 滚动加载更多（追加）
   const loadMoreData = useCallback(() => {
     if (isLoadingMore || !hasMore) return;
     const nextPage = currentPage + 1;
-    if (nextPage <= totalPages) {
-      fetchPageData(nextPage, true);
-    }
+    if (nextPage <= totalPages) fetchPageData(nextPage, true);
   }, [currentPage, totalPages, hasMore, isLoadingMore, fetchPageData]);
 
-  // 处理滚动事件
+  // 数据加载完成后，检测内容是否未撑满容器，未撑满则自动加载下一页
+  useEffect(() => {
+    if (!contentRef.current || !hasMore || isLoadingMore || loading || !queryId) return;
+    const el = contentRef.current;
+    const raf = requestAnimationFrame(() => {
+      if (el.scrollHeight <= el.clientHeight) {
+        const nextPage = currentPage + 1;
+        if (nextPage <= totalPages) fetchPageData(nextPage, true);
+      }
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [logs, hasMore, isLoadingMore, loading, queryId, currentPage, totalPages, fetchPageData]);
+
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const target = e.target as HTMLDivElement;
-
-    // 底部检测：用 rAF 去重，避免高频触发
     if (scrollTimerRef.current) cancelAnimationFrame(scrollTimerRef.current);
     scrollTimerRef.current = requestAnimationFrame(() => {
       const { scrollTop, scrollHeight, clientHeight } = target;
@@ -313,17 +305,12 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
       const threshold = 100;
 
       if (distanceToBottom < threshold && !isLoadingMore && hasMore && queryId) {
-        if (!hasReachedBottom) {
-          setHasReachedBottom(true);
-        } else {
-          setHasReachedBottom(false);
-          loadMoreData();
-        }
+        if (!hasReachedBottom) setHasReachedBottom(true);
+        else { setHasReachedBottom(false); loadMoreData(); }
       } else if (distanceToBottom > threshold + 50 && hasReachedBottom) {
         setHasReachedBottom(false);
       }
 
-      // 滚动位置回传防抖：键盘滚动期间跳过，鼠标滚动停止 300ms 后才回传，避免高频 setState
       if (!isKeyScrolling.current) {
         if (scrollSaveTimer.current) clearTimeout(scrollSaveTimer.current);
         scrollSaveTimer.current = setTimeout(() => {
@@ -333,7 +320,6 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
     });
   }, [isLoadingMore, hasMore, queryId, hasReachedBottom, loadMoreData, onScrollPositionChange]);
 
-  // 跳页
   const handleJumpPage = () => {
     const page = parseInt(jumpPage);
     if (isNaN(page) || page < 1 || page > totalPages) {
@@ -350,11 +336,15 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
       type: 'success',
       title: '日志导出成功',
       content: `文件已保存到: ${filePath}`,
-      extra: { filePath }
+      extra: { filePath },
     });
   };
 
   const isLoading = loading || pageLoading;
+
+  // 两种模式各自的公共 props
+  const lineProps = { timeField, currentView, selectedFields, formatTime, highlightText };
+  const jsonProps = { timeField, currentView, selectedFields, keyword, formatTime, highlightText, onContextClick: setContextLog };
 
   return (
     <div className="logs-panel">
@@ -374,12 +364,31 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
           ))}
         </div>
       )}
+
       <div className="logs-header">
         <div className="header-left">
           <span className="title">查询结果</span>
           <span className="count">({total})</span>
         </div>
         <div className="header-actions">
+          {/* 展示模式切换 */}
+          <div className="display-mode-toggle">
+            <button
+              className={`btn-mode ${displayMode === 'line' ? 'active' : ''}`}
+              onClick={() => handleDisplayModeChange('line')}
+              title="行展示"
+            >
+              <AlignLeft size={14} /> 行
+            </button>
+            <button
+              className={`btn-mode ${displayMode === 'json' ? 'active' : ''}`}
+              onClick={() => handleDisplayModeChange('json')}
+              title="JSON 展示"
+            >
+              <Braces size={14} /> JSON
+            </button>
+          </div>
+
           <button className="btn-sort" onClick={handleSortToggle}>
             {sortOrder === 'asc' ? <><ArrowUp size={14} /> 时间升序</> : <><ArrowDown size={14} /> 时间降序</>}
           </button>
@@ -401,62 +410,21 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
           <div className="logs-empty">暂无数据</div>
         ) : (
           <div className="logs-list">
-            {logs.map((log, idx) => {
-              const data = processLog(log);
-              const time = formatTime(data[timeField]);
-              return (
-                <div key={log._id || idx} className="log-entry">
-                  <div className="log-time">{time}</div>
-                  <div className="log-body">
-                    {currentView?.log_type === 'sls' && data['__tag__:__path__'] ? (
-                      <div className="field-pair tag-path">
-                        <span className="field-name">__tag__:__path__:</span>
-                        <span className="field-value">{String(data['__tag__:__path__'])}</span>
-                      </div>
-                    ) : log._index ? (
-                      <div className="field-pair tag-path">
-                        <span className="field-name">_index:</span>
-                        <span className="field-value">{log._index}</span>
-                      </div>
-                    ) : null}
-                    {Object.entries(data)
-                      .filter(([key]) => {
-                        if (key === timeField || key.startsWith('_') || key === '__tag__:__path__') return false;
-                        if (selectedFields.length > 0) return selectedFields.includes(key);
-                        return true;
-                      })
-                      .map(([key, value]) => {
-                        const type = getFieldType(value);
-                        const color = typeColors[type] || typeColors.string;
-                        return (
-                          <div key={key} className="field-pair">
-                            <span className="field-name" style={{ color }}>{key}:</span>
-                            <span
-                              className="field-value"
-                              dangerouslySetInnerHTML={{ __html: highlightText(formatValue(value)) }}
-                            />
-                          </div>
-                        );
-                      })}
-                  </div>
-                  <div className="log-actions">
-                    <button className="btn-context" onClick={() => setContextLog(log)}>
-                      <FileText size={12} /> 上下文
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-            
-            {/* 加载更多提示 */}
+            {logs.map((log, idx) =>
+              displayMode === 'line' ? (
+                <LogEntryLine key={log._id || idx} log={log} {...lineProps} />
+              ) : (
+                <LogEntryJson key={log._id || idx} log={log} {...jsonProps} />
+              )
+            )}
+
             {isLoadingMore && (
               <div className="loading-more">
                 <Loader2 size={16} className="spin" />
                 <span>加载中...</span>
               </div>
             )}
-            
-            {/* 没有更多数据 */}
+
             {!hasMore && logs.length > 0 && (
               <div className="no-more-data">没有更多数据了</div>
             )}
@@ -482,7 +450,7 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
               if (currentPage < totalPages - 3) pages.push('...');
               pages.push(totalPages);
             }
-            return pages.map((p, i) => 
+            return pages.map((p, i) =>
               typeof p === 'number' ? (
                 <button key={i} className={p === currentPage ? 'active' : ''} onClick={() => handlePageChange(p)} disabled={isLoading}>{p}</button>
               ) : (
@@ -492,9 +460,9 @@ const LogsPanel = ({ loading, logs, total, keyword, currentView, selectedFields,
           })()}
           <button disabled={currentPage >= totalPages || isLoading} onClick={() => handlePageChange(currentPage + 1)}>»</button>
           <div className="page-jump">
-            <input 
-              type="text" 
-              value={jumpPage} 
+            <input
+              type="text"
+              value={jumpPage}
               onChange={e => setJumpPage(e.target.value.replace(/\D/g, ''))}
               onKeyDown={e => e.key === 'Enter' && handleJumpPage()}
               placeholder={String(currentPage)}

@@ -32,6 +32,7 @@
   margin: 0;
   font-size: 16px;
   font-weight: 600;
+  color: var(--text-color);
 }
 
 .elfk-shortcut-dialog .close-btn {
@@ -78,6 +79,7 @@
 .elfk-shortcut-dialog .shortcut-label {
   font-size: 14px;
   font-weight: 500;
+  color: var(--text-color);
 }
 
 .elfk-shortcut-dialog .shortcut-desc {
@@ -92,6 +94,7 @@
   border-radius: 4px;
   font-size: 13px;
   font-family: 'Monaco', 'Consolas', monospace;
+  color: var(--text-color);
   cursor: pointer;
 }
 
@@ -120,6 +123,7 @@
   font-size: 12px;
   font-family: 'Monaco', 'Consolas', monospace;
   background: var(--bg-color);
+  color: var(--text-color);
   text-align: center;
 }
 
