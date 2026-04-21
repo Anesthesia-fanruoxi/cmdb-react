@@ -392,7 +392,7 @@ const ElfkSearch = () => {
         }
       }
       
-      const res = await searchLogs(searchParams as SearchParams);
+      const res = await searchLogs(searchParams as unknown as SearchParams);
       if (res.code === 200 && res.data) {
         updateTab(activeTab.id, { 
           logs: res.data.hits || [], 
@@ -435,7 +435,7 @@ const ElfkSearch = () => {
     }, 5000);
 
     return () => clearInterval(timer);
-  }, [activeTab?.autoRefresh, activeTab?.lastParams, activeTab?.id]);
+  }, [activeTab?.autoRefresh, activeTab?.lastParams, activeTab?.id, handleSearch]);
 
   const handlePageData = (data: { logs: LogHit[]; page: number; pages: number; append?: boolean }) => {
     if (!activeTab) return;
