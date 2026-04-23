@@ -2,7 +2,7 @@
  * Switch 开关样式
  */
 
-.switch {
+button.switch {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -16,24 +16,24 @@
   transition: background 0.2s;
 }
 
-.switch:focus {
+button.switch:focus {
   outline: none;
 }
 
-.switch:focus-visible {
+button.switch:focus-visible {
   box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.3);
 }
 
-.switch.checked {
+button.switch.checked {
   background: var(--primary-color, #1890ff);
 }
 
-.switch.disabled {
+button.switch.disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.switch-handle {
+button.switch .switch-handle {
   position: absolute;
   left: 2px;
   width: 16px;
@@ -43,6 +43,6 @@
   transition: left 0.2s;
 }
 
-.switch.checked .switch-handle {
+button.switch.checked .switch-handle {
   left: 22px;
 }

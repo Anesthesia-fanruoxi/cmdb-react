@@ -44,14 +44,14 @@ const formatDisplayTime = (dateStr: string) => {
     date.getMonth() === now.getMonth() &&
     date.getDate() === now.getDate()
   ) {
-    return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
   }
   
   if (date.getFullYear() === now.getFullYear()) {
-    return `${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    return `${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
   }
   
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 };
 
 // 快捷选项配置 - 按分类组织
@@ -384,10 +384,10 @@ const KibanaTimeRangePicker = ({ value, onChange }: Props) => {
               onChange={handleDateChange}
               onCalendarChange={handleCalendarChange}
               showTime={{ 
-                format: 'HH:mm',
+                format: 'HH:mm:ss',
                 defaultValue: [dayjs().startOf('day'), dayjs()],
               }}
-              format="YYYY-MM-DD HH:mm"
+              format="YYYY-MM-DD HH:mm:ss"
               placeholder={['开始时间', '结束时间']}
               disabledDate={(current) => current && current > dayjs().endOf('day')}
               style={{ width: '100%' }}
@@ -398,11 +398,11 @@ const KibanaTimeRangePicker = ({ value, onChange }: Props) => {
             <div className="selected-range">
               <div className="range-info">
                 <span className="label">开始时间：</span>
-                <span className="value">{tempDateRange[0].format('YYYY-MM-DD HH:mm')}</span>
+                <span className="value">{tempDateRange[0].format('YYYY-MM-DD HH:mm:ss')}</span>
               </div>
               <div className="range-info">
                 <span className="label">结束时间：</span>
-                <span className="value">{tempDateRange[1].format('YYYY-MM-DD HH:mm')}</span>
+                <span className="value">{tempDateRange[1].format('YYYY-MM-DD HH:mm:ss')}</span>
               </div>
             </div>
           )}
@@ -427,7 +427,7 @@ const KibanaTimeRangePicker = ({ value, onChange }: Props) => {
               max={999}
               value={relativeValue}
               onChange={(val) => setRelativeValue(val || 1)}
-              onKeyPress={handleRelativeKeyPress}
+              onKeyDown={handleRelativeKeyPress}
               style={{ width: 120 }}
             />
             <Select
