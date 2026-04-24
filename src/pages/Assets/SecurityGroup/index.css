@@ -356,3 +356,113 @@
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+/* 批量操作栏 */
+.sg-batch-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(24, 144, 255, 0.06);
+  border: 1px solid var(--primary-color, #1890ff);
+  border-radius: 6px;
+  animation: fadeIn 0.15s ease;
+}
+
+.sg-batch-info {
+  font-size: 13px;
+  color: var(--text-color, #333);
+  margin-right: 4px;
+}
+
+.sg-batch-info strong {
+  color: var(--primary-color, #1890ff);
+}
+
+.btn-danger,
+.sg-btn-danger {
+  background: #ff4d4f;
+  border-color: #ff4d4f;
+  color: #fff;
+}
+
+.sg-btn-danger:hover {
+  opacity: 0.85;
+  color: #fff;
+}
+
+/* 自定义 checkbox 方块 */
+.sg-checkbox {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border-color-dark, #bbb);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+  flex-shrink: 0;
+  background: var(--bg-color, #fff);
+  vertical-align: middle;
+  user-select: none;
+}
+
+.sg-checkbox:hover {
+  border-color: var(--primary-color, #1890ff);
+}
+
+.sg-checkbox-checked {
+  background: var(--primary-color, #1890ff);
+  border-color: var(--primary-color, #1890ff);
+}
+
+.sg-checkbox-checked::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 0;
+  width: 5px;
+  height: 9px;
+  border: 2px solid #fff;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
+
+.sg-checkbox-indeterminate {
+  border-color: var(--primary-color, #1890ff);
+}
+
+.sg-checkbox-indeterminate::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 5px;
+  width: 8px;
+  height: 2px;
+  background: var(--primary-color, #1890ff);
+}
+
+/* 可选行鼠标样式 */
+.sg-row-selectable {
+  user-select: none;
+}
+
+/* 选中行高亮 */
+.sg-row-selected td {
+  background: rgba(24, 144, 255, 0.15) !important;
+  border-bottom-color: rgba(24, 144, 255, 0.2) !important;
+}
+
+.sg-row-selectable:hover td {
+  background: var(--bg-hover, #f5f7fa);
+}
+
+.sg-row-selected:hover td {
+  background: rgba(24, 144, 255, 0.2) !important;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}

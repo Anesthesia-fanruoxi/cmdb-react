@@ -24,6 +24,17 @@
   text-overflow: ellipsis;
 }
 
+.feishu-cell {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: 12px;
+  color: var(--success-color, #52c41a);
+  cursor: default;
+}
+
 .project-logo {
   width: 32px;
   height: 32px;

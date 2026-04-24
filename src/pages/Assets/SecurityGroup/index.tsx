@@ -2,7 +2,7 @@
  * 安全组管理页面 - 入站规则增删改查
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { RefreshCw, Plus, Edit2, Trash2, ShieldCheck, Search } from 'lucide-react';
 import {
   getSecurityGroupList,
@@ -12,6 +12,7 @@ import type { SecurityGroupInfo, SecurityGroupRule } from '@/services/assets/sec
 import toast from '@/components/Toast';
 import { useAuthStore } from '@/stores/authStore';
 import RuleFormModal from './RuleFormModal';
+import BatchDescModal from './BatchDescModal';
 import './index.css';
 
 const SecurityGroupPage = () => {
@@ -28,6 +29,10 @@ const SecurityGroupPage = () => {
   // 搜索关键词
   const [keyword, setKeyword] = useState('');
 
+  // 多选状态
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [batchDeleting, setBatchDeleting] = useState(false);
+  const [batchDescVisible, setBatchDescVisible] = useState(false);
   // 屏蔽开关（仅管理员可用）：过滤掉备注为「自动更新 - IP监控工具」的规则
   const MONITOR_DESC = '自动更新 - IP监控工具';
   const [hideMonitor, setHideMonitor] = useState(false);
@@ -93,27 +98,6 @@ const SecurityGroupPage = () => {
     }
   };
 
-  const getPolicyTag = (policy: string) => {
-    return policy?.toLowerCase() === 'accept'
-      ? <span className="sg-tag tag-accept">允许</span>
-      : <span className="sg-tag tag-drop">拒绝</span>;
-  };
-
-  const getProtocolTag = (protocol: string) => {
-    const key = protocol?.toLowerCase() || '';
-    const colorMap: Record<string, string> = {
-      tcp: 'tag-tcp',
-      udp: 'tag-udp',
-      icmp: 'tag-icmp',
-      all: 'tag-all',
-    };
-    return (
-      <span className={`sg-tag ${colorMap[key] || 'tag-all'}`}>
-        {key.toUpperCase()}
-      </span>
-    );
-  };
-
   const rules = sgInfo?.ingress_rules ?? [];
 
   // 普通用户只能操作端口为 80 或 443 的规则
@@ -138,6 +122,68 @@ const SecurityGroupPage = () => {
         );
       })
     : baseRules;
+
+  // 多选操作
+  const lastClickedIdxRef = useRef(-1);
+
+  const toggleSelectAll = () => {
+    const selectableIds = filteredRules
+      .filter(r => r.security_group_rule_id && (isAdmin || isAllowedPort(r.port_range)))
+      .map(r => r.security_group_rule_id!);
+    const allSelected = selectableIds.every(id => selectedIds.has(id));
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(selectableIds));
+    }
+  };
+
+  const handleBatchDelete = async () => {
+    const ids = [...selectedIds];
+    if (!ids.length) return;
+    if (!window.confirm(`确定要删除选中的 ${ids.length} 条规则吗？`)) return;
+    setBatchDeleting(true);
+    try {
+      const results = await Promise.allSettled(
+        ids.map(id => deleteSecurityGroupRule({ security_group_rule_id: id }))
+      );
+      const failCount = results.filter(
+        r => r.status === 'rejected' || (r.status === 'fulfilled' && r.value.code !== 200)
+      ).length;
+      if (failCount === 0) {
+        toast.success(`已删除 ${ids.length} 条规则`);
+      } else {
+        toast.warning(`${ids.length - failCount} 条删除成功，${failCount} 条失败`);
+      }
+      setSelectedIds(new Set());
+      fetchData();
+    } catch {
+      toast.error('批量删除失败');
+    } finally {
+      setBatchDeleting(false);
+    }
+  };
+
+  const getPolicyTag = (policy: string) => {
+    return policy?.toLowerCase() === 'accept'
+      ? <span className="sg-tag tag-accept">允许</span>
+      : <span className="sg-tag tag-drop">拒绝</span>;
+  };
+
+  const getProtocolTag = (protocol: string) => {
+    const key = protocol?.toLowerCase() || '';
+    const colorMap: Record<string, string> = {
+      tcp: 'tag-tcp',
+      udp: 'tag-udp',
+      icmp: 'tag-icmp',
+      all: 'tag-all',
+    };
+    return (
+      <span className={`sg-tag ${colorMap[key] || 'tag-all'}`}>
+        {key.toUpperCase()}
+      </span>
+    );
+  };
 
   return (
     <div className="sg-page">
@@ -209,6 +255,31 @@ const SecurityGroupPage = () => {
         </div>
       </div>
 
+      {/* 批量操作栏 */}
+      {selectedIds.size > 0 && (
+        <div className="sg-batch-bar">
+          <span className="sg-batch-info">已选 <strong>{selectedIds.size}</strong> 条</span>
+          <button
+            className="btn btn-default"
+            onClick={() => setBatchDescVisible(true)}
+          >
+            <Edit2 size={13} />
+            批量修改备注
+          </button>
+          <button
+            className="btn sg-btn-danger"
+            onClick={handleBatchDelete}
+            disabled={batchDeleting}
+          >
+            <Trash2 size={13} />
+            {batchDeleting ? '删除中...' : '批量删除'}
+          </button>
+          <button className="btn btn-default" onClick={() => setSelectedIds(new Set())}>
+            取消选择
+          </button>
+        </div>
+      )}
+
       {/* 规则表格 */}
       <div className="sg-table-wrap">
         {loading && rules.length === 0 ? (
@@ -225,6 +296,21 @@ const SecurityGroupPage = () => {
           <table className="sg-table">
             <thead>
               <tr>
+                <th style={{ width: 40 }}>
+                  <span
+                    className={`sg-checkbox ${
+                      filteredRules.length > 0 &&
+                      filteredRules
+                        .filter(r => r.security_group_rule_id && (isAdmin || isAllowedPort(r.port_range)))
+                        .every(r => selectedIds.has(r.security_group_rule_id!))
+                        ? 'sg-checkbox-checked'
+                        : filteredRules.some(r => r.security_group_rule_id && selectedIds.has(r.security_group_rule_id!))
+                        ? 'sg-checkbox-indeterminate'
+                        : ''
+                    }`}
+                    onClick={toggleSelectAll}
+                  />
+                </th>
                 <th>协议</th>
                 <th>端口范围</th>
                 <th>源 IP 段</th>
@@ -236,8 +322,43 @@ const SecurityGroupPage = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredRules.map((rule, idx) => (
-                <tr key={rule.security_group_rule_id || idx}>
+              {filteredRules.map((rule, idx) => {
+                const selectable = (isAdmin || isAllowedPort(rule.port_range)) && !!rule.security_group_rule_id;
+                const isSelected = !!rule.security_group_rule_id && selectedIds.has(rule.security_group_rule_id);
+                return (
+                <tr
+                  key={rule.security_group_rule_id || idx}
+                  className={isSelected ? 'sg-row-selected' : ''}
+                >
+                  <td>
+                    {selectable ? (
+                      <span
+                        className={`sg-checkbox ${isSelected ? 'sg-checkbox-checked' : ''}`}
+                        onClick={(e) => {
+                          if (e.shiftKey && lastClickedIdxRef.current >= 0) {
+                            const from = Math.min(lastClickedIdxRef.current, idx);
+                            const to = Math.max(lastClickedIdxRef.current, idx);
+                            const rangeIds = filteredRules
+                              .slice(from, to + 1)
+                              .filter(r => r.security_group_rule_id && (isAdmin || isAllowedPort(r.port_range)))
+                              .map(r => r.security_group_rule_id!);
+                            setSelectedIds(prev => new Set([...prev, ...rangeIds]));
+                          } else {
+                            setSelectedIds(prev => {
+                              const next = new Set(prev);
+                              if (isSelected) {
+                                next.delete(rule.security_group_rule_id!);
+                              } else {
+                                next.add(rule.security_group_rule_id!);
+                              }
+                              return next;
+                            });
+                            lastClickedIdxRef.current = idx;
+                          }
+                        }}
+                      />
+                    ) : null}
+                  </td>
                   <td>{getProtocolTag(rule.ip_protocol)}</td>
                   <td className="sg-mono">{rule.port_range}</td>
                   <td className="sg-mono">{rule.source_cidr_ip || '-'}</td>
@@ -275,7 +396,8 @@ const SecurityGroupPage = () => {
                     </div>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         )}
@@ -289,6 +411,18 @@ const SecurityGroupPage = () => {
         onClose={() => setModalVisible(false)}
         onSuccess={() => {
           setModalVisible(false);
+          fetchData();
+        }}
+      />
+
+      {/* 批量修改备注弹窗 */}
+      <BatchDescModal
+        visible={batchDescVisible}
+        rules={filteredRules.filter(r => r.security_group_rule_id && selectedIds.has(r.security_group_rule_id!))}
+        onClose={() => setBatchDescVisible(false)}
+        onSuccess={() => {
+          setBatchDescVisible(false);
+          setSelectedIds(new Set());
           fetchData();
         }}
       />

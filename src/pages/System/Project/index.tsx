@@ -3,9 +3,10 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { getProjectList, deleteProject, quickUpdateProject, type Project } from '../../../services/system/project';
-import { confirm } from '../../../components/ConfirmModal';
+import { getProjectList, getProjectDetail, deleteProject, quickUpdateProject, type Project } from '@/services/system/project';
+import { confirm } from '@/components/ConfirmModal';
 import ProjectForm from './components/ProjectForm';
+import ProjectDetail from './components/ProjectDetail';
 import './style.css';
 
 const ProjectManagement = () => {
@@ -13,6 +14,8 @@ const ProjectManagement = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [formVisible, setFormVisible] = useState(false);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
+  const [detailVisible, setDetailVisible] = useState(false);
+  const [detailData, setDetailData] = useState<Project | null>(null);
 
   // 获取项目列表
   const fetchProjects = useCallback(async () => {
@@ -41,10 +44,30 @@ const ProjectManagement = () => {
     setFormVisible(true);
   };
 
-  // 编辑
-  const handleEdit = (row: Project) => {
-    setCurrentProject(row);
-    setFormVisible(true);
+  // 编辑：先拉 detail 接口获取完整数据
+  const handleEdit = async (row: Project) => {
+    try {
+      const res = await getProjectDetail(row.project);
+      if (res.code === 200 && res.data) {
+        setCurrentProject(res.data as Project);
+        setFormVisible(true);
+      }
+    } catch (error) {
+      console.error('获取项目详情失败:', error);
+    }
+  };
+
+  // 查看详情：先拉 detail 接口
+  const handleView = async (row: Project) => {
+    try {
+      const res = await getProjectDetail(row.project);
+      if (res.code === 200 && res.data) {
+        setDetailData(res.data as Project);
+        setDetailVisible(true);
+      }
+    } catch (error) {
+      console.error('获取项目详情失败:', error);
+    }
   };
 
   // 删除
@@ -92,13 +115,13 @@ const ProjectManagement = () => {
     }
   };
 
-  // 格式化飞书地址（用于表格显示）
+  // 格式化飞书地址：去掉前缀，显示完整 token
   const formatFeishuUrl = (url?: string) => {
     if (!url) return '-';
-    const match = url.match(/hook\/([a-zA-Z0-9-]+)/);
-    return match ? match[1].substring(0, 16) + '...' : url.substring(0, 20) + '...';
+    const prefix = 'https://open.feishu.cn/open-apis/bot/v2/hook/';
+    if (url.startsWith(prefix)) return url.replace(prefix, '');
+    return url;
   };
-  void formatFeishuUrl; // 暂时保留，后续可用于显示飞书地址
 
   // 格式化时间
   const formatDateTime = (dateStr?: string) => {
@@ -120,13 +143,15 @@ const ProjectManagement = () => {
         {loading ? (
           <div className="loading">加载中...</div>
         ) : (
-          <table className="data-table">
+          <table className="data-table" style={{ minWidth: 1800 }}>
             <thead>
               <tr>
                 <th>Logo</th>
-                <th>项目简称</th>
                 <th>项目名称</th>
                 <th>Agent地址</th>
+                <th>飞书告警</th>
+                <th>发版通知</th>
+                <th>步骤通知</th>
                 <th>链路追踪</th>
                 <th>前端工具</th>
                 <th>后端工具</th>
@@ -136,7 +161,7 @@ const ProjectManagement = () => {
             </thead>
             <tbody>
               {projects.length === 0 ? (
-                <tr><td colSpan={9} className="empty-cell">暂无数据</td></tr>
+                <tr><td colSpan={11} className="empty-cell">暂无数据</td></tr>
               ) : (
                 projects.map((row) => (
                   <tr key={row.project}>
@@ -147,9 +172,11 @@ const ProjectManagement = () => {
                         <span className="logo-placeholder">{row.project?.charAt(0).toUpperCase()}</span>
                       )}
                     </td>
-                    <td>{row.project}</td>
                     <td>{row.project_name || '-'}</td>
                     <td className="url-cell" title={row.agent_url}>{row.agent_url || '-'}</td>
+                    <td className="feishu-cell" title={row.alter_feishu}>{formatFeishuUrl(row.alter_feishu)}</td>
+                    <td className="feishu-cell" title={row.update_feishu}>{formatFeishuUrl(row.update_feishu)}</td>
+                    <td className="feishu-cell" title={row.notify_feishu}>{formatFeishuUrl(row.notify_feishu)}</td>
                     <td>
                       <label className="switch">
                         <input
@@ -185,6 +212,7 @@ const ProjectManagement = () => {
                     </td>
                     <td>{formatDateTime(row.created_at)}</td>
                     <td className="action-cell">
+                      <button className="btn-link" onClick={() => handleView(row)}>详情</button>
                       <button className="btn-link" onClick={() => handleEdit(row)}>编辑</button>
                       <button className="btn-link btn-danger" onClick={() => handleDelete(row)}>删除</button>
                     </td>
@@ -201,6 +229,12 @@ const ProjectManagement = () => {
         data={currentProject}
         onClose={() => setFormVisible(false)}
         onSuccess={handleFormSuccess}
+      />
+
+      <ProjectDetail
+        visible={detailVisible}
+        data={detailData}
+        onClose={() => setDetailVisible(false)}
       />
     </div>
   );
