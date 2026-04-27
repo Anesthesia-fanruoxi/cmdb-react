@@ -163,7 +163,7 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"
-          DESCRIPTION="1、白名单支持勾选批量操作，支持批量删除，批量修改备注。选择第一个之后按住shift支持范围筛选。"
+          DESCRIPTION="1、简单优化发版逻辑，支持删除无法停止的任务。"
 
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \

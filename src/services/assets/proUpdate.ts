@@ -115,6 +115,11 @@ export function cancelTask(taskId: string) {
   return apiClient.post('/assets/proUpdate/cancel', { id: taskId });
 }
 
+// 删除任务
+export function deleteTask(taskId: string) {
+  return apiClient.post('/assets/proUpdate/delete', { task_id: taskId });
+}
+
 // 开始发版
 export function startRelease(data: { project: string; type?: string; branch?: string; category?: string; description?: string }) {
   return apiClient.post<{ task_id: string }>('/assets/proUpdate/create', data);

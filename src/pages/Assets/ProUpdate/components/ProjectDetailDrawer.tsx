@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { X, Loader2, Play } from 'lucide-react';
-import { subscribeProjectDetail, startRelease, cancelTask } from '@/services/assets';
+import { subscribeProjectDetail, startRelease, cancelTask, deleteTask } from '@/services/assets';
 import toast from '@/components/Toast';
 import { confirm } from '@/components/ConfirmModal';
 import type { ProjectUpdate, ReleaseRecord, ProjectDetailResponse } from '@/services/assets';
@@ -158,6 +158,19 @@ const ProjectDetailDrawer = ({ visible, project, onClose, onRefresh }: Props) =>
     }
   };
 
+  const handleDeleteTask = async (taskId: string) => {
+    if (!await confirm({ content: '确定要删除该任务记录吗？删除后不可恢复。', type: 'danger' })) return;
+    try {
+      await deleteTask(taskId);
+      toast.success('任务已删除');
+      // 直接从本地列表移除，保留滚动位置
+      setRecords(prev => prev.filter(r => r.task_id !== taskId));
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : '删除失败';
+      toast.error(message);
+    }
+  };
+
   const handleShowRecordDetail = (record: ReleaseRecord) => {
     setCurrentRecord(record);
     setRecordDialogVisible(true);
@@ -229,6 +242,9 @@ const ProjectDetailDrawer = ({ visible, project, onClose, onRefresh }: Props) =>
                               {(r.status === 'running' || r.status === 'pending') && (
                                 <button className="btn-cancel" onClick={() => handleCancelTask(r.task_id)}>取消</button>
                               )}
+                              {(r.status !== 'running' && r.status !== 'pending') && (
+                                <button className="btn-delete" onClick={() => handleDeleteTask(r.task_id)}>删除</button>
+                              )}
                               <button className="btn-detail" onClick={() => handleShowRecordDetail(r)}>详情</button>
                             </td>
                           </tr>
@@ -274,6 +290,8 @@ const ProjectDetailDrawer = ({ visible, project, onClose, onRefresh }: Props) =>
         .status-tag.default { color: var(--text-secondary, #999); }
         .btn-cancel, .btn-detail { padding: 2px 8px; margin: 0 2px; border: 1px solid var(--border-color, #3a3a3a); background: var(--bg-secondary, #2a2a2a); color: var(--text-color, #e0e0e0); border-radius: 4px; cursor: pointer; font-size: 12px; }
         .btn-cancel:hover { color: #ff4d4f; border-color: #ff4d4f; }
+        .btn-delete { padding: 2px 8px; margin: 0 2px; border: 1px solid var(--border-color, #3a3a3a); background: var(--bg-secondary, #2a2a2a); color: var(--text-color, #e0e0e0); border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .btn-delete:hover { color: #ff4d4f; border-color: #ff4d4f; }
         .btn-detail:hover { color: var(--primary-color, #1890ff); border-color: var(--primary-color, #1890ff); }
         .spin { animation: spin 1s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

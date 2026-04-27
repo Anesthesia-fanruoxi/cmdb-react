@@ -20,7 +20,7 @@ interface ConfirmModalProps extends ConfirmOptions {
 
 const ConfirmModal = ({ title, content, okText, cancelText, type, onOk, onCancel }: ConfirmModalProps) => {
   return (
-    <div className="confirm-overlay" onClick={onCancel}>
+    <div className="confirm-overlay" onClick={e => { e.stopPropagation(); onCancel(); }}>
       <div className={`confirm-modal ${type || 'info'}`} onClick={e => e.stopPropagation()}>
         {title && <div className="confirm-title">{title}</div>}
         <div className="confirm-content">{content}</div>
@@ -47,8 +47,11 @@ export const confirm = (options: ConfirmOptions): Promise<boolean> => {
     const root = createRoot(container);
 
     const cleanup = () => {
-      root.unmount();
-      container.remove();
+      // 延迟移除，避免 DOM 移除后点击事件冒泡穿透到底层元素
+      setTimeout(() => {
+        root.unmount();
+        container.remove();
+      }, 0);
     };
 
     const handleOk = () => {
