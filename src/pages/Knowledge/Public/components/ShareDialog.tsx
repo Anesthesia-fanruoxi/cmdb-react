@@ -17,7 +17,7 @@ interface Props {
 
 const ShareDialog = ({ visible, doc, onClose, onSuccess }: Props) => {
   const [loading, setLoading] = useState(false);
-  const [expiredDays, setExpiredDays] = useState(7);
+  const [expiredDays, setExpiredDays] = useState<number>(7);
   const shareInfo = (doc as any)?.share as { share_url?: string; share_code?: string; expired_at?: string } | undefined;
   const isShared = !!shareInfo?.share_url;
 
@@ -26,8 +26,9 @@ const ShareDialog = ({ visible, doc, onClose, onSuccess }: Props) => {
   }, [visible]);
 
   const getRemainingTime = () => {
-    if (!shareInfo?.expired_at) return '未知';
+    if (!shareInfo?.expired_at) return '永久';
     const diff = new Date(shareInfo.expired_at).getTime() - Date.now();
+    if (isNaN(diff)) return '永久';
     if (diff <= 0) return '已过期';
     const hours = Math.floor(diff / (1000 * 60 * 60));
     if (hours < 24) return `${hours} 小时`;
@@ -109,6 +110,7 @@ const ShareDialog = ({ visible, doc, onClose, onSuccess }: Props) => {
                 <option value={7}>7天</option>
                 <option value={15}>15天</option>
                 <option value={30}>30天</option>
+                <option value={-1}>永久有效</option>
               </select>
             </div>
           )}

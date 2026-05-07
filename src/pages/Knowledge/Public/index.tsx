@@ -3,8 +3,8 @@
  */
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { FileText, Plus, Edit, Trash2, Search, Upload, User, Clock, Share2, Link } from 'lucide-react';
-import { getPublicDocList, getPublicDocDetail, deletePublicDoc, DocItem } from '../../../services/knowledge';
+import { FileText, Plus, Edit, Trash2, Search, Upload, User, Clock, Share2 } from 'lucide-react';
+import { getPublicDocList, getPublicDocDetail, getPublicShareList, getUserPublicDocList, deletePublicDoc, closePublicShare, DocItem } from '../../../services/knowledge';
 import { getDictDetail } from '../../../services/system/dict';
 import type { DictItem } from '../../../services/system/dict';
 import toast from '../../../components/Toast';
@@ -40,11 +40,36 @@ const PublicKnowledge = () => {
   const fetchDocList = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await getPublicDocList({ category: filterCategory || undefined });
-      if (res.code === 200 && res.data) setDocList(Array.isArray(res.data) ? res.data : []);
+      let res;
+      if (viewMode === 'shared') {
+        res = await getPublicShareList();
+        if (res.code === 200 && res.data) {
+          const rawList = Array.isArray(res.data) ? res.data : [];
+          // API 返回的是扁平字段，映射为嵌套 share 对象（与 Vue 一致）
+          setDocList(rawList.map((item: any) => ({
+            id: item.id,
+            title: item.title,
+            content: item.content,
+            category: item.category,
+            user_name: item.user_name,
+            creator: item.creator,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+            share: item.share_code ? {
+              share_url: item.share_url,
+              share_code: item.share_code,
+              expired_at: item.expired_at,
+            } : null,
+          })));
+        }
+      } else {
+        const api = onlyMine ? getUserPublicDocList : getPublicDocList;
+        res = await api({ category: filterCategory || undefined });
+        if (res.code === 200 && res.data) setDocList(Array.isArray(res.data) ? res.data : []);
+      }
     } catch (err) { toast.error('获取文档列表失败'); }
     finally { setLoading(false); }
-  }, [filterCategory]);
+  }, [filterCategory, viewMode, onlyMine]);
 
   const fetchDocDetail = useCallback(async (doc: DocItem) => {
     try {
@@ -90,6 +115,26 @@ const PublicKnowledge = () => {
 
   const handleShare = (doc: DocItem) => { setSharingDoc(doc); setShowShare(true); };
 
+  const handleCloseShare = async (doc: DocItem) => {
+    if (!await confirm({ content: '确定要关闭分享吗？', type: 'warning' })) return;
+    try {
+      const shareCode = doc.share?.share_code;
+      if (!shareCode) return;
+      const res = await closePublicShare(shareCode);
+      if (res.code === 200) {
+        toast.success('关闭分享成功');
+        if (currentDoc?.id === doc.id) setCurrentDoc(null);
+        fetchDocList();
+      }
+    } catch (err) { toast.error('关闭分享失败'); }
+  };
+
+  // 切换视图时清除选中
+  const handleViewModeChange = (mode: 'all' | 'shared') => {
+    setViewMode(mode);
+    setCurrentDoc(null);
+  };
+
   const handleFormSuccess = async (doc: DocItem) => {
     setShowForm(false);
     await fetchDocList();
@@ -129,8 +174,8 @@ const PublicKnowledge = () => {
           <div className="action-row">
             <button className="btn-primary" onClick={handleAdd}><Plus size={14} /> 新建文档</button>
             <div className="view-tabs">
-              <button className={viewMode === 'all' ? 'active' : ''} onClick={() => setViewMode('all')}>全部</button>
-              <button className={viewMode === 'shared' ? 'active' : ''} onClick={() => setViewMode('shared')}>已分享</button>
+              <button className={viewMode === 'all' ? 'active' : ''} onClick={() => handleViewModeChange('all')}>全部</button>
+              <button className={viewMode === 'shared' ? 'active' : ''} onClick={() => handleViewModeChange('shared')}>已分享</button>
             </div>
           </div>
         </div>
@@ -142,7 +187,6 @@ const PublicKnowledge = () => {
                 <div className="doc-title">
                   <FileText size={14} />
                   <span>{doc.title}</span>
-                  {doc.share && <span className="share-badge"><Link size={10} /></span>}
                 </div>
                 <div className="doc-meta">
                   <span><User size={12} /> {doc.creator || doc.user_name}</span>
@@ -150,9 +194,17 @@ const PublicKnowledge = () => {
                 </div>
               </div>
               <div className="doc-actions">
-                <button onClick={e => { e.stopPropagation(); handleShare(doc); }} title="分享"><Share2 size={14} /></button>
-                <button onClick={e => { e.stopPropagation(); handleEdit(doc); }} title="编辑"><Edit size={14} /></button>
-                <button onClick={e => { e.stopPropagation(); handleDelete(doc); }} title="删除"><Trash2 size={14} /></button>
+                {viewMode === 'shared' ? (
+                  <button className="btn-close-share" onClick={e => { e.stopPropagation(); handleCloseShare(doc); }}>
+                    关闭分享
+                  </button>
+                ) : (
+                  <>
+                    <button onClick={e => { e.stopPropagation(); handleShare(doc); }} title="分享"><Share2 size={14} /></button>
+                    <button onClick={e => { e.stopPropagation(); handleEdit(doc); }} title="编辑"><Edit size={14} /></button>
+                    <button onClick={e => { e.stopPropagation(); handleDelete(doc); }} title="删除"><Trash2 size={14} /></button>
+                  </>
+                )}
               </div>
             </div>
           ))}

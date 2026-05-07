@@ -3,8 +3,8 @@
  */
 
 import { useState } from 'react';
-import { User, Clock, Edit, History, Tag, Download, Share2, Link } from 'lucide-react';
-import { DocItem, getDocumentHistoryList, getDocumentHistoryDetail, restoreDocumentHistory, DocHistoryItem } from '../../../services/knowledge';
+import { User, Clock, Edit, History, Tag, Download, Share2, Link, Info, Copy } from 'lucide-react';
+import { DocItem, getDocumentHistoryList, getDocumentHistoryDetail, restoreDocumentHistory, getPublicDocHistoryList, getPublicDocHistoryDetail, restorePublicDocHistory, DocHistoryItem, ShareInfo } from '../../../services/knowledge';
 import type { DictItem } from '../../../services/system/dict';
 import MarkdownView from '../../../components/Markdown';
 import DocTocNav from './DocTocNav';
@@ -26,6 +26,28 @@ const DocView = ({ doc, onEdit, onRefresh, onShare, categoryOptions = [], showHe
   const [showHistory, setShowHistory] = useState(false);
   const [historyList, setHistoryList] = useState<DocHistoryItem[]>([]);
   const [previewData, setPreviewData] = useState<DocHistoryItem | null>(null);
+  const [showShareTip, setShowShareTip] = useState(false);
+
+  const shareInfo = (doc as any).share as ShareInfo | undefined;
+
+  const getRemainingTime = (expiredAt?: string | null) => {
+    if (!expiredAt) return '永久';
+    const diff = new Date(expiredAt).getTime() - Date.now();
+    if (isNaN(diff)) return '永久';
+    if (diff <= 0) return '已过期';
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    if (hours < 24) return `${hours} 小时`;
+    const days = Math.floor(hours / 24);
+    const h = hours % 24;
+    return h > 0 ? `${days} 天 ${h} 小时` : `${days} 天`;
+  };
+
+  const handleCopyShareUrl = async () => {
+    if (shareInfo?.share_url) {
+      await navigator.clipboard.writeText(shareInfo.share_url);
+      toast.success('已复制分享链接');
+    }
+  };
 
   const formatTime = (timeStr?: string): string => {
     if (!timeStr) return '-';
@@ -34,9 +56,15 @@ const DocView = ({ doc, onEdit, onRefresh, onShare, categoryOptions = [], showHe
 
   const getCategoryName = (key?: string) => categoryOptions.find(c => c.key === key)?.value || key || '未分类';
 
+  const historyApi = {
+    list: type === 'public' ? getPublicDocHistoryList : getDocumentHistoryList,
+    detail: type === 'public' ? getPublicDocHistoryDetail : getDocumentHistoryDetail,
+    restore: type === 'public' ? restorePublicDocHistory : restoreDocumentHistory,
+  };
+
   const handleShowHistory = async () => {
     try {
-      const res = await getDocumentHistoryList(doc.id);
+      const res = await historyApi.list(doc.id);
       if (res.code === 200) {
         setHistoryList(Array.isArray(res.data) ? res.data : [res.data]);
         setShowHistory(true);
@@ -46,7 +74,7 @@ const DocView = ({ doc, onEdit, onRefresh, onShare, categoryOptions = [], showHe
 
   const handlePreview = async (item: DocHistoryItem) => {
     try {
-      const res = await getDocumentHistoryDetail(item.id);
+      const res = await historyApi.detail(item.id);
       if (res.code === 200) setPreviewData({ ...res.data, version: item.version });
     } catch (err) { toast.error('获取版本详情失败'); }
   };
@@ -54,7 +82,7 @@ const DocView = ({ doc, onEdit, onRefresh, onShare, categoryOptions = [], showHe
   const handleRestore = async (item: DocHistoryItem) => {
     if (!await confirm({ content: '确定要恢复到该版本吗？', type: 'warning' })) return;
     try {
-      const res = await restoreDocumentHistory(item.id);
+      const res = await historyApi.restore(item.id);
       if (res.code === 200) { toast.success('恢复成功'); setShowHistory(false); onRefresh?.(); }
     } catch (err) { toast.error('恢复失败'); }
   };
@@ -79,7 +107,21 @@ const DocView = ({ doc, onEdit, onRefresh, onShare, categoryOptions = [], showHe
           <div className="header-top">
             <h2 className="doc-title">
               {doc.title}
-              {isShared && <span className="shared-badge"><Link size={12} /> 已分享</span>}
+              {isShared && (
+                <span className="shared-badge" onMouseEnter={() => setShowShareTip(true)} onMouseLeave={() => setShowShareTip(false)}>
+                  <Link size={12} /> 已分享 <Info size={12} />
+                  {showShareTip && (
+                    <span className="share-tooltip">
+                      <p>分享码：{shareInfo?.share_code}</p>
+                      <p className="share-url-line">
+                        分享链接：{shareInfo?.share_url}
+                        <button onClick={(e) => { e.stopPropagation(); handleCopyShareUrl(); }}><Copy size={12} /></button>
+                      </p>
+                      <p>剩余时间：{getRemainingTime(shareInfo?.expired_at)}</p>
+                    </span>
+                  )}
+                </span>
+              )}
             </h2>
           </div>
           <div className="doc-meta">

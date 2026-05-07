@@ -4,6 +4,13 @@
 
 import { apiClient } from '../request';
 
+/** 分享信息 */
+export interface ShareInfo {
+  share_url: string;
+  share_code: string;
+  expired_at: string | null;
+}
+
 /** 文档项 */
 export interface DocItem {
   id: number;
@@ -14,7 +21,7 @@ export interface DocItem {
   creator?: string;
   created_at?: string;
   updated_at?: string;
-  share?: boolean;
+  share?: ShareInfo | null;
 }
 
 /** 创建/更新文档参数 */
@@ -64,6 +71,11 @@ export const getPublicDocDetail = (id: number) => {
   return apiClient.get<DocItem>('/knowledge/public/detail', { id });
 };
 
+/** 获取已分享公开文档列表 */
+export const getPublicShareList = () => {
+  return apiClient.get<DocItem[]>('/knowledge/public/share/list');
+};
+
 /** 创建公开文档 */
 export const createPublicDoc = (data: DocParams) => {
   return apiClient.post<null>('/knowledge/public/create', data);
@@ -78,13 +90,6 @@ export const updatePublicDoc = (data: DocParams) => {
 export const deletePublicDoc = (id: number) => {
   return apiClient.delete<null>(`/knowledge/public/delete?id=${id}`);
 };
-
-/** 分享响应 */
-export interface ShareInfo {
-  share_url: string;
-  share_code: string;
-  expired_at: string;
-}
 
 /** 分享公开文档 */
 export const sharePublicDoc = (data: { doc_id: number; expired_days: number }) => {
