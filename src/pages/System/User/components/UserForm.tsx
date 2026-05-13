@@ -2,13 +2,14 @@
  * 用户表单组件
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createUser, updateUser, type User, type CreateUserRequest, type UpdateUserRequest } from '@/services/system/user';
 import { getBasicSetting } from '@/services/system/setting';
 import { toast } from '@/components/AppNotification';
 import TreeSelect from '@/components/TreeSelect';
 import type { Role } from '@/services/system/role';
 import type { Dept } from '@/services/system/dept';
+import { RefreshCw } from 'lucide-react';
 import './UserForm.css';
 
 interface UserFormProps {
@@ -36,7 +37,48 @@ const UserForm = ({ visible, editData, roleOptions, deptOptions, isSuperAdmin, o
   });
 
   const [passwordTip, setPasswordTip] = useState('');
+  const [passwordRules, setPasswordRules] = useState<Record<string, any>>({});
   const [submitting, setSubmitting] = useState(false);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
+
+  // 生成随机密码
+  const generatePassword = () => {
+    const rules = passwordRules;
+    const minLen = rules.password_min_length || 8;
+    const maxLen = rules.password_max_length || 20;
+    const len = Math.min(maxLen, Math.max(minLen, 16));
+
+    const pools: { chars: string; required: boolean }[] = [
+      { chars: 'abcdefghijklmnopqrstuvwxyz', required: !!rules.password_need_letter },
+      { chars: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', required: !!rules.password_need_case },
+      { chars: '0123456789', required: !!rules.password_need_number },
+      { chars: '!@#$%^&*()_+-=[]{}|;:,.<>?', required: !!rules.password_need_special },
+    ];
+
+    const allChars = pools.map(p => p.chars).join('');
+    const requiredChars = pools.filter(p => p.required).map(p => p.chars[Math.floor(Math.random() * p.chars.length)]);
+
+    // 至少包含所有必需的字符类型，然后补齐到目标长度
+    let password = requiredChars.join('');
+    while (password.length < len) {
+      password += allChars[Math.floor(Math.random() * allChars.length)];
+    }
+
+    // 打乱顺序
+    const arr = password.split('');
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    const result = arr.join('');
+
+    setForm(f => ({ ...f, password: result }));
+    navigator.clipboard.writeText(result).then(() => {
+      toast.success('已生成随机密码并复制到剪贴板');
+    }).catch(() => {
+      toast.success('已生成随机密码');
+    });
+  };
 
   // 初始化表单
   useEffect(() => {
@@ -75,6 +117,7 @@ const UserForm = ({ visible, editData, roleOptions, deptOptions, isSuperAdmin, o
       const res = await getBasicSetting();
       if (res.code === 200) {
         const data = res.data;
+        setPasswordRules(data);
         const tips = [];
         if (data.password_need_number) tips.push('数字');
         if (data.password_need_letter) tips.push('字母');
@@ -250,12 +293,18 @@ const UserForm = ({ visible, editData, roleOptions, deptOptions, isSuperAdmin, o
             <div className="form-row">
               <div className="form-group">
                 <label>密码</label>
-                <input
-                  type="password"
-                  value={form.password}
-                  onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                  placeholder={isEdit ? '不填则不修改' : '不填则使用默认密码'}
-                />
+                <div className="password-input-wrap">
+                  <input
+                    ref={passwordInputRef}
+                    type="password"
+                    value={form.password}
+                    onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                    placeholder={isEdit ? '不填则不修改' : '不填则使用默认密码'}
+                  />
+                  <button type="button" className="btn-gen-password" onClick={generatePassword} title="随机生成密码">
+                    <RefreshCw size={14} /> 随机
+                  </button>
+                </div>
               </div>
 
               {isEdit && (

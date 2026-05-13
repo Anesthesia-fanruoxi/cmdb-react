@@ -144,11 +144,37 @@ const RuleFormModal = ({ visible, editRule, isAdmin = true, onClose, onSuccess }
     return null;
   };
 
+  // 判断 API 返回是否为重复
+  const isDuplicate = (r: PromiseSettledResult<{ code: number; message?: string; msg?: string; }>) => {
+    const msg = r.status === 'fulfilled' ? (r.value.message || r.value.msg || '') : (r.reason?.message || String(r.reason));
+    return msg.toLowerCase().includes('duplicat') || msg.includes('已存在') || msg.includes('exist');
+  };
+  const isSuccess = (r: PromiseSettledResult<{ code: number }>) =>
+    r.status === 'fulfilled' && r.value.code === 200;
+
+  const summaryResults = (results: PromiseSettledResult<{ code: number; message?: string; msg?: string }>[], total: number) => {
+    const successCount = results.filter(isSuccess).length;
+    const dupCount = results.filter(r => !isSuccess(r) && isDuplicate(r)).length;
+    const errCount = results.length - successCount - dupCount;
+
+    if (successCount === total) return { code: 200, message: `全部添加成功（${successCount} 条）` };
+    const msgs: string[] = [];
+    if (successCount > 0) msgs.push(`${successCount} 条添加成功`);
+    if (dupCount > 0) msgs.push(`${dupCount} 条已存在，已跳过`);
+    if (errCount > 0) msgs.push(`${errCount} 条添加失败`);
+    if (successCount > 0) return { code: 206, message: msgs.join('，') };
+    if (dupCount === total) return { code: 409, message: '所有规则均已存在' };
+    throw new Error(msgs.join('，') || '规则添加失败');
+  };
+
   // ── 管理员提交 ──
   const submitAdmin = async () => {
     const normalizedPortRange = normalizePortRange(form.port_range);
     const normalizedIp = normalizeIpInput(form.source_cidr_ip);
+    const ipList = normalizedIp.split(',').filter(Boolean);
+
     if (isEdit && editRule?.security_group_rule_id) {
+      // 编辑模式：不改 IP 拆分逻辑
       return updateSecurityGroupRule({
         security_group_rule_id: editRule.security_group_rule_id,
         ip_protocol: form.ip_protocol,
@@ -159,76 +185,56 @@ const RuleFormModal = ({ visible, editRule, isAdmin = true, onClose, onSuccess }
         description: form.description.trim(),
       } as UpdateRuleParams);
     }
-    return addSecurityGroupRule({
-      ip_protocol: form.ip_protocol,
-      port_range: normalizedPortRange,
-      source_cidr_ip: normalizedIp,
-      policy: form.policy,
-      priority: form.priority,
-      description: form.description.trim(),
-    } as AddRuleParams);
+
+    // 新增：逐 IP 添加，跳过重复
+    const results = await Promise.allSettled(
+      ipList.map(ip =>
+        addSecurityGroupRule({
+          ip_protocol: form.ip_protocol,
+          port_range: normalizedPortRange,
+          source_cidr_ip: ip,
+          policy: form.policy,
+          priority: form.priority,
+          description: form.description.trim(),
+        } as AddRuleParams)
+      )
+    );
+    return summaryResults(results, ipList.length);
   };
 
-  // ── 普通用户提交 ──
+  // ── 普通用户/快捷添加提交 ──
   const submitSimple = async () => {
-    const ip = normalizeIpInput(form.source_cidr_ip);
+    const normalizedIp = normalizeIpInput(form.source_cidr_ip);
+    const ipList = normalizedIp.split(',').filter(Boolean);
     const descParts = [form.project, form.submitter, form.purpose].map(s => s.trim()).filter(Boolean);
     const desc = descParts.join('-');
 
     if (isEdit && editRule?.security_group_rule_id) {
       return updateSecurityGroupRule({
         security_group_rule_id: editRule.security_group_rule_id,
-        source_cidr_ip: ip,
+        source_cidr_ip: normalizedIp,
         description: form.description.trim(),
       });
     }
 
-    // 新增：固定同时提交 80 和 443 两条规则，互不影响
-    const results = await Promise.allSettled(
-      ['443/443', '80/80'].map(port =>
-        addSecurityGroupRule({
-          ip_protocol: 'tcp',
-          port_range: port,
-          source_cidr_ip: ip,
-          policy: 'accept',
-          priority: '1',
-          description: desc || `开放 ${port.split('/')[0]} 端口`,
-        })
-      )
-    );
-
-    // 判断每条结果：已存在 / 真实报错 / 成功
-    const isDuplicate = (r: PromiseSettledResult<{ code: number; message?: string; msg?: string }>) => {
-      const msg = r.status === 'fulfilled' ? (r.value.message || r.value.msg || '') : (r.reason?.message || String(r.reason));
-      return msg.toLowerCase().includes('duplicat') || msg.includes('已存在') || msg.includes('exist');
-    };
-    const isSuccess = (r: PromiseSettledResult<{ code: number }>) =>
-      r.status === 'fulfilled' && r.value.code === 200;
-
-    const [r443, r80] = results;
-    const success443 = isSuccess(r443), success80 = isSuccess(r80);
-    const dup443 = !success443 && isDuplicate(r443), dup80 = !success80 && isDuplicate(r80);
-
-    if (success443 || success80) {
-      // 至少一条成功，成功后刷新，顺带提示已存在的那条
-      if (dup443 || dup80) {
-        const dupPorts = [dup443 && '443', dup80 && '80'].filter(Boolean).join(' 和 ');
-        return { code: 206, message: `端口 ${dupPorts} 规则已存在，其余规则已添加` };
+    // 新增：逐 IP 逐端口添加，跳过重复
+    const tasks: Promise<any>[] = [];
+    for (const ip of ipList) {
+      for (const port of ['443/443', '80/80']) {
+        tasks.push(
+          addSecurityGroupRule({
+            ip_protocol: 'tcp',
+            port_range: port,
+            source_cidr_ip: ip,
+            policy: 'accept',
+            priority: '1',
+            description: desc || `开放 ${port.split('/')[0]} 端口`,
+          })
+        );
       }
-      return { code: 200, message: 'success' };
     }
-
-    // 两条都失败：区分已存在还是真实报错
-    if (dup443 && dup80) {
-      return { code: 409, message: '80 和 443 规则均已存在' };
-    }
-    // 有真实报错
-    const errMsg = [r443, r80]
-      .filter((_r, i) => ![dup443, dup80][i])
-      .map(r => r.status === 'fulfilled' ? (r.value as { message?: string; msg?: string }).message || (r.value as { message?: string; msg?: string }).msg : r.reason?.message)
-      .filter(Boolean)
-      .join('；');
-    throw new Error(errMsg || '规则添加失败');
+    const results = await Promise.allSettled(tasks);
+    return summaryResults(results, tasks.length);
   };
 
   const handleSubmit = async () => {

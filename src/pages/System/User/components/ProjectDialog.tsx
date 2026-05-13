@@ -142,27 +142,24 @@ const ProjectDialog = ({ visible, user, onClose }: Props) => {
   // 获取菜单的所有子菜单ID
   const getChildIds = (menuId: number, nodes: MenuItem[]): number[] => {
     const ids: number[] = [];
-    const findAndCollect = (items: MenuItem[], found: boolean): boolean => {
+    const findNode = (items: MenuItem[]): boolean => {
       for (const item of items) {
         const nodeId = item.id ? parseInt(item.id) : 0;
-        if (found || nodeId === menuId) {
-          if (nodeId !== menuId) ids.push(nodeId);
-          if (item.children?.length) {
-            item.children.forEach(c => {
-              if (c.id) ids.push(parseInt(c.id));
-            });
-            findAndCollect(item.children, true);
-          }
-          if (nodeId === menuId && item.children?.length) {
-            findAndCollect(item.children, true);
-          }
-          if (nodeId === menuId) return true;
+        if (nodeId === menuId) {
+          const collectDescendants = (list: MenuItem[]) => {
+            for (const n of list) {
+              if (n.id) ids.push(parseInt(n.id));
+              if (n.children?.length) collectDescendants(n.children);
+            }
+          };
+          if (item.children?.length) collectDescendants(item.children);
+          return true;
         }
-        if (item.children?.length && findAndCollect(item.children, false)) return true;
+        if (item.children?.length && findNode(item.children)) return true;
       }
       return false;
     };
-    findAndCollect(nodes, false);
+    findNode(nodes);
     return ids;
   };
 
@@ -172,19 +169,18 @@ const ProjectDialog = ({ visible, user, onClose }: Props) => {
     return childIds.some(id => selectedIds.has(id));
   };
 
-  // 切换菜单选中（自动关联父菜单，取消时检查是否需要取消父菜单）
+  // 切换菜单选中（自动关联父菜单和子菜单）
   const toggleMenu = (menuId: number, checked: boolean) => {
     if (!currentProject) return;
     setProjectMenusMap(prev => {
       const current = new Set(prev[currentProject.project] || []);
       if (checked) {
         current.add(menuId);
-        // 自动勾选所有父菜单
-        const parentIds = findParentIds(menuId, menuTree, []);
-        parentIds?.forEach(id => current.add(id));
+        getChildIds(menuId, menuTree).forEach(id => current.add(id));
+        findParentIds(menuId, menuTree, [])?.forEach(id => current.add(id));
       } else {
         current.delete(menuId);
-        // 检查父菜单是否需要取消勾选
+        getChildIds(menuId, menuTree).forEach(id => current.delete(id));
         const parentIds = findParentIds(menuId, menuTree, []) || [];
         for (const parentId of [...parentIds].reverse()) {
           if (!hasSelectedChild(parentId, current, menuTree)) {
@@ -228,9 +224,10 @@ const ProjectDialog = ({ visible, user, onClose }: Props) => {
       const menuName = item.meta?.title || item.name;
       return (
         <div key={item.id}>
-          <label className="perm-menu-item" style={{ paddingLeft: 12 + level * 20 }}>
+          <label className="perm-menu-item" style={{ paddingLeft: 24 + level * 20 }}>
             <input type="checkbox" checked={checked} onChange={e => toggleMenu(menuId, e.target.checked)} />
-            <span>{menuName}</span>
+            <span className="checkmark" />
+            <span className="menu-label">{menuName}</span>
           </label>
           {item.children && item.children.length > 0 && renderMenuTree(item.children, level + 1)}
         </div>
