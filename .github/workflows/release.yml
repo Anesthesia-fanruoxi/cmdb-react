@@ -163,8 +163,7 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"
-          DESCRIPTION="1、优化批量加入白名单的逻辑，不再会因为单条导致全部添加失败。
-          2、优化部分功能"
+          DESCRIPTION="1、虚空修复关闭软件的时候偶现无响应。"
 
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \

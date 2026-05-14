@@ -31,12 +31,13 @@ fn main() {
             Ok(())
         })
         .on_window_event(|window, event| {
-            // 主窗口关闭时，关闭所有其他窗口
+            // 主窗口关闭时，关闭所有子窗口（跳过主窗口自身防止重入死锁）
             if let tauri::WindowEvent::CloseRequested { .. } = event {
                 if window.label() == "main" {
-                    // 关闭所有窗口
-                    for (_, win) in window.app_handle().webview_windows() {
-                        let _ = win.close();
+                    for (label, win) in window.app_handle().webview_windows() {
+                        if label != "main" {
+                            let _ = win.close();
+                        }
                     }
                 }
             }
