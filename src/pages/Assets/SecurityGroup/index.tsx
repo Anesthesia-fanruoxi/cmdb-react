@@ -10,6 +10,7 @@ import {
 } from '@/services/assets/securityGroup';
 import type { SecurityGroupInfo, SecurityGroupRule } from '@/services/assets/securityGroup';
 import toast from '@/components/Toast';
+import { confirm } from '@/components/ConfirmModal';
 import { useAuthStore } from '@/stores/authStore';
 import RuleFormModal from './RuleFormModal';
 import BatchDescModal from './BatchDescModal';
@@ -78,6 +79,11 @@ const SecurityGroupPage = () => {
       toast.error('该规则缺少 rule_id，无法删除');
       return;
     }
+    const confirmed = await confirm({
+      content: '确定要删除该规则吗？',
+      type: 'danger'
+    });
+    if (!confirmed) return;
     setDeletingId(rule.security_group_rule_id);
     try {
       const res = await deleteSecurityGroupRule({
@@ -139,9 +145,14 @@ const SecurityGroupPage = () => {
   };
 
   const handleBatchDelete = async () => {
+    if (batchDeleting) return;
     const ids = [...selectedIds];
     if (!ids.length) return;
-    if (!window.confirm(`确定要删除选中的 ${ids.length} 条规则吗？`)) return;
+    const confirmed = await confirm({
+      content: `确定要删除选中的 ${ids.length} 条规则吗？`,
+      type: 'danger'
+    });
+    if (!confirmed) return;
     setBatchDeleting(true);
     try {
       const results = await Promise.allSettled(
