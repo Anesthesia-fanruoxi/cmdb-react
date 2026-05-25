@@ -17,7 +17,7 @@ export interface Message {
   read: boolean;
   // 可选：点击跳转动作
   action?: {
-    type: 'task-center' | 'link' | 'download' | 'custom';
+    type: 'task-center' | 'link' | 'download' | 'custom' | 'sql_approval';
     payload?: string;
     // 自定义按钮（当type为custom时使用）
     buttons?: Array<{

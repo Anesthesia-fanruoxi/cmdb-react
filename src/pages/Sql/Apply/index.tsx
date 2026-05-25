@@ -82,23 +82,15 @@ const SqlApply = () => {
       params,
       (data) => {
         const currentIds = new Set(data.map(item => item.id));
-        // 打印首项字段（调试用）
-        if (data.length > 0) {
-          const f = data[0];
-          console.log('[SSE] 首项字段:', Object.keys(f).map(k => `${k}=${(f as any)[k]}`).join(', '));
-        }
-        // 遍历所有项
         data.forEach(item => {
           const st = String(item.status);
           const isNew = !prevIdsRef.current.has(item.id);
           const isMyJob = (st === '0' && item.apply_name === myName) || (st === '1' && item.executor_name === myName);
 
           if (isNew) {
-            console.log('[SSE] 项', item.id, '| 新 | 状态:', st, '| 审批人:', item.apply_name, '| 执行人:', item.executor_name, '| 我:', myName, '| 匹配:', isMyJob);
             if (isMyJob && !notifiedIdsRef.current.has(item.id)) {
               notifiedIdsRef.current.add(item.id);
               trackedIdsRef.current.add(item.id);
-              // 系统通知卡片
               openDesktopNotifyWindow({
                 title: 'SQL 审批通知',
                 subtitle: `${item.submitter_name} · ${item.created_at || '刚刚'}`,
@@ -106,7 +98,6 @@ const SqlApply = () => {
                 project: item.project,
                 description: item.description || item.remark || '',
               });
-              // 推送到消息中心
               useMessageStore.getState().addMessage({
                 type: 'info',
                 title: 'SQL 审批通知',
@@ -119,11 +110,28 @@ const SqlApply = () => {
               });
             }
           } else {
-            // 旧项：检查是否从追踪中变成了已处理
-            if (trackedIdsRef.current.has(item.id) && !isMyJob) {
+            if (isMyJob && !notifiedIdsRef.current.has(item.id)) {
+              notifiedIdsRef.current.add(item.id);
+              trackedIdsRef.current.add(item.id);
+              openDesktopNotifyWindow({
+                title: 'SQL 审批通知',
+                subtitle: `${item.submitter_name} · ${item.created_at || '刚刚'}`,
+                applyId: item.id,
+                project: item.project,
+                description: item.description || item.remark || '',
+              });
+              useMessageStore.getState().addMessage({
+                type: 'info',
+                title: 'SQL 审批通知',
+                content: `${item.project} · ${(item.description || item.remark || '').slice(0, 30)}`,
+                action: {
+                  type: 'sql_approval',
+                  payload: JSON.stringify({ applyId: item.id, project: item.project, description: item.description || item.remark || '' }),
+                },
+                extra: { applyId: item.id },
+              });
+            } else if (trackedIdsRef.current.has(item.id) && !isMyJob) {
               trackedIdsRef.current.delete(item.id);
-              console.log('[SSE] 状态变更，标已读:', item.id);
-              // 标记消息中心对应条目标已读
               useMessageStore.getState().messages.forEach(msg => {
                 if (msg.extra?.applyId === item.id && !msg.read) {
                   useMessageStore.getState().markAsRead(msg.id);
@@ -154,7 +162,6 @@ const SqlApply = () => {
 
   const handleRefresh = useCallback(() => {
     if (refreshing) return;
-    console.log('[SSE] 手动刷新');
     setRefreshing(true);
     prevIdsRef.current = new Set();
     notifiedIdsRef.current = new Set();

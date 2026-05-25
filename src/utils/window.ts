@@ -4,6 +4,7 @@
  */
 
 import { WebviewWindow, getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
+import { currentMonitor } from '@tauri-apps/api/window';
 import { emit, listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
 
@@ -197,8 +198,7 @@ export async function openDesktopNotifyWindow(options: DesktopNotifyWindowOption
   let screenWidth = window.screen.width;
   let screenHeight = window.screen.height;
   try {
-    const mainWindow = getCurrentWebviewWindow();
-    const monitor = await mainWindow.currentMonitor();
+    const monitor = await currentMonitor();
     if (monitor) {
       screenWidth = monitor.size.width;
       screenHeight = monitor.size.height;
@@ -229,7 +229,7 @@ export async function openDesktopNotifyWindow(options: DesktopNotifyWindowOption
     visible: false,
     x,
     y,
-  }, options);
+  }, options as unknown as WindowUpdateEvent);
 }
 
 /**
