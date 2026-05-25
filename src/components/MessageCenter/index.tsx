@@ -4,9 +4,11 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bell, X, AlertCircle, CheckCircle, Info, ExternalLink, FolderOpen, FileText, Download } from 'lucide-react';
 import { useMessageStore, type Message } from '../../stores/messageStore';
 import { useTaskCenterStore } from '../../stores/taskCenterStore';
+import { updateApply } from '../../services/sql/apply';
 import { openFolder, showInFolder, openFile } from '../../utils/fileSystem';
 import { isTauriEnv } from '../../services/machine';
 import { toast } from '../Toast';
@@ -40,6 +42,7 @@ const MessageCenter = ({ visible: externalVisible, onClose }: MessageCenterProps
   const containerRef = useRef<HTMLDivElement>(null);
   const { messages, unreadCount, markAsRead, markAllAsRead, removeMessage, clearAll, rehydrate } = useMessageStore();
   const openTaskCenter = useTaskCenterStore(state => state.open);
+  const navigate = useNavigate();
 
   // 是否是抽屉模式
   const isDrawerMode = onClose !== undefined;
@@ -69,8 +72,11 @@ const MessageCenter = ({ visible: externalVisible, onClose }: MessageCenterProps
         else setInternalVisible(false);
         openTaskCenter();
       } else if (msg.action.type === 'download') {
-        // 下载类型的消息不自动跳转，由按钮处理
         return;
+      } else if (msg.action.type === 'sql_approval') {
+        if (isDrawerMode) onClose?.();
+        else setInternalVisible(false);
+        navigate('/sql/apply');
       }
     }
   };
@@ -109,7 +115,9 @@ const MessageCenter = ({ visible: externalVisible, onClose }: MessageCenterProps
     }
   };
 
-  const renderMessageItem = (msg: Message) => (
+  const renderMessageItem = (msg: Message) => {
+    const approvalPayload = msg.action?.type === 'sql_approval' && msg.action.payload ? JSON.parse(msg.action.payload) : null;
+    return (
     <div key={msg.id} className={`msg-item ${msg.read ? 'read' : 'unread'} msg-${msg.type} ${msg.action && msg.action.type !== 'download' && msg.action.type !== 'custom' ? 'clickable' : ''}`} onClick={() => handleItemClick(msg)}>
       <div className="msg-icon">{typeIcons[msg.type]}</div>
       <div className="msg-content">
@@ -137,6 +145,27 @@ const MessageCenter = ({ visible: externalVisible, onClose }: MessageCenterProps
             ))}
           </div>
         )}
+        {/* SQL 审批操作按钮 - 未读才显示按钮 */}
+        {!msg.read && approvalPayload && (
+          <div className="msg-custom-actions">
+            <button
+              className="btn-custom-action btn-custom-reject"
+              onClick={async (e) => {
+                e.stopPropagation();
+                try { const res = await updateApply({ id: approvalPayload.applyId, process_type: 0 }); if (res.code === 200) toast.success('已驳回'); } catch {}
+                if (!msg.read) markAsRead(msg.id);
+              }}
+            >驳回</button>
+            <button
+              className="btn-custom-action btn-custom-approve"
+              onClick={async (e) => {
+                e.stopPropagation();
+                try { const res = await updateApply({ id: approvalPayload.applyId, process_type: 1 }); if (res.code === 200) toast.success('执行成功'); } catch {}
+                if (!msg.read) markAsRead(msg.id);
+              }}
+            >执行</button>
+          </div>
+        )}
         {/* 下载操作按钮 */}
         {msg.action?.type === 'download' && isTauriEnv() && msg.extra?.filePath && (
           <div className="msg-download-actions">
@@ -158,6 +187,7 @@ const MessageCenter = ({ visible: externalVisible, onClose }: MessageCenterProps
       <button className="btn-remove" onClick={e => { e.stopPropagation(); removeMessage(msg.id); }} title="删除">🗑️</button>
     </div>
   );
+  };
 
   // 抽屉模式
   if (isDrawerMode) {

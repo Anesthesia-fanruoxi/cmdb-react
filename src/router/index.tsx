@@ -6,6 +6,7 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import AuthGuard from './AuthGuard';
+import DetachedWindow from '../pages/Detached';
 
 // 懒加载组件包装器
 const LazyComponent = ({ component: Component }: { component: React.LazyExoticComponent<React.ComponentType> }) => (
@@ -45,9 +46,6 @@ export const loadComponent = (componentPath: string) => {
   return null;
 };
 
-// 独立窗口页面
-const DetachedWindow = lazy(() => import('../pages/Detached'));
-
 /**
  * 创建应用路由
  * @param isAuthenticated 是否已认证
@@ -64,7 +62,7 @@ export const createAppRouter = (isAuthenticated: boolean) => {
     },
     {
       path: '/detached',
-      element: <LazyComponent component={DetachedWindow} />,
+      element: <DetachedWindow />,
     },
     {
       path: '/*',

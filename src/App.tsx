@@ -17,6 +17,7 @@ import type { UpdateInfo } from './services/storage';
 import { StatusModalContainer } from './components/StatusModal';
 import { UpdateModal } from './components/UpdateModal';
 import StartupScreen, { type FlowType, FLOW_STEPS } from './components/StartupScreen';
+import Watermark from './components/Watermark';
 import { installUpdate, cleanupOldUpdate, saveInstallPath } from './services/updater';
 import { listen } from '@tauri-apps/api/event';
 import { isTauriEnv } from './services/machine';
@@ -26,7 +27,29 @@ function App() {
   const { isAuthenticated, initFromStorage, userName } = useAuthStore();
   const { theme, setTheme } = useAppStore();
   const initRef = useRef(false);
+  const isDesktopNotifyDetached = useMemo(() => {
+    try {
+      const href = window.location.href || '';
+      const params = new URLSearchParams(window.location.search);
+      return params.get('type') === 'desktop-notify' || href.includes('type=desktop-notify');
+    } catch {
+      return false;
+    }
+  }, []);
   
+  // 通知窗强制所有中间态背景透明，防止白框闪烁
+  useEffect(() => {
+    if (!isDesktopNotifyDetached) return;
+    const style = document.createElement('style');
+    style.id = 'notify-override';
+    style.textContent = `
+      html, body, #root, .loading-container, .loading-state,
+      .detached-loading, .startup-screen { background: transparent !important; }
+    `;
+    document.head.appendChild(style);
+    return () => style.remove();
+  }, [isDesktopNotifyDetached]);
+
   const [ready, setReady] = useState(false);
   const [flowType, setFlowType] = useState<FlowType>('none');
   const [currentStep, setCurrentStep] = useState(0);
@@ -323,7 +346,7 @@ const startup = async () => {
   };
 
   // 启动画面
-  if (flowType !== 'none' || !ready) {
+  if (!isDesktopNotifyDetached && (flowType !== 'none' || !ready)) {
     return (
       <StartupScreen
         flowType={flowType !== 'none' ? flowType : 'init'}
@@ -345,6 +368,7 @@ const startup = async () => {
         onSkip={closeUpdateModal}
         installing={installing}
       />
+      {ready && isAuthenticated && <Watermark />}
     </>
   );
 }

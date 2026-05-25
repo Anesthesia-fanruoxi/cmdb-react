@@ -605,3 +605,50 @@
   border-color: #177ddc;
   color: #40a9ff;
 }
+
+/* 审批专用按钮 */
+.btn-custom-reject {
+  background: transparent !important;
+  border: 1px solid #d9d9d9 !important;
+  color: #666 !important;
+}
+
+.btn-custom-reject:hover {
+  border-color: #ff4d4f !important;
+  color: #ff4d4f !important;
+  background: rgba(255, 77, 79, 0.04) !important;
+}
+
+.btn-custom-approve {
+  background: #1890ff !important;
+  color: #fff !important;
+  border: 1px solid #1890ff !important;
+}
+
+.btn-custom-approve:hover {
+  background: #40a9ff !important;
+  border-color: #40a9ff !important;
+}
+
+:root.dark .btn-custom-reject {
+  background: transparent !important;
+  border-color: #434343 !important;
+  color: #aaa !important;
+}
+
+:root.dark .btn-custom-reject:hover {
+  border-color: #ff4d4f !important;
+  color: #ff4d4f !important;
+  background: rgba(255, 77, 79, 0.08) !important;
+}
+
+:root.dark .btn-custom-approve {
+  background: #177ddc !important;
+  color: #fff !important;
+  border-color: #177ddc !important;
+}
+
+:root.dark .btn-custom-approve:hover {
+  background: #1890ff !important;
+  border-color: #1890ff !important;
+}

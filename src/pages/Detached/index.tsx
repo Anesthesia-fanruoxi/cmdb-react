@@ -11,6 +11,7 @@ import '../../index.css';
 
 const DetachedWindow = () => {
   const [searchParams] = useSearchParams();
+  const type = searchParams.get('type');
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [Component, setComponent] = useState<React.ComponentType<any> | null>(null);
   const [props, setProps] = useState<Record<string, unknown>>({});
@@ -34,7 +35,6 @@ const DetachedWindow = () => {
   }, []);
 
   useEffect(() => {
-    const type = searchParams.get('type');
     const data = searchParams.get('data');
 
     if (data) {
@@ -88,6 +88,11 @@ const DetachedWindow = () => {
           setComponent(() => mod.default);
           break;
         }
+        case 'desktop-notify': {
+          const mod = await import('./components/DesktopNotifyWindow');
+          setComponent(() => mod.default);
+          break;
+        }
         default:
           console.warn('未知的窗口类型:', type);
       }
@@ -97,6 +102,9 @@ const DetachedWindow = () => {
   }, [searchParams]);
 
   if (!Component) {
+    if (type === 'desktop-notify') {
+      return <div style={{ width: '100vw', height: '100vh', background: 'transparent' }} />;
+    }
     return <div className="detached-loading">加载中...</div>;
   }
 

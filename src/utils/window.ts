@@ -24,6 +24,24 @@ interface DetachWindowOptions {
   minHeight?: number;
   /** 是否居中 */
   center?: boolean;
+  /** 是否显示边框 */
+  decorations?: boolean;
+  /** 是否置顶 */
+  alwaysOnTop?: boolean;
+  /** 是否在任务栏显示 */
+  skipTaskbar?: boolean;
+  /** 是否可聚焦 */
+  focus?: boolean;
+  /** 是否透明 */
+  transparent?: boolean;
+  /** 初始 X 坐标 */
+  x?: number;
+  /** 初始 Y 坐标 */
+  y?: number;
+  /** 是否可调整大小 */
+  resizable?: boolean;
+  /** 是否初始可见 */
+  visible?: boolean;
 }
 
 /** 已创建的窗口缓存 */
@@ -50,7 +68,16 @@ export async function createDetachedWindow(
     height = 600,
     minWidth = 400,
     minHeight = 300,
-    center = true
+    center = true,
+    decorations = true,
+    alwaysOnTop = false,
+    skipTaskbar = false,
+    focus = true,
+    transparent = false,
+    x,
+    y,
+    resizable = true,
+    visible = true,
   } = options;
 
   const fullLabel = `detached-${label}`;
@@ -85,9 +112,15 @@ export async function createDetachedWindow(
       minWidth,
       minHeight,
       center,
-      resizable: true,
-      decorations: true,
-      focus: true,
+      resizable,
+      decorations,
+      focus,
+      alwaysOnTop,
+      skipTaskbar,
+      transparent,
+      visible,
+      ...(typeof x === 'number' ? { x } : {}),
+      ...(typeof y === 'number' ? { y } : {}),
       theme: isDark ? 'dark' : 'light',
     });
 
@@ -142,6 +175,61 @@ export function openComponentWindow(options: ComponentWindowOptions) {
     width,
     height,
   }, props); // 传递 props 作为更新数据
+}
+
+interface DesktopNotifyWindowOptions {
+  title: string;
+  subtitle?: string;
+  content?: string;
+  duration?: number;
+  // SQL 审批快捷操作
+  applyId?: string;
+  project?: string;
+  description?: string;
+}
+
+export async function openDesktopNotifyWindow(options: DesktopNotifyWindowOptions) {
+  const width = 360;
+  const height = 170;
+  const margin = 24;
+
+  // 获取主窗口所在屏幕的尺寸，把通知窗放在其右下角
+  let screenWidth = window.screen.width;
+  let screenHeight = window.screen.height;
+  try {
+    const mainWindow = getCurrentWebviewWindow();
+    const monitor = await mainWindow.currentMonitor();
+    if (monitor) {
+      screenWidth = monitor.size.width;
+      screenHeight = monitor.size.height;
+    }
+  } catch { /* 兜底用 window.screen */ }
+
+  const x = Math.max(0, screenWidth - width - margin);
+  // taskbar 大约占 50px，再留 margin 间距
+  const y = Math.max(0, screenHeight - height - 50 - margin);
+  const label = `desktop-notify-${Date.now()}`;
+  const data = encodeURIComponent(JSON.stringify(options));
+
+  return createDetachedWindow({
+    label,
+    title: options.title,
+    url: `/detached?type=desktop-notify&data=${data}`,
+    width,
+    height,
+    minWidth: width,
+    minHeight: height,
+    center: false,
+    decorations: false,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    focus: false,
+    transparent: true,
+    resizable: false,
+    visible: false,
+    x,
+    y,
+  }, options);
 }
 
 /**

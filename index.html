@@ -5,6 +5,17 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CMDB Desktop</title>
+    <style id="notify-preload-style">
+      html, body, #root { background: transparent !important; }
+    </style>
+    <script id="notify-preload-script">
+      // 通知窗：保留透明样式；非通知窗：删除预加载透明样式，恢复默认主题
+      if (location.href.includes('type=desktop-notify')) {
+        document.documentElement.style.background = 'transparent';
+      } else {
+        document.getElementById('notify-preload-style')?.remove();
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

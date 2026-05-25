@@ -30,6 +30,59 @@
   font-size: 18px;
   font-weight: 600;
   color: var(--text-color);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* SSE 连接状态指示灯 - 呼吸灯 */
+.sse-dot-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: default;
+}
+
+.sse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.sse-dot--open {
+  background: #52c41a;
+  box-shadow: 0 0 4px rgba(82, 196, 26, 0.5);
+  animation: sse-breathe 2.4s ease-in-out infinite;
+}
+
+.sse-dot--connecting {
+  background: #faad14;
+  animation: sse-breathe 0.8s ease-in-out infinite;
+}
+
+.sse-dot--closed {
+  background: #ff4d4f;
+}
+
+@keyframes sse-breathe {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.85); }
+}
+
+.sse-tooltip {
+  position: absolute;
+  left: calc(100% + 4px);
+  top: calc(100% + 2px);
+  white-space: nowrap;
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  pointer-events: none;
+  z-index: 1000;
 }
 
 .apply-card .card-actions { display: flex; gap: 12px; }

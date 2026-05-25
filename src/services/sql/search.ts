@@ -165,37 +165,73 @@ export function createSSEConnection(
   url: string,
   onMessage: (data: unknown) => void,
   onError?: (error: Event) => void,
-  onComplete?: () => void
+  onComplete?: () => void,
+  options?: { reconnectInterval?: number }
 ) {
   const token = getToken();
-  // SSE 使用独立的服务地址
   const baseUrl = import.meta.env.VITE_SSE_BASE_URL || import.meta.env.VITE_API_BASE_URL || '';
-  
-  // 判断URL是否已经包含查询参数
   const separator = url.includes('?') ? '&' : '?';
   const fullUrl = `${baseUrl}${url}${separator}token=${token}`;
-  
-  const eventSource = new EventSource(fullUrl);
-  
-  eventSource.addEventListener('data', (event) => {
-    try {
-      const data = JSON.parse(event.data);
-      onMessage(data);
-    } catch (e) {
-      console.error('SSE解析错误:', e);
-    }
-  });
-  
-  eventSource.onerror = (error) => {
-    console.error('SSE错误:', error);
-    eventSource.close();
-    onError?.(error);
+
+  const { reconnectInterval = 3000 } = options || {};
+  let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  let isClosed = false;
+
+  let currentES: EventSource | null = null;
+
+  const connect = (): EventSource => {
+    const eventSource = new EventSource(fullUrl);
+    currentES = eventSource;
+
+    eventSource.addEventListener('data', (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        onMessage(data);
+      } catch (e) {
+        console.error('SSE解析错误:', e);
+      }
+    });
+
+    eventSource.onerror = (error) => {
+      console.error('SSE连接断开，准备重连...', error);
+      eventSource.close();
+
+      if (!isClosed) {
+        reconnectTimer = setTimeout(() => {
+          if (!isClosed) {
+            console.log('SSE重连中...');
+            connect();
+          }
+        }, reconnectInterval);
+      } else {
+        onError?.(error);
+      }
+    };
+
+    eventSource.addEventListener('complete', () => {
+      eventSource.close();
+      onComplete?.();
+    });
+
+    return eventSource;
   };
-  
-  eventSource.addEventListener('complete', () => {
-    eventSource.close();
-    onComplete?.();
-  });
-  
-  return eventSource;
+
+  const eventSource = connect();
+
+  // 返回包装对象，close 时同时取消重连定时器
+  return {
+    get readyState() { return currentES?.readyState ?? 2; },
+    getStatus: () => {
+      if (isClosed) return 'closed';
+      const rs = currentES?.readyState;
+      if (rs === 0) return 'connecting';
+      if (rs === 1) return 'open';
+      return 'closed';
+    },
+    close: () => {
+      isClosed = true;
+      if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+      eventSource.close();
+    }
+  };
 }
