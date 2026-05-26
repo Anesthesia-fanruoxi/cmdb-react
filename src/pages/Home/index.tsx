@@ -13,6 +13,7 @@ import { useMenuStore } from '../../stores/menuStore';
 import { usePageStateStore } from '../../stores/pageStateStore';
 import { markDirty } from '../../services/storage/autoSave';
 import Dashboard from './Dashboard';
+import FloatingActions from '../../components/FloatingActions';
 import './style.css';
 
 // 懒加载页面组件 - 使用 eager: false 确保懒加载
@@ -119,6 +120,7 @@ const Home = () => {
           </KeepAlive>
         </Content>
       </div>
+      <FloatingActions />
     </div>
   );
 };
