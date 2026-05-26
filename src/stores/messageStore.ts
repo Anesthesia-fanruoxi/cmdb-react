@@ -39,6 +39,8 @@ interface MessageState {
   unreadCount: number;
   // 添加消息
   addMessage: (msg: Omit<Message, 'id' | 'time' | 'read'>) => void;
+  // 更新消息
+  updateMessage: (id: string, updates: Partial<Pick<Message, 'title' | 'content' | 'extra'>>) => void;
   // 标记已读
   markAsRead: (id: string) => void;
   // 全部标记已读
@@ -96,6 +98,15 @@ export const useMessageStore = create<MessageState>((set) => ({
         startTrayFlash();
       }
       
+      return { messages, unreadCount };
+    });
+  },
+
+  updateMessage: (id, updates) => {
+    set(state => {
+      const messages = state.messages.map(m => m.id === id ? { ...m, ...updates, extra: updates.extra !== undefined ? { ...m.extra, ...updates.extra } : m.extra } : m);
+      saveToStorage(messages);
+      const unreadCount = messages.filter(m => !m.read).length;
       return { messages, unreadCount };
     });
   },

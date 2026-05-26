@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { BellDot } from 'lucide-react';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { updateApply } from '@/services/sql/apply';
+import { confirm } from '@/components/ConfirmModal';
 import './DesktopNotifyWindow.css';
 
 interface Props {
@@ -41,11 +42,10 @@ const DesktopNotifyWindow = ({
 
   const doAction = async (processType: number, label: string) => {
     if (!applyId) return;
+    if (!await confirm({ content: `确定要${label}该申请吗？`, type: processType === 0 ? 'warning' : 'danger' })) return;
     setActing(true);
     try {
-      console.log('[Notify] 操作:', label, 'applyId:', applyId);
       const res = await updateApply({ id: applyId, process_type: processType });
-      console.log('[Notify] 结果:', res);
       if (res.code === 200) {
         try { getCurrentWebviewWindow().destroy(); } catch {}
       }

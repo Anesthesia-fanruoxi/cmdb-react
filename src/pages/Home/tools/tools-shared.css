@@ -1,0 +1,80 @@
+/**
+ * 小工具共享弹框样式
+ */
+
+.tool-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: toolFadeIn 0.15s ease;
+}
+
+@keyframes toolFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.tool-modal {
+  background: var(--bg-color);
+  border-radius: 14px;
+  width: 90vw;
+  max-width: 640px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.25);
+  animation: toolSlideIn 0.2s ease;
+}
+
+.tool-modal--sm {
+  max-width: 480px;
+}
+
+@keyframes toolSlideIn {
+  from { transform: translateY(20px) scale(0.96); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.tool-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tool-modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.tool-modal-close {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tool-modal-close:hover {
+  background: var(--bg-secondary);
+  color: var(--text-color);
+}
+
+.tool-modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}

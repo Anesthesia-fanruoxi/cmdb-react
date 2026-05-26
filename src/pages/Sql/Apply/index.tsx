@@ -85,7 +85,7 @@ const SqlApply = () => {
         data.forEach(item => {
           const st = String(item.status);
           const isNew = !prevIdsRef.current.has(item.id);
-          const isMyJob = (st === '0' && item.apply_name === myName) || (st === '1' && item.executor_name === myName);
+          const isMyJob = st === '1' && item.executor_name === myName;
 
           if (isNew) {
             if (isMyJob && !notifiedIdsRef.current.has(item.id)) {

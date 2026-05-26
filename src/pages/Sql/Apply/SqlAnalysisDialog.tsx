@@ -103,11 +103,11 @@ const SqlAnalysisDialog = ({
   }, [])
 
   return (
-    <div className="modal-overlay" onClick={onCancel}>
+    <div className="modal-overlay" onClick={submitting ? undefined : onCancel}>
       <div className="modal-content modal-xl" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h4>SQL分析结果</h4>
-          <button className="close-btn" onClick={onCancel}>×</button>
+          <button className="close-btn" onClick={submitting ? undefined : onCancel}>×</button>
         </div>
 
         <div className="analysis-layout">

@@ -1,0 +1,260 @@
+/* ===== 格式切换标签 ===== */
+.ce-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.ce-tab {
+  flex: 1;
+  padding: 8px 0;
+  font-size: 13px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.ce-tab:hover {
+  color: var(--text-color);
+  background: var(--bg-color);
+}
+
+.ce-tab.active {
+  background: var(--primary-color);
+  color: #fff;
+}
+
+/* ===== 频率选择 ===== */
+.ce-section {
+  margin-bottom: 18px;
+}
+
+.ce-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-color);
+  margin-bottom: 8px;
+}
+
+.ce-freq-grid {
+  display: grid;
+  /* 列数由组件内联样式动态设置 */
+  gap: 6px;
+}
+
+.ce-freq-btn {
+  padding: 7px 0;
+  font-size: 13px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.ce-freq-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.ce-freq-btn.active {
+  background: var(--primary-color);
+  color: #fff;
+  border-color: var(--primary-color);
+}
+
+/* ===== 参数配置 ===== */
+.ce-params {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.ce-param-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ce-param-text {
+  font-size: 13px;
+  color: var(--text-color);
+  white-space: nowrap;
+}
+
+.ce-num-input {
+  width: 56px;
+  padding: 5px 6px;
+  font-size: 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  text-align: center;
+  box-sizing: border-box;
+  -moz-appearance: textfield;
+}
+
+.ce-num-input::-webkit-inner-spin-button,
+.ce-num-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.ce-num-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.ce-num-input--sm {
+  width: 48px;
+}
+
+/* ===== 星期选择 ===== */
+.ce-weekday-btn {
+  width: 32px;
+  height: 32px;
+  font-size: 13px;
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  background: var(--bg-color);
+  color: var(--text-color);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ce-weekday-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.ce-weekday-btn.active {
+  background: var(--primary-color);
+  color: #fff;
+  border-color: var(--primary-color);
+}
+
+/* ===== 结果 ===== */
+.ce-result-box {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.ce-result-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.ce-result-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.ce-cron-code {
+  flex: 1;
+  font-size: 18px;
+  font-family: 'Courier New', monospace;
+  color: var(--primary-color);
+  font-weight: 600;
+  user-select: all;
+}
+
+.ce-copy-btn {
+  flex-shrink: 0;
+  padding: 4px 12px;
+  font-size: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ce-copy-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.ce-desc-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.ce-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 12px 0;
+}
+
+.ce-next-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-color);
+  margin-bottom: 8px;
+}
+
+.ce-next-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ce-next-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 10px;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  font-size: 13px;
+  font-family: 'Courier New', monospace;
+  color: var(--text-color);
+}
+
+.ce-next-idx {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-color);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.ce-next-time {
+  color: var(--text-color);
+}
+
+.ce-next-empty {
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 8px;
+}

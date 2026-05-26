@@ -1,0 +1,83 @@
+.cc-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: 'Courier New', monospace;
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  resize: vertical;
+  box-sizing: border-box;
+  margin-bottom: 12px;
+}
+
+.cc-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.cc-convert-btn {
+  width: 100%;
+  padding: 10px;
+  background: var(--primary-color);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-bottom: 16px;
+}
+
+.cc-convert-btn:hover {
+  background: var(--primary-hover);
+}
+
+.cc-results {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cc-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.cc-label {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+  min-width: 100px;
+}
+
+.cc-value {
+  flex: 1;
+  font-size: 14px;
+  font-family: 'Courier New', monospace;
+  color: var(--text-color);
+  word-break: break-all;
+  user-select: all;
+}
+
+.cc-copy {
+  flex-shrink: 0;
+  padding: 2px 10px;
+  font-size: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  cursor: pointer;
+}
+
+.cc-copy:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}

@@ -1,0 +1,237 @@
+.pw-field {
+  margin-bottom: 16px;
+}
+
+.pw-row {
+  display: flex;
+  gap: 12px;
+}
+
+.pw-field-hal {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.pw-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-color);
+  margin-bottom: 6px;
+}
+
+/* 数字输入框通用样式 */
+.pw-length-input,
+.pw-count-input {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  box-sizing: border-box;
+  -moz-appearance: textfield;
+}
+
+.pw-length-input::-webkit-inner-spin-button,
+.pw-length-input::-webkit-outer-spin-button,
+.pw-count-input::-webkit-inner-spin-button,
+.pw-count-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.pw-length-input:focus,
+.pw-count-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+/* 自定义复选框 */
+.pw-checks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.pw-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-color);
+  cursor: pointer;
+  padding: 6px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.pw-check:hover {
+  border-color: var(--primary-color);
+}
+
+.pw-check input[type="checkbox"] {
+  display: none;
+}
+
+.pw-check-box {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--text-secondary);
+  border-radius: 3px;
+  flex-shrink: 0;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.pw-check input:checked + .pw-check-box {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.pw-check input:checked + .pw-check-box::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 5px;
+  height: 9px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* 生成按钮 */
+.pw-gen-btn {
+  width: 100%;
+  padding: 10px;
+  background: var(--primary-color);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-bottom: 16px;
+}
+
+.pw-gen-btn:hover {
+  background: var(--primary-hover);
+}
+
+/* 结果列表 */
+.pw-results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.pw-results-count {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.pw-copy-all-btn {
+  padding: 3px 12px;
+  font-size: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  cursor: pointer;
+}
+
+.pw-copy-all-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.pw-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.pw-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.pw-index {
+  flex-shrink: 0;
+  width: 20px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-align: right;
+}
+
+.pw-text {
+  flex: 1;
+  font-size: 14px;
+  font-family: 'Courier New', monospace;
+  color: var(--text-color);
+  word-break: break-all;
+  user-select: all;
+}
+
+.pw-tag {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 1px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.pw-tag.weak { background: #fff1f0; color: #cf1322; }
+.pw-tag.medium { background: #fff7e6; color: #d46b08; }
+.pw-tag.strong { background: #f6ffed; color: #389e0d; }
+.pw-tag.very-strong { background: #f0f5ff; color: #1d39c4; }
+
+:root.dark .pw-tag.weak { background: #3a1010; color: #ff7875; }
+:root.dark .pw-tag.medium { background: #3a2a10; color: #ffc53d; }
+:root.dark .pw-tag.strong { background: #103a10; color: #95de64; }
+:root.dark .pw-tag.very-strong { background: #101a3a; color: #85a5ff; }
+
+.pw-item-copy {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  font-size: 11px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  cursor: pointer;
+}
+
+.pw-item-copy:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.pw-error {
+  padding: 12px;
+  background: #fff1f0;
+  border: 1px solid #ffa39e;
+  border-radius: 8px;
+  color: #cf1322;
+  font-size: 13px;
+  text-align: center;
+}
+
+:root.dark .pw-error {
+  background: #3a1010;
+  border-color: #5a2020;
+  color: #ff7875;
+}

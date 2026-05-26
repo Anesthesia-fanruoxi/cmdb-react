@@ -316,6 +316,11 @@ const ApplyCreateDrawer = ({ prefillData, onClose, onSuccess }: Props) => {
 
   const handleConfirmSubmit = async () => {
     setSubmitting(true);
+    const startTime = Date.now();
+    const minDelay = () => {
+      const elapsed = Date.now() - startTime;
+      return elapsed < 500 ? new Promise(r => setTimeout(r, 500 - elapsed)) : Promise.resolve();
+    };
     try {
       const data = {
         project: formData.project, 
@@ -329,11 +334,13 @@ const ApplyCreateDrawer = ({ prefillData, onClose, onSuccess }: Props) => {
         ...(isScheduled && formData.executeTime ? { execution_time: formData.executeTime } : {})
       };
       const res = await submitApply(data);
+      await minDelay();
       if (res.code === 200) { 
         setAnalysisVisible(false); 
         onSuccess(); 
       } else toast.error(res.message || '提交失败');
     } catch (e) { 
+      await minDelay();
       console.error('提交失败:', e); 
       toast.error('提交失败'); 
     } finally { 

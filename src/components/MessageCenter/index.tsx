@@ -9,6 +9,7 @@ import { Bell, X, AlertCircle, CheckCircle, Info, ExternalLink, FolderOpen, File
 import { useMessageStore, type Message } from '../../stores/messageStore';
 import { useTaskCenterStore } from '../../stores/taskCenterStore';
 import { updateApply } from '../../services/sql/apply';
+import { confirm } from '../../components/ConfirmModal';
 import { openFolder, showInFolder, openFile } from '../../utils/fileSystem';
 import { isTauriEnv } from '../../services/machine';
 import { toast } from '../Toast';
@@ -125,7 +126,10 @@ const MessageCenter = ({ visible: externalVisible, onClose }: MessageCenterProps
         <div className="msg-text">{msg.content}</div>
         <div className="msg-footer">
           <span className="msg-time">{formatTime(msg.time)}</span>
-          {msg.action && msg.action.type !== 'download' && msg.action.type !== 'custom' && <span className="msg-action-hint"><ExternalLink size={12} /> 点击查看</span>}
+          <span className="msg-footer-right">
+            {!!msg.extra?.actionResult && <span className={`msg-result-tag ${String(msg.extra.actionResult) === '已执行' ? 'result-executed' : 'result-rejected'}`}>{msg.extra.actionResult as string}</span>}
+            {msg.action && msg.action.type !== 'download' && msg.action.type !== 'custom' && <span className="msg-action-hint"><ExternalLink size={12} /> 点击查看</span>}
+          </span>
         </div>
         {/* 自定义按钮 */}
         {msg.action?.type === 'custom' && msg.action.buttons && (
@@ -152,7 +156,17 @@ const MessageCenter = ({ visible: externalVisible, onClose }: MessageCenterProps
               className="btn-custom-action btn-custom-reject"
               onClick={async (e) => {
                 e.stopPropagation();
-                try { const res = await updateApply({ id: approvalPayload.applyId, process_type: 0 }); if (res.code === 200) toast.success('已驳回'); } catch {}
+                if (!await confirm({ content: '确定要驳回该申请吗？', type: 'warning' })) return;
+                try {
+                  const res = await updateApply({ id: approvalPayload.applyId, process_type: 0 });
+                  if (res.code === 200) {
+                    toast.success('已驳回');
+                    // 更新消息显示回执
+                    useMessageStore.getState().updateMessage(msg.id, {
+                      extra: { ...msg.extra, actionResult: '已驳回' }
+                    });
+                  }
+                } catch {}
                 if (!msg.read) markAsRead(msg.id);
               }}
             >驳回</button>
@@ -160,7 +174,17 @@ const MessageCenter = ({ visible: externalVisible, onClose }: MessageCenterProps
               className="btn-custom-action btn-custom-approve"
               onClick={async (e) => {
                 e.stopPropagation();
-                try { const res = await updateApply({ id: approvalPayload.applyId, process_type: 1 }); if (res.code === 200) toast.success('执行成功'); } catch {}
+                if (!await confirm({ content: '确定要执行该SQL吗？', type: 'danger' })) return;
+                try {
+                  const res = await updateApply({ id: approvalPayload.applyId, process_type: 1 });
+                  if (res.code === 200) {
+                    toast.success('执行成功');
+                    // 更新消息显示回执
+                    useMessageStore.getState().updateMessage(msg.id, {
+                      extra: { ...msg.extra, actionResult: '已执行' }
+                    });
+                  }
+                } catch {}
                 if (!msg.read) markAsRead(msg.id);
               }}
             >执行</button>

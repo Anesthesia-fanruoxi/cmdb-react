@@ -11,23 +11,27 @@ interface ConfirmOptions {
   okText?: string;
   cancelText?: string;
   type?: 'info' | 'warning' | 'danger';
+  mode?: 'confirm' | 'alert';
 }
 
 interface ConfirmModalProps extends ConfirmOptions {
   onOk: () => void;
-  onCancel: () => void;
+  onCancel?: () => void;
 }
 
-const ConfirmModal = ({ title, content, okText, cancelText, type, onOk, onCancel }: ConfirmModalProps) => {
+const ConfirmModal = ({ title, content, okText, cancelText, type, mode, onOk, onCancel }: ConfirmModalProps) => {
+  const isAlert = mode === 'alert';
   return (
-    <div className="confirm-overlay" onClick={e => { e.stopPropagation(); onCancel(); }}>
-      <div className={`confirm-modal ${type || 'info'}`} onClick={e => e.stopPropagation()}>
+    <div className="confirm-overlay" onClick={e => { e.stopPropagation(); if (isAlert) onOk(); else onCancel?.(); }}>
+      <div className={`confirm-modal ${type || (isAlert ? 'info' : 'info')}`} onClick={e => e.stopPropagation()}>
         {title && <div className="confirm-title">{title}</div>}
         <div className="confirm-content">{content}</div>
         <div className="confirm-actions">
-          <button className="confirm-btn cancel" onClick={onCancel}>
-            {cancelText || '取消'}
-          </button>
+          {!isAlert && (
+            <button className="confirm-btn cancel" onClick={onCancel}>
+              {cancelText || '取消'}
+            </button>
+          )}
           <button className="confirm-btn ok" onClick={onOk}>
             {okText || '确定'}
           </button>
@@ -66,6 +70,35 @@ export const confirm = (options: ConfirmOptions): Promise<boolean> => {
 
     root.render(
       <ConfirmModal {...options} onOk={handleOk} onCancel={handleCancel} />
+    );
+  });
+};
+
+/**
+ * 显示提示弹框（替换原生 alert()）
+ */
+export const alert = (content: string, options?: Omit<ConfirmOptions, 'content' | 'mode'>): Promise<void> => {
+  return new Promise((resolve) => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    const cleanup = () => {
+      setTimeout(() => {
+        root.unmount();
+        container.remove();
+      }, 0);
+    };
+
+    root.render(
+      <ConfirmModal
+        content={content}
+        title={options?.title}
+        okText={options?.okText || '我知道了'}
+        type={options?.type || 'info'}
+        mode="alert"
+        onOk={() => { cleanup(); resolve(); }}
+      />
     );
   });
 };

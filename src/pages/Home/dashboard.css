@@ -6,9 +6,7 @@
   width: 100%;
   height: 100%;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  transition: background-color 1s ease;
+  flex-direction: column;
   overflow: hidden;
   position: relative;
 }
@@ -38,11 +36,18 @@
   pointer-events: none;
 }
 
+.dashboard-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
 .clock-container {
   text-align: center;
   padding: clamp(20px, 4vh, 60px);
   width: min(556px, 90vw);
-  max-height: 90%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -57,27 +62,18 @@
   color: white;
   position: relative;
   z-index: 1;
-}
-
-/* 时钟容器 */
-.clock-wrapper {
   cursor: pointer;
-  position: relative;
-  margin-bottom: 24px;
 }
 
 .clock-hint {
-  position: absolute;
-  bottom: -20px;
-  left: 50%;
-  transform: translateX(-50%);
   font-size: 12px;
   opacity: 0;
   transition: opacity 0.3s;
   color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 16px;
 }
 
-.clock-wrapper:hover .clock-hint {
+.clock-container:hover .clock-hint {
   opacity: 1;
 }
 
@@ -86,6 +82,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-bottom: 16px;
+}
+
+.clock-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(6px, 1vh, 12px);
 }
 
 /* 数字时钟 */
@@ -144,8 +148,8 @@
 
 /* 圆形指针时钟 */
 .round-clock {
-  width: min(430px, 60vmin);
-  height: min(430px, 60vmin);
+  width: min(320px, 50vmin);
+  height: min(320px, 50vmin);
 }
 
 .clock-face {
@@ -250,14 +254,12 @@
 /* 日期信息 */
 .date {
   font-size: clamp(16px, 2.5vw, 24px);
-  margin-bottom: clamp(8px, 1.5vh, 12px);
   font-weight: 300;
   opacity: 0.9;
 }
 
 .lunar-info {
   font-size: clamp(14px, 2vw, 18px);
-  margin-bottom: clamp(12px, 2vh, 24px);
   font-weight: 300;
   opacity: 0.8;
   display: flex;
@@ -288,6 +290,82 @@
   animation: bounce 2s infinite;
 }
 
+/* ===== 小工具卡片 ===== */
+.tools-section {
+  width: 100%;
+  max-width: 520px;
+  padding: 0 20px 24px;
+  animation: fadeIn 1s ease-out 0.3s both;
+}
+
+.tools-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 0 2px;
+}
+
+.tools-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.tools-subtitle {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.tool-card {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 14px;
+  padding: 18px 14px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  color: white;
+  user-select: none;
+}
+
+.tool-card:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
+}
+
+.tool-card:active {
+  transform: translateY(-1px);
+}
+
+.tool-icon {
+  font-size: 30px;
+  margin-bottom: 8px;
+  line-height: 1;
+}
+
+.tool-name {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.tool-desc {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.3;
+}
+
 /* 动画 */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(20px); }
@@ -304,13 +382,15 @@
   100% { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
-/* 小屏幕优化 */
-@media (max-height: 600px) {
-  .clock-wrapper {
-    margin-bottom: 12px;
+/* 小屏幕 */
+@media (max-width: 640px) {
+  .tools-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
-  
-  .clock-hint {
-    bottom: -12px;
+}
+
+@media (max-height: 600px) {
+  .clock-container {
+    padding: 12px;
   }
 }
