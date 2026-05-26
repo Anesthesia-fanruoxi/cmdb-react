@@ -330,10 +330,14 @@
   border-radius: 14px;
   padding: 18px 14px;
   text-align: center;
-  cursor: pointer;
+  cursor: grab;
   transition: all 0.25s ease;
   color: white;
   user-select: none;
+}
+
+.tool-card:active {
+  cursor: grabbing;
 }
 
 .tool-card:hover {
@@ -343,8 +347,12 @@
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
 }
 
-.tool-card:active {
-  transform: translateY(-1px);
+/* 拖拽目标位置高亮 */
+.tool-card--drag-over {
+  border-color: rgba(255, 255, 255, 0.7) !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  transform: scale(1.04) !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4) !important;
 }
 
 .tool-icon {

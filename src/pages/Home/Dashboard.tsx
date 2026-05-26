@@ -3,7 +3,7 @@
  * 显示时钟、日期、农历、问候语等信息
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { PasswordGen, CaseConvert, JsonFormatter, CronExpr, TimeConvert } from './tools';
 import './tools/tools-shared.css';
@@ -13,6 +13,36 @@ type ToolName = 'password' | 'case' | 'json' | 'cron' | 'time' | null;
 
 type ClockMode = 'digital' | 'analog';
 type TimeOfDay = 'dawn' | 'morning' | 'day' | 'dusk' | 'night';
+
+// 工具卡片定义
+const TOOL_CARDS = [
+  { id: 'password', icon: '🔑', name: '随机密码', desc: '生成高强度随机密码' },
+  { id: 'case',     icon: '🐪', name: '驼峰转换', desc: 'snake_case / camelCase 互转' },
+  { id: 'json',     icon: '📋', name: 'JSON格式化', desc: '美化 / 压缩 / 校验 JSON' },
+  { id: 'cron',     icon: '⏰', name: 'Cron表达式', desc: '可视化生成定时表达式' },
+  { id: 'time',     icon: '🕐', name: '时间戳转换', desc: '时间戳 ↔ 日期时间互转' },
+] as const;
+
+const STORAGE_KEY = 'cmdb-tool-order';
+
+function loadOrder(): string[] {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed: string[] = JSON.parse(saved);
+      // 确保所有工具都在列表里（新增工具时补充到末尾）
+      const all = TOOL_CARDS.map(t => t.id);
+      const valid = parsed.filter(id => all.includes(id));
+      const missing = all.filter(id => !valid.includes(id));
+      return [...valid, ...missing];
+    }
+  } catch { /* */ }
+  return TOOL_CARDS.map(t => t.id);
+}
+
+function saveOrder(order: string[]) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(order)); } catch { /* */ }
+}
 
 // 农历数据
 const lunarInfo = [
@@ -122,6 +152,39 @@ const Dashboard = () => {
   const [minuteDeg, setMinuteDeg] = useState(0);
   const [secondDeg, setSecondDeg] = useState(0);
   const [activeTool, setActiveTool] = useState<ToolName>(null);
+
+  // 拖拽排序状态
+  const [toolOrder, setToolOrder] = useState<string[]>(loadOrder);
+  const dragSrcIdx = useRef<number>(-1);
+  const [dragOverIdx, setDragOverIdx] = useState<number>(-1);
+
+  const handleDragStart = useCallback((idx: number) => {
+    dragSrcIdx.current = idx;
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    setDragOverIdx(idx);
+  }, []);
+
+  const handleDrop = useCallback((idx: number) => {
+    const src = dragSrcIdx.current;
+    if (src === -1 || src === idx) { setDragOverIdx(-1); return; }
+    setToolOrder(prev => {
+      const next = [...prev];
+      const [item] = next.splice(src, 1);
+      next.splice(idx, 0, item);
+      saveOrder(next);
+      return next;
+    });
+    dragSrcIdx.current = -1;
+    setDragOverIdx(-1);
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    dragSrcIdx.current = -1;
+    setDragOverIdx(-1);
+  }, []);
 
   const openTool = (tool: NonNullable<ToolName>) => {
     invoke('open_tool_window', { tool }).catch(() => {
@@ -261,34 +324,29 @@ const Dashboard = () => {
       <div className="dashboard-tools-area">
         <div className="tools-header">
           <span className="tools-title">🧰 小工具</span>
-          <span className="tools-subtitle">即开即用，无需跳转</span>
+          <span className="tools-subtitle">拖拽可排序</span>
         </div>
         <div className="tools-grid">
-          <div className="tool-card" onClick={() => openTool('password')}>
-            <div className="tool-icon">🔑</div>
-            <div className="tool-name">随机密码</div>
-            <div className="tool-desc">生成高强度随机密码</div>
-          </div>
-          <div className="tool-card" onClick={() => openTool('case')}>
-            <div className="tool-icon">🐪</div>
-            <div className="tool-name">驼峰转换</div>
-            <div className="tool-desc">snake_case / camelCase 互转</div>
-          </div>
-          <div className="tool-card" onClick={() => openTool('json')}>
-            <div className="tool-icon">📋</div>
-            <div className="tool-name">JSON格式化</div>
-            <div className="tool-desc">美化 / 压缩 / 校验 JSON</div>
-          </div>
-          <div className="tool-card" onClick={() => openTool('cron')}>
-            <div className="tool-icon">⏰</div>
-            <div className="tool-name">Cron表达式</div>
-            <div className="tool-desc">可视化生成定时表达式</div>
-          </div>
-          <div className="tool-card" onClick={() => openTool('time')}>
-            <div className="tool-icon">🕐</div>
-            <div className="tool-name">时间戳转换</div>
-            <div className="tool-desc">时间戳 ↔ 日期时间互转</div>
-          </div>
+          {toolOrder.map((id, idx) => {
+            const card = TOOL_CARDS.find(t => t.id === id);
+            if (!card) return null;
+            return (
+              <div
+                key={card.id}
+                className={`tool-card ${dragOverIdx === idx ? 'tool-card--drag-over' : ''}`}
+                draggable
+                onDragStart={() => handleDragStart(idx)}
+                onDragOver={e => handleDragOver(e, idx)}
+                onDrop={() => handleDrop(idx)}
+                onDragEnd={handleDragEnd}
+                onClick={() => openTool(card.id as NonNullable<ToolName>)}
+              >
+                <div className="tool-icon">{card.icon}</div>
+                <div className="tool-name">{card.name}</div>
+                <div className="tool-desc">{card.desc}</div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
