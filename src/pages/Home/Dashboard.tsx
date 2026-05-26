@@ -31,7 +31,7 @@ function loadOrder(): string[] {
     if (saved) {
       const parsed: string[] = JSON.parse(saved);
       // 确保所有工具都在列表里（新增工具时补充到末尾）
-      const all = TOOL_CARDS.map(t => t.id);
+      const all = TOOL_CARDS.map(t => t.id) as string[];
       const valid = parsed.filter(id => all.includes(id));
       const missing = all.filter(id => !valid.includes(id));
       return [...valid, ...missing];

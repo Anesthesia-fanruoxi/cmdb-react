@@ -84,7 +84,7 @@ function JsonNode({ value, keyName, depth, isLast }: JsonNodeProps) {
   return (
     <div className="jt-node">
       {/* 行头：key + 折叠按钮 + 括号，右键触发折叠 */}
-      <div className="jt-line jt-collapsible" onContextMenu={e => { setCollapsed(c => !c); }}>
+      <div className="jt-line jt-collapsible" onContextMenu={() => { setCollapsed(c => !c); }}>
         <span className={`jt-toggle ${collapsed ? 'jt-toggle--collapsed' : ''}`}>▾</span>
         {keyName !== undefined && (
           <span className="jt-key">"{keyName}": </span>
