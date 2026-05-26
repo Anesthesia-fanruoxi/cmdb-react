@@ -1,0 +1,213 @@
+.tc-root {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* 顶部栏：单位切换 + 当前时间戳 */
+.tc-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tc-unit-tabs {
+  display: flex;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.tc-unit-tab {
+  padding: 6px 18px;
+  font-size: 13px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tc-unit-tab:hover { color: var(--text-color); }
+
+.tc-unit-tab.active {
+  background: var(--primary-color);
+  color: #fff;
+}
+
+.tc-now {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.tc-now-label {
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.tc-now-val {
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: var(--primary-color);
+  background: var(--bg-secondary);
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  user-select: all;
+}
+
+.tc-fill-btn {
+  padding: 3px 10px;
+  font-size: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tc-fill-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+/* 区块 */
+.tc-section {
+  margin-bottom: 20px;
+}
+
+.tc-section-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-color);
+  margin-bottom: 10px;
+}
+
+/* 输入行 */
+.tc-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tc-input {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-family: 'Courier New', monospace;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.tc-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.tc-input--error {
+  border-color: #ff4d4f !important;
+}
+
+:root.dark .tc-input--error {
+  border-color: #ff7875 !important;
+}
+
+.tc-arrow {
+  font-size: 16px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.tc-result-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  min-width: 0;
+  min-height: 38px;
+}
+
+.tc-result {
+  flex: 1;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: var(--text-color);
+  user-select: all;
+  word-break: break-all;
+}
+
+.tc-placeholder {
+  color: var(--text-muted);
+  font-style: normal;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.tc-error {
+  flex: 1;
+  font-size: 12px;
+  color: #ff4d4f;
+}
+
+:root.dark .tc-error {
+  color: #ff7875;
+}
+
+.tc-copy-btn {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  font-size: 11px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  cursor: pointer;
+}
+
+.tc-copy-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+/* 快速参考 */
+.tc-ref-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.tc-ref-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.tc-ref-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.tc-ref-val {
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: var(--text-color);
+  user-select: all;
+}

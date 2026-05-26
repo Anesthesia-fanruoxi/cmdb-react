@@ -9,7 +9,7 @@ interface ToolModalProps {
   title: string;
   children: ReactNode;
   onClose: () => void;
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'lg';
 }
 
 export default function ToolModal({ visible, title, children, onClose, size = 'sm' }: ToolModalProps) {
@@ -28,7 +28,7 @@ export default function ToolModal({ visible, title, children, onClose, size = 's
 
   return (
     <div className="tool-overlay">
-      <div className={`tool-modal ${size === 'sm' ? 'tool-modal--sm' : ''}`} onClick={e => e.stopPropagation()}>
+      <div className={`tool-modal ${size === 'sm' ? 'tool-modal--sm' : size === 'lg' ? 'tool-modal--lg' : ''}`} onClick={e => e.stopPropagation()}>
         <div className="tool-modal-header">
           <span className="tool-modal-title">{title}</span>
           <button className="tool-modal-close" onClick={onClose}>✕</button>

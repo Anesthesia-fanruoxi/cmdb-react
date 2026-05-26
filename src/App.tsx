@@ -3,7 +3,7 @@
  * 使用启动动画组件管理各场景
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react';
 import { RouterProvider } from 'react-router-dom';
 import { createAppRouter, preloadHome } from './router';
 import { useAuthStore } from './stores/authStore';
@@ -23,7 +23,44 @@ import { listen } from '@tauri-apps/api/event';
 import { isTauriEnv } from './services/machine';
 import './App.css';
 
+// 工具窗口组件懒加载
+const ToolWindowMap: Record<string, React.LazyExoticComponent<React.ComponentType>> = {
+  'tool-json':     lazy(() => import('./pages/Home/tools/JsonFormatter').then(m => ({ default: m.JsonFormatterWindow }))),
+  'tool-password': lazy(() => import('./pages/Home/tools/PasswordGen').then(m => ({ default: m.PasswordGenWindow }))),
+  'tool-case':     lazy(() => import('./pages/Home/tools/CaseConvert').then(m => ({ default: m.CaseConvertWindow }))),
+  'tool-cron':     lazy(() => import('./pages/Home/tools/CronExpr').then(m => ({ default: m.CronExprWindow }))),
+  'tool-time':     lazy(() => import('./pages/Home/tools/TimeConvert').then(m => ({ default: m.TimeConvertWindow }))),
+};
+
+// 检测当前是否为小工具独立窗口，完全跳过初始化
+function getToolWindowType(): string | null {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const type = params.get('type') ?? '';
+    return type.startsWith('tool-') ? type : null;
+  } catch {
+    return null;
+  }
+}
+
+const toolWindowType = getToolWindowType();
+
+/** 工具窗口容器 */
+function ToolWindowContainer({ toolType }: { toolType: string }) {
+  const ToolComponent = ToolWindowMap[toolType];
+  return (
+    <Suspense fallback={<div style={{ width: '100vw', height: '100vh', background: 'var(--bg-color)' }} />}>
+      <ToolComponent />
+    </Suspense>
+  );
+}
+
 function App() {
+  // 小工具独立窗口：完全跳过所有初始化，直接渲染
+  if (toolWindowType && ToolWindowMap[toolWindowType]) {
+    return <ToolWindowContainer toolType={toolWindowType} />;
+  }
+
   const { isAuthenticated, initFromStorage, userName } = useAuthStore();
   const { theme, setTheme } = useAppStore();
   const initRef = useRef(false);

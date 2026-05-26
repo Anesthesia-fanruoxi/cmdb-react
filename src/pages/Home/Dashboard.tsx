@@ -4,11 +4,12 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
-import { PasswordGen, CaseConvert, JsonFormatter, CronExpr } from './tools';
+import { invoke } from '@tauri-apps/api/core';
+import { PasswordGen, CaseConvert, JsonFormatter, CronExpr, TimeConvert } from './tools';
 import './tools/tools-shared.css';
 import './dashboard.css';
 
-type ToolName = 'password' | 'case' | 'json' | 'cron' | null;
+type ToolName = 'password' | 'case' | 'json' | 'cron' | 'time' | null;
 
 type ClockMode = 'digital' | 'analog';
 type TimeOfDay = 'dawn' | 'morning' | 'day' | 'dusk' | 'night';
@@ -122,6 +123,13 @@ const Dashboard = () => {
   const [secondDeg, setSecondDeg] = useState(0);
   const [activeTool, setActiveTool] = useState<ToolName>(null);
 
+  const openTool = (tool: NonNullable<ToolName>) => {
+    invoke('open_tool_window', { tool }).catch(() => {
+      // Tauri 不可用时（浏览器环境）降级为弹框
+      setActiveTool(tool);
+    });
+  };
+
   // 根据时间段设置背景
   const timeOfDay = useMemo((): TimeOfDay => {
     const hour = new Date().getHours();
@@ -199,91 +207,97 @@ const Dashboard = () => {
 
   return (
     <div className={`dashboard ${timeOfDay}`}>
-      <div className="dashboard-main">
-      <div className="clock-container" onClick={() => setClockMode(m => m === 'digital' ? 'analog' : 'digital')}>
-        <div className="clock-area">
-          {clockMode === 'digital' ? (
-            <div className="tech-frame">
-              <div className="tech-border">
-                <div className="time-wrapper">
-                  <div className="time">{currentTime}</div>
-                  <div className="time-shadow">{currentTime}</div>
+      {/* 上半区：时钟居中 */}
+      <div className="dashboard-clock-area">
+        <div className="clock-container" onClick={() => setClockMode(m => m === 'digital' ? 'analog' : 'digital')}>
+          <div className="clock-area">
+            {clockMode === 'digital' ? (
+              <div className="tech-frame">
+                <div className="tech-border">
+                  <div className="time-wrapper">
+                    <div className="time">{currentTime}</div>
+                    <div className="time-shadow">{currentTime}</div>
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="round-clock">
-              <div className="clock-face">
-                {Array.from({ length: 60 }, (_, i) => (
-                  <div key={`tick-${i}`} className="minute-tick" style={{ transform: `rotate(${i * 6}deg)` }}>
-                    <span className={`tick-line ${i % 5 === 0 ? 'hour-tick' : ''}`} />
-                  </div>
-                ))}
-                {Array.from({ length: 12 }, (_, i) => (
-                  <div key={`num-${i}`} className="hour-mark" style={{ transform: `rotate(${(i + 1) * 30}deg)` }}>
-                    <span className="mark-number" style={{ transform: `rotate(${-(i + 1) * 30}deg)` }}>{i + 1}</span>
-                  </div>
-                ))}
-                <div className="hand hour-hand" style={{ transform: `rotate(${hourDeg}deg)` }} />
-                <div className="hand minute-hand" style={{ transform: `rotate(${minuteDeg}deg)` }} />
-                <div className="hand second-hand" style={{ transform: `rotate(${secondDeg}deg)` }} />
-                <div className="center-dot" />
+            ) : (
+              <div className="round-clock">
+                <div className="clock-face">
+                  {Array.from({ length: 60 }, (_, i) => (
+                    <div key={`tick-${i}`} className="minute-tick" style={{ transform: `rotate(${i * 6}deg)` }}>
+                      <span className={`tick-line ${i % 5 === 0 ? 'hour-tick' : ''}`} />
+                    </div>
+                  ))}
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <div key={`num-${i}`} className="hour-mark" style={{ transform: `rotate(${(i + 1) * 30}deg)` }}>
+                      <span className="mark-number" style={{ transform: `rotate(${-(i + 1) * 30}deg)` }}>{i + 1}</span>
+                    </div>
+                  ))}
+                  <div className="hand hour-hand" style={{ transform: `rotate(${hourDeg}deg)` }} />
+                  <div className="hand minute-hand" style={{ transform: `rotate(${minuteDeg}deg)` }} />
+                  <div className="hand second-hand" style={{ transform: `rotate(${secondDeg}deg)` }} />
+                  <div className="center-dot" />
+                </div>
               </div>
+            )}
+          </div>
+          <div className="clock-hint">点击切换</div>
+          <div className="clock-info">
+            <div className="date">{currentDate} {weekDay}</div>
+            <div className="lunar-info">
+              <span className="lunar">{lunarDate}</span>
+              <span className="divider">|</span>
+              <span className="zodiac">{zodiacSign}</span>
             </div>
-          )}
-        </div>
-        <div className="clock-hint">点击切换</div>
-
-        <div className="clock-info">
-          <div className="date">{currentDate} {weekDay}</div>
-          <div className="lunar-info">
-            <span className="lunar">{lunarDate}</span>
-            <span className="divider">|</span>
-            <span className="zodiac">{zodiacSign}</span>
-          </div>
-          <div className="greeting">
-            <span className="greeting-icon">{greeting.icon}</span>
-            <span className="greeting-text">{greeting.text}</span>
+            <div className="greeting">
+              <span className="greeting-icon">{greeting.icon}</span>
+              <span className="greeting-text">{greeting.text}</span>
+            </div>
           </div>
         </div>
-        </div>
+      </div>
 
-        {/* 小工具卡片 */}
-        <div className="tools-section">
+      {/* 下半区：工具栏铺满整行 */}
+      <div className="dashboard-tools-area">
         <div className="tools-header">
           <span className="tools-title">🧰 小工具</span>
           <span className="tools-subtitle">即开即用，无需跳转</span>
         </div>
         <div className="tools-grid">
-          <div className="tool-card" onClick={() => setActiveTool('password')}>
+          <div className="tool-card" onClick={() => openTool('password')}>
             <div className="tool-icon">🔑</div>
             <div className="tool-name">随机密码</div>
             <div className="tool-desc">生成高强度随机密码</div>
           </div>
-          <div className="tool-card" onClick={() => setActiveTool('case')}>
+          <div className="tool-card" onClick={() => openTool('case')}>
             <div className="tool-icon">🐪</div>
             <div className="tool-name">驼峰转换</div>
             <div className="tool-desc">snake_case / camelCase 互转</div>
           </div>
-          <div className="tool-card" onClick={() => setActiveTool('json')}>
+          <div className="tool-card" onClick={() => openTool('json')}>
             <div className="tool-icon">📋</div>
             <div className="tool-name">JSON格式化</div>
             <div className="tool-desc">美化 / 压缩 / 校验 JSON</div>
           </div>
-          <div className="tool-card" onClick={() => setActiveTool('cron')}>
+          <div className="tool-card" onClick={() => openTool('cron')}>
             <div className="tool-icon">⏰</div>
             <div className="tool-name">Cron表达式</div>
             <div className="tool-desc">可视化生成定时表达式</div>
           </div>
+          <div className="tool-card" onClick={() => openTool('time')}>
+            <div className="tool-icon">🕐</div>
+            <div className="tool-name">时间戳转换</div>
+            <div className="tool-desc">时间戳 ↔ 日期时间互转</div>
+          </div>
         </div>
       </div>
-      </div>
 
-      {/* 小工具弹框 */}
+      {/* 小工具弹框（浏览器环境降级） */}
       <PasswordGen visible={activeTool === 'password'} onClose={() => setActiveTool(null)} />
       <CaseConvert visible={activeTool === 'case'} onClose={() => setActiveTool(null)} />
       <JsonFormatter visible={activeTool === 'json'} onClose={() => setActiveTool(null)} />
       <CronExpr visible={activeTool === 'cron'} onClose={() => setActiveTool(null)} />
+      <TimeConvert visible={activeTool === 'time'} onClose={() => setActiveTool(null)} />
     </div>
   );
 };

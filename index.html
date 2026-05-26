@@ -9,12 +9,33 @@
       html, body, #root { background: transparent !important; }
     </style>
     <script id="notify-preload-script">
-      // 通知窗：保留透明样式；非通知窗：删除预加载透明样式，恢复默认主题
-      if (location.href.includes('type=desktop-notify')) {
-        document.documentElement.style.background = 'transparent';
-      } else {
-        document.getElementById('notify-preload-style')?.remove();
-      }
+      (function () {
+        var params = new URLSearchParams(location.search);
+        var type = params.get('type') || '';
+
+        // 通知窗：保持透明
+        if (type === 'desktop-notify') {
+          document.documentElement.style.background = 'transparent';
+          return;
+        }
+
+        // 非通知窗：移除透明预加载样式
+        document.getElementById('notify-preload-style').remove();
+
+        // 尽早应用主题，消除白屏和主题闪烁
+        // cmdb-theme 由 appStore.setTheme 每次切换时同步写入 localStorage
+        var theme = 'light';
+        try {
+          theme = localStorage.getItem('cmdb-theme') || 'light';
+        } catch (e) { /* 读取失败保持 light */ }
+
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+          document.documentElement.style.background = '#1a202c';
+        } else {
+          document.documentElement.style.background = '#e9ecef';
+        }
+      })();
     </script>
   </head>
   <body>

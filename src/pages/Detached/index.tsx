@@ -11,7 +11,7 @@ import '../../index.css';
 
 const DetachedWindow = () => {
   const [searchParams] = useSearchParams();
-  const type = searchParams.get('type');
+  const type = searchParams.get('type') ?? '';
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [Component, setComponent] = useState<React.ComponentType<any> | null>(null);
   const [props, setProps] = useState<Record<string, unknown>>({});
@@ -23,12 +23,10 @@ const DetachedWindow = () => {
     setWindowLabel(label);
   }, []);
 
-  // ESC 键关闭窗口
+  // ESC 键直接关闭
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        closeCurrentWindow();
-      }
+      if (e.key === 'Escape') closeCurrentWindow();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -36,7 +34,6 @@ const DetachedWindow = () => {
 
   useEffect(() => {
     const data = searchParams.get('data');
-
     if (data) {
       try {
         setProps(JSON.parse(decodeURIComponent(data)));
@@ -45,7 +42,6 @@ const DetachedWindow = () => {
       }
     }
 
-    // 根据类型动态加载组件
     const loadComponent = async () => {
       switch (type) {
         case 'dept-project': {
@@ -93,13 +89,38 @@ const DetachedWindow = () => {
           setComponent(() => mod.default);
           break;
         }
+        case 'tool-json': {
+          const mod = await import('../Home/tools/JsonFormatter');
+          setComponent(() => mod.JsonFormatterWindow);
+          break;
+        }
+        case 'tool-password': {
+          const mod = await import('../Home/tools/PasswordGen');
+          setComponent(() => mod.PasswordGenWindow);
+          break;
+        }
+        case 'tool-case': {
+          const mod = await import('../Home/tools/CaseConvert');
+          setComponent(() => mod.CaseConvertWindow);
+          break;
+        }
+        case 'tool-cron': {
+          const mod = await import('../Home/tools/CronExpr');
+          setComponent(() => mod.CronExprWindow);
+          break;
+        }
+        case 'tool-time': {
+          const mod = await import('../Home/tools/TimeConvert');
+          setComponent(() => mod.TimeConvertWindow);
+          break;
+        }
         default:
           console.warn('未知的窗口类型:', type);
       }
     };
 
     loadComponent();
-  }, [searchParams]);
+  }, [searchParams, type]);
 
   if (!Component) {
     if (type === 'desktop-notify') {

@@ -121,6 +121,9 @@ export const useAppStore = create<AppState>()((set, get) => ({
       document.documentElement.classList.remove('dark');
     }
     
+    // 缓存主题到 localStorage，供 index.html 内联脚本在 bundle 加载前读取（消除白屏/主题闪烁）
+    try { localStorage.setItem('cmdb-theme', theme); } catch { /* */ }
+
     // 更新窗口标题栏主题
     invoke('set_window_theme', { dark: theme === 'dark' }).catch(() => {});
   },

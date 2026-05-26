@@ -24,7 +24,8 @@ const CONVERTERS: { label: string; fn: (s: string) => string }[] = [
   { label: 'SCREAMING_SNAKE', fn: toScreamingSnake },
 ];
 
-export default function CaseConvert({ visible, onClose }: CaseConvertProps) {
+/** 核心内容，可在弹框和独立窗口中复用 */
+export function CaseConvertContent() {
   const [input, setInput] = useState('');
   const [results, setResults] = useState<{ label: string; value: string }[] | null>(null);
   const [copiedIdx, setCopiedIdx] = useState(-1);
@@ -44,32 +45,46 @@ export default function CaseConvert({ visible, onClose }: CaseConvertProps) {
     } catch { /* */ }
   };
 
-  if (!visible) return null;
+  return (
+    <>
+      <textarea
+        className="cc-input"
+        placeholder="输入要转换的文本，例如：hello_world"
+        value={input}
+        onChange={e => setInput(e.target.value)}
+        rows={3}
+      />
+      <button className="cc-convert-btn" onClick={convert}>转换</button>
+      {results && (
+        <div className="cc-results">
+          {results.map((r, i) => (
+            <div key={r.label} className="cc-row">
+              <span className="cc-label">{r.label}</span>
+              <code className="cc-value">{r.value}</code>
+              <button className="cc-copy" onClick={() => copy(r.value, i)}>{copiedIdx === i ? '✓' : '复制'}</button>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
 
+/** 独立窗口版本 */
+export function CaseConvertWindow() {
+  return (
+    <div className="tool-window-root">
+      <CaseConvertContent />
+    </div>
+  );
+}
+
+/** 弹框版本 */
+export default function CaseConvert({ visible, onClose }: CaseConvertProps) {
+  if (!visible) return null;
   return (
     <ToolModal visible={visible} title="🐪 驼峰转换" onClose={onClose} size="sm">
-          <textarea
-            className="cc-input"
-            placeholder="输入要转换的文本，例如：hello_world"
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            rows={3}
-          />
-          <button className="cc-convert-btn" onClick={convert}>转换</button>
-
-          {results && (
-            <div className="cc-results">
-              {results.map((r, i) => (
-                <div key={r.label} className="cc-row">
-                  <span className="cc-label">{r.label}</span>
-                  <code className="cc-value">{r.value}</code>
-                  <button className="cc-copy" onClick={() => copy(r.value, i)}>
-                    {copiedIdx === i ? '✓' : '复制'}
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
+      <CaseConvertContent />
     </ToolModal>
   );
 }

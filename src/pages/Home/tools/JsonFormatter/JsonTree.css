@@ -1,0 +1,166 @@
+.jt-root {
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-color);
+  user-select: text;
+}
+
+/* 每一行 */
+.jt-line {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  padding: 0 2px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* 可点击折叠行 */
+.jt-collapsible {
+  cursor: text;
+}
+
+.jt-collapsible:hover {
+  background: var(--bg-hover);
+}
+
+.jt-collapsible:hover .jt-toggle {
+  color: var(--primary-color);
+}
+
+/* 折叠箭头 */
+.jt-toggle {
+  display: inline-block;
+  width: 14px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  transition: transform 0.15s;
+  flex-shrink: 0;
+  margin-right: 2px;
+}
+
+.jt-toggle--collapsed {
+  transform: rotate(-90deg);
+}
+
+/* 子节点缩进 */
+.jt-children {
+  padding-left: 20px;
+  border-left: 1px solid var(--border-color);
+  margin-left: 6px;
+}
+
+/* 关闭括号行右键折叠 */
+.jt-close-line {
+  cursor: text;
+}
+
+.jt-close-line:hover {
+  background: var(--bg-hover);
+}
+
+/* key 名 */
+.jt-key {
+  color: #e06c75;
+  flex-shrink: 0;
+}
+
+:root.dark .jt-key {
+  color: #f28b82;
+}
+
+/* 值类型颜色 */
+.jt-string {
+  color: #98c379;
+  word-break: break-all;
+  white-space: pre-wrap;
+}
+
+:root.dark .jt-string {
+  color: #a8d8a8;
+}
+
+.jt-number {
+  color: #d19a66;
+}
+
+:root.dark .jt-number {
+  color: #ffb86c;
+}
+
+.jt-bool {
+  color: #56b6c2;
+  font-weight: 600;
+}
+
+:root.dark .jt-bool {
+  color: #8be9fd;
+}
+
+.jt-null {
+  color: #abb2bf;
+  font-style: italic;
+}
+
+/* 括号 */
+.jt-bracket {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* 逗号 */
+.jt-comma {
+  color: var(--text-secondary);
+}
+
+/* 折叠摘要 */
+.jt-summary {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.jt-count {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--bg-hover);
+  padding: 0 5px;
+  border-radius: 3px;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.jt-preview {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* 展开时行内数量提示 */
+.jt-inline-count {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: 6px;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* 操作提示条 */
+.jt-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--text-muted);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 2px 8px;
+  margin-bottom: 8px;
+  user-select: none;
+}
+
+.jt-hint::before {
+  content: '🖱️';
+  font-size: 11px;
+}

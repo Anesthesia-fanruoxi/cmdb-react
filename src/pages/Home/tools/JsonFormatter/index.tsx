@@ -1,8 +1,10 @@
 /**
  * JSON 格式化工具
+ * 左右布局：左边输入（含错误高亮），右边实时显示可折叠 JSON 树
  */
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import ToolModal from '../ToolModal';
+import JsonTree from './JsonTree';
 import './style.css';
 
 interface JsonFormatterProps {
@@ -10,75 +12,214 @@ interface JsonFormatterProps {
   onClose: () => void;
 }
 
-export default function JsonFormatter({ visible, onClose }: JsonFormatterProps) {
-  const [input, setInput] = useState('');
-  const [output, setOutput] = useState('');
-  const [error, setError] = useState('');
-  const [copied, setCopied] = useState(false);
+const DEFAULT_JSON = ``;
 
-  const process = useCallback((mode: 'format' | 'compress') => {
-    setError('');
+/** 从 JSON.parse 错误信息中提取字符位置 */
+function parseErrorPosition(msg: string): number {
+  // Chrome: "... is not valid JSON" — 无位置，需要逐步试探
+  // Firefox/旧版: "JSON.parse: ... at line X column Y"
+  const lineCol = msg.match(/line (\d+) column (\d+)/);
+  if (lineCol) return -1; // 返回 -1 表示用行列定位
+
+  // "at position N" (部分环境)
+  const pos = msg.match(/at position (\d+)/);
+  if (pos) return parseInt(pos[1], 10);
+
+  return -1;
+}
+
+/** 从错误信息提取行列（Firefox 格式） */
+function parseErrorLineCol(msg: string): { line: number; col: number } | null {
+  const m = msg.match(/line (\d+) column (\d+)/);
+  if (m) return { line: parseInt(m[1], 10), col: parseInt(m[2], 10) };
+  return null;
+}
+
+/** 将字符位置转换为行列号 */
+function posToLineCol(text: string, pos: number): { line: number; col: number } {
+  const lines = text.slice(0, pos).split('\n');
+  return { line: lines.length, col: lines[lines.length - 1].length + 1 };
+}
+
+/** 用二分法找到第一个导致解析失败的字符位置 */
+function findErrorPos(text: string): number {
+  // 先尝试从错误信息提取
+  try { JSON.parse(text); return -1; } catch (e: any) {
+    const pos = parseErrorPosition(e.message);
+    if (pos >= 0) return pos;
+
+    const lc = parseErrorLineCol(e.message);
+    if (lc) {
+      const lines = text.split('\n');
+      let offset = 0;
+      for (let i = 0; i < lc.line - 1 && i < lines.length; i++) {
+        offset += lines[i].length + 1;
+      }
+      return offset + lc.col - 1;
+    }
+
+    // 二分法兜底：找最短仍报错的前缀
+    let lo = 0, hi = text.length;
+    while (lo < hi) {
+      const mid = Math.floor((lo + hi) / 2);
+      try { JSON.parse(text.slice(0, mid) + '"_"'); lo = mid + 1; } catch { hi = mid; }
+    }
+    return Math.min(lo, text.length - 1);
+  }
+}
+
+/** 转义 HTML 特殊字符 */
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/** 生成带错误高亮的 HTML，在 errPos 处插入 <mark> */
+function buildHighlightHtml(text: string, errPos: number): string {
+  if (errPos < 0 || errPos >= text.length) return escapeHtml(text);
+  const before = escapeHtml(text.slice(0, errPos));
+  const errChar = escapeHtml(text[errPos] || ' ');
+  const after = escapeHtml(text.slice(errPos + 1));
+  return `${before}<mark class="jf-err-mark">${errChar}</mark>${after}`;
+}
+
+/** 核心内容，可在弹框和独立窗口中复用 */
+export function JsonFormatterContent() {
+  const [input, setInput] = useState(DEFAULT_JSON);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [parsed, setParsed] = useState<any>(null);
+  const [error, setError] = useState('');
+  const [errPos, setErrPos] = useState(-1);
+  const [errLineCol, setErrLineCol] = useState<{ line: number; col: number } | null>(null);
+  const [copied, setCopied] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const highlightRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
     setCopied(false);
     const trimmed = input.trim();
-    if (!trimmed) { setOutput(''); return; }
-
+    if (!trimmed) { setParsed(null); setError(''); setErrPos(-1); setErrLineCol(null); return; }
     try {
-      const parsed = JSON.parse(trimmed);
-      setOutput(mode === 'format' ? JSON.stringify(parsed, null, 2) : JSON.stringify(parsed));
+      setParsed(JSON.parse(trimmed));
+      setError('');
+      setErrPos(-1);
+      setErrLineCol(null);
     } catch (e: any) {
-      setError(e.message || '无效的 JSON');
-      setOutput('');
+      const msg = e.message || '无效的 JSON';
+      setError(msg);
+      setParsed(null);
+      const pos = findErrorPos(input);
+      setErrPos(pos);
+      setErrLineCol(pos >= 0 ? posToLineCol(input, pos) : null);
     }
   }, [input]);
 
-  const format = useCallback(() => process('format'), [process]);
-  const compress = useCallback(() => process('compress'), [process]);
+  // 同步 textarea 和高亮层的滚动
+  const syncScroll = useCallback(() => {
+    if (textareaRef.current && highlightRef.current) {
+      highlightRef.current.scrollTop = textareaRef.current.scrollTop;
+      highlightRef.current.scrollLeft = textareaRef.current.scrollLeft;
+    }
+  }, []);
 
   const copy = async () => {
-    if (!output) return;
+    if (!parsed) return;
     try {
-      await navigator.clipboard.writeText(output);
+      await navigator.clipboard.writeText(JSON.stringify(parsed, null, 2));
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch { /* */ }
   };
 
-  if (!visible) return null;
+  const highlightHtml = error && errPos >= 0 ? buildHighlightHtml(input, errPos) : '';
 
   return (
-    <ToolModal visible={visible} title="📋 JSON 格式化" onClose={onClose} size="md">
-          <div className="jf-section">
-            <label className="jf-section-label">输入 JSON</label>
-            <textarea
-              className="jf-textarea"
-              placeholder='输入 JSON 字符串，例如：{"name":"test"}'
-              value={input}
-              onChange={e => { setInput(e.target.value); setError(''); setOutput(''); }}
-              rows={6}
+    <div className="jf-container">
+      {/* 左侧输入区 */}
+      <div className="jf-panel">
+        <div className="jf-panel-header">
+          <span className="jf-panel-title">输入</span>
+          {error && errLineCol && (
+            <span className="jf-err-badge">
+              ⚠️ 第 {errLineCol.line} 行 第 {errLineCol.col} 列
+            </span>
+          )}
+        </div>
+        {/* 叠加层：高亮 div + textarea */}
+        <div className="jf-editor-wrap">
+          {/* 高亮层（仅错误时显示） */}
+          {error && errPos >= 0 && (
+            <div
+              ref={highlightRef}
+              className="jf-highlight-layer"
+              dangerouslySetInnerHTML={{ __html: highlightHtml + '\n' }}
             />
-          </div>
+          )}
+          <textarea
+            ref={textareaRef}
+            className={`jf-textarea ${error ? 'jf-textarea--error' : ''}`}
+            placeholder='粘贴 JSON 字符串，例如：{"name":"test"}'
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onScroll={syncScroll}
+            spellCheck={false}
+          />
+        </div>
+      </div>
 
-          <div className="jf-actions">
-            <button className="jf-btn jf-btn-format" onClick={format}>美化</button>
-            <button className="jf-btn jf-btn-compress" onClick={compress}>压缩</button>
+      {/* 右侧树视图 */}
+      <div className="jf-panel">
+        <div className="jf-panel-header">
+          <div className="jf-panel-title-group">
+            <span className="jf-panel-title">
+              {error ? '错误' : '树视图'}
+            </span>
+            {parsed && !error && (
+              <span className="jf-hint-tag">🖱️ 右键折叠</span>
+            )}
           </div>
-
-          {error && (
-            <div className="jf-error">
+          {parsed && !error && (
+            <button className="jf-copy-btn" onClick={copy}>
+              {copied ? '✓ 已复制' : '📋 复制'}
+            </button>
+          )}
+        </div>
+        {error ? (
+          <div className="jf-error-box">
+            <div className="jf-error-main">
               <span className="jf-error-icon">⚠️</span>
-              {error}
+              <span className="jf-error-text">{error}</span>
             </div>
-          )}
-
-          {output && (
-            <div className="jf-section">
-              <div className="jf-section-label-row">
-                <label className="jf-section-label">结果</label>
-                <button className="jf-copy-btn" onClick={copy}>{copied ? '已复制' : '复制'}</button>
+            {errLineCol && (
+              <div className="jf-error-loc">
+                错误位置：第 {errLineCol.line} 行，第 {errLineCol.col} 列
               </div>
-              <pre className="jf-output">{output}</pre>
-            </div>
-          )}
+            )}
+          </div>
+        ) : (
+          <div className="jf-output" onContextMenu={e => e.preventDefault()}>
+            {parsed !== null && <JsonTree data={parsed} />}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** 独立窗口版本：直接渲染内容，填满整个窗口 */
+export function JsonFormatterWindow() {
+  return (
+    <div className="tool-window-root">
+      <JsonFormatterContent />
+    </div>
+  );
+}
+
+/** 弹框版本（首页卡片点击使用） */
+export default function JsonFormatter({ visible, onClose }: JsonFormatterProps) {
+  if (!visible) return null;
+  return (
+    <ToolModal visible={visible} title="📋 JSON 格式化" onClose={onClose} size="lg">
+      <JsonFormatterContent />
     </ToolModal>
   );
 }

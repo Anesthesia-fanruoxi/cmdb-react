@@ -34,6 +34,24 @@
   max-width: 480px;
 }
 
+.tool-modal--lg {
+  max-width: 960px;
+  width: 92vw;
+  max-height: 90vh;
+}
+
+/* 独立窗口根容器：撑满整个窗口，带内边距 */
+.tool-window-root {
+  width: 100vw;
+  height: 100vh;
+  box-sizing: border-box;
+  padding: 20px 24px;
+  background: var(--bg-color);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 @keyframes toolSlideIn {
   from { transform: translateY(20px) scale(0.96); opacity: 0; }
   to { transform: translateY(0) scale(1); opacity: 1; }
@@ -77,4 +95,7 @@
   padding: 20px;
   overflow-y: auto;
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }

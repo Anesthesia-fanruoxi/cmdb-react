@@ -73,7 +73,8 @@ fn main() {
             window::request_attention,
             window::cancel_attention,
             window::set_window_theme,
-            window::bring_window_to_front
+            window::bring_window_to_front,
+            window::open_tool_window
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
