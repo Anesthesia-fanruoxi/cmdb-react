@@ -3,8 +3,10 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { Loader2, Smartphone, Shield, Zap, Database, Camera } from 'lucide-react';
+import { Loader2, Smartphone, Shield, Zap, Database, Camera, Circle } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
+
+const FAB_VISIBLE_KEY = 'cmdb-fab-visible';
 import { updateProfile, getProfile } from '../../services/auth';
 import { isTauriEnv, hasDeviceCredentials, clearDeviceCredentials } from '../../services/machine';
 import { getUserAvatar, setUserAvatar } from '../../services/storage';
@@ -26,6 +28,7 @@ const ProfileDrawer = ({ visible, onClose }: ProfileDrawerProps) => {
   const [checkingDevice, setCheckingDevice] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isClosing, setIsClosing] = useState(false);
+  const [fabVisible, setFabVisible] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // 原始表单数据（用于比较是否修改）
@@ -43,7 +46,23 @@ const ProfileDrawer = ({ visible, onClose }: ProfileDrawerProps) => {
       loadProfile();
       checkDeviceStatus();
       loadAvatar();
+      // 加载悬浮球状态
+      try {
+        const v = localStorage.getItem(FAB_VISIBLE_KEY);
+        setFabVisible(v === null ? true : v === 'true');
+      } catch { setFabVisible(true); }
     }
+  }, [visible]);
+
+  // 监听悬浮球状态变化（长按隐藏时同步开关）
+  useEffect(() => {
+    if (!visible) return;
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (typeof detail === 'boolean') setFabVisible(detail);
+    };
+    window.addEventListener('fab-visible-change', handler);
+    return () => window.removeEventListener('fab-visible-change', handler);
   }, [visible]);
 
   const loadProfile = async () => {
@@ -139,6 +158,14 @@ const ProfileDrawer = ({ visible, onClose }: ProfileDrawerProps) => {
 
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
+  };
+
+  const toggleFabVisible = () => {
+    const next = !fabVisible;
+    setFabVisible(next);
+    try { localStorage.setItem(FAB_VISIBLE_KEY, String(next)); } catch { /* */ }
+    // 同步浮球组件（同页面自定义事件）
+    window.dispatchEvent(new CustomEvent('fab-visible-change', { detail: next }));
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -284,6 +311,29 @@ const ProfileDrawer = ({ visible, onClose }: ProfileDrawerProps) => {
                       onChange={e => handleChange('email', e.target.value)}
                       placeholder="请输入邮箱"
                     />
+                  </div>
+                </div>
+
+                {/* 界面设置 */}
+                <div className="form-section">
+                  <div className="form-section-title">界面设置</div>
+                  <div className="form-item fab-toggle-item">
+                    <label>
+                      <Circle size={16} /> 悬浮球
+                    </label>
+                    <div className="fab-toggle-wrap">
+                      <span className="fab-toggle-hint">{fabVisible ? '已开启' : '已关闭'}</span>
+                      <button
+                        className={`fab-toggle-btn ${fabVisible ? 'fab-toggle-btn--on' : ''}`}
+                        onClick={toggleFabVisible}
+                        type="button"
+                      >
+                        <span className="fab-toggle-knob" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="fab-toggle-tips">
+                    长按悬浮球可快速关闭，关闭后可在此处重新打开
                   </div>
                 </div>
                 

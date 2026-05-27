@@ -9,6 +9,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { invoke } from '@tauri-apps/api/core';
 import { Wrench, X, Pencil, Check } from 'lucide-react';
 import { useMenuStore } from '../../stores/menuStore';
+import { alert } from '../ConfirmModal';
 import type { MenuItem } from '../../types/menu';
 import './style.css';
 
@@ -23,6 +24,10 @@ const TOOLS = [
 const MAX_SHORTCUTS = 8;
 const SHORTCUT_KEY = 'cmdb-fab-shortcuts';
 const POSITION_KEY = 'cmdb-fab-position';
+const VISIBLE_KEY = 'cmdb-fab-visible';
+const FAB_HIDE_TIP_KEY = 'cmdb-fab-hide-tip-shown';
+const LONG_PRESS_MS = 500;
+const DRAG_THRESHOLD = 5;
 const FAB_SIZE = 44;
 const ITEM_SIZE = 44;   // 子按钮尺寸
 const ITEM_GAP = 8;     // 子按钮间距
@@ -38,6 +43,21 @@ function loadPosition(): { x: number; y: number } | null {
 }
 function savePosition(pos: { x: number; y: number }) {
   try { localStorage.setItem(POSITION_KEY, JSON.stringify(pos)); } catch { /* */ }
+}
+function loadVisible(): boolean {
+  try {
+    const v = localStorage.getItem(VISIBLE_KEY);
+    return v === null ? true : v === 'true';
+  } catch { return true; }
+}
+function saveVisible(v: boolean) {
+  try { localStorage.setItem(VISIBLE_KEY, String(v)); } catch { /* */ }
+}
+function hasTipShown(): boolean {
+  try { return localStorage.getItem(FAB_HIDE_TIP_KEY) === 'true'; } catch { return false; }
+}
+function markTipShown() {
+  try { localStorage.setItem(FAB_HIDE_TIP_KEY, 'true'); } catch { /* */ }
 }
 
 function flattenMenuLeaves(menus: MenuItem[]): MenuItem[] {
@@ -70,13 +90,31 @@ export default function FloatingActions() {
     return { x: window.innerWidth - FAB_SIZE - 24, y: 80 };
   });
   const [dragging, setDragging] = useState(false);
+  const [visible, setVisible] = useState(loadVisible);
 
   const dragOffset = useRef({ dx: 0, dy: 0 });
   const hasDragged = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { menuList } = useMenuStore();
+
+  // 监听可见性变化（同页面 + 跨标签页）
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (typeof detail === 'boolean') {
+        setVisible(detail);
+        if (detail) {
+          const saved = loadPosition();
+          if (saved) setPos(saved);
+        }
+      }
+    };
+    window.addEventListener('fab-visible-change', handler);
+    return () => window.removeEventListener('fab-visible-change', handler);
+  }, []);
 
   const isDashboard = location.pathname === '/' || location.pathname === '/dashboard';
   const { xDir, yDir } = getDir(pos);
@@ -94,25 +132,69 @@ export default function FloatingActions() {
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
-  // 拖拽
+  // 长按隐藏浮球
+  const handleLongPress = useCallback(() => {
+    savePosition(pos);
+    saveVisible(false);
+    setVisible(false);
+    setOpen(false);
+    // 通知 ProfileDrawer 同步开关状态
+    window.dispatchEvent(new CustomEvent('fab-visible-change', { detail: false }));
+    // 首次关闭时显示提示
+    if (!hasTipShown()) {
+      markTipShown();
+      setTimeout(() => {
+        alert('如需重新打开，请点击头像 → 个人信息 → 悬浮球', {
+          title: '悬浮球已关闭',
+          type: 'info',
+        });
+      }, 100);
+    }
+  }, [pos]);
+
+  // 拖拽 + 长按检测
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button !== 0) return;
     e.preventDefault();
     hasDragged.current = false;
     dragOffset.current = { dx: e.clientX - pos.x, dy: e.clientY - pos.y };
     setDragging(true);
-  }, [pos]);
+
+    // 启动长按计时器
+    longPressTimer.current = setTimeout(() => {
+      if (!hasDragged.current) {
+        handleLongPress();
+      }
+    }, LONG_PRESS_MS);
+  }, [pos, handleLongPress]);
 
   useEffect(() => {
     if (!dragging) return;
+    const startX = dragOffset.current.dx + pos.x;
+    const startY = dragOffset.current.dy + pos.y;
     const onMove = (e: MouseEvent) => {
-      hasDragged.current = true;
-      const nx = Math.max(0, Math.min(window.innerWidth - FAB_SIZE, e.clientX - dragOffset.current.dx));
-      const ny = Math.max(0, Math.min(window.innerHeight - FAB_SIZE, e.clientY - dragOffset.current.dy));
-      setPos({ x: nx, y: ny });
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      // 超过阈值才算拖拽
+      if (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD) {
+        hasDragged.current = true;
+        if (longPressTimer.current) {
+          clearTimeout(longPressTimer.current);
+          longPressTimer.current = null;
+        }
+      }
+      if (hasDragged.current) {
+        const nx = Math.max(0, Math.min(window.innerWidth - FAB_SIZE, e.clientX - dragOffset.current.dx));
+        const ny = Math.max(0, Math.min(window.innerHeight - FAB_SIZE, e.clientY - dragOffset.current.dy));
+        setPos({ x: nx, y: ny });
+      }
     };
     const onUp = () => {
       setDragging(false);
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
+        longPressTimer.current = null;
+      }
       setPos(p => { savePosition(p); return p; });
     };
     window.addEventListener('mousemove', onMove);
@@ -156,7 +238,8 @@ export default function FloatingActions() {
     .map(path => allLeaves.find(m => m.path === path))
     .filter(Boolean) as MenuItem[];
 
-  if (isDashboard) return null;
+  // 隐藏状态或仪表盘页面不渲染
+  if (!visible || isDashboard) return null;
 
   // 子按钮偏移计算
   // X 轴：沿水平方向，step = ITEM_SIZE + ITEM_GAP
@@ -180,7 +263,7 @@ export default function FloatingActions() {
         className={`fab-main ${open ? 'fab-main--open' : ''} ${dragging ? 'fab-main--dragging' : ''}`}
         onMouseDown={onMouseDown}
         onClick={handleMainClick}
-        title="快捷工具（拖拽可移动）"
+        title="快捷工具（拖拽移动，长按隐藏）"
       >
         {open ? <X size={18} /> : <Wrench size={18} />}
       </button>

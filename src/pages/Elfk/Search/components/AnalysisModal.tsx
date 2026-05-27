@@ -2,7 +2,7 @@
  * 字段分析弹框
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { analyzeField } from '../../../../services/elfk/search';
 import toast from '../../../../components/Toast';
@@ -27,6 +27,10 @@ const AnalysisModal = ({ visible, currentView, searchParams, logs, total, onClos
   const [endDelimiter, setEndDelimiter] = useState('');
   const [loading, setLoading] = useState(false);
   const [sampleValue, setSampleValue] = useState<string>('');
+  const sampleRef = useRef<HTMLPreElement>(null);
+
+  // 划词选择弹出状态
+  const [selectionPopup, setSelectionPopup] = useState<{ x: number; y: number; text: string } | null>(null);
 
   // 获取可分析的字段
   const fields = useMemo(() => {
@@ -56,6 +60,7 @@ const AnalysisModal = ({ visible, currentView, searchParams, logs, total, onClos
     setSelectedField(fieldName);
     setStartDelimiter('');
     setEndDelimiter('');
+    setSelectionPopup(null);
     
     if (!fieldName || !logs.length) {
       setSampleValue('');
@@ -72,6 +77,55 @@ const AnalysisModal = ({ visible, currentView, searchParams, logs, total, onClos
       }
     }
     setSampleValue('未找到示例值');
+  };
+
+  // 划词选择检测
+  useEffect(() => {
+    if (!visible) { setSelectionPopup(null); return; }
+
+    const handleMouseUp = () => {
+      setTimeout(() => {
+        const selection = window.getSelection();
+        const text = selection?.toString().trim();
+        // 必须在示例数据区域内选择
+        if (!text || !sampleRef.current?.contains(selection?.anchorNode ?? null)) {
+          setSelectionPopup(null);
+          return;
+        }
+        const range = selection!.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        setSelectionPopup({
+          x: rect.left + rect.width / 2,
+          y: rect.top - 8,
+          text,
+        });
+      }, 10);
+    };
+
+    const handleMouseDown = (e: MouseEvent) => {
+      if (!(e.target as HTMLElement).closest('.delimiter-fill-btn')) {
+        setSelectionPopup(null);
+      }
+    };
+
+    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => {
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mousedown', handleMouseDown);
+    };
+  }, [visible]);
+
+  // 将选中文本填入分隔符
+  const fillDelimiter = (type: 'start' | 'end') => {
+    if (!selectionPopup) return;
+    if (type === 'start') {
+      setStartDelimiter(selectionPopup.text);
+    } else {
+      setEndDelimiter(selectionPopup.text);
+    }
+    setSelectionPopup(null);
+    window.getSelection()?.removeAllRanges();
   };
 
   const handleAnalyze = async () => {
@@ -130,6 +184,8 @@ const AnalysisModal = ({ visible, currentView, searchParams, logs, total, onClos
     setStartDelimiter('');
     setEndDelimiter('');
     setSampleValue('');
+    setSelectionPopup(null);
+    window.getSelection()?.removeAllRanges();
     onClose();
   };
 
@@ -157,7 +213,29 @@ const AnalysisModal = ({ visible, currentView, searchParams, logs, total, onClos
           {sampleValue && (
             <div className="form-section">
               <label>示例数据</label>
-              <pre className="sample-value">{sampleValue}</pre>
+              <pre ref={sampleRef} className="sample-value">{sampleValue}</pre>
+            </div>
+          )}
+
+          {/* 划词选择弹出按钮 */}
+          {selectionPopup && (
+            <div
+              className="delimiter-fill-btn-group"
+              style={{
+                position: 'fixed',
+                left: selectionPopup.x,
+                top: selectionPopup.y,
+                transform: 'translate(-50%, -100%)',
+                zIndex: 9999,
+              }}
+              onMouseDown={e => e.preventDefault()}
+            >
+              <button className="delimiter-fill-btn start" onClick={() => fillDelimiter('start')}>
+                填入开始分隔符
+              </button>
+              <button className="delimiter-fill-btn end" onClick={() => fillDelimiter('end')}>
+                填入结束分隔符
+              </button>
             </div>
           )}
 

@@ -508,3 +508,75 @@
 .profile-form .form-item.readonly {
   display: none;
 }
+
+/* 悬浮球开关 */
+.fab-toggle-item {
+  flex-direction: row !important;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.fab-toggle-item > label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-color);
+  margin-bottom: 0 !important;
+}
+
+.fab-toggle-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fab-toggle-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.fab-toggle-btn {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  border: none;
+  background: #ccc;
+  cursor: pointer;
+  transition: background 0.2s;
+  padding: 0;
+}
+
+.fab-toggle-btn--on {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+}
+
+.fab-toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s;
+}
+
+.fab-toggle-btn--on .fab-toggle-knob {
+  transform: translateX(20px);
+}
+
+.fab-toggle-tips {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 8px;
+  padding: 0 4px;
+  line-height: 1.5;
+}
