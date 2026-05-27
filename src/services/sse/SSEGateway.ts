@@ -11,6 +11,7 @@ import type {
   Subscription,
 } from './types';
 import { SubscriptionManager } from './SubscriptionManager';
+import { getToken } from '../storage/tokenStorage';
 
 /** 事件处理器类型 */
 type EventHandler = (...args: unknown[]) => void;
@@ -81,7 +82,8 @@ export class SSEGateway {
     }
 
     this.setConnectionState('connecting');
-    const url = `${this.config.url}?token=${getToken()}`;
+    const token = getToken();
+    const url = `${this.config.url}?token=${token || ''}`;
 
     this.eventSource = new EventSource(url);
 
@@ -89,7 +91,7 @@ export class SSEGateway {
     this.eventSource.addEventListener('connected', (event) => {
       try {
         const data = JSON.parse(event.data);
-        this.connectionId = data.connection_id;
+        this.connectionId = data.data?.connection_id || data.connection_id;
         this.reconnectAttempts = 0;
         this.setConnectionState('open');
         this.lastHeartbeat = Date.now();
@@ -232,14 +234,5 @@ export class SSEGateway {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
-  }
-}
-
-/** 获取 Token */
-function getToken(): string {
-  try {
-    return localStorage.getItem('token') || '';
-  } catch {
-    return '';
   }
 }

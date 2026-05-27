@@ -68,9 +68,6 @@ const ProjectDetailDrawer = ({ visible, project, onClose, onRefresh }: Props) =>
         if (data) {
           setDetail({ ...data.project_info, ...project, total_updates: data.total_updates || 0, last_update: data.last_update || '' });
           setRecords(data.records || []);
-          // 检查是否还有运行中的任务
-          const hasRunning = data.records?.some(r => r.status === 'running' || r.status === 'pending');
-          if (!hasRunning) closeSSE();
         }
       },
       () => {

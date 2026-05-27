@@ -11,6 +11,7 @@ import type {
   SubscribeRequest,
   UnsubscribeRequest,
 } from './types';
+import { getToken } from '../storage/tokenStorage';
 
 /** 订阅条目（内部管理用） */
 interface SubscriptionEntry {
@@ -207,14 +208,5 @@ export class SubscriptionManager {
     } catch (error) {
       console.error('[SSE Subscription] 取消订阅请求失败:', error);
     }
-  }
-}
-
-/** 获取 Token */
-function getToken(): string {
-  try {
-    return localStorage.getItem('token') || '';
-  } catch {
-    return '';
   }
 }
