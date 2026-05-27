@@ -163,9 +163,9 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"
-          DESCRIPTION="1、sql审批流程中添加了sse呼吸灯，用于提示当前sse连接状态。
-          2、添加了sql审批通知（系统卡片通知和消息中心通知），可以通过消息中心快捷审批跳转至sql审批菜单。
-          3、添加了页面水印"
+          DESCRIPTION="1、在首页添加了小工具卡片，后续根据需求添加常用小工具，长按可以拖拽排序。
+          2、新增了悬浮球，可自由拖拽摆放，点击会展开小工具，和常用菜单快速跳转，长按隐藏，再次启用可在个人信息中打开。
+          3、再elfk中的数据分析里面新增了划词选中填入分割。"
 
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \
