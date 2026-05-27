@@ -4,6 +4,7 @@
 
 import { apiClient } from './request';
 import { getToken } from './storage/tokenStorage';
+import { createGatewayConnection } from './sse/compat';
 
 // 任务类型定义
 export interface Task {
@@ -62,7 +63,18 @@ export function getTaskDetail(
   onMessage: (data: Task) => void,
   onError?: () => void,
   onComplete?: () => void
-): EventSource {
+): { close: () => void } {
+  // 网关模式
+  const gatewayResult = createGatewayConnection<Task>(
+    'tasks.detail',
+    { task_id: taskId },
+    onMessage,
+    () => onError?.(),
+    onComplete,
+  );
+  if (gatewayResult) return gatewayResult;
+
+  // 旧模式
   const token = getToken();
   const baseUrl = import.meta.env.VITE_SSE_BASE_URL || import.meta.env.VITE_API_BASE_URL || '';
   const url = `${baseUrl}/tasks/detail?id=${taskId}&token=${token}`;

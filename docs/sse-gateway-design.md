@@ -133,36 +133,36 @@ Authorization: Bearer {token}
 
 ```typescript
 interface SubscribeRequest {
-  connection_id: string;           // SSE 连接 ID
-  subscriptions: Subscription[];   // 订阅列表
+    connection_id: string;           // SSE 连接 ID
+    subscriptions: Subscription[];   // 订阅列表
 }
 
 interface Subscription {
-  id: string;                      // 订阅唯一ID (客户端生成)
-  channel: string;                 // 通道名称
-  params: Record<string, unknown>; // 订阅参数
+    id: string;                      // 订阅唯一ID (客户端生成)
+    channel: string;                 // 通道名称
+    params: Record<string, unknown>; // 订阅参数
 }
 
 // 示例
 {
-  "connection_id": "conn_abc123",
-  "subscriptions": [
+    "connection_id": "conn_abc123",
+    "subscriptions": [
     {
-      "id": "sub_sql_apply_001",
-      "channel": "sql.apply.list",
-      "params": {
-        "submitter_name": "",
-        "status": ""
-      }
+        "id": "sub_sql_apply_001",
+        "channel": "sql.apply.list",
+        "params": {
+            "submitter_name": "",
+            "status": ""
+        }
     },
     {
-      "id": "sub_task_list_001",
-      "channel": "tasks.list",
-      "params": {
-        "type": "analysis"
-      }
+        "id": "sub_task_list_001",
+        "channel": "tasks.list",
+        "params": {
+            "type": "analysis"
+        }
     }
-  ]
+]
 }
 ```
 
@@ -1732,3 +1732,666 @@ SSEGateway.getInstance().on('message', (msg) => {
 4. **渐进迁移**：兼容层确保平滑过渡，降低风险
 
 预计总工期：**5-8 周**
+
+---
+
+## 11. 服务端事件驱动实现（已落地）
+
+### 11.1 设计思路
+
+**核心问题**：原有 SSE 端点使用定时轮询（2-3 秒查一次 MySQL），大部分查询是浪费的。
+
+**解决方案**：事件驱动 + 兜底轮询
+
+```
+业务写入（创建/更新/删除）
+    ↓
+发布事件 → Redis Pub/Sub
+    ↓
+SSE 端点收到事件 → 查 MySQL → 推给客户端
+    ↓
+兜底轮询（30秒，防止事件丢失）
+```
+
+**效果**：没人操作时 0 次查询/秒，有人操作时 1 次查询/秒推给所有人。
+
+### 11.2 事件总线实现
+
+#### 文件：`pkg/eventbus/eventbus.go`
+
+```go
+package eventbus
+
+import (
+    "cmdb/pkg/database"
+    "context"
+    "github.com/redis/go-redis/v9"
+)
+
+// 频道常量
+const (
+    SQLApply  = "sse:events:sql_apply"  // SQL审批
+    SQLExport = "sse:events:sql_export" // SQL导出
+    Task      = "sse:events:task"       // 任务中心
+    ProUpdate = "sse:events:pro_update" // 项目发版
+    DataBI    = "sse:events:databi"     // DataBI刷新
+)
+
+// Publish 发布事件
+func Publish(ctx context.Context, channel string) error {
+    return database.RDB.Publish(ctx, channel, "changed").Err()
+}
+
+// Subscribe 订阅指定频道
+func Subscribe(ctx context.Context, channels ...string) *redis.PubSub {
+    return database.RDB.Subscribe(ctx, channels...)
+}
+```
+
+### 11.3 事件发布点
+
+在每个业务写入点（Create/Update/Delete）后发布事件：
+
+```go
+// 示例：api/sql/apply/applyCreate.go
+// 创建审批后
+if err := database.DB.Create(apply).Error; err != nil {
+    // 错误处理...
+}
+
+// 发布事件（通知SSE端点数据已变化）
+go eventbus.Publish(context.Background(), eventbus.SQLApply)
+
+// 发送飞书通知...
+```
+
+#### 事件发布点清单
+
+| 模块 | 文件 | 触发时机 | 事件频道 |
+|------|------|---------|---------|
+| SQL审批 | `api/sql/apply/applyCreate.go` | 创建审批 | `SQLApply` |
+| SQL审批 | `api/sql/apply/applyUpdate.go` | 更新审批状态 | `SQLApply` |
+| SQL审批 | `api/sql/apply/applyFeiShuCallback.go` | 飞书卡片回调 | `SQLApply` |
+| SQL导出 | `api/sql/export/exportCreate.go` | 创建导出 | `SQLExport` |
+| SQL导出 | `api/sql/export/exportUpdate.go` | 更新导出状态 | `SQLExport` |
+| 任务中心 | `api/task/taskManager.go` | 任务创建 | `Task` |
+| 任务中心 | `api/task/taskManager.go` | 任务状态变更 | `Task` |
+| 任务中心 | `api/task/taskManager.go` | 任务完成/失败 | `Task` |
+| 任务中心 | `api/task/taskManager.go` | 任务取消 | `Task` |
+| 发版记录 | `api/assets/proUpdate/proUpdateRecords.go` | 任务信息更新 | `ProUpdate` |
+| 发版记录 | `api/assets/proUpdate/proUpdateRecords.go` | 步骤信息更新 | `ProUpdate` |
+| DataBI | `api/sql/databi/databiCache.go` | 刷新状态保存 | `DataBI` |
+
+### 11.4 SSE 端点改造
+
+#### 改造前（轮询模式）
+
+```go
+ticker := time.NewTicker(3 * time.Second)
+defer ticker.Stop()
+
+for {
+    select {
+    case <-ctx.Done():
+        return
+    case <-ticker.C:
+        data := queryDB()  // 每次都查库
+        push(data)
+    }
+}
+```
+
+#### 改造后（事件驱动 + 兜底）
+
+```go
+// 订阅Redis事件频道
+pubsub := database.RDB.Subscribe(ctx, eventbus.SQLApply)
+defer pubsub.Close()
+
+// 兜底轮询（30秒）
+ticker := time.NewTicker(30 * time.Second)
+defer ticker.Stop()
+
+eventCh := pubsub.Channel()
+
+for {
+    select {
+    case <-ctx.Done():
+        return
+    case <-eventCh:
+        // 收到事件，查库推送
+        data := queryDB()
+        push(data)
+    case <-ticker.C:
+        // 兜底：30秒还没事件也查一次
+        data := queryDB()
+        push(data)
+    }
+}
+```
+
+### 11.5 改造后的 SSE 端点
+
+| 端点 | 兜底间隔 | 改造说明 |
+|------|---------|---------|
+| `/sql/apply/list` | 30 秒 | 订阅 `SQLApply` 频道 |
+| `/sql/export/list` | 30 秒 | 订阅 `SQLExport` 频道 |
+| `/tasks/list` | 10 秒 | 订阅 `Task` 频道 |
+| `/tasks/detail` | 10 秒 | 订阅 `Task` 频道 |
+| `/assets/proUpdate/list-detail` | 30 秒 | 订阅 `ProUpdate` 频道 |
+| `/assets/proUpdate/records-detail` | 10 秒 | 订阅 `ProUpdate` 频道 |
+| `/assets/proUpdate/mobile/sse` | 10 秒 | 订阅 `ProUpdate` 频道 |
+| `/sql/databi/tables` | 1 秒 | 订阅 `DataBI` 频道（刷新过程需实时） |
+
+### 11.6 事件流程图
+
+```
+用户提交SQL审批
+    ↓
+POST /api/sql/apply/create
+    ↓
+database.DB.Create(apply)
+    ↓
+go eventbus.Publish(ctx, "sse:events:sql_apply")
+    ↓
+Redis Pub/Sub 广播
+    ↓
+所有订阅了 SQLApply 的 SSE 连接收到通知
+    ↓
+各连接查询 MySQL，获取最新数据
+    ↓
+比较 hash，有变化则推送给客户端
+```
+
+### 11.7 性能对比
+
+| 指标 | 改造前 | 改造后 |
+|------|--------|--------|
+| 10 用户在线，无人操作 | 3.3 次/秒查询 | **0 次/秒** |
+| 10 用户在线，有人操作 | 3.3 次/秒查询 | **1 次/秒** |
+| 推送延迟 | 2-3 秒（轮询间隔） | **< 100ms**（事件驱动） |
+| 事件丢失防护 | 无 | **兜底轮询**（1-30 秒） |
+
+### 11.8 新增模块接入指南
+
+新增一个实时推送功能，只需 3 步：
+
+#### 第 1 步：在 eventbus 中注册频道
+
+```go
+// pkg/eventbus/eventbus.go
+const (
+    // ... 已有频道
+    NewModule = "sse:events:new_module"  // 新模块
+)
+```
+
+#### 第 2 步：在写入点发布事件
+
+```go
+// api/newmodule/create.go
+if err := database.DB.Create(&record).Error; err != nil {
+    // 错误处理
+}
+
+// 发布事件
+go eventbus.Publish(context.Background(), eventbus.NewModule)
+```
+
+#### 第 3 步：SSE 端点订阅事件
+
+```go
+// api/newmodule/list.go
+pubsub := database.RDB.Subscribe(ctx, eventbus.NewModule)
+defer pubsub.Close()
+
+ticker := time.NewTicker(30 * time.Second) // 兜底
+defer ticker.Stop()
+
+eventCh := pubsub.Channel()
+
+for {
+    select {
+    case <-ctx.Done():
+        return
+    case <-eventCh:
+        data := queryDB()
+        push(data)
+    case <-ticker.C:
+        data := queryDB()
+        push(data)
+    }
+}
+```
+
+### 11.9 文件变更清单
+
+#### 新增文件
+
+| 文件 | 说明 |
+|------|------|
+| `pkg/eventbus/eventbus.go` | 事件总线（Redis Pub/Sub 封装） |
+
+#### 修改文件
+
+| 文件 | 改动 |
+|------|------|
+| `api/sql/apply/applyCreate.go` | 新增事件发布 |
+| `api/sql/apply/applyUpdate.go` | 新增事件发布 |
+| `api/sql/apply/applyFeiShuCallback.go` | 新增事件发布 |
+| `api/sql/apply/applyList.go` | SSE 改为事件驱动 |
+| `api/sql/export/exportCreate.go` | 新增事件发布 |
+| `api/sql/export/exportUpdate.go` | 新增事件发布（2处） |
+| `api/sql/export/exportList.go` | SSE 改为事件驱动 |
+| `api/task/taskManager.go` | 新增事件发布（4处） |
+| `api/task/taskAPI.go` | 2 个 SSE 端点改为事件驱动 |
+| `api/assets/proUpdate/proUpdateRecords.go` | 新增事件发布（2处） |
+| `api/assets/proUpdate/proUpdateListDetail.go` | SSE 改为事件驱动 |
+| `api/assets/proUpdate/proUpdateRecordDetail.go` | SSE 改为事件驱动 |
+| `api/assets/proUpdate/proUpdateMobile.go` | SSE 改为事件驱动 |
+| `api/sql/databi/databiCache.go` | 新增事件发布 |
+| `api/sql/databi/databiTables.go` | SSE 改为事件驱动 |
+
+### 11.10 后续演进方向
+
+当前事件驱动已解决"频繁查库"问题，后续可演进：
+
+1. ~~**SSE 网关合并**：将 8 个独立 SSE 端点合并为 1 个网关端点（解决浏览器 6 连接限制）~~ ✅ 已实现
+2. **事件携带数据**：事件消息中携带变更摘要，SSE 端点可跳过部分查询
+3. **内存事件总线**：对于单实例部署，可用 Go Channel 替代 Redis Pub/Sub，减少网络开销
+4. **事件持久化**：将事件写入 Redis List，支持事件重放和审计
+
+---
+
+## 12. SSE 网关实现（已落地）
+
+### 12.1 设计思路
+
+**核心问题**：原有 8 个独立 SSE 端点，每个页面打开都创建新连接，浏览器 6 连接限制导致排队。
+
+**解决方案**：统一 SSE 网关 + 通道订阅模式
+
+```
+客户端（1 个 SSE 连接）
+    │
+    ├─ GET /sse/gateway?token=xxx    → 建立连接
+    ├─ POST /sse/subscribe            → 订阅通道
+    └─ POST /sse/unsubscribe          → 取消订阅
+    │
+服务端
+    │
+    ├─ Gateway 管理所有连接
+    ├─ Channel 监听事件（Redis Pub/Sub）
+    └─ 收到事件 → 查数据库 → 推给订阅者
+```
+
+### 12.2 目录结构
+
+```
+api/sse/
+├── message.go              # 消息类型定义
+├── gateway.go              # 连接管理 + 订阅管理 + 广播
+├── handler.go              # HTTP 处理器
+└── channels/
+    ├── channel.go          # Channel 接口
+    ├── sql_apply.go        # SQL审批通道
+    ├── sql_export.go       # SQL导出通道
+    ├── tasks.go            # 任务列表通道
+    ├── tasks_detail.go     # 任务详情通道
+    ├── pro_update.go       # 发版记录详情通道
+    ├── databi.go           # DataBI表树通道
+    └── monitor.go          # 监控指标通道
+
+routers/
+├── sse.go                  # SSE 路由注册
+└── path/
+    └── sse.go              # 路径常量
+```
+
+### 12.3 核心结构
+
+#### 连接管理（`api/sse/gateway.go`）
+
+```go
+// Connection SSE 连接
+type Connection struct {
+    ID            string
+    UserID        int64
+    Writer        chan Message          // 消息缓冲区
+    Subscriptions map[string]*Subscription // 订阅列表
+    CreatedAt     time.Time
+}
+
+// Gateway SSE 网关
+type Gateway struct {
+    connections map[string]*Connection  // connID -> Connection
+    userConns   map[int64][]string      // userID -> connectionIDs
+}
+```
+
+#### 通道接口（`api/sse/channels/channel.go`）
+
+```go
+type Channel interface {
+    Name() string
+    StartWatching(conn *Connection, subID string, params map[string]interface{}, userID int64)
+    StopWatching(connID string, subID string)
+}
+```
+
+### 12.4 API 接口
+
+#### 建立 SSE 连接
+
+```
+GET /sse/gateway?token={jwt_token}
+```
+
+**连接建立后，服务端发送：**
+```json
+{
+  "event": "connected",
+  "data": {
+    "connection_id": "conn_abc123",
+    "server_time": 1716800000
+  }
+}
+```
+
+#### 订阅通道
+
+```
+POST /sse/subscribe
+Content-Type: application/json
+Authorization: Bearer {token}
+```
+
+```json
+{
+  "connection_id": "conn_abc123",
+  "subscriptions": [
+    {
+      "id": "sub_sql_apply_001",
+      "channel": "sql.apply.list",
+      "params": {
+        "submitter_name": ""
+      }
+    },
+    {
+      "id": "sub_tasks_list_001",
+      "channel": "tasks.list",
+      "params": {
+        "type": "analysis"
+      }
+    }
+  ]
+}
+```
+
+#### 取消订阅
+
+```
+POST /sse/unsubscribe
+Content-Type: application/json
+Authorization: Bearer {token}
+```
+
+```json
+{
+  "connection_id": "conn_abc123",
+  "subscription_ids": ["sub_sql_apply_001"]
+}
+```
+
+#### 服务端推送消息格式
+
+```json
+{
+  "subscription_id": "sub_sql_apply_001",
+  "channel": "sql.apply.list",
+  "event": "data",
+  "data": { ... },
+  "timestamp": 1716800000
+}
+```
+
+### 12.5 通道实现
+
+| 通道名 | 文件 | 事件源 | 兜底间隔 |
+|--------|------|--------|---------|
+| `sql.apply.list` | `channels/sql_apply.go` | Redis Pub/Sub | 30 秒 |
+| `sql.export.list` | `channels/sql_export.go` | Redis Pub/Sub | 30 秒 |
+| `tasks.list` | `channels/tasks.go` | Redis Pub/Sub | 10 秒 |
+| `tasks.detail` | `channels/tasks_detail.go` | Redis Pub/Sub | 10 秒 |
+| `assets.record.detail` | `channels/pro_update.go` | Redis Pub/Sub | 10 秒 |
+| `sql.databi.tables` | `channels/databi.go` | Redis Pub/Sub | 1 秒 |
+| `monitor.metrics` | `channels/monitor.go` | 轮询（无事件源） | 5 秒 |
+
+#### 通道实现示例（SQL审批）
+
+```go
+func (c *SQLApplyChannel) StartWatching(conn *sse.Connection, subID string, params map[string]interface{}, userID int64) {
+    ctx, cancel := context.WithCancel(context.Background())
+    defer cancel()
+
+    // 发送初始数据
+    data := c.getInitialData(params, userID)
+    c.sendToConn(conn, subID, data)
+
+    // 订阅 Redis 事件
+    pubsub := database.RDB.Subscribe(ctx, eventbus.SQLApply)
+    defer pubsub.Close()
+
+    eventCh := pubsub.Channel()
+    ticker := time.NewTicker(30 * time.Second) // 兜底
+    defer ticker.Stop()
+
+    for {
+        select {
+        case <-ctx.Done():
+            return
+        case <-eventCh:
+            // 收到事件，查库推送
+            data := c.getInitialData(params, userID)
+            c.sendToConn(conn, subID, data)
+        case <-ticker.C:
+            // 兜底：30秒还没事件也查一次
+            data := c.getInitialData(params, userID)
+            c.sendToConn(conn, subID, data)
+        }
+    }
+}
+```
+
+### 12.6 路由注册
+
+```go
+// routers/sse.go
+func InitSSERoutes(mux *http.ServeMux) {
+    gateway := sse.NewGateway()
+    handler := sse.NewHandler(gateway)
+
+    // 注册通道
+    handler.RegisterChannel(channels.NewSQLApplyChannel())
+    handler.RegisterChannel(channels.NewSQLExportChannel())
+    handler.RegisterChannel(channels.NewTasksChannel())
+    handler.RegisterChannel(channels.NewTaskDetailChannel())
+    handler.RegisterChannel(channels.NewProUpdateDetailChannel())
+    handler.RegisterChannel(channels.NewDataBITablesChannel())
+    handler.RegisterChannel(channels.NewMonitorMetricsChannel())
+
+    // 注册路由（走 JWTAuth 处理 CORS）
+    mux.HandleFunc(path.SSEGatewayPath, utils.JWTAuth(handler.HandleGateway, "", "", "SSE网关"))
+    mux.HandleFunc(path.SSESubscribePath, utils.JWTAuth(handler.HandleSubscribe, "", "", "SSE订阅"))
+    mux.HandleFunc(path.SSEUnsubscribePath, utils.JWTAuth(handler.HandleUnsubscribe, "", "", "SSE取消订阅"))
+}
+```
+
+#### WhiteList 白名单
+
+```go
+// utils/jwt.go
+path.SSEGatewayPath:     true, // SSE网关（token通过query参数传递）
+path.SSESubscribePath:   true, // SSE订阅
+path.SSEUnsubscribePath: true, // SSE取消订阅
+```
+
+### 12.7 完整数据流
+
+```
+用户打开 SQL 审批页面
+    │
+    ├─ 1. GET /sse/gateway?token=xxx
+    │     → JWTAuth 设置 CORS + 白名单放行
+    │     → 创建 Connection，返回 connection_id
+    │
+    ├─ 2. POST /sse/subscribe
+    │     { connection_id, subscriptions: [{ id: "sub_001", channel: "sql.apply.list", params: {} }] }
+    │     → Gateway.Subscribe() 添加订阅
+    │     → Channel.StartWatching() 启动事件监听
+    │     → 发送初始数据
+    │
+    ├─ 3. 用户提交 SQL 审批
+    │     → applyCreate.go 写入 MySQL
+    │     → go eventbus.Publish(ctx, "sse:events:sql_apply")
+    │
+    ├─ 4. Redis Pub/Sub 广播事件
+    │     → Channel.StartWatching() 收到事件
+    │     → 查询 MySQL 获取最新数据
+    │     → 比较 hash，有变化则推送给客户端
+    │
+    └─ 5. 用户关闭页面
+          → GET /sse/gateway 连接断开
+          → Gateway.RemoveConnection() 清理
+          → Channel.StopWatching() 停止监听
+```
+
+### 12.8 文件变更清单
+
+#### 新增文件（12 个）
+
+| 文件 | 说明 |
+|------|------|
+| `api/sse/message.go` | 消息类型定义 |
+| `api/sse/gateway.go` | 连接管理 + 订阅管理 + 广播 |
+| `api/sse/handler.go` | HTTP 处理器 |
+| `api/sse/channels/channel.go` | Channel 接口 |
+| `api/sse/channels/sql_apply.go` | SQL审批通道 |
+| `api/sse/channels/sql_export.go` | SQL导出通道 |
+| `api/sse/channels/tasks.go` | 任务列表通道 |
+| `api/sse/channels/tasks_detail.go` | 任务详情通道 |
+| `api/sse/channels/pro_update.go` | 发版记录详情通道 |
+| `api/sse/channels/databi.go` | DataBI表树通道 |
+| `api/sse/channels/monitor.go` | 监控指标通道 |
+| `routers/sse.go` | SSE 路由注册 |
+| `routers/path/sse.go` | 路径常量 |
+
+#### 修改文件（2 个）
+
+| 文件 | 改动 |
+|------|------|
+| `routers/router.go` | 新增 `InitSSERoutes` |
+| `utils/jwt.go` | 新增 3 个 WhiteList 条目 |
+
+### 12.9 新增通道接入指南
+
+新增一个实时推送功能，只需 2 步：
+
+#### 第 1 步：实现 Channel 接口
+
+```go
+// api/sse/channels/new_channel.go
+package channels
+
+type NewChannel struct {
+    watchers map[string]*watcher
+    mu       sync.RWMutex
+}
+
+func NewNewChannel() *NewChannel {
+    return &NewChannel{watchers: make(map[string]*watcher)}
+}
+
+func (c *NewChannel) Name() string {
+    return "new.channel"
+}
+
+func (c *NewChannel) StartWatching(conn *sse.Connection, subID string, params map[string]interface{}, userID int64) {
+    ctx, cancel := context.WithCancel(context.Background())
+    c.mu.Lock()
+    c.watchers[subID] = &watcher{connID: conn.ID, subID: subID, cancel: cancel}
+    c.mu.Unlock()
+
+    // 发送初始数据
+    data := c.getInitialData(params, userID)
+    c.sendToConn(conn, subID, data)
+
+    // 订阅事件
+    pubsub := database.RDB.Subscribe(ctx, eventbus.NewModule)
+    defer pubsub.Close()
+
+    eventCh := pubsub.Channel()
+    ticker := time.NewTicker(30 * time.Second)
+    defer ticker.Stop()
+
+    for {
+        select {
+        case <-ctx.Done():
+            return
+        case <-eventCh:
+            data := c.getInitialData(params, userID)
+            c.sendToConn(conn, subID, data)
+        case <-ticker.C:
+            data := c.getInitialData(params, userID)
+            c.sendToConn(conn, subID, data)
+        }
+    }
+}
+
+func (c *NewChannel) StopWatching(connID string, subID string) {
+    c.mu.Lock()
+    defer c.mu.Unlock()
+    if w, ok := c.watchers[subID]; ok {
+        w.cancel()
+        delete(c.watchers, subID)
+    }
+}
+```
+
+#### 第 2 步：注册通道
+
+```go
+// routers/sse.go
+handler.RegisterChannel(channels.NewNewChannel())
+```
+
+### 12.10 与事件驱动的关系
+
+SSE 网关和事件驱动是**互补**的两层：
+
+| 层 | 解决的问题 | 实现方式 |
+|----|-----------|---------|
+| 事件驱动 | 查询太频繁 | Redis Pub/Sub + 业务写入点发布事件 |
+| SSE 网关 | 连接数过多 | 统一连接 + 通道订阅 + 事件路由 |
+
+两者结合后的完整架构：
+
+```
+业务写入 → 发布事件（Redis Pub/Sub）
+                ↓
+        SSE 网关 Channel 收到事件
+                ↓
+        查询数据库获取最新数据
+                ↓
+        推给所有订阅了该通道的客户端
+```
+
+### 12.11 性能对比
+
+| 指标 | 改造前（8 个独立 SSE） | 改造后（SSE 网关） |
+|------|----------------------|-------------------|
+| 每用户连接数 | 8 个 | **1 个** |
+| 浏览器并发压力 | 容易触发 6 连接限制 | **无压力** |
+| 代码重复度 | 每个端点重复实现连接/重连/错误处理 | **统一管理** |
+| 新增实时功能 | 需要新建端点 + 路由 + CORS + 白名单 | **只需实现 Channel** |
+| 事件驱动 | 各端点独立订阅 | **网关统一订阅** |

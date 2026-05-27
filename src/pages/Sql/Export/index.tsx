@@ -17,7 +17,7 @@ const SqlExport = () => {
   const [loading, setLoading] = useState(false);
   const [exportList, setExportList] = useState<ExportItem[]>([]);
   const [projects, setProjects] = useState<ExportProject[]>([]);
-  const eventSourceRef = useRef<EventSource | null>(null);
+  const eventSourceRef = useRef<{ close: () => void } | null>(null);
   
   // 进度数据
   const [progressData, setProgressData] = useState<ExportProgress[]>([]);

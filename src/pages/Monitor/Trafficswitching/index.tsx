@@ -32,7 +32,7 @@ const TrafficSwitching = () => {
   
   // 用 ref 存储最新的 timeRange，避免闭包问题
   const timeRangeRef = useRef(timeRange);
-  const eventSourceRef = useRef<EventSource | null>(null);
+  const eventSourceRef = useRef<{ close: () => void } | null>(null);
   timeRangeRef.current = timeRange;
 
   // 关闭 SSE 连接

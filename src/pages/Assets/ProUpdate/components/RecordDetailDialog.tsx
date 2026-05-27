@@ -5,6 +5,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Loader2, Square, FileText } from 'lucide-react';
 import { cancelTask } from '@/services/assets';
+import { createGatewayConnection } from '@/services/sse/compat';
 import type { ReleaseRecord } from '@/services/assets';
 import LogViewerDialog from './LogViewerDialog';
 import { confirm } from '@/components/ConfirmModal';
@@ -99,6 +100,27 @@ const RecordDetailDialog = ({ visible, record, projectDetail, onClose, onRefresh
     setLoading(true);
     closeSSE();
 
+    // 网关模式
+    const gatewayResult = createGatewayConnection<RecordDetailData>(
+      'assets.record.detail',
+      { task_id: taskId },
+      (data) => {
+        setLoading(false);
+        setDetail({ ...record, ...data } as RecordDetailData);
+        if (data.finished_at) closeSSE();
+      },
+      () => {
+        setLoading(false);
+        setDetail(record as RecordDetailData);
+      },
+    );
+
+    if (gatewayResult) {
+      sseRef.current = gatewayResult;
+      return;
+    }
+
+    // 旧模式
     const baseUrl = import.meta.env.VITE_SSE_BASE_URL || import.meta.env.VITE_API_BASE_URL || '';
     const url = `${baseUrl}/assets/proUpdate/records-detail?id=${taskId}`;
     const eventSource = new EventSource(url);

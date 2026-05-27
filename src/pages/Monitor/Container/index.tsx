@@ -38,7 +38,7 @@ const ContainerMonitor = () => {
   const [autoRefresh, setAutoRefresh] = useState(false);
   
   const timeRangeRef = useRef(timeRange);
-  const eventSourceRef = useRef<EventSource | null>(null);
+  const eventSourceRef = useRef<{ close: () => void } | null>(null);
   timeRangeRef.current = timeRange;
 
   // 可用的 Namespace 列表

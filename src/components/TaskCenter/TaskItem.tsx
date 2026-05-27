@@ -61,7 +61,7 @@ const TaskItem = ({ task, expanded, onToggle, onPreview, onRefresh }: TaskItemPr
   const [showDownloadDialog, setShowDownloadDialog] = useState(false);
   const [downloadUrl, setDownloadUrl] = useState('');
   const [generating, setGenerating] = useState(false);
-  const eventSourceRef = useRef<EventSource | null>(null);
+  const eventSourceRef = useRef<{ close: () => void } | null>(null);
 
   // 获取任务详情（SSE）
   useEffect(() => {

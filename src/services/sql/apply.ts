@@ -4,6 +4,7 @@
 
 import { apiClient } from '../request';
 import { createSSEConnection } from './search';
+import { createGatewayConnection } from '../sse/compat';
 
 // 类型定义
 export interface ApplyProject {
@@ -194,6 +195,19 @@ export function getApplyListSSE(
   onError?: (error: Event) => void,
   onComplete?: () => void
 ) {
+  // 网关模式
+  const gatewayResult = createGatewayConnection<{ apply?: ApplyItem[]; total_count?: number }>(
+    'sql.apply.list',
+    { submitter_name: params.submitter_name || '', status: params.status || '' },
+    (data) => {
+      onMessage(data.apply || []);
+    },
+    () => onError?.(new Event('error')),
+    onComplete,
+  );
+  if (gatewayResult) return gatewayResult;
+
+  // 旧模式
   // 构建查询参数
   const queryParams: string[] = [];
   if (params.submitter_name) {

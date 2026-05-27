@@ -3,6 +3,7 @@
  */
 
 import { apiClient } from '../request';
+import { createGatewayConnection } from '../sse/compat';
 
 /** 监控视图项 */
 export interface MonitorView {
@@ -137,7 +138,29 @@ export const getMonitorMetricsSSE = (
   onMessage: (data: MonitorMetric[]) => void,
   onError?: (error: Event) => void,
   onComplete?: () => void
-): EventSource => {
+): { close: () => void } => {
+  // 网关模式
+  const gatewayResult = createGatewayConnection<MonitorMetric[]>(
+    'monitor.metrics',
+    {
+      project: params.project,
+      category: params.category,
+      service: params.service || '',
+      namespace: params.namespace || '',
+    },
+    (data) => {
+      // 处理包装格式
+      const actual = (data as any)?.data || data;
+      if (Array.isArray(actual)) {
+        onMessage(actual);
+      }
+    },
+    () => onError?.(new Event('error')),
+    onComplete,
+  );
+  if (gatewayResult) return gatewayResult;
+
+  // 旧模式
   const baseUrl = import.meta.env.VITE_SSE_BASE_URL || import.meta.env.VITE_API_BASE_URL || '';
   
   // 构建查询参数，只添加有值的参数

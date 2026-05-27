@@ -4,6 +4,7 @@
 
 import { apiClient } from '../request';
 import { getToken } from '../storage/tokenStorage';
+import { createGatewayConnection } from '../sse/compat';
 
 // 类型定义
 export interface ExportProject {
@@ -83,7 +84,18 @@ export function getExportListSSE(
   onMessage: (data: { export: ExportItem[]; progress?: ExportProgress[]; total_count: number }) => void,
   onError?: (error: Event) => void,
   onComplete?: () => void
-): EventSource {
+): { close: () => void } {
+  // 网关模式
+  const gatewayResult = createGatewayConnection<{ export: ExportItem[]; progress?: ExportProgress[]; total_count: number }>(
+    'sql.export.list',
+    {},
+    onMessage,
+    () => onError?.(new Event('error')),
+    onComplete,
+  );
+  if (gatewayResult) return gatewayResult;
+
+  // 旧模式
   const token = getToken();
   const baseUrl = import.meta.env.VITE_SSE_BASE_URL || import.meta.env.VITE_API_BASE_URL || '';
   const url = `${baseUrl}/sql/export/list?token=${token}`;

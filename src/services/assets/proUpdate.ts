@@ -3,6 +3,7 @@
  */
 
 import { apiClient } from '../request';
+import { createGatewayConnection } from '../sse/compat';
 
 /** 项目更新信息 */
 export interface ProjectUpdate {
@@ -79,6 +80,16 @@ export function subscribeProjectDetail(
   onMessage: (data: ProjectDetailResponse) => void,
   onError?: (error: Event) => void
 ): { close: () => void } {
+  // 网关模式
+  const gatewayResult = createGatewayConnection<ProjectDetailResponse>(
+    'assets.project.detail',
+    { project, type: type || '' },
+    onMessage,
+    () => onError?.(new Event('error')),
+  );
+  if (gatewayResult) return gatewayResult;
+
+  // 旧模式
   const baseUrl = import.meta.env.VITE_SSE_BASE_URL || import.meta.env.VITE_API_BASE_URL || '';
   const url = `${baseUrl}/assets/proUpdate/list-detail?project=${project}${type ? `&type=${type}` : ''}`;
   

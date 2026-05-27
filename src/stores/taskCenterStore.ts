@@ -7,6 +7,7 @@ import { create } from 'zustand';
 import { getToken } from '../services/storage/tokenStorage';
 import { useMessageStore } from './messageStore';
 import { useAuthStore } from './authStore';
+import { createGatewayConnection } from '../services/sse/compat';
 import type { Task } from '../services/task';
 
 // 任务类型名称映射
@@ -32,7 +33,7 @@ interface TaskCenterState {
   // 上次任务状态（用于检测状态变化）
   prevTaskStatus: Map<string, string>;
   // SSE 连接实例
-  eventSource: EventSource | null;
+  eventSource: { close: () => void } | null;
 
   // Actions
   open: () => void;
@@ -103,6 +104,77 @@ export const useTaskCenterStore = create<TaskCenterState>((set, get) => ({
 
     set({ loading: true });
 
+    // 网关模式
+    const gatewayResult = createGatewayConnection<{ tasks?: Task[] }>(
+      'tasks.list',
+      { type: activeType, keyword: searchKeyword || '' },
+      (data) => {
+        const tasks: Task[] = (data.tasks || []).sort((a: Task, b: Task) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+
+        const { prevTaskStatus, visible } = get();
+        const addMessage = useMessageStore.getState().addMessage;
+        const currentUser = useAuthStore.getState().user;
+        const currentNickName = currentUser?.nick_name;
+        const newRunningIds = new Set<string>();
+
+        tasks.forEach((task: Task) => {
+          const prevStatus = prevTaskStatus.get(task.id);
+          
+          // 更新运行中任务集合
+          if (task.status === 'pending' || task.status === 'running') {
+            newRunningIds.add(task.id);
+          }
+
+          // 检测状态变化，判断是否需要发送消息通知
+          const isOwnTask = !task.nick_name || task.nick_name === currentNickName;
+          
+          if (prevStatus && prevStatus !== task.status && isOwnTask) {
+            if (task.status === 'success') {
+              addMessage({
+                type: 'success',
+                title: `${TASK_TYPE_NAMES[task.type] || '任务'}完成`,
+                content: task.type_text || '任务执行成功',
+                action: { type: 'task-center' },
+              });
+            } else if (task.status === 'failed') {
+              addMessage({
+                type: 'error',
+                title: `${TASK_TYPE_NAMES[task.type] || '任务'}失败`,
+                content: task.error_message || '任务执行失败',
+                action: { type: 'task-center' },
+              });
+            }
+          }
+
+          prevTaskStatus.set(task.id, task.status);
+        });
+
+        set({
+          taskList: tasks,
+          loading: false,
+          runningTaskIds: newRunningIds,
+          prevTaskStatus: new Map(prevTaskStatus),
+        });
+
+        // 如果没有运行中的任务且弹框已关闭，断开 SSE
+        if (newRunningIds.size === 0 && !visible) {
+          get().stopSSE();
+        }
+      },
+      () => {
+        set({ loading: false });
+        get().stopSSE();
+      },
+    );
+
+    if (gatewayResult) {
+      set({ eventSource: gatewayResult });
+      return;
+    }
+
+    // 旧模式
     const token = getToken();
     const baseUrl = import.meta.env.VITE_SSE_BASE_URL || import.meta.env.VITE_API_BASE_URL || '';
     const keyword = searchKeyword ? `&keyword=${encodeURIComponent(searchKeyword)}` : '';
@@ -132,9 +204,6 @@ export const useTaskCenterStore = create<TaskCenterState>((set, get) => ({
           }
 
           // 检测状态变化，判断是否需要发送消息通知
-          // 1. 没有 nick_name → 非管理员用户，只能看到自己的任务 → 发送通知
-          // 2. 有 nick_name 且不等于自己 → 管理员查看其他用户的任务 → 不发送通知
-          // 3. 有 nick_name 且等于自己 → 管理员查看自己的任务 → 发送通知
           const isOwnTask = !task.nick_name || task.nick_name === currentNickName;
           
           if (prevStatus && prevStatus !== task.status && isOwnTask) {
