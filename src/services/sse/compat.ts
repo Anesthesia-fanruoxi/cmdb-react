@@ -27,9 +27,10 @@ export function createGatewayConnection<T>(
 ): CompatibleSSEConnection | null {
   if (!shouldUseGateway(channel)) return null;
 
+  const baseUrl = import.meta.env.VITE_SSE_BASE_URL || import.meta.env.VITE_API_BASE_URL || '';
   const gateway = SSEGateway.getInstance({
-    url: '/sse/gateway',
-    subscribeApiUrl: '/sse',
+    url: `${baseUrl}/gateway`,
+    subscribeApiUrl: baseUrl,
   });
 
   // 确保连接
