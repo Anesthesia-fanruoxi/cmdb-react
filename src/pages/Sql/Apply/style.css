@@ -41,40 +41,49 @@
   display: inline-flex;
   align-items: center;
   cursor: default;
+  width: 22px;
+  height: 22px;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--bg-secondary);
 }
 
 .sse-dot {
-  width: 8px;
-  height: 8px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   display: inline-block;
   flex-shrink: 0;
+  transition: background 0.3s;
 }
 
 .sse-dot--open {
   background: #52c41a;
-  box-shadow: 0 0 4px rgba(82, 196, 26, 0.5);
+  box-shadow: 0 0 6px rgba(82, 196, 26, 0.6);
   animation: sse-breathe 2.4s ease-in-out infinite;
 }
 
 .sse-dot--connecting {
   background: #faad14;
+  box-shadow: 0 0 6px rgba(250, 173, 20, 0.6);
   animation: sse-breathe 0.8s ease-in-out infinite;
 }
 
 .sse-dot--closed {
   background: #ff4d4f;
+  box-shadow: 0 0 6px rgba(255, 77, 79, 0.4);
 }
 
 @keyframes sse-breathe {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.35; transform: scale(0.85); }
+  50% { opacity: 0.3; transform: scale(0.8); }
 }
 
 .sse-tooltip {
   position: absolute;
-  left: calc(100% + 4px);
-  top: calc(100% + 2px);
+  left: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%);
   white-space: nowrap;
   padding: 4px 10px;
   font-size: 12px;

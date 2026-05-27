@@ -42,7 +42,12 @@ export function useSSESubscription<T>({
   const subscribe = useCallback(() => {
     if (!enabled) return;
 
-    const gateway = SSEGateway.getInstance();
+    let gateway = SSEGateway.getInstance();
+    if (!gateway) {
+      const baseUrl = import.meta.env.VITE_SSE_BASE_URL || import.meta.env.VITE_API_BASE_URL || '';
+      SSEGateway.getInstance({ url: `${baseUrl}/gateway`, subscribeApiUrl: baseUrl });
+      gateway = SSEGateway.getInstance()!;
+    }
 
     // 确保连接
     if (gateway.getState() === 'closed') {

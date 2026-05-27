@@ -4,9 +4,12 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { 
-  getApplyListSSE, type ApplyItem, type ApplyDetail, getApplyDetail,
+  type ApplyItem, type ApplyDetail, getApplyDetail,
   APPLY_STATUS_MAP
 } from '../../../services/sql/apply';
+import { SSEGateway, CHANNELS } from '../../../services/sse';
+import { useSSESubscription } from '../../../services/sse/hooks/useSSESubscription';
+import type { SSEConnectionState } from '../../../services/sse/types';
 import ApplyDetailDrawer from './ApplyDetail';
 import ApplyCreateDrawer from './ApplyCreate';
 import { openDesktopNotifyWindow } from '@/utils/window';
@@ -15,12 +18,11 @@ import { useMessageStore } from '@/stores/messageStore';
 import './index.css';
 
 const SqlApply = () => {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [applyList, setApplyList] = useState<ApplyItem[]>([]);
-  const sseRef = useRef<{ close: () => void; getStatus: () => string } | null>(null);
   const prevIdsRef = useRef<Set<string>>(new Set());
-  const [sseStatus, setSseStatus] = useState<'open' | 'connecting' | 'closed'>('closed');
+  const [sseStatus, setSseStatus] = useState<SSEConnectionState>('closed');
   const connectedAtRef = useRef<number>(0);
   const [sseDuration, setSseDuration] = useState('');
   const [sseTooltipVisible, setSseTooltipVisible] = useState(false);
@@ -55,98 +57,114 @@ const SqlApply = () => {
     return `${h} 时 ${min} 分`;
   };
 
-  // SSE 连接状态轮询，计算时长
+  // SSEGateway 连接状态监听
   useEffect(() => {
-    const timer = window.setInterval(() => {
-      if (sseRef.current) {
-        const st = sseRef.current.getStatus() as 'open' | 'connecting' | 'closed';
-        setSseStatus(st);
-        if (st === 'open') {
-          if (!connectedAtRef.current) connectedAtRef.current = Date.now();
-          setSseDuration(formatDuration(Date.now() - connectedAtRef.current));
-        } else {
-          connectedAtRef.current = 0;
-          setSseDuration('');
-        }
+    const gateway = SSEGateway.getInstance();
+    if (!gateway) return;
+
+    const updateState = () => {
+      const st = gateway.getState();
+      setSseStatus(st);
+      if (st === 'open') {
+        if (!connectedAtRef.current) connectedAtRef.current = Date.now();
+      } else {
+        connectedAtRef.current = 0;
       }
-    }, 1000);
-    return () => window.clearInterval(timer);
+    };
+
+    const unsub = gateway.on('stateChange', updateState);
+    updateState();
+    return unsub;
   }, []);
 
-  // 获取列表 SSE
-  const fetchApplyListSSE = useCallback(() => {
-    setLoading(true);
-    if (sseRef.current) sseRef.current.close();
-    const params = { submitter_name: appliedSubmitter, status: appliedStatus };
-    sseRef.current = getApplyListSSE(
-      params,
-      (data) => {
-        const currentIds = new Set(data.map(item => item.id));
-        data.forEach(item => {
-          const st = String(item.status);
-          const isNew = !prevIdsRef.current.has(item.id);
-          const isMyJob = st === '1' && item.executor_name === myName;
+  // 连接时长计时
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (sseStatus === 'open' && connectedAtRef.current) {
+        setSseDuration(formatDuration(Date.now() - connectedAtRef.current));
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [sseStatus]);
 
-          if (isNew) {
-            if (isMyJob && !notifiedIdsRef.current.has(item.id)) {
-              notifiedIdsRef.current.add(item.id);
-              trackedIdsRef.current.add(item.id);
-              openDesktopNotifyWindow({
-                title: 'SQL 审批通知',
-                subtitle: `${item.submitter_name} · ${item.created_at || '刚刚'}`,
-                applyId: item.id,
-                project: item.project,
-                description: item.description || item.remark || '',
-              });
-              useMessageStore.getState().addMessage({
-                type: 'info',
-                title: 'SQL 审批通知',
-                content: `${item.project} · ${(item.description || item.remark || '').slice(0, 30)}`,
-                action: {
-                  type: 'sql_approval',
-                  payload: JSON.stringify({ applyId: item.id, project: item.project, description: item.description || item.remark || '' }),
-                },
-                extra: { applyId: item.id },
-              });
+  // 通知逻辑（数据去重 + 桌面通知）
+  const handleSSEData = useCallback((data: { apply?: ApplyItem[]; total_count?: number }) => {
+    const items = data.apply || [];
+    if (items.length === 0) return;
+
+    const currentIds = new Set(items.map(item => item.id));
+    items.forEach(item => {
+      const st = String(item.status);
+      const isNew = !prevIdsRef.current.has(item.id);
+      const isMyJob = st === '1' && item.executor_name === myName;
+
+      if (isNew) {
+        if (isMyJob && !notifiedIdsRef.current.has(item.id)) {
+          notifiedIdsRef.current.add(item.id);
+          trackedIdsRef.current.add(item.id);
+          openDesktopNotifyWindow({
+            title: 'SQL 审批通知',
+            subtitle: `${item.submitter_name} · ${item.created_at || '刚刚'}`,
+            applyId: item.id,
+            project: item.project,
+            description: item.description || item.remark || '',
+          });
+          useMessageStore.getState().addMessage({
+            type: 'info',
+            title: 'SQL 审批通知',
+            content: `${item.project} · ${(item.description || item.remark || '').slice(0, 30)}`,
+            action: {
+              type: 'sql_approval',
+              payload: JSON.stringify({ applyId: item.id, project: item.project, description: item.description || item.remark || '' }),
+            },
+            extra: { applyId: item.id },
+          });
+        }
+      } else {
+        if (isMyJob && !notifiedIdsRef.current.has(item.id)) {
+          notifiedIdsRef.current.add(item.id);
+          trackedIdsRef.current.add(item.id);
+          openDesktopNotifyWindow({
+            title: 'SQL 审批通知',
+            subtitle: `${item.submitter_name} · ${item.created_at || '刚刚'}`,
+            applyId: item.id,
+            project: item.project,
+            description: item.description || item.remark || '',
+          });
+          useMessageStore.getState().addMessage({
+            type: 'info',
+            title: 'SQL 审批通知',
+            content: `${item.project} · ${(item.description || item.remark || '').slice(0, 30)}`,
+            action: {
+              type: 'sql_approval',
+              payload: JSON.stringify({ applyId: item.id, project: item.project, description: item.description || item.remark || '' }),
+            },
+            extra: { applyId: item.id },
+          });
+        } else if (trackedIdsRef.current.has(item.id) && !isMyJob) {
+          trackedIdsRef.current.delete(item.id);
+          useMessageStore.getState().messages.forEach(msg => {
+            if (msg.extra?.applyId === item.id && !msg.read) {
+              useMessageStore.getState().markAsRead(msg.id);
             }
-          } else {
-            if (isMyJob && !notifiedIdsRef.current.has(item.id)) {
-              notifiedIdsRef.current.add(item.id);
-              trackedIdsRef.current.add(item.id);
-              openDesktopNotifyWindow({
-                title: 'SQL 审批通知',
-                subtitle: `${item.submitter_name} · ${item.created_at || '刚刚'}`,
-                applyId: item.id,
-                project: item.project,
-                description: item.description || item.remark || '',
-              });
-              useMessageStore.getState().addMessage({
-                type: 'info',
-                title: 'SQL 审批通知',
-                content: `${item.project} · ${(item.description || item.remark || '').slice(0, 30)}`,
-                action: {
-                  type: 'sql_approval',
-                  payload: JSON.stringify({ applyId: item.id, project: item.project, description: item.description || item.remark || '' }),
-                },
-                extra: { applyId: item.id },
-              });
-            } else if (trackedIdsRef.current.has(item.id) && !isMyJob) {
-              trackedIdsRef.current.delete(item.id);
-              useMessageStore.getState().messages.forEach(msg => {
-                if (msg.extra?.applyId === item.id && !msg.read) {
-                  useMessageStore.getState().markAsRead(msg.id);
-                }
-              });
-            }
-          }
-        });
-        prevIdsRef.current = currentIds;
-        setApplyList(data); setLoading(false);
-      },
-      () => { setLoading(false); },
-      () => setLoading(false)
-    );
-  }, [appliedSubmitter, appliedStatus, myName]);
+          });
+        }
+      }
+    });
+    prevIdsRef.current = currentIds;
+    setApplyList(items);
+    setLoading(false);
+  }, [myName]);
+
+  // 通过全局网关订阅数据
+  useSSESubscription({
+    channel: CHANNELS.SQL_APPLY_LIST,
+    params: { submitter_name: appliedSubmitter, status: appliedStatus },
+    onData: handleSSEData,
+    onError: () => setLoading(false),
+    onComplete: () => setLoading(false),
+    enabled: true,
+  });
 
   const handleViewDetail = async (item: ApplyItem) => {
     try {
@@ -165,9 +183,9 @@ const SqlApply = () => {
     setRefreshing(true);
     prevIdsRef.current = new Set();
     notifiedIdsRef.current = new Set();
-    fetchApplyListSSE();
+    setLoading(true);
     setTimeout(() => setRefreshing(false), 1000);
-  }, [refreshing, fetchApplyListSSE]);
+  }, [refreshing]);
 
   const handleResubmit = (data: Partial<ApplyItem>) => {
     setPrefillData(data);
@@ -201,10 +219,7 @@ const SqlApply = () => {
     setAppliedStatus('');
   };
 
-  // 当应用的筛选条件变化时,重新获取数据
-  useEffect(() => {
-    fetchApplyListSSE();
-  }, [fetchApplyListSSE]);
+  // 参数变化时 useSSESubscription 自动重新订阅
 
   return (
     <div className="sql-apply-page">
@@ -217,10 +232,10 @@ const SqlApply = () => {
               onMouseEnter={() => setSseTooltipVisible(true)}
               onMouseLeave={() => setSseTooltipVisible(false)}
             >
-              <span className={`sse-dot sse-dot--${sseStatus}`} />
+              <span className={`sse-dot sse-dot--${sseStatus === 'reconnecting' ? 'connecting' : sseStatus}`} />
               {sseTooltipVisible && (
                 <span className="sse-tooltip">
-                  {sseStatus === 'open' ? `SSE 已连接 · ${sseDuration}` : sseStatus === 'connecting' ? 'SSE 重连中...' : 'SSE 已断开'}
+                  {sseStatus === 'open' ? `SSE 已连接 · ${sseDuration}` : sseStatus === 'connecting' || sseStatus === 'reconnecting' ? 'SSE 重连中...' : 'SSE 已断开'}
                 </span>
               )}
             </span>
@@ -318,7 +333,7 @@ const SqlApply = () => {
         <ApplyCreateDrawer
           prefillData={prefillData}
           onClose={() => setCreateVisible(false)}
-          onSuccess={() => { setCreateVisible(false); fetchApplyListSSE(); }}
+          onSuccess={() => setCreateVisible(false)}
         />
       )}
 
@@ -326,7 +341,7 @@ const SqlApply = () => {
         <ApplyDetailDrawer
           detail={currentDetail}
           onClose={() => setDetailVisible(false)}
-          onRefresh={fetchApplyListSSE}
+          onRefresh={() => { prevIdsRef.current = new Set(); setLoading(true); }}
           onResubmit={handleResubmit}
         />
       )}
