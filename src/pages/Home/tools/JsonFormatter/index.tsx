@@ -7,6 +7,10 @@ import ToolModal from '../ToolModal';
 import JsonTree from './JsonTree';
 import './style.css';
 
+/** 最小/最大面板宽度百分比 */
+const MIN_PANEL = 20;
+const MAX_PANEL = 80;
+
 interface JsonFormatterProps {
   visible: boolean;
   onClose: () => void;
@@ -93,6 +97,13 @@ export function JsonFormatterContent() {
   const [copied, setCopied] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const highlightRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // 分割线拖拽状态
+  const [splitRatio, setSplitRatio] = useState(50);
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const startRatio = useRef(50);
 
   useEffect(() => {
     setCopied(false);
@@ -121,6 +132,40 @@ export function JsonFormatterContent() {
     }
   }, []);
 
+  // 分割线拖拽逻辑
+  const handleDragStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isDragging.current = true;
+    startX.current = e.clientX;
+    startRatio.current = splitRatio;
+    document.body.classList.add('jf-resizing');
+  }, [splitRatio]);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging.current || !containerRef.current) return;
+      const containerWidth = containerRef.current.offsetWidth;
+      const dx = e.clientX - startX.current;
+      const deltaPercent = (dx / containerWidth) * 100;
+      const newRatio = Math.max(MIN_PANEL, Math.min(MAX_PANEL, startRatio.current + deltaPercent));
+      setSplitRatio(newRatio);
+    };
+
+    const handleMouseUp = () => {
+      if (isDragging.current) {
+        isDragging.current = false;
+        document.body.classList.remove('jf-resizing');
+      }
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, []);
+
   const copy = async () => {
     if (!parsed) return;
     try {
@@ -133,9 +178,9 @@ export function JsonFormatterContent() {
   const highlightHtml = error && errPos >= 0 ? buildHighlightHtml(input, errPos) : '';
 
   return (
-    <div className="jf-container">
+    <div className="jf-container" ref={containerRef}>
       {/* 左侧输入区 */}
-      <div className="jf-panel">
+      <div className="jf-panel" style={{ flex: `0 0 calc(${splitRatio}% - 3px)` }}>
         <div className="jf-panel-header">
           <span className="jf-panel-title">输入</span>
           {error && errLineCol && (
@@ -166,8 +211,14 @@ export function JsonFormatterContent() {
         </div>
       </div>
 
+      {/* 拖拽分割线 */}
+      <div
+        className="jf-resizer"
+        onMouseDown={handleDragStart}
+      />
+
       {/* 右侧树视图 */}
-      <div className="jf-panel">
+      <div className="jf-panel" style={{ flex: `0 0 calc(${100 - splitRatio}% - 3px)` }}>
         <div className="jf-panel-header">
           <div className="jf-panel-title-group">
             <span className="jf-panel-title">

@@ -10,6 +10,9 @@ interface Props {
 }
 
 const Watermark = ({ text }: Props) => {
+  // 开发模式下不显示水印
+  if (import.meta.env.DEV) return null;
+
   const user = useAuthStore(s => s.user);
   const userName = useAuthStore(s => s.userName);
   const nick = user?.nick_name || '';
