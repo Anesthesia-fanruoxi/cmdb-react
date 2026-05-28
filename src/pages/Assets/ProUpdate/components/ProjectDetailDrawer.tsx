@@ -46,7 +46,7 @@ const ProjectDetailDrawer = ({ visible, project, onClose, onRefresh }: Props) =>
     }
     return () => closeSSE();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, project]);
+  }, [visible, project?.project]);
 
   const closeSSE = () => {
     if (sseRef.current) {

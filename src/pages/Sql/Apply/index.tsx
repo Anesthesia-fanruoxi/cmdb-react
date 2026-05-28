@@ -156,13 +156,21 @@ const SqlApply = () => {
     setLoading(false);
   }, [myName]);
 
+  const handleSSEError = useCallback(() => {
+    setLoading(false);
+  }, []);
+
+  const handleSSEComplete = useCallback(() => {
+    setLoading(false);
+  }, []);
+
   // 通过全局网关订阅数据
   useSSESubscription({
     channel: CHANNELS.SQL_APPLY_LIST,
     params: { submitter_name: appliedSubmitter, status: appliedStatus },
     onData: handleSSEData,
-    onError: () => setLoading(false),
-    onComplete: () => setLoading(false),
+    onError: handleSSEError,
+    onComplete: handleSSEComplete,
     enabled: true,
   });
 

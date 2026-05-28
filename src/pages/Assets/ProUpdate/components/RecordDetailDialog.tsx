@@ -56,7 +56,7 @@ const RecordDetailDialog = ({ visible, record, projectDetail, onClose, onRefresh
     }
     return () => closeSSE();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, record]);
+  }, [visible, record?.task_id]);
 
   // ESC 关闭（只在最顶层时响应）
   useEffect(() => {

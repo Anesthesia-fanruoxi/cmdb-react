@@ -179,21 +179,9 @@ export class SSEGateway {
   /** 处理断开连接 */
   private handleDisconnect(): void {
     this.stopHeartbeat();
-    this.setConnectionState('reconnecting');
-
-    if (this.reconnectAttempts < this.config.maxReconnectAttempts) {
-      this.reconnectAttempts++;
-      const delay = this.config.reconnectInterval * Math.min(this.reconnectAttempts, 5);
-
-      console.log(`[SSE Gateway] ${delay}ms 后重连 (第${this.reconnectAttempts}次)`);
-
-      this.reconnectTimer = setTimeout(() => {
-        this.connect();
-      }, delay);
-    } else {
-      console.error('[SSE Gateway] 达到最大重连次数');
-      this.emit('maxReconnectReached');
-    }
+    this.setConnectionState('closed');
+    console.warn('[SSE Gateway] 连接断开，已禁用自动重连');
+    this.emit('disconnected');
   }
 
   /** 设置连接状态 */
@@ -210,14 +198,14 @@ export class SSEGateway {
     this.stopHeartbeat();
     this.lastHeartbeat = Date.now();
 
-    this.heartbeatTimer = setInterval(() => {
-      const elapsed = Date.now() - this.lastHeartbeat;
-      // 如果超过 2 倍心跳间隔没收到心跳，认为连接异常
-      if (elapsed > this.config.heartbeatInterval * 2) {
-        console.warn('[SSE Gateway] 心跳超时，触发重连');
-        this.handleDisconnect();
-      }
-    }, this.config.heartbeatInterval);
+    // 心跳超时检测已禁用，由连接的 onerror 处理断开
+    // this.heartbeatTimer = setInterval(() => {
+    //   const elapsed = Date.now() - this.lastHeartbeat;
+    //   if (elapsed > this.config.heartbeatInterval * 2) {
+    //     console.warn('[SSE Gateway] 心跳超时，触发重连');
+    //     this.handleDisconnect();
+    //   }
+    // }, this.config.heartbeatInterval);
   }
 
   /** 停止心跳检测 */

@@ -31,13 +31,25 @@ export function useSSESubscription<T>({
   enabled = true,
 }: UseSSESubscriptionOptions<T>) {
   const subscriptionRef = useRef<Subscription<T> | null>(null);
-  const paramsRef = useRef(params);
-  paramsRef.current = params;
+
+  // 使用 useRef 保持对最新回调函数的引用，避免回调函数引用变化引起重新订阅
+  const onDataRef = useRef(onData);
+  const onErrorRef = useRef(onError);
+  const onCompleteRef = useRef(onComplete);
+
+  useEffect(() => {
+    onDataRef.current = onData;
+    onErrorRef.current = onError;
+    onCompleteRef.current = onComplete;
+  }); // 每次渲染都更新最新引用
 
   // 生成稳定的订阅 ID
   const subscriptionId = useRef(
     `sub_${channel}_${Math.random().toString(36).slice(2, 8)}`
   ).current;
+
+  // 将参数序列化，只有当参数真正发生变化时才触发重新订阅
+  const paramsStr = JSON.stringify(params);
 
   const subscribe = useCallback(() => {
     if (!enabled) return;
@@ -57,12 +69,12 @@ export function useSSESubscription<T>({
     subscriptionRef.current = gateway.subscribe<T>({
       id: subscriptionId,
       channel,
-      params: paramsRef.current,
-      onData,
-      onError,
-      onComplete,
+      params: JSON.parse(paramsStr),
+      onData: (data) => onDataRef.current(data),
+      onError: (error) => onErrorRef.current?.(error),
+      onComplete: () => onCompleteRef.current?.(),
     });
-  }, [channel, enabled, subscriptionId, onData, onError, onComplete]);
+  }, [channel, enabled, subscriptionId, paramsStr]);
 
   const unsubscribe = useCallback(() => {
     subscriptionRef.current?.unsubscribe();
