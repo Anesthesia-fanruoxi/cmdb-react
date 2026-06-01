@@ -20,18 +20,20 @@ interface KeepAliveProps {
 
 const KeepAlive = memo(({ children, maxCache = 10 }: KeepAliveProps) => {
   const location = useLocation();
-  const { cachedViews } = useMenuStore();
+  const { visitedViews } = useMenuStore();
   const cacheRef = useRef<Map<string, CacheItem>>(new Map());
   const [, forceUpdate] = useState(0);
   const currentPath = location.pathname;
+
+  // 已打开标签页的路径集合（用于判断哪些缓存该保留）
+  const visitedPaths = new Set(visitedViews.map(v => v.path));
 
   // 更新缓存
   useEffect(() => {
     const cache = cacheRef.current;
     
-    // 只有当页面不在缓存中时才添加（保持已有页面的状态）
+    // 只有当页面不在缓存中时才添加
     if (!cache.has(currentPath)) {
-      // 超出最大缓存数量时，删除最早的
       if (cache.size >= maxCache) {
         const firstKey = cache.keys().next().value;
         if (firstKey) cache.delete(firstKey);
@@ -40,17 +42,17 @@ const KeepAlive = memo(({ children, maxCache = 10 }: KeepAliveProps) => {
       forceUpdate(n => n + 1);
     }
 
-    // 清理不在 cachedViews 中的缓存（被关闭的标签）
+    // 清理不在 visitedViews 中的缓存（已关闭的标签页）
     let needUpdate = false;
     cache.forEach((_, key) => {
-      const shouldCache = cachedViews.includes(key) || key === currentPath || key === '/' || key === '/dashboard';
-      if (!shouldCache) {
+      if (key === currentPath) return;
+      if (!visitedPaths.has(key)) {
         cache.delete(key);
         needUpdate = true;
       }
     });
     if (needUpdate) forceUpdate(n => n + 1);
-  }, [currentPath, cachedViews, maxCache]);
+  }, [currentPath, visitedViews, maxCache]);
 
   // 渲染所有缓存的页面，当前页面显示，其他隐藏
   return (

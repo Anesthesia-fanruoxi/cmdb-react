@@ -38,7 +38,7 @@ interface MessageState {
   messages: Message[];
   unreadCount: number;
   // 添加消息
-  addMessage: (msg: Omit<Message, 'id' | 'time' | 'read'>) => void;
+  addMessage: (msg: Omit<Message, 'id' | 'time' | 'read'> & { id?: string }) => string;
   // 更新消息
   updateMessage: (id: string, updates: Partial<Pick<Message, 'title' | 'content' | 'extra'>>) => void;
   // 标记已读
@@ -79,9 +79,10 @@ export const useMessageStore = create<MessageState>((set) => ({
   unreadCount: 0,
 
   addMessage: (msg) => {
+    const id = msg.id || `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const newMsg: Message = {
       ...msg,
-      id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      id,
       time: Date.now(),
       read: false,
     };
@@ -100,6 +101,7 @@ export const useMessageStore = create<MessageState>((set) => ({
       
       return { messages, unreadCount };
     });
+    return id;
   },
 
   updateMessage: (id, updates) => {

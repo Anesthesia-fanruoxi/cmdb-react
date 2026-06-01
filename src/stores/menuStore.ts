@@ -6,7 +6,9 @@
 import { create } from 'zustand';
 import type { MenuItem, TagView } from '../types/menu';
 import { getUserMenus } from '../services/system/menu';
-import { markDirty } from '../services/storage/autoSave';
+import { saveTabs } from '../services/storage/tabManager';
+import { saveSidebar } from '../services/storage/sidebarManager';
+import { usePageStateStore } from './pageStateStore';
 
 // 首页菜单配置
 const HOME_MENU: MenuItem = {
@@ -42,6 +44,8 @@ interface MenuState {
   delVisitedView: (view: TagView) => void;
   delOtherViews: (view: TagView) => void;
   delAllViews: () => void;
+  delLeftViews: (view: TagView) => void;
+  delRightViews: (view: TagView) => void;
   addCachedView: (name: string) => void;
   delCachedView: (name: string) => void;
   reorderViews: (fromIndex: number, toIndex: number) => void;
@@ -121,12 +125,12 @@ export const useMenuStore = create<MenuState>()((set, get) => ({
 
   toggleCollapsed: () => {
     set((state) => ({ collapsed: !state.collapsed }));
-    markDirty();
+    saveSidebar();
   },
 
   setCollapsed: (collapsed) => {
     set({ collapsed });
-    markDirty();
+    saveSidebar();
   },
 
   // 状态恢复
@@ -141,7 +145,7 @@ export const useMenuStore = create<MenuState>()((set, get) => ({
   // 清空 visitedViews（用于恢复状态时）
   clearVisitedViews: () => {
     set({ visitedViews: [] });
-    markDirty();
+    saveTabs();
   },
 
   addVisitedView: (view) => {
@@ -158,7 +162,7 @@ export const useMenuStore = create<MenuState>()((set, get) => ({
     set((state) => ({
       visitedViews: [...state.visitedViews, normalizedView],
     }));
-    markDirty();
+    saveTabs();
 
     if (!view.meta?.noCache) {
       get().addCachedView(view.name);
@@ -166,22 +170,44 @@ export const useMenuStore = create<MenuState>()((set, get) => ({
   },
 
   delVisitedView: (view) => {
+    // 首页（affix）不可被关闭
+    if (view.meta?.affix) return;
+    
     set((state) => {
       const newViews = state.visitedViews.filter((v) => v.path !== view.path);
       return { visitedViews: newViews };
     });
     get().delCachedView(view.name);
-    markDirty();
+
+    // 同步清除对应页面的快照状态
+    const pageKey = view.path.replace(/^\//, '');
+    usePageStateStore.getState().clearPageState(pageKey);
+
+    saveTabs();
   },
 
   delOtherViews: (view) => {
+    const remainingPaths = new Set([view.path]);
     set((state) => ({
       visitedViews: state.visitedViews.filter(
-        (v) => v.meta?.affix || v.path === view.path
+        (v) => {
+          if (v.meta?.affix) {
+            remainingPaths.add(v.path);
+            return true;
+          }
+          return v.path === view.path;
+        }
       ),
       cachedViews: view.meta?.noCache ? [] : [view.name],
     }));
-    markDirty();
+    // 清除被关闭标签的 pageState
+    const pageStore = usePageStateStore.getState();
+    Object.keys(pageStore.pages).forEach(key => {
+      if (!remainingPaths.has('/' + key)) {
+        pageStore.clearPageState(key);
+      }
+    });
+    saveTabs();
   },
 
   delAllViews: () => {
@@ -194,13 +220,87 @@ export const useMenuStore = create<MenuState>()((set, get) => ({
       }],
       cachedViews: [],
     }));
-    markDirty();
+    // 关闭所有 → 清空所有 pageState
+    usePageStateStore.getState().clearAllPageStates();
+    saveTabs();
+  },
+
+  // 关闭左边所有标签（保留 affix 和 view 本身）
+  delLeftViews: (view) => {
+    const index = get().visitedViews.findIndex(v => v.path === view.path);
+    if (index <= 0) return; // 已在最左或找不到
+
+    const remainingPaths = new Set<string>();
+    set((state) => {
+      const kept = state.visitedViews.filter((v, i) => {
+        if (i < index) {
+          // 左边标签：保留 affix
+          if (v.meta?.affix) {
+            remainingPaths.add(v.path);
+            return true;
+          }
+          return false;
+        }
+        remainingPaths.add(v.path);
+        return true;
+      });
+      return {
+        visitedViews: kept,
+        cachedViews: state.cachedViews.filter(name =>
+          kept.some(v => v.name === name)
+        ),
+      };
+    });
+    // 清除被关闭标签的 pageState
+    const pageStore = usePageStateStore.getState();
+    Object.keys(pageStore.pages).forEach(key => {
+      if (!remainingPaths.has('/' + key)) {
+        pageStore.clearPageState(key);
+      }
+    });
+    saveTabs();
+  },
+
+  // 关闭右边所有标签（保留 affix 和 view 本身）
+  delRightViews: (view) => {
+    const index = get().visitedViews.findIndex(v => v.path === view.path);
+    if (index === -1) return;
+
+    const remainingPaths = new Set<string>();
+    set((state) => {
+      const kept = state.visitedViews.filter((v, i) => {
+        if (i > index) {
+          // 右边标签：保留 affix
+          if (v.meta?.affix) {
+            remainingPaths.add(v.path);
+            return true;
+          }
+          return false;
+        }
+        remainingPaths.add(v.path);
+        return true;
+      });
+      return {
+        visitedViews: kept,
+        cachedViews: state.cachedViews.filter(name =>
+          kept.some(v => v.name === name)
+        ),
+      };
+    });
+    // 清除被关闭标签的 pageState
+    const pageStore = usePageStateStore.getState();
+    Object.keys(pageStore.pages).forEach(key => {
+      if (!remainingPaths.has('/' + key)) {
+        pageStore.clearPageState(key);
+      }
+    });
+    saveTabs();
   },
 
   addCachedView: (name) => {
     set((state) => {
       if (state.cachedViews.includes(name)) return state;
-      markDirty();
+      saveTabs();
       return { cachedViews: [...state.cachedViews, name] };
     });
   },
@@ -209,7 +309,7 @@ export const useMenuStore = create<MenuState>()((set, get) => ({
     set((state) => ({
       cachedViews: state.cachedViews.filter((v) => v !== name),
     }));
-    markDirty();
+    saveTabs();
   },
 
   reorderViews: (fromIndex: number, toIndex: number) => {
@@ -219,6 +319,6 @@ export const useMenuStore = create<MenuState>()((set, get) => ({
       views.splice(toIndex, 0, moved);
       return { visitedViews: views };
     });
-    markDirty();
+    saveTabs();
   },
 }));

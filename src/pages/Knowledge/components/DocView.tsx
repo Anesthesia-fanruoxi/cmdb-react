@@ -4,12 +4,17 @@
 
 import { useState } from 'react';
 import { User, Clock, Edit, History, Tag, Download, Share2, Link, Info, Copy } from 'lucide-react';
+import { writeFile } from '@tauri-apps/plugin-fs';
 import { DocItem, getDocumentHistoryList, getDocumentHistoryDetail, restoreDocumentHistory, getPublicDocHistoryList, getPublicDocHistoryDetail, restorePublicDocHistory, DocHistoryItem, ShareInfo } from '../../../services/knowledge';
 import type { DictItem } from '../../../services/system/dict';
 import MarkdownView from '../../../components/Markdown';
 import DocTocNav from './DocTocNav';
 import toast from '../../../components/Toast';
+import appNotification from '../../../components/AppNotification';
 import { confirm } from '../../../components/ConfirmModal';
+import { useMessageStore } from '../../../stores/messageStore';
+import { isTauriEnv } from '../../../services/machine';
+import { getDownloadDir, openFolder } from '../../../utils/fileSystem';
 import './DocView.css';
 
 interface DocViewProps {
@@ -87,15 +92,66 @@ const DocView = ({ doc, onEdit, onRefresh, onShare, categoryOptions = [], showHe
     } catch (err) { toast.error('恢复失败'); }
   };
 
-  const handleDownload = () => {
-    const blob = new Blob([doc.content || ''], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${doc.title}.md`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success('下载成功');
+  const handleDownload = async () => {
+    const filename = `${doc.title || '文档'}.md`;
+    const content = doc.content || '';
+    
+    if (isTauriEnv()) {
+      try {
+        toast.info('开始下载...');
+        const dir = await getDownloadDir();
+        const filePath = `${dir}/${filename}`;
+        
+        // 写入文件
+        const encoder = new TextEncoder();
+        await writeFile(filePath, encoder.encode(content));
+        
+        // 添加到消息中心
+        const msgId = useMessageStore.getState().addMessage({
+          type: 'success',
+          title: '文档下载完成',
+          content: `文件已保存: ${filename}`,
+          action: { type: 'download' },
+          extra: {
+            filename,
+            filePath,
+            downloadDir: dir,
+          },
+        });
+        
+        // 显示带按钮的通知
+        appNotification.withButtons('success', '文档下载完成', `文件已保存: ${filename}`, [
+          { 
+            text: '打开文件夹', 
+            primary: true, 
+            onClick: () => {
+              openFolder(dir);
+              useMessageStore.getState().markAsRead(msgId);
+            }
+          },
+        ], 8000);
+      } catch (err) {
+        console.error('下载文档失败:', err);
+        toast.error('下载失败');
+      }
+    } else {
+      // 浏览器降级：直接下载
+      const blob = new Blob([content], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 100);
+      
+      useMessageStore.getState().addMessage({
+        type: 'success',
+        title: '文档下载完成',
+        content: `文件已保存: ${filename}`,
+      });
+    }
   };
 
   const isShared = !!(doc as any).share;
@@ -108,8 +164,10 @@ const DocView = ({ doc, onEdit, onRefresh, onShare, categoryOptions = [], showHe
             <h2 className="doc-title">
               {doc.title}
               {isShared && (
-                <span className="shared-badge" onMouseEnter={() => setShowShareTip(true)} onMouseLeave={() => setShowShareTip(false)}>
-                  <Link size={12} /> 已分享 <Info size={12} />
+                <span className="shared-badge-wrapper" onMouseEnter={() => setShowShareTip(true)} onMouseLeave={() => setShowShareTip(false)}>
+                  <span className="shared-badge">
+                    <Link size={12} /> 已分享 <Info size={12} />
+                  </span>
                   {showShareTip && (
                     <span className="share-tooltip">
                       <p>分享码：{shareInfo?.share_code}</p>

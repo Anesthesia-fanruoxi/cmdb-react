@@ -81,13 +81,25 @@ export {
 // 设备凭据由 Rust 端管理（device_credentials.dat）
 // 前端通过 src/services/machine.ts 调用
 
-// 自动保存
+// 自动保存（兼容层）
 export {
   markDirty,
   forceSave,
   startAutoSave,
   stopAutoSave,
 } from './autoSave';
+
+// 保存调度器与策略
+export { scheduler } from './scheduler';
+export { SaveType, SaveStrategy, SAVE_CONFIG } from './strategies';
+export type { SaveConfig } from './strategies';
+
+// 各管理器
+export { saveTabs, flushTabs } from './tabManager';
+export { saveSnapshot, saveActiveRoute, flushSnapshot } from './snapshotManager';
+export { savePrefs, flushPrefs } from './prefsManager';
+export { saveCurrentRoute, flushRoute } from './routeManager';
+export { saveSidebar, flushSidebar } from './sidebarManager';
 
 // 类型导出
 export type {

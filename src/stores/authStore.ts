@@ -344,24 +344,22 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
             });
           }
 
-          // 恢复菜单状态
+          // 恢复菜单状态（优化：批量恢复，避免多次触发 markDirty）
           if (state) {
             const menuStore = useMenuStore.getState();
-            if (state.visitedViews?.length) {
-              // 先清空当前的 visitedViews，再从存储中恢复
-              // 这样可以避免重复添加已删除的标签
-              menuStore.clearVisitedViews();
-              state.visitedViews.forEach(v => {
-                menuStore.addVisitedView({
+            
+            // ✅ 一次性恢复所有菜单状态（而不是循环调用 addVisitedView）
+            if (state.visitedViews?.length || state.cachedViews?.length || state.sidebarCollapsed !== undefined) {
+              menuStore.restoreState({
+                visitedViews: state.visitedViews?.map(v => ({
                   path: v.path,
                   name: v.name,
                   title: v.title,
                   meta: { title: v.title },
-                });
+                })) || [],
+                cachedViews: state.cachedViews || [],
+                collapsed: state.sidebarCollapsed,
               });
-            }
-            if (state.sidebarCollapsed !== undefined) {
-              menuStore.setCollapsed(state.sidebarCollapsed);
             }
             
             // 恢复页面状态（表单数据等）

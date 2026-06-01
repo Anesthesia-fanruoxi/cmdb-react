@@ -4,7 +4,7 @@
  */
 
 import { create } from 'zustand';
-import { markDirty } from '../services/storage/autoSave';
+import { saveSnapshot } from '../services/storage/snapshotManager';
 
 /** 页面状态数据 */
 interface PageState {
@@ -55,7 +55,7 @@ export const usePageStateStore = create<PageStateStore>()((set, get) => ({
       },
       lastSaveTime: Date.now(),
     }));
-    markDirty();
+    saveSnapshot();
   },
 
   getPageState: <T extends PageState>(pageKey: string) => {
@@ -67,12 +67,12 @@ export const usePageStateStore = create<PageStateStore>()((set, get) => ({
       const { [pageKey]: _, ...rest } = prev.pages;
       return { pages: rest };
     });
-    markDirty();
+    saveSnapshot();
   },
 
   clearAllPageStates: () => {
     set({ pages: {}, lastRoute: null, lastSaveTime: null });
-    markDirty();
+    saveSnapshot();
   },
 
   setLastRoute: (route) => {

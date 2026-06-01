@@ -16,8 +16,6 @@ export interface GatewayConfig {
   reconnectInterval?: number;
   /** 最大重连次数 */
   maxReconnectAttempts?: number;
-  /** 心跳间隔 (ms) */
-  heartbeatInterval?: number;
   /** 订阅 API 基础 URL */
   subscribeApiUrl?: string;
 }

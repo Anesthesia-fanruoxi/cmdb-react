@@ -4,7 +4,7 @@
  */
 
 import { create } from 'zustand';
-import { markDirty } from '@/services/storage/autoSave';
+import { savePrefs } from '@/services/storage/prefsManager';
 
 /** SQL 编辑器快捷键配置 */
 export interface SqlShortcuts {
@@ -129,31 +129,31 @@ export const useUserPrefsStore = create<UserPrefsState>()((set) => ({
     set((state) => ({
       sqlShortcuts: { ...state.sqlShortcuts, [key]: value },
     }));
-    markDirty();
+    savePrefs();
   },
 
   resetSqlShortcuts: () => {
     set({ sqlShortcuts: { ...DEFAULT_SQL_SHORTCUTS } });
-    markDirty();
+    savePrefs();
   },
 
   setElfkShortcut: (key, value) => {
     set((state) => ({
       elfkShortcuts: { ...state.elfkShortcuts, [key]: value },
     }));
-    markDirty();
+    savePrefs();
   },
 
   resetElfkShortcuts: () => {
     set({ elfkShortcuts: { ...DEFAULT_ELFK_SHORTCUTS } });
-    markDirty();
+    savePrefs();
   },
 
   setMonitorDefault: (key, value) => {
     set((state) => ({
       monitorDefaults: { ...state.monitorDefaults, [key]: value },
     }));
-    markDirty();
+    savePrefs();
   },
 
   addRecentSearch: (search) => {
@@ -165,21 +165,21 @@ export const useUserPrefsStore = create<UserPrefsState>()((set) => ({
         esSearchPrefs: { ...state.esSearchPrefs, recentSearches: updated },
       };
     });
-    markDirty();
+    savePrefs();
   },
 
   clearRecentSearches: () => {
     set((state) => ({
       esSearchPrefs: { ...state.esSearchPrefs, recentSearches: [] },
     }));
-    markDirty();
+    savePrefs();
   },
 
   setUiPref: (key: keyof UiPrefs, value: boolean | number | string) => {
     set((state) => ({
       uiPrefs: { ...state.uiPrefs, [key]: value },
     }));
-    markDirty();
+    savePrefs();
   },
 
   // 状态恢复

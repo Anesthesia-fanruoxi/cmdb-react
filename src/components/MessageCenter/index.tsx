@@ -5,12 +5,12 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, X, AlertCircle, CheckCircle, Info, ExternalLink, FolderOpen, FileText, Download } from 'lucide-react';
+import { Bell, X, AlertCircle, CheckCircle, Info, ExternalLink, FolderOpen } from 'lucide-react';
 import { useMessageStore, type Message } from '../../stores/messageStore';
 import { useTaskCenterStore } from '../../stores/taskCenterStore';
 import { updateApply } from '../../services/sql/apply';
 import { confirm } from '../../components/ConfirmModal';
-import { openFolder, showInFolder, openFile } from '../../utils/fileSystem';
+import { openFolder } from '../../utils/fileSystem';
 import { isTauriEnv } from '../../services/machine';
 import { toast } from '../Toast';
 import './style.css';
@@ -94,28 +94,6 @@ const MessageCenter = ({ visible: externalVisible, onClose }: MessageCenterProps
     }
   };
 
-  const handleShowInFolder = async (msg: Message, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!msg.extra?.filePath) return;
-    
-    try {
-      await showInFolder(msg.extra.filePath as string);
-    } catch (error) {
-      toast.error('定位文件失败');
-    }
-  };
-
-  const handleOpenFile = async (msg: Message, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!msg.extra?.filePath) return;
-    
-    try {
-      await openFile(msg.extra.filePath as string);
-    } catch (error) {
-      toast.error('打开文件失败');
-    }
-  };
-
   const renderMessageItem = (msg: Message) => {
     const approvalPayload = msg.action?.type === 'sql_approval' && msg.action.payload ? JSON.parse(msg.action.payload) : null;
     return (
@@ -196,14 +174,6 @@ const MessageCenter = ({ visible: externalVisible, onClose }: MessageCenterProps
             <button className="btn-download-action" onClick={(e) => handleOpenFolder(msg, e)} title="打开文件夹">
               <FolderOpen size={14} />
               <span>打开文件夹</span>
-            </button>
-            <button className="btn-download-action" onClick={(e) => handleShowInFolder(msg, e)} title="定位文件">
-              <FileText size={14} />
-              <span>定位文件</span>
-            </button>
-            <button className="btn-download-action" onClick={(e) => handleOpenFile(msg, e)} title="打开文件">
-              <Download size={14} />
-              <span>打开文件</span>
             </button>
           </div>
         )}

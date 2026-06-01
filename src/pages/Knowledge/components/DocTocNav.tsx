@@ -31,8 +31,14 @@ const DocTocNav = ({ content, contentSelector = '.markdown-content', containerSe
     while ((match = regex.exec(text)) !== null) {
       const level = match[1].length;
       const rawText = match[2].trim();
+      // 去掉 markdown 格式：加粗、斜体、行内代码、链接
+      const cleanText = rawText
+        .replace(/\*\*(.+?)\*\*/g, '$1')  // **bold**
+        .replace(/\*(.+?)\*/g, '$1')       // *italic*
+        .replace(/`(.+?)`/g, '$1')         // `code`
+        .replace(/\[(.+?)\]\(.+?\)/g, '$1'); // [link](url)
       const id = `heading-${rawText.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-')}-${matches.length}`;
-      matches.push({ level, text: rawText, id });
+      matches.push({ level, text: cleanText, id });
     }
     return matches;
   }, []);

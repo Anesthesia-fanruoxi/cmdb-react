@@ -153,7 +153,9 @@ export function waitForStorageInit(): Promise<void> {
 }
 
 /**
- * 初始化所有存储文件
+ * 初始化所有存储文件（并行优化版）
+ * 5 个文件独立解密，使用 Promise.all 同时加载
+ * 预期提速：3-5 倍（从 ~500ms 降至 ~100-150ms）
  */
 export async function initAllStorage(): Promise<void> {
   if (isInitialized) return;
@@ -167,10 +169,14 @@ export async function initAllStorage(): Promise<void> {
     // credentials.dat 由 Rust 端管理，不在此初始化
   ];
 
-  for (const file of files) {
-    const data = await loadAndDecrypt(file);
-    memoryCache.set(file, data);
-  }
+  // ✅ 并行解密所有文件（无依赖关系）
+  const loadPromises = files.map(file => loadAndDecrypt(file));
+  const results = await Promise.all(loadPromises);
+
+  // 写入各自的内存缓存
+  files.forEach((file, index) => {
+    memoryCache.set(file, results[index]);
+  });
 
   isInitialized = true;
   if (initPromiseResolve) {

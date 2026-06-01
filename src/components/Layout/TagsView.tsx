@@ -18,7 +18,7 @@ interface TagsViewProps {
 const TagsView = ({ collapsed, onToggleCollapse }: TagsViewProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { visitedViews, delVisitedView, delOtherViews, delAllViews, addVisitedView, menuList, reorderViews } = useMenuStore();
+  const { visitedViews, delVisitedView, delOtherViews, delAllViews, delLeftViews, delRightViews, addVisitedView, menuList, reorderViews } = useMenuStore();
   const scrollRef = useRef<HTMLDivElement>(null);
   
   // 拖拽状态
@@ -190,6 +190,32 @@ const TagsView = ({ collapsed, onToggleCollapse }: TagsViewProps) => {
         delAllViews();
         navigate('/dashboard');
         break;
+      case 'closeLeft': {
+        const index = visitedViews.findIndex(v => v.path === tag.path);
+        delLeftViews(tag);
+        // 如果当前路由不在剩余标签中，跳转到 tag
+        const remainingPaths = new Set(visitedViews.slice(index).map(v => v.path));
+        visitedViews.slice(0, index).forEach(v => {
+          if (v.meta?.affix) remainingPaths.add(v.path);
+        });
+        if (!remainingPaths.has(location.pathname)) {
+          navigate(tag.path);
+        }
+        break;
+      }
+      case 'closeRight': {
+        const index = visitedViews.findIndex(v => v.path === tag.path);
+        delRightViews(tag);
+        // 如果当前路由不在剩余标签中，跳转到 tag
+        const remainingPaths = new Set(visitedViews.slice(0, index + 1).map(v => v.path));
+        visitedViews.slice(index + 1).forEach(v => {
+          if (v.meta?.affix) remainingPaths.add(v.path);
+        });
+        if (!remainingPaths.has(location.pathname)) {
+          navigate(tag.path);
+        }
+        break;
+      }
     }
   };
 
@@ -286,8 +312,10 @@ const TagsView = ({ collapsed, onToggleCollapse }: TagsViewProps) => {
       {contextMenu.visible && (
         <ul className="tags-context-menu" style={{ left: contextMenu.x, top: contextMenu.y }}>
           {!contextMenu.tag?.meta?.affix && (
-            <li onClick={() => handleMenuAction('close')}>关闭</li>
+            <li onClick={() => handleMenuAction('close')}>关闭当前</li>
           )}
+          <li onClick={() => handleMenuAction('closeLeft')}>关闭左边</li>
+          <li onClick={() => handleMenuAction('closeRight')}>关闭右边</li>
           <li onClick={() => handleMenuAction('closeOthers')}>关闭其他</li>
           <li onClick={() => handleMenuAction('closeAll')}>关闭所有</li>
         </ul>

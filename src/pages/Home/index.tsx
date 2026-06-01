@@ -11,7 +11,7 @@ import TagsView from '../../components/Layout/TagsView';
 import KeepAlive from '../../components/KeepAlive';
 import { useMenuStore } from '../../stores/menuStore';
 import { usePageStateStore } from '../../stores/pageStateStore';
-import { markDirty } from '../../services/storage/autoSave';
+import { saveCurrentRoute } from '../../services/storage/routeManager';
 import Dashboard from './Dashboard';
 import FloatingActions from '../../components/FloatingActions';
 import './style.css';
@@ -64,7 +64,7 @@ const Home = () => {
   useEffect(() => {
     if (_hasHydrated && location.pathname !== '/') {
       setLastRoute(location.pathname);
-      markDirty(); // 触发自动保存
+      saveCurrentRoute(location.pathname); // 防抖 1 秒保存路由状态
     }
   }, [_hasHydrated, location.pathname, setLastRoute]);
 

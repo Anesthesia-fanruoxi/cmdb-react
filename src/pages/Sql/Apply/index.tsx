@@ -19,7 +19,6 @@ import './index.css';
 
 const SqlApply = () => {
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [applyList, setApplyList] = useState<ApplyItem[]>([]);
   const prevIdsRef = useRef<Set<string>>(new Set());
   const [sseStatus, setSseStatus] = useState<SSEConnectionState>('closed');
@@ -186,15 +185,6 @@ const SqlApply = () => {
     }
   };
 
-  const handleRefresh = useCallback(() => {
-    if (refreshing) return;
-    setRefreshing(true);
-    prevIdsRef.current = new Set();
-    notifiedIdsRef.current = new Set();
-    setLoading(true);
-    setTimeout(() => setRefreshing(false), 1000);
-  }, [refreshing]);
-
   const handleResubmit = (data: Partial<ApplyItem>) => {
     setPrefillData(data);
     setDetailVisible(false);
@@ -279,9 +269,6 @@ const SqlApply = () => {
                 重置
               </button>
             )}
-            <button className="btn btn-default" onClick={handleRefresh} disabled={refreshing}>
-              {refreshing ? '刷新中...' : '刷新'}
-            </button>
             <button className="btn btn-primary" onClick={() => { setPrefillData(null); setCreateVisible(true); }}>
               + 新建申请
             </button>
