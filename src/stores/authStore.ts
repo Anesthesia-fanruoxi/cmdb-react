@@ -37,6 +37,7 @@ import { useMenuStore } from './menuStore';
 import { useAppStore } from './appStore';
 import { usePageStateStore } from './pageStateStore';
 import { useUserPrefsStore } from './userPrefsStore';
+import { useSqlApplyStore } from './sqlApplyStore';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -115,6 +116,9 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         isAuthenticated: true,
       });
 
+      // 启动全局 SQL 申请订阅
+      useSqlApplyStore.getState().start();
+
       return { isDefaultPass: is_default_pass };
     } else {
       throw new Error(res.message || '登录失败');
@@ -140,6 +144,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           userName: result.user_name || userName,
           isAuthenticated: true,
         });
+        // 启动全局 SQL 申请订阅
+        useSqlApplyStore.getState().start();
         return true;
       }
       
@@ -257,6 +263,9 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
   // 登出 - 第二步：执行清除（在动画中调用）
   executeLogout: async () => {
+    // 停止全局 SQL 申请订阅
+    useSqlApplyStore.getState().stop();
+
     // 调用登出接口
     try {
       await logoutApi();
@@ -327,6 +336,9 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           if (profile?.permissions) {
             get().setPermissions(profile.permissions);
           }
+
+          // 启动全局 SQL 申请订阅
+          useSqlApplyStore.getState().start();
 
           // 恢复主题
           if (prefs?.theme) {

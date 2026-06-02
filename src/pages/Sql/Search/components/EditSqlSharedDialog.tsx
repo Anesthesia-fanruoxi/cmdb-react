@@ -17,11 +17,13 @@ const EditSqlSharedDialog = ({ visible, item, onClose, onSuccess }: Props) => {
   const [remark, setRemark] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isShared, setIsShared] = useState(true);
 
   useEffect(() => {
     if (visible && item) {
       setQuery(item.query || '');
       setRemark(item.remark || '');
+      setIsShared(!!item.is_shared);
       setError('');
     }
   }, [visible, item]);
@@ -52,10 +54,9 @@ const EditSqlSharedDialog = ({ visible, item, onClose, onSuccess }: Props) => {
     try {
       const res = await updateSqlSharedQuery({
         id: item.id,
-        project: item.project,
-        db_name: item.db_name,
         query: query.trim(),
         remark: remark.trim(),
+        is_shared: isShared,
       });
 
       if (res.code === 200) {
@@ -76,52 +77,51 @@ const EditSqlSharedDialog = ({ visible, item, onClose, onSuccess }: Props) => {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="sql-detail-modal" style={{ width: 700 }} onClick={e => e.stopPropagation()}>
+      <div className="sql-edit-modal" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h4>✏️ 编辑共享记录</h4>
           <button className="close-btn" onClick={onClose}>×</button>
         </div>
 
-        <div style={{ padding: '16px 20px' }}>
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', marginBottom: 6, fontSize: 13, color: 'var(--text-secondary)' }}>SQL 查询</label>
+        <div className="sql-edit-body">
+          <div className="edit-row edit-row-grow">
+            <label>SQL 查询</label>
             <textarea
+              className="edit-textarea"
               value={query}
               onChange={e => setQuery(e.target.value)}
-              rows={8}
-              style={{
-                width: '100%',
-                padding: 12,
-                border: '1px solid var(--border-color)',
-                borderRadius: 6,
-                fontSize: 13,
-                fontFamily: "'Monaco', 'Consolas', monospace",
-                resize: 'vertical',
-                boxSizing: 'border-box'
-              }}
             />
           </div>
 
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', marginBottom: 6, fontSize: 13, color: 'var(--text-secondary)' }}>备注</label>
-            <input
-              type="text"
-              value={remark}
-              onChange={e => setRemark(e.target.value)}
-              placeholder="输入备注信息"
-              style={{
-                width: '100%',
-                height: 36,
-                padding: '0 12px',
-                border: '1px solid var(--border-color)',
-                borderRadius: 6,
-                fontSize: 13,
-                boxSizing: 'border-box'
-              }}
-            />
+          <div className="edit-row edit-row-inline">
+            <div className="edit-row-half">
+              <label>保存位置</label>
+              <div className="share-toggle">
+                <button
+                  type="button"
+                  className={`toggle-btn ${isShared ? 'active' : ''}`}
+                  onClick={() => setIsShared(true)}
+                >👥 共享记录</button>
+                <button
+                  type="button"
+                  className={`toggle-btn ${!isShared ? 'active' : ''}`}
+                  onClick={() => setIsShared(false)}
+                >⭐ 个人收藏</button>
+              </div>
+            </div>
+            <div className="edit-row-half">
+              <label>备注</label>
+              <input
+                className="edit-input"
+                type="text"
+                value={remark}
+                onChange={e => setRemark(e.target.value)}
+                placeholder="输入备注信息"
+              />
+            </div>
           </div>
 
-          {error && <div style={{ color: '#e74c3c', fontSize: 13, marginBottom: 12 }}>{error}</div>}
+          {error && <div className="edit-error">{error}</div>}
         </div>
 
         <div className="modal-footer">

@@ -13,6 +13,7 @@ export interface SharedKeywordItem {
   view_id: number;
   keyword: string;
   remark: string;
+  is_shared: boolean;
   creator: string;
   created_at: string;
 }
@@ -23,6 +24,7 @@ export interface SharedKeywordQuery {
   category?: string;   // 分类名称（模糊搜索）
   view_id?: number;    // 视图ID（精确匹配）
   search?: string;     // 混合搜索（匹配关键词、备注、添加人）
+  is_shared?: '0' | '1' | ''; // 0=个人收藏, 1=共享记录, ''=全部
   page?: number;       // 页码
 }
 
@@ -33,16 +35,14 @@ export interface CreateSharedKeywordParams {
   view_id: number;
   keyword: string;
   remark?: string;
+  is_shared: boolean;  // true=共享, false=个人收藏
 }
 
 /** 更新共享关键词参数 */
 export interface UpdateSharedKeywordParams {
   id: number;
-  project: string;
-  category: string;
-  view_id: number;
-  keyword: string;
   remark?: string;
+  is_shared?: boolean; // 可选切换个人/共享
 }
 
 /** 分页响应 */
@@ -71,5 +71,5 @@ export const updateSharedKeyword = (data: UpdateSharedKeywordParams) => {
 
 /** 删除共享关键词 */
 export const deleteSharedKeyword = (id: number) => {
-  return request.post<null>(`/elfk/keyword/delete?id=${id}`);
+  return request.delete<null>(`/elfk/keyword/delete?id=${id}`);
 };

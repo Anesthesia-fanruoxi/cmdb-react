@@ -282,17 +282,43 @@
   position: relative;
   flex: 1;
   min-width: 200px;
+  height: 32px;
+}
+
+/* 聚焦时浮起覆盖下方内容 */
+.search-form-bar .search-input-wrapper.search-input-expanded {
+  z-index: 100;
+}
+
+.search-form-bar .search-input-wrapper.search-input-expanded .search-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  max-height: 80vh;
+}
+
+.search-form-bar .search-input-wrapper.search-input-expanded .search-input textarea {
+  overflow: hidden;
+  max-height: calc(80vh - 20px);
+}
+
+/* 内容超过 80vh 时才出现滚动条 */
+.search-form-bar .search-input-wrapper.search-input-expanded .search-input textarea.has-scroll {
+  overflow: auto;
 }
 
 .search-form-bar .search-input {
   display: flex;
-  align-items: center;
-  height: 32px;
+  align-items: flex-start;
+  min-height: 32px;
   border: 1px solid var(--border-color, #d9d9d9);
   border-radius: 6px;
   background: var(--bg-color, #fff);
-  padding: 0 10px;
+  padding: 6px 10px;
   width: 100%;
+  transition: box-shadow 0.2s;
 }
 
 .search-form-bar .search-icon {
@@ -304,13 +330,18 @@
   color: var(--primary-color, #1890ff);
 }
 
-.search-form-bar .search-input input {
+.search-form-bar .search-input input,
+.search-form-bar .search-input textarea {
   flex: 1;
   border: none;
   outline: none;
   font-size: 13px;
   background: transparent;
   color: var(--text-color, #333);
+  resize: none;
+  overflow: hidden;
+  line-height: 20px;
+  font-family: inherit;
 }
 
 .search-form-bar .search-history-dropdown {

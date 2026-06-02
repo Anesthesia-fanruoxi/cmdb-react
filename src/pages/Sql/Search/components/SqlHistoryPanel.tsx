@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { getSqlSharedQueryList, deleteSqlSharedQuery, type SqlSharedQueryItem } from '../../../../services/sql';
 import { getHistoryList, type HistoryItem } from '../../../../services/sql/search';
 import EditSqlSharedDialog from './EditSqlSharedDialog';
+import SqlDetailModal from './SqlDetailModal';
 
 interface Props {
   visible: boolean;
@@ -17,16 +18,21 @@ interface Props {
 }
 
 const SqlHistoryPanel = ({ visible, project, projectName, onClose, onSelect, onAppend }: Props) => {
-  const [activeTab, setActiveTab] = useState<'personal' | 'shared'>('personal');
+  const [activeTab, setActiveTab] = useState<'personal' | 'shared' | 'favorite'>('personal');
   const [personalHistory, setPersonalHistory] = useState<HistoryItem[]>([]);
   const [personalLoading, setPersonalLoading] = useState(false);
   const [sharedList, setSharedList] = useState<SqlSharedQueryItem[]>([]);
   const [sharedTotal, setSharedTotal] = useState(0);
   const [sharedPage, setSharedPage] = useState(1);
+  const [favoriteList, setFavoriteList] = useState<SqlSharedQueryItem[]>([]);
+  const [favoriteTotal, setFavoriteTotal] = useState(0);
+  const [favoritePage, setFavoritePage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [selectedItem, setSelectedItem] = useState<HistoryItem | SqlSharedQueryItem | null>(null);
   const [editItem, setEditItem] = useState<SqlSharedQueryItem | null>(null);
+
+  const PAGE_SIZE = 100;
 
   // ESC 键关闭：优先关闭详情弹框，其次关闭抽屉
   useEffect(() => {
@@ -84,7 +90,7 @@ const SqlHistoryPanel = ({ visible, project, projectName, onClose, onSelect, onA
     if (!project) return;
     setLoading(true);
     try {
-      const res = await getSqlSharedQueryList({ project, search: search || undefined, page });
+      const res = await getSqlSharedQueryList({ project, search: search || undefined, page, is_shared: '1' });
       if (res.code === 200 && res.data) {
         setSharedList(res.data.list || []);
         setSharedTotal(res.data.total || 0);
@@ -97,9 +103,30 @@ const SqlHistoryPanel = ({ visible, project, projectName, onClose, onSelect, onA
     }
   }, [project]);
 
+  // 加载个人收藏
+  const fetchFavorite = useCallback(async (page = 1, search = '') => {
+    if (!project) return;
+    setLoading(true);
+    try {
+      const res = await getSqlSharedQueryList({ project, search: search || undefined, page, is_shared: '0' });
+      if (res.code === 200 && res.data) {
+        setFavoriteList(res.data.list || []);
+        setFavoriteTotal(res.data.total || 0);
+        setFavoritePage(page);
+      }
+    } catch (err) {
+      console.error('获取个人收藏失败:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [project]);
+
   useEffect(() => {
     if (visible && activeTab === 'shared' && project) {
       fetchShared(1, searchText);
+    }
+    if (visible && activeTab === 'favorite' && project) {
+      fetchFavorite(1, searchText);
     }
   }, [visible, activeTab, project]);
 
@@ -107,8 +134,10 @@ const SqlHistoryPanel = ({ visible, project, projectName, onClose, onSelect, onA
     if (activeTab === 'personal') {
       // 个人记录前端过滤
       fetchPersonalHistory();
-    } else {
+    } else if (activeTab === 'shared') {
       fetchShared(1, searchText);
+    } else {
+      fetchFavorite(1, searchText);
     }
   };
 
@@ -127,6 +156,16 @@ const SqlHistoryPanel = ({ visible, project, projectName, onClose, onSelect, onA
     }
   };
 
+  const handleDeleteFavorite = async (id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await deleteSqlSharedQuery(id);
+      fetchFavorite(favoritePage, searchText);
+    } catch (err) {
+      console.error('删除失败:', err);
+    }
+  };
+
   const handleEditShared = (item: SqlSharedQueryItem, e: React.MouseEvent) => {
     e.stopPropagation();
     setEditItem(item);
@@ -138,7 +177,8 @@ const SqlHistoryPanel = ({ visible, project, projectName, onClose, onSelect, onA
 
   if (!visible) return null;
 
-  const totalPages = Math.ceil(sharedTotal / 20);
+  const sharedTotalPages = Math.max(1, Math.ceil(sharedTotal / PAGE_SIZE));
+  const favoriteTotalPages = Math.max(1, Math.ceil(favoriteTotal / PAGE_SIZE));
 
   return (
     <>
@@ -152,10 +192,13 @@ const SqlHistoryPanel = ({ visible, project, projectName, onClose, onSelect, onA
           {/* 标签页 */}
           <div className="modal-tabs" style={{ background: 'transparent', padding: '8px 16px' }}>
             <button className={`tab-btn ${activeTab === 'personal' ? 'active' : ''}`} onClick={() => setActiveTab('personal')}>
-              👤 个人记录
+              📝 个人记录
             </button>
             <button className={`tab-btn ${activeTab === 'shared' ? 'active' : ''}`} onClick={() => setActiveTab('shared')}>
-              👥 共享记录
+              👥 共享记录 {sharedTotal > 0 && `(${sharedTotal})`}
+            </button>
+            <button className={`tab-btn ${activeTab === 'favorite' ? 'active' : ''}`} onClick={() => setActiveTab('favorite')}>
+              ⭐ 个人收藏 {favoriteTotal > 0 && `(${favoriteTotal})`}
             </button>
           </div>
 
@@ -167,7 +210,7 @@ const SqlHistoryPanel = ({ visible, project, projectName, onClose, onSelect, onA
               value={searchText}
               onChange={e => setSearchText(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSearch()}
-              style={{ flex: 1, height: 32, padding: '0 12px', border: '1px solid var(--border-color)', borderRadius: 6, fontSize: 13 }}
+              style={{ flex: 1, height: 32, padding: '0 12px', border: '1px solid var(--border-color)', borderRadius: 6, fontSize: 13, background: 'var(--bg-color)', color: 'var(--text-color)', outline: 'none' }}
             />
             <button onClick={handleSearch} style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--primary-color)', border: 'none', borderRadius: 6, color: '#fff', cursor: 'pointer', fontSize: 14 }}>
               🔍
@@ -201,7 +244,7 @@ const SqlHistoryPanel = ({ visible, project, projectName, onClose, onSelect, onA
                   ))
                 )}
               </div>
-            ) : (
+            ) : activeTab === 'shared' ? (
               <div className="history-list">
                 <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8 }}>
                   {projectName} | 共 {sharedTotal} 条
@@ -229,11 +272,49 @@ const SqlHistoryPanel = ({ visible, project, projectName, onClose, onSelect, onA
                         </div>
                       </div>
                     ))}
-                    {totalPages > 1 && (
+                    {sharedTotalPages > 1 && (
                       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 16, paddingTop: 12, borderTop: '1px solid var(--border-color)' }}>
                         <button disabled={sharedPage <= 1} onClick={() => fetchShared(sharedPage - 1, searchText)} style={{ padding: '6px 12px', background: 'var(--bg-color)', border: '1px solid var(--border-color)', borderRadius: 4, fontSize: 13, cursor: 'pointer', opacity: sharedPage <= 1 ? 0.5 : 1 }}>上一页</button>
-                        <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{sharedPage} / {totalPages}</span>
-                        <button disabled={sharedPage >= totalPages} onClick={() => fetchShared(sharedPage + 1, searchText)} style={{ padding: '6px 12px', background: 'var(--bg-color)', border: '1px solid var(--border-color)', borderRadius: 4, fontSize: 13, cursor: 'pointer', opacity: sharedPage >= totalPages ? 0.5 : 1 }}>下一页</button>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{sharedPage} / {sharedTotalPages}</span>
+                        <button disabled={sharedPage >= sharedTotalPages} onClick={() => fetchShared(sharedPage + 1, searchText)} style={{ padding: '6px 12px', background: 'var(--bg-color)', border: '1px solid var(--border-color)', borderRadius: 4, fontSize: 13, cursor: 'pointer', opacity: sharedPage >= sharedTotalPages ? 0.5 : 1 }}>下一页</button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="history-list">
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8 }}>
+                  {projectName} | 共 {favoriteTotal} 条
+                </div>
+                {loading ? (
+                  <div className="empty-tip">加载中...</div>
+                ) : favoriteList.length === 0 ? (
+                  <div className="empty-tip">暂无个人收藏</div>
+                ) : (
+                  <>
+                    {favoriteList.map(item => (
+                      <div key={item.id} className="history-card" onClick={() => setSelectedItem(item)}>
+                        <div className="history-card-header">
+                          <span className="history-time">⭐ {item.creator} · {item.created_at?.split('T')[0]}</span>
+                          <div className="history-card-actions">
+                            <button className="btn-icon" title="替换" onClick={e => { e.stopPropagation(); onSelect(item.query); }}>📋</button>
+                            <button className="btn-icon" title="追加" onClick={e => { e.stopPropagation(); onAppend(item.query); }}>➕</button>
+                            <button className="btn-icon" title="编辑" onClick={e => handleEditShared(item, e)}>✏️</button>
+                            <button className="btn-icon" title="删除" onClick={e => handleDeleteFavorite(item.id, e)}>🗑️</button>
+                          </div>
+                        </div>
+                        {item.remark && <div style={{ fontSize: 12, color: 'var(--primary-color)', marginBottom: 6 }}>💬 {item.remark}</div>}
+                        <div className="history-sql-preview">
+                          {item.query?.replace(/\s+/g, ' ').slice(0, 120)}{(item.query?.length || 0) > 120 ? '...' : ''}
+                        </div>
+                      </div>
+                    ))}
+                    {favoriteTotalPages > 1 && (
+                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 16, paddingTop: 12, borderTop: '1px solid var(--border-color)' }}>
+                        <button disabled={favoritePage <= 1} onClick={() => fetchFavorite(favoritePage - 1, searchText)} style={{ padding: '6px 12px', background: 'var(--bg-color)', border: '1px solid var(--border-color)', borderRadius: 4, fontSize: 13, cursor: 'pointer', opacity: favoritePage <= 1 ? 0.5 : 1 }}>上一页</button>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{favoritePage} / {favoriteTotalPages}</span>
+                        <button disabled={favoritePage >= favoriteTotalPages} onClick={() => fetchFavorite(favoritePage + 1, searchText)} style={{ padding: '6px 12px', background: 'var(--bg-color)', border: '1px solid var(--border-color)', borderRadius: 4, fontSize: 13, cursor: 'pointer', opacity: favoritePage >= favoriteTotalPages ? 0.5 : 1 }}>下一页</button>
                       </div>
                     )}
                   </>
@@ -245,33 +326,27 @@ const SqlHistoryPanel = ({ visible, project, projectName, onClose, onSelect, onA
       </div>
 
       {/* SQL 详情弹框 */}
-      {selectedItem && (
-        <div className="modal-overlay" onClick={() => setSelectedItem(null)}>
-          <div className="sql-detail-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h4>SQL 详情</h4>
-              <button className="close-btn" onClick={() => setSelectedItem(null)}>×</button>
-            </div>
-            {'remark' in selectedItem && selectedItem.remark && (
-              <div className="modal-meta">备注：{selectedItem.remark}</div>
-            )}
-            <div className="modal-content">
-              <pre>{getSqlContent(selectedItem)}</pre>
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-default" onClick={() => { onAppend(getSqlContent(selectedItem)); setSelectedItem(null); }}>➕ 追加填入</button>
-              <button className="btn btn-primary" onClick={() => { onSelect(getSqlContent(selectedItem)); setSelectedItem(null); }}>📋 替换填入</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <SqlDetailModal
+        visible={!!selectedItem}
+        sql={selectedItem ? getSqlContent(selectedItem) : ''}
+        remark={selectedItem && 'remark' in selectedItem ? selectedItem.remark : undefined}
+        onAppend={(s) => onAppend(s)}
+        onSelect={(s) => onSelect(s)}
+        onClose={() => setSelectedItem(null)}
+      />
 
       {/* 编辑共享记录弹框 */}
       <EditSqlSharedDialog
         visible={!!editItem}
         item={editItem}
         onClose={() => setEditItem(null)}
-        onSuccess={() => fetchShared(sharedPage, searchText)}
+        onSuccess={() => {
+          if (activeTab === 'favorite') {
+            fetchFavorite(favoritePage, searchText);
+          } else {
+            fetchShared(sharedPage, searchText);
+          }
+        }}
       />
     </>
   );

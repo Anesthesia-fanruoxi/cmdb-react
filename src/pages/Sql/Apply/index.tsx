@@ -1,47 +1,37 @@
 /**
- * SQL变更申请页面 - 参考Vue版本
+ * SQL变更申请页面
+ * 数据/订阅/通知统一由 useSqlApplyStore 管理（登录后全局订阅 sql.apply.list）
+ * 本页只负责 UI 展示与筛选条件下发
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { 
+import { useState, useEffect } from 'react';
+import {
   type ApplyItem, type ApplyDetail, getApplyDetail,
   APPLY_STATUS_MAP
 } from '../../../services/sql/apply';
-import { SSEGateway, CHANNELS } from '../../../services/sse';
-import { useSSESubscription } from '../../../services/sse/hooks/useSSESubscription';
-import type { SSEConnectionState } from '../../../services/sse/types';
+import { useSqlApplyStore } from '@/stores/sqlApplyStore';
 import ApplyDetailDrawer from './ApplyDetail';
 import ApplyCreateDrawer from './ApplyCreate';
-import { openDesktopNotifyWindow } from '@/utils/window';
-import { useAuthStore } from '@/stores';
-import { useMessageStore } from '@/stores/messageStore';
 import './index.css';
 
 const SqlApply = () => {
-  const [loading, setLoading] = useState(true);
-  const [applyList, setApplyList] = useState<ApplyItem[]>([]);
-  const prevIdsRef = useRef<Set<string>>(new Set());
-  const [sseStatus, setSseStatus] = useState<SSEConnectionState>('closed');
-  const connectedAtRef = useRef<number>(0);
+  const applyList = useSqlApplyStore(s => s.applyList);
+  const loading = useSqlApplyStore(s => s.loading);
+  const sseStatus = useSqlApplyStore(s => s.sseStatus);
+  const sseConnectedAt = useSqlApplyStore(s => s.sseConnectedAt);
+  const appliedFilter = useSqlApplyStore(s => s.filter);
+
   const [sseDuration, setSseDuration] = useState('');
   const [sseTooltipVisible, setSseTooltipVisible] = useState(false);
-  const notifiedIdsRef = useRef<Set<string>>(new Set());
-  const trackedIdsRef = useRef<Set<string>>(new Set());
 
-  // 筛选状态
-  const [filterSubmitter, setFilterSubmitter] = useState<string>('');
-  const [filterStatus, setFilterStatus] = useState<string>('');
-  // 实际应用的筛选条件
-  const [appliedSubmitter, setAppliedSubmitter] = useState<string>('');
-  const [appliedStatus, setAppliedStatus] = useState<string>('');
+  // 筛选输入态
+  const [filterSubmitter, setFilterSubmitter] = useState<string>(appliedFilter.submitter_name);
+  const [filterStatus, setFilterStatus] = useState<string>(appliedFilter.status);
 
   const [createVisible, setCreateVisible] = useState(false);
   const [detailVisible, setDetailVisible] = useState(false);
   const [currentDetail, setCurrentDetail] = useState<ApplyDetail | null>(null);
   const [prefillData, setPrefillData] = useState<Partial<ApplyItem> | null>(null);
-
-  const currentUser = useAuthStore(s => s.user);
-  const myName = currentUser?.nick_name || currentUser?.user_name || '';
 
   // 格式化连接时长
   const formatDuration = (ms: number) => {
@@ -56,122 +46,15 @@ const SqlApply = () => {
     return `${h} 时 ${min} 分`;
   };
 
-  // SSEGateway 连接状态监听
-  useEffect(() => {
-    const gateway = SSEGateway.getInstance();
-    if (!gateway) return;
-
-    const updateState = () => {
-      const st = gateway.getState();
-      setSseStatus(st);
-      if (st === 'open') {
-        if (!connectedAtRef.current) connectedAtRef.current = Date.now();
-      } else {
-        connectedAtRef.current = 0;
-      }
-    };
-
-    const unsub = gateway.on('stateChange', updateState);
-    updateState();
-    return unsub;
-  }, []);
-
   // 连接时长计时
   useEffect(() => {
     const timer = setInterval(() => {
-      if (sseStatus === 'open' && connectedAtRef.current) {
-        setSseDuration(formatDuration(Date.now() - connectedAtRef.current));
+      if (sseStatus === 'open' && sseConnectedAt) {
+        setSseDuration(formatDuration(Date.now() - sseConnectedAt));
       }
     }, 1000);
     return () => clearInterval(timer);
-  }, [sseStatus]);
-
-  // 通知逻辑（数据去重 + 桌面通知）
-  const handleSSEData = useCallback((data: { apply?: ApplyItem[]; total_count?: number }) => {
-    const items = data.apply || [];
-    if (items.length === 0) return;
-
-    const currentIds = new Set(items.map(item => item.id));
-    items.forEach(item => {
-      const st = String(item.status);
-      const isNew = !prevIdsRef.current.has(item.id);
-      const isMyJob = st === '1' && item.executor_name === myName;
-
-      if (isNew) {
-        if (isMyJob && !notifiedIdsRef.current.has(item.id)) {
-          notifiedIdsRef.current.add(item.id);
-          trackedIdsRef.current.add(item.id);
-          openDesktopNotifyWindow({
-            title: 'SQL 审批通知',
-            subtitle: `${item.submitter_name} · ${item.created_at || '刚刚'}`,
-            applyId: item.id,
-            project: item.project,
-            description: item.description || item.remark || '',
-          });
-          useMessageStore.getState().addMessage({
-            type: 'info',
-            title: 'SQL 审批通知',
-            content: `${item.project} · ${(item.description || item.remark || '').slice(0, 30)}`,
-            action: {
-              type: 'sql_approval',
-              payload: JSON.stringify({ applyId: item.id, project: item.project, description: item.description || item.remark || '' }),
-            },
-            extra: { applyId: item.id },
-          });
-        }
-      } else {
-        if (isMyJob && !notifiedIdsRef.current.has(item.id)) {
-          notifiedIdsRef.current.add(item.id);
-          trackedIdsRef.current.add(item.id);
-          openDesktopNotifyWindow({
-            title: 'SQL 审批通知',
-            subtitle: `${item.submitter_name} · ${item.created_at || '刚刚'}`,
-            applyId: item.id,
-            project: item.project,
-            description: item.description || item.remark || '',
-          });
-          useMessageStore.getState().addMessage({
-            type: 'info',
-            title: 'SQL 审批通知',
-            content: `${item.project} · ${(item.description || item.remark || '').slice(0, 30)}`,
-            action: {
-              type: 'sql_approval',
-              payload: JSON.stringify({ applyId: item.id, project: item.project, description: item.description || item.remark || '' }),
-            },
-            extra: { applyId: item.id },
-          });
-        } else if (trackedIdsRef.current.has(item.id) && !isMyJob) {
-          trackedIdsRef.current.delete(item.id);
-          useMessageStore.getState().messages.forEach(msg => {
-            if (msg.extra?.applyId === item.id && !msg.read) {
-              useMessageStore.getState().markAsRead(msg.id);
-            }
-          });
-        }
-      }
-    });
-    prevIdsRef.current = currentIds;
-    setApplyList(items);
-    setLoading(false);
-  }, [myName]);
-
-  const handleSSEError = useCallback(() => {
-    setLoading(false);
-  }, []);
-
-  const handleSSEComplete = useCallback(() => {
-    setLoading(false);
-  }, []);
-
-  // 通过全局网关订阅数据
-  useSSESubscription({
-    channel: CHANNELS.SQL_APPLY_LIST,
-    params: { submitter_name: appliedSubmitter, status: appliedStatus },
-    onData: handleSSEData,
-    onError: handleSSEError,
-    onComplete: handleSSEComplete,
-    enabled: true,
-  });
+  }, [sseStatus, sseConnectedAt]);
 
   const handleViewDetail = async (item: ApplyItem) => {
     try {
@@ -198,8 +81,10 @@ const SqlApply = () => {
 
   // 执行搜索
   const handleSearch = () => {
-    setAppliedSubmitter(filterSubmitter);
-    setAppliedStatus(filterStatus);
+    useSqlApplyStore.getState().setFilter({
+      submitter_name: filterSubmitter,
+      status: filterStatus,
+    });
   };
 
   // 处理回车键
@@ -213,11 +98,8 @@ const SqlApply = () => {
   const handleResetFilter = () => {
     setFilterSubmitter('');
     setFilterStatus('');
-    setAppliedSubmitter('');
-    setAppliedStatus('');
+    useSqlApplyStore.getState().setFilter({ submitter_name: '', status: '' });
   };
-
-  // 参数变化时 useSSESubscription 自动重新订阅
 
   return (
     <div className="sql-apply-page">
@@ -264,7 +146,7 @@ const SqlApply = () => {
             <button className="btn btn-primary" onClick={handleSearch}>
               搜索
             </button>
-            {(appliedSubmitter || appliedStatus) && (
+            {(appliedFilter.submitter_name || appliedFilter.status) && (
               <button className="btn btn-default" onClick={handleResetFilter}>
                 重置
               </button>
@@ -336,7 +218,7 @@ const SqlApply = () => {
         <ApplyDetailDrawer
           detail={currentDetail}
           onClose={() => setDetailVisible(false)}
-          onRefresh={() => { prevIdsRef.current = new Set(); setLoading(true); }}
+          onRefresh={() => { useSqlApplyStore.getState().resetSeen(); }}
           onResubmit={handleResubmit}
         />
       )}

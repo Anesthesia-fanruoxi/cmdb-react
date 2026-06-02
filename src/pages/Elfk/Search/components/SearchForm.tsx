@@ -138,7 +138,27 @@ const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, initial
   const [shortcutVisible, setShortcutVisible] = useState(false);
 
   const { elfkShortcuts } = useUserPrefsStore();
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [inputFocused, setInputFocused] = useState(false);
+  const keywordChangeTimer = useRef<number | null>(null);
+  const onKeywordChangeRef = useRef(onKeywordChange);
+  onKeywordChangeRef.current = onKeywordChange;
+
+  // textarea 自适应高度
+  const adjustHeight = () => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    const maxH = window.innerHeight * 0.8 - 20;
+    const scrollH = el.scrollHeight;
+    if (scrollH > maxH) {
+      el.style.height = `${maxH}px`;
+      el.classList.add('has-scroll');
+    } else {
+      el.style.height = `${scrollH}px`;
+      el.classList.remove('has-scroll');
+    }
+  };
 
   // 同步外部传入的 keyword
   useEffect(() => {
@@ -147,11 +167,28 @@ const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, initial
     }
   }, [initialKeyword]);
 
-  // 输入变化时同步到父组件
+  // keyword 变化后同步高度
+  useEffect(() => {
+    adjustHeight();
+  }, [localKeyword]);
+
+  // 输入变化时同步到父组件（防抖，避免频繁重渲染导致卡顿）
   const handleKeywordChange = (value: string) => {
     setLocalKeyword(value);
-    onKeywordChange?.(value);
+    if (keywordChangeTimer.current) {
+      window.clearTimeout(keywordChangeTimer.current);
+    }
+    keywordChangeTimer.current = window.setTimeout(() => {
+      onKeywordChangeRef.current?.(value);
+    }, 200);
   };
+
+  // 卸载时清理定时器
+  useEffect(() => {
+    return () => {
+      if (keywordChangeTimer.current) window.clearTimeout(keywordChangeTimer.current);
+    };
+  }, []);
 
   // 根据分类过滤视图
   const views = projectInfo?.category
@@ -183,6 +220,12 @@ const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, initial
   const handleSearch = useCallback(() => {
     if (!currentView || !projectInfo) return;
     if (localKeyword.trim()) saveLocalHistory(localKeyword.trim());
+    // 冲刷防抖，立即同步最新 keyword 到父组件
+    if (keywordChangeTimer.current) {
+      window.clearTimeout(keywordChangeTimer.current);
+      keywordChangeTimer.current = null;
+      onKeywordChangeRef.current?.(localKeyword);
+    }
     
     // 动态计算实际时间范围
     const actualRange = getActualTimeRange(timeRange);
@@ -318,17 +361,18 @@ const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, initial
         </div>
 
         {/* 搜索框 */}
-        <div className="search-input-wrapper">
+        <div className={`search-input-wrapper${inputFocused ? ' search-input-expanded' : ''}`}>
           <div className="search-input">
             <span className="search-icon" onClick={() => setHistoryVisible(!historyVisible)} title="历史记录">🔍</span>
-            <input
+            <textarea
               ref={inputRef}
-              type="text"
+              rows={1}
               placeholder="输入搜索关键词，支持 Lucene 语法"
               value={localKeyword}
-              onChange={e => handleKeywordChange(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleSearch()}
-              onFocus={() => setHistoryVisible(true)}
+              onChange={e => { handleKeywordChange(e.target.value); adjustHeight(); }}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSearch(); } }}
+              onFocus={() => { setInputFocused(true); adjustHeight(); }}
+              onBlur={() => setInputFocused(false)}
             />
           </div>
           <HistoryDropdown

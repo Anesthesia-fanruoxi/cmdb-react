@@ -56,6 +56,47 @@
   text-decoration: underline;
 }
 
+.dropdown-search {
+  display: flex;
+  gap: 4px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dropdown-search input {
+  flex: 1;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  font-size: 12px;
+  outline: none;
+}
+
+.dropdown-search input:focus {
+  border-color: var(--primary-color);
+}
+
+.dropdown-search .search-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-color);
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.dropdown-search .search-btn:hover {
+  opacity: 0.9;
+}
+
 /* 内容区 */
 .dropdown-content {
   max-height: 300px;
@@ -168,4 +209,36 @@
 
 .dropdown-content .history-list.shared .delete-btn:hover {
   color: #e74c3c;
+}
+
+/* 分页控件 */
+.history-pager {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border-color);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.history-pager button {
+  padding: 4px 10px;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--text-color);
+  cursor: pointer;
+}
+
+.history-pager button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.history-pager button:not(:disabled):hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }

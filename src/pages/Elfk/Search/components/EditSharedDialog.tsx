@@ -53,10 +53,6 @@ const EditSharedDialog = ({ visible, item, onClose, onSuccess }: Props) => {
     try {
       const res = await updateSharedKeyword({
         id: item.id,
-        project: item.project,
-        category: item.category,
-        view_id: item.view_id,
-        keyword: keyword.trim(),
         remark: remark.trim(),
       });
 

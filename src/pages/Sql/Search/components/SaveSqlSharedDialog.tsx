@@ -21,31 +21,26 @@ const SaveSqlSharedDialog = ({ visible, project, projectName, dbName, sql, onClo
   const [remark, setRemark] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isShared, setIsShared] = useState(true); // true=共享, false=个人收藏
 
   // 重置状态
   useEffect(() => {
     if (visible) {
       setRemark('');
       setError('');
+      setIsShared(true);
     }
   }, [visible]);
 
-  // ESC 关闭，Enter 保存
+  // ESC 关闭
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!visible) return;
       if (e.key === 'Escape') onClose();
-      // Ctrl+Enter 或 Meta+Enter 保存
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        e.preventDefault();
-        if (!loading && sql.trim() && remark.trim()) {
-          handleSave();
-        }
-      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [visible, onClose, loading, sql, remark]);
+  }, [visible, onClose]);
 
   const handleSave = async () => {
     if (!project || !dbName || !sql.trim()) {
@@ -62,6 +57,7 @@ const SaveSqlSharedDialog = ({ visible, project, projectName, dbName, sql, onClo
         db_name: dbName,
         query: sql.trim(),
         remark: remark.trim(),
+        is_shared: isShared,
       });
 
       if (res.code === 200) {
@@ -99,13 +95,28 @@ const SaveSqlSharedDialog = ({ visible, project, projectName, dbName, sql, onClo
             <span className="form-value">{dbName || '-'}</span>
           </div>
           <div className="form-item">
+            <label>保存位置</label>
+            <div className="share-toggle">
+              <button
+                type="button"
+                className={`toggle-btn ${isShared ? 'active' : ''}`}
+                onClick={() => setIsShared(true)}
+              >👥 共享记录</button>
+              <button
+                type="button"
+                className={`toggle-btn ${!isShared ? 'active' : ''}`}
+                onClick={() => setIsShared(false)}
+              >⭐ 个人收藏</button>
+            </div>
+          </div>
+          <div className="form-item">
             <label>SQL</label>
             <div className="sql-preview">{sql || '-'}</div>
           </div>
           <div className="form-item">
-            <label>备注 <span className="required">*</span></label>
+            <label>备注</label>
             <textarea
-              placeholder="输入备注信息，方便其他人理解这条SQL的用途"
+              placeholder="输入备注信息，方便理解这条SQL的用途"
               value={remark}
               onChange={e => setRemark(e.target.value)}
               rows={3}
@@ -116,7 +127,7 @@ const SaveSqlSharedDialog = ({ visible, project, projectName, dbName, sql, onClo
 
         <div className="dialog-footer">
           <button className="btn-cancel" onClick={onClose}>取消</button>
-          <button className="btn-save" onClick={handleSave} disabled={loading || !sql.trim() || !remark.trim()}>
+          <button className="btn-save" onClick={handleSave} disabled={loading || !sql.trim()}>
             {loading ? '保存中...' : '保存'}
           </button>
         </div>

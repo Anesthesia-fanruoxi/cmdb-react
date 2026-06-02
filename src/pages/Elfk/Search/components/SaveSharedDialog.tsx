@@ -28,31 +28,26 @@ const SaveSharedDialog = ({ visible, projectInfo, viewId, viewName, keyword, onC
   const [remark, setRemark] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isShared, setIsShared] = useState(true); // true=共享, false=个人收藏
 
   // 重置状态
   useEffect(() => {
     if (visible) {
       setRemark('');
       setError('');
+      setIsShared(true);
     }
   }, [visible]);
 
-  // ESC 关闭，Enter 保存
+  // ESC 关闭
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!visible) return;
       if (e.key === 'Escape') onClose();
-      // Ctrl+Enter 或 Meta+Enter 保存
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        e.preventDefault();
-        if (!loading && keyword.trim()) {
-          handleSave();
-        }
-      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [visible, onClose, loading, keyword]);
+  }, [visible, onClose]);
 
   const handleSave = async () => {
     if (!projectInfo || !viewId || !keyword.trim()) {
@@ -70,6 +65,7 @@ const SaveSharedDialog = ({ visible, projectInfo, viewId, viewName, keyword, onC
         view_id: viewId,
         keyword: keyword.trim(),
         remark: remark.trim(),
+        is_shared: isShared,
       });
 
       if (res.code === 200) {
@@ -110,6 +106,21 @@ const SaveSharedDialog = ({ visible, projectInfo, viewId, viewName, keyword, onC
           <div className="form-item">
             <label>视图</label>
             <span className="form-value">{viewName || '-'}</span>
+          </div>
+          <div className="form-item">
+            <label>保存位置</label>
+            <div className="share-toggle">
+              <button
+                type="button"
+                className={`toggle-btn ${isShared ? 'active' : ''}`}
+                onClick={() => setIsShared(true)}
+              >👥 共享记录</button>
+              <button
+                type="button"
+                className={`toggle-btn ${!isShared ? 'active' : ''}`}
+                onClick={() => setIsShared(false)}
+              >⭐ 个人收藏</button>
+            </div>
           </div>
           <div className="form-item">
             <label>关键词</label>

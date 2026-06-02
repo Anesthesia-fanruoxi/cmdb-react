@@ -9,4 +9,5 @@ export { usePageStateStore } from './pageStateStore';
 export { useMessageStore } from './messageStore';
 export { useUserPrefsStore } from './userPrefsStore';
 export { useTaskCenterStore } from './taskCenterStore';
+export { useSqlApplyStore } from './sqlApplyStore';
 export type { SqlShortcuts, ElfkShortcuts, MonitorDefaults, EsSearchPrefs, UiPrefs } from './userPrefsStore';
