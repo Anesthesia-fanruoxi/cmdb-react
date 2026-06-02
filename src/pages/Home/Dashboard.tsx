@@ -5,23 +5,17 @@
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { PasswordGen, CaseConvert, JsonFormatter, CronExpr, TimeConvert } from './tools';
+import { PasswordGen, CaseConvert, JsonFormatter, CronExpr, TimeConvert, QpsCalc, ByteConvert } from './tools';
+import { TOOLS as TOOL_CARDS, type ToolId } from '../../config/tools';
 import './tools/tools-shared.css';
 import './dashboard.css';
 
-type ToolName = 'password' | 'case' | 'json' | 'cron' | 'time' | null;
+type ToolName = ToolId | null;
 
 type ClockMode = 'digital' | 'analog';
 type TimeOfDay = 'dawn' | 'morning' | 'day' | 'dusk' | 'night';
 
-// 工具卡片定义
-const TOOL_CARDS = [
-  { id: 'password', icon: '🔑', name: '随机密码', desc: '生成高强度随机密码' },
-  { id: 'case',     icon: '🐪', name: '驼峰转换', desc: 'snake_case / camelCase 互转' },
-  { id: 'json',     icon: '📋', name: 'JSON格式化', desc: '美化 / 压缩 / 校验 JSON' },
-  { id: 'cron',     icon: '⏰', name: 'Cron表达式', desc: '可视化生成定时表达式' },
-  { id: 'time',     icon: '🕐', name: '时间戳转换', desc: '时间戳 ↔ 日期时间互转' },
-] as const;
+// 工具卡片定义迁移至 src/config/tools.ts
 
 const STORAGE_KEY = 'cmdb-tool-order';
 
@@ -356,6 +350,8 @@ const Dashboard = () => {
       <JsonFormatter visible={activeTool === 'json'} onClose={() => setActiveTool(null)} />
       <CronExpr visible={activeTool === 'cron'} onClose={() => setActiveTool(null)} />
       <TimeConvert visible={activeTool === 'time'} onClose={() => setActiveTool(null)} />
+      <QpsCalc visible={activeTool === 'qps'} onClose={() => setActiveTool(null)} />
+            <ByteConvert visible={activeTool === 'byte'} onClose={() => setActiveTool(null)} />
     </div>
   );
 };

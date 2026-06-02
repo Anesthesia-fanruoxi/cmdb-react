@@ -168,7 +168,7 @@ jobs:
           3、新增sql和es共享中的个人收藏，用于记录个人常用。
           4、修复sql历史记录显示bug。
           5、去掉了es输入框为空的时候自动显示历史记录。
-          6、新增qps计算卡片"
+          6、新增qps计算卡片和字节计算卡片"
 
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \

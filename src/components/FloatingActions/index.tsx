@@ -11,15 +11,14 @@ import { Wrench, X, Pencil, Check } from 'lucide-react';
 import { useMenuStore } from '../../stores/menuStore';
 import { alert } from '../ConfirmModal';
 import type { MenuItem } from '../../types/menu';
+import { TOOLS as TOOL_DEFS } from '../../config/tools';
 import './style.css';
 
-const TOOLS = [
-  { id: 'password', icon: '🔑', label: '随机密码' },
-  { id: 'case',     icon: '🐪', label: '驼峰转换' },
-  { id: 'json',     icon: '📋', label: 'JSON' },
-  { id: 'cron',     icon: '⏰', label: 'Cron' },
-  { id: 'time',     icon: '🕐', label: '时间戳' },
-];
+const TOOLS = TOOL_DEFS.map(t => ({
+  id: t.id,
+  icon: t.icon,
+  label: t.shortLabel || t.name,
+}));
 
 const MAX_SHORTCUTS = 8;
 const SHORTCUT_KEY = 'cmdb-fab-shortcuts';

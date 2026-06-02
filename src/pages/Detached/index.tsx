@@ -114,6 +114,16 @@ const DetachedWindow = () => {
           setComponent(() => mod.TimeConvertWindow);
           break;
         }
+        case 'tool-qps': {
+          const mod = await import('../Home/tools/QpsCalc');
+          setComponent(() => mod.QpsCalcWindow);
+          break;
+        }
+        case 'tool-byte': {
+          const mod = await import('../Home/tools/ByteConvert');
+          setComponent(() => mod.ByteConvertWindow);
+          break;
+        }
         default:
           console.warn('未知的窗口类型:', type);
       }

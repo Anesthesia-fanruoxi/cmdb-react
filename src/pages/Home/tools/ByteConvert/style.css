@@ -1,0 +1,69 @@
+.bc-root {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.bc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 0 4px;
+}
+
+.bc-formula {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.bc-clear {
+  height: 22px;
+  padding: 0 8px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.bc-clear:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.bc-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bc-input {
+  flex: 1;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  font-size: 12px;
+  font-family: 'Monaco', 'Consolas', monospace;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.bc-input:focus {
+  border-color: var(--primary-color);
+}
+
+.bc-suffix {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary-color);
+  font-family: 'Monaco', 'Consolas', monospace;
+  width: 24px;
+  text-align: left;
+  flex-shrink: 0;
+}

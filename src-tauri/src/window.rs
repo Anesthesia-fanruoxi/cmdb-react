@@ -83,6 +83,8 @@ pub async fn open_tool_window(app: AppHandle, tool: String) -> Result<(), String
         "case"     => ("驼峰转换", 480.0_f64, 420.0_f64),
         "cron"     => ("Cron 表达式生成", 640.0_f64, 680.0_f64),
         "time"     => ("时间戳转换", 560.0_f64, 480.0_f64),
+        "qps"      => ("QPS 计算器", 420.0_f64, 280.0_f64),
+        "byte"     => ("字节转换", 380.0_f64, 380.0_f64),
         _          => ("工具", 520.0_f64, 480.0_f64),
     };
 
