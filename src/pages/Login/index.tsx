@@ -5,6 +5,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '../../stores/authStore';
+import { SSEGateway } from '../../services/sse';
 import { useAppStore } from '../../stores/appStore';
 import { isTauriEnv, hasDeviceCredentials } from '../../services/machine';
 import { getLoginHistory, getLastUser } from '../../services/loginHistory';
@@ -194,8 +195,11 @@ const Login = () => {
 
   // 登录成功后跳转
   const onLoginSuccess = () => {
+    // 在整页刷新前主动断开旧 SSE 连接，避免被浏览器被动杀掉
+    const gateway = SSEGateway.getInstance();
+    if (gateway) gateway.disconnect();
+
     setGlobalTheme(theme);
-    // 通过 URL 参数传递主题，避免跳转后重新读取
     window.location.href = `/dashboard?from=login&theme=${theme}`;
   };
 

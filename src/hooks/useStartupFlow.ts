@@ -4,8 +4,8 @@
  */
 
 import { useState, useCallback } from 'react';
-import type { FlowType } from '../components/StartupScreen';
-import { FLOW_STEPS } from '../components/StartupScreen';
+import type { FlowType } from '../components/StartupScreen/constants';
+import { FLOW_STEPS } from '../components/StartupScreen/constants';
 
 interface UseStartupFlowReturn {
   flowType: FlowType;

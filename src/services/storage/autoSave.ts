@@ -21,6 +21,7 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import type { UnlistenFn } from '@tauri-apps/api/event';
 
 let isInitialized = false;
+let isClosing = false;
 let unlistenCloseRequested: UnlistenFn | null = null;
 
 /**
@@ -84,9 +85,21 @@ export async function startAutoSave(): Promise<void> {
   try {
     const appWindow = getCurrentWindow();
     unlistenCloseRequested = await appWindow.onCloseRequested(async (event) => {
+      if (isClosing) return;
+      isClosing = true;
       event.preventDefault();
-      await forceSave();
-      await appWindow.close();
+      try {
+        await forceSave();
+      } catch (e) {
+        console.warn('[AutoSave] 关闭前保存失败:', e);
+      }
+      try {
+        await appWindow.destroy();
+      } catch (e) {
+        console.warn('[AutoSave] destroy 失败:', e);
+        // destroy 失败时重置标志，允许重试
+        isClosing = false;
+      }
     });
   } catch (e) {
     console.warn('[AutoSave] 注册窗口关闭事件失败:', e);
@@ -106,4 +119,5 @@ export function stopAutoSave(): void {
 
   scheduler.dispose();
   isInitialized = false;
+  isClosing = false;
 }

@@ -16,7 +16,8 @@ import { getLoginHistory, getLastUser } from './services/loginHistory';
 import type { UpdateInfo } from './services/storage';
 import { StatusModalContainer } from './components/StatusModal';
 import { UpdateModal } from './components/UpdateModal';
-import StartupScreen, { type FlowType, FLOW_STEPS } from './components/StartupScreen';
+import StartupScreen from './components/StartupScreen';
+import { type FlowType, FLOW_STEPS } from './components/StartupScreen/constants';
 import Watermark from './components/Watermark';
 import { installUpdate, cleanupOldUpdate, saveInstallPath } from './services/updater';
 import { listen } from '@tauri-apps/api/event';
@@ -30,6 +31,8 @@ const ToolWindowMap: Record<string, React.LazyExoticComponent<React.ComponentTyp
   'tool-case':     lazy(() => import('./pages/Home/tools/CaseConvert').then(m => ({ default: m.CaseConvertWindow }))),
   'tool-cron':     lazy(() => import('./pages/Home/tools/CronExpr').then(m => ({ default: m.CronExprWindow }))),
   'tool-time':     lazy(() => import('./pages/Home/tools/TimeConvert').then(m => ({ default: m.TimeConvertWindow }))),
+  'tool-qps':      lazy(() => import('./pages/Home/tools/QpsCalc').then(m => ({ default: m.QpsCalcWindow }))),
+  'tool-byte':     lazy(() => import('./pages/Home/tools/ByteConvert').then(m => ({ default: m.ByteConvertWindow }))),
 };
 
 // 检测当前是否为小工具独立窗口，完全跳过初始化

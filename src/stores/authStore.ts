@@ -116,8 +116,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         isAuthenticated: true,
       });
 
-      // 启动全局 SQL 申请订阅
-      useSqlApplyStore.getState().start();
+      // 注意：不在此处调用 start()，因为登录成功后会整页刷新(window.location.href)
+      // SSE连接会在新页面的 initFromStorage() 中建立，避免白建连接
 
       return { isDefaultPass: is_default_pass };
     } else {

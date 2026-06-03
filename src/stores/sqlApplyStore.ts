@@ -143,9 +143,7 @@ function handleData(data: SSEData) {
 
 function subscribeOnce(filter: ApplyFilter) {
   const gateway = ensureGateway();
-  if (gateway.getState() === 'closed') {
-    gateway.connect();
-  }
+  gateway.connect();
   subscriptionRef = gateway.subscribe<SSEData>({
     id: SUBSCRIPTION_ID,
     channel: CHANNELS.SQL_APPLY_LIST,
@@ -169,6 +167,11 @@ export const useSqlApplyStore = create<SqlApplyState>()((set, get) => ({
 
   start: () => {
     if (started) return;
+
+    // 独立窗口不启动 SSE（由主窗口统一管理）
+    const isDetached = window.location.pathname === '/detached';
+    if (isDetached) return;
+
     started = true;
 
     const gateway = ensureGateway();
@@ -186,9 +189,8 @@ export const useSqlApplyStore = create<SqlApplyState>()((set, get) => ({
     gatewayUnsubRef = gateway.on('stateChange', updateState);
     updateState();
 
-    if (gateway.getState() === 'closed') {
-      gateway.connect();
-    }
+    // connect 内部有状态防护
+    gateway.connect();
 
     // 建立全局订阅
     set({ loading: true });

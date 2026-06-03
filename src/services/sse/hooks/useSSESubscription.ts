@@ -61,10 +61,8 @@ export function useSSESubscription<T>({
       gateway = SSEGateway.getInstance()!;
     }
 
-    // 确保连接
-    if (gateway.getState() === 'closed') {
-      gateway.connect();
-    }
+    // 确保连接（connect 内部有状态防护，不会重复连接）
+    gateway.connect();
 
     subscriptionRef.current = gateway.subscribe<T>({
       id: subscriptionId,

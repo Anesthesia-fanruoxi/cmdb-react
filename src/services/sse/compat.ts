@@ -33,10 +33,8 @@ export function createGatewayConnection<T>(
     subscribeApiUrl: baseUrl,
   });
 
-  // 确保连接
-  if (gateway.getState() === 'closed') {
-    gateway.connect();
-  }
+  // 确保连接（connect 内部有状态防护，不会重复连接）
+  gateway.connect();
 
   const subscription = gateway.subscribe<T>({
     id: `compat_${channel}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,

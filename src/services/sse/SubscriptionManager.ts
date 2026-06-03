@@ -99,10 +99,15 @@ export class SubscriptionManager {
     // 如果有 subscription_id，路由到对应的订阅
     if (message.subscription_id) {
       const entry = this.subscriptions.get(message.subscription_id);
-      if (!entry) return;
+      if (!entry) {
+        console.warn('[SSE Sub] ⚠️ 未找到订阅:', message.subscription_id, '当前订阅:', [...this.subscriptions.keys()]);
+        return;
+      }
 
       // 暂停状态不处理数据
-      if (entry.state === 'paused') return;
+      if (entry.state === 'paused') {
+        return;
+      }
 
       this.dispatchMessage(entry, message);
       return;
@@ -110,10 +115,15 @@ export class SubscriptionManager {
 
     // 如果没有 subscription_id，按 channel 匹配
     if (message.channel) {
-      for (const entry of this.subscriptions.values()) {
+      let matched = false;
+      for (const [, entry] of this.subscriptions.entries()) {
         if (entry.config.channel === message.channel && entry.state === 'active') {
           this.dispatchMessage(entry, message);
+          matched = true;
         }
+      }
+      if (!matched) {
+        console.warn('[SSE Sub] ⚠️ channel无匹配订阅:', message.channel, '当前订阅:', [...this.subscriptions.entries()].map(([id, e]) => `${id}(${e.config.channel}/${e.state})`));
       }
     }
   }

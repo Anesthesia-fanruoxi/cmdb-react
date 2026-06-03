@@ -26,6 +26,8 @@ export class SSEGateway {
   private connectionState: SSEConnectionState = 'closed';
   private _reconnectAttempts = 0;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private connectionTimer: ReturnType<typeof setTimeout> | null = null;
+  private heartbeatTimer: ReturnType<typeof setTimeout> | null = null;
   private subscriptionManager: SubscriptionManager;
   private listeners = new Map<string, Set<EventHandler>>();
 
@@ -75,13 +77,28 @@ export class SSEGateway {
 
   /** 建立连接 */
   connect(): void {
+    // 防止重复连接
+    if (this.connectionState === 'connecting' || this.connectionState === 'open') {
+      return;
+    }
+
+    this.clearReconnectTimer();
+
     if (this.eventSource) {
       this.eventSource.close();
+      this.eventSource = null;
     }
 
     this.setConnectionState('connecting');
     const token = getToken();
     const url = `${this.config.url}?token=${token || ''}`;
+
+    // 连接超时：10s 内未收到 connected 事件则视为连接失败
+    this.clearConnectionTimer();
+    this.connectionTimer = setTimeout(() => {
+      console.warn('[SSE] 连接超时，主动断开重连');
+      this.handleDisconnect();
+    }, 10_000);
 
     this.eventSource = new EventSource(url);
 
@@ -92,6 +109,8 @@ export class SSEGateway {
         this.connectionId = data.data?.connection_id || data.connection_id;
         this._reconnectAttempts = 0;
         this.setConnectionState('open');
+        this.clearConnectionTimer();
+        this.resetHeartbeat();
 
         // 重连后重新订阅
         this.subscriptionManager.resubscribeAll();
@@ -106,6 +125,7 @@ export class SSEGateway {
     this.eventSource.addEventListener('data', (event) => {
       try {
         const message: SSEMessage = JSON.parse(event.data);
+        this.resetHeartbeat();
         this.emit('message', message);
         this.subscriptionManager.handleMessage(message);
       } catch (e) {
@@ -119,7 +139,8 @@ export class SSEGateway {
     });
 
     // 错误处理
-    this.eventSource.onerror = () => {
+    this.eventSource.onerror = (e) => {
+      console.warn('[SSE Gateway] ❌ 连接错误, readyState:', this.eventSource?.readyState, e);
       this.handleDisconnect();
     };
   }
@@ -127,6 +148,8 @@ export class SSEGateway {
   /** 断开连接 */
   disconnect(): void {
     this.clearReconnectTimer();
+    this.clearConnectionTimer();
+    this.clearHeartbeat();
 
     if (this.eventSource) {
       this.eventSource.close();
@@ -167,23 +190,30 @@ export class SSEGateway {
 
   /** 处理断开连接 */
   private handleDisconnect(): void {
+    this.clearConnectionTimer();
+    this.clearHeartbeat();
+
+    // 关闭旧 EventSource，阻止浏览器内置重连干扰
+    if (this.eventSource) {
+      this.eventSource.close();
+      this.eventSource = null;
+    }
+    this.connectionId = null;
+
     this.setConnectionState('closed');
     this.emit('disconnected');
     this.scheduleReconnect();
   }
 
-  /** 计划重连 */
+  /** 计划重连（无限重连，指数退避封顶 60s） */
   private scheduleReconnect(): void {
-    if (this._reconnectAttempts >= this.config.maxReconnectAttempts) {
-      console.warn('[SSE Gateway] 达到最大重连次数，停止重连');
-      return;
-    }
-
     this.clearReconnectTimer();
-    const delay = this.config.reconnectInterval * Math.pow(1.5, this._reconnectAttempts);
+    const base = this.config.reconnectInterval;
+    const raw = base * Math.pow(1.5, this._reconnectAttempts);
+    const delay = Math.min(raw, 60_000); // 封顶 60s
     this._reconnectAttempts++;
 
-    console.log(`[SSE Gateway] ${delay / 1000}s 后尝试第 ${this._reconnectAttempts} 次重连`);
+    console.log(`[SSE] ${(delay / 1000).toFixed(1)}s 后尝试第 ${this._reconnectAttempts} 次重连`);
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
       if (this.connectionState === 'closed') {
@@ -207,5 +237,28 @@ export class SSEGateway {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
+  }
+
+  private clearConnectionTimer(): void {
+    if (this.connectionTimer) {
+      clearTimeout(this.connectionTimer);
+      this.connectionTimer = null;
+    }
+  }
+
+  private clearHeartbeat(): void {
+    if (this.heartbeatTimer) {
+      clearTimeout(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
+  }
+
+  /** 心跳超时：30s 内无任何消息则视为连接死亡 */
+  private resetHeartbeat(): void {
+    this.clearHeartbeat();
+    this.heartbeatTimer = setTimeout(() => {
+      console.warn('[SSE] 心跳超时，主动断开重连');
+      this.handleDisconnect();
+    }, 30_000);
   }
 }
