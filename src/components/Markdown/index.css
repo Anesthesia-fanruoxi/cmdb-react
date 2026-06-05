@@ -58,7 +58,8 @@
 }
 
 /* 代码块 */
-.markdown-view pre {
+.markdown-view pre,
+.markdown-view pre.hljs-code-block {
   position: relative;
   padding: 16px;
   margin: 16px 0;
@@ -67,9 +68,11 @@
   line-height: 1.45;
   background-color: #f6f8fa;
   border-radius: 6px;
+  border: 1px solid var(--border-color, #e1e4e8);
 }
 
-.markdown-view pre code {
+.markdown-view pre code,
+.markdown-view pre.hljs-code-block code {
   display: block;
   padding: 0;
   margin: 0;
@@ -80,6 +83,7 @@
   border: 0;
   font-size: 100%;
   color: inherit;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
 }
 
 /* 行内代码 */
@@ -97,7 +101,7 @@
   position: absolute;
   top: 8px;
   right: 8px;
-  padding: 4px 8px;
+  padding: 4px 10px;
   font-size: 12px;
   color: var(--text-secondary, #666);
   background: var(--bg-color, #fff);
@@ -149,33 +153,172 @@
   margin-top: 0.25em;
 }
 
-/* 表格 */
-.markdown-view table {
-  display: block;
-  width: 100%;
-  overflow: auto;
+/* 表格包裹器：提供横向滚动 */
+.markdown-view .table-wrapper {
   margin: 16px 0;
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #d9d9d9);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.markdown-view .table-wrapper::-webkit-scrollbar {
+  height: 6px;
+}
+
+.markdown-view .table-wrapper::-webkit-scrollbar-thumb {
+  background: var(--border-color, #bfbfbf);
+  border-radius: 3px;
+}
+
+.markdown-view .table-wrapper::-webkit-scrollbar-track {
+  background: var(--bg-secondary, #f5f5f5);
+}
+
+/* 表格 */
+.markdown-view .table-wrapper > table,
+.markdown-view table {
+  width: 100%;
+  margin: 0;
   border-spacing: 0;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+  border: none;
+  border-radius: 0;
 }
 
 .markdown-view table th,
 .markdown-view table td {
-  padding: 6px 13px;
-  border: 1px solid var(--border-color, #dfe2e5);
+  padding: 10px 14px;
+  border-top: 1px solid var(--border-color, #e8e8e8);
+  border-bottom: 1px solid var(--border-color, #e8e8e8);
+  text-align: left;
+  vertical-align: middle;
+  line-height: 1.5;
+}
+
+.markdown-view table th:first-child,
+.markdown-view table td:first-child {
+  border-left: none;
+  padding-left: 16px;
+}
+
+.markdown-view table th:last-child,
+.markdown-view table td:last-child {
+  border-right: none;
+  padding-right: 16px;
 }
 
 .markdown-view table th {
   font-weight: 600;
-  background-color: var(--table-header-bg, #f6f8fa);
+  background: linear-gradient(180deg, #f5f7fa 0%, #eef0f4 100%);
+  color: var(--text-color, #333);
+  white-space: nowrap;
+  border-top: none;
+  font-size: 12.5px;
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+
+.markdown-view table th:first-child {
+  border-radius: 0;
+}
+
+.markdown-view table th:last-child {
+  border-radius: 0;
+}
+
+.markdown-view .table-wrapper > table th:first-child {
+  border-radius: 0;
+}
+
+.markdown-view .table-wrapper > table th:last-child {
+  border-radius: 0;
 }
 
 .markdown-view table tr {
+  transition: background-color 0.15s;
+}
+
+.markdown-view table tbody tr {
   background-color: var(--bg-color, #fff);
 }
 
-.markdown-view table tr:nth-child(2n) {
-  background-color: var(--table-row-bg, #f6f8fa);
+.markdown-view table tbody tr:nth-child(even) {
+  background-color: #fafbfc;
+}
+
+.markdown-view table tbody tr:nth-child(odd) {
+  background-color: #fff;
+}
+
+.markdown-view table tbody tr:hover {
+  background-color: #eef2ff;
+}
+
+.markdown-view table tbody tr td {
+  border-color: #f0f0f0;
+}
+
+.markdown-view .table-wrapper > table {
+  margin: 0;
+}
+
+/* KaTeX 数学公式 */
+.markdown-view .katex-block {
+  display: flex;
+  justify-content: center;
+  padding: 12px 16px;
+  margin: 16px 0;
+  background: var(--bg-secondary, #fafbfc);
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.markdown-view .katex-error {
+  color: #ff4d4f;
+  font-family: monospace;
+  padding: 4px 8px;
+  background: rgba(255, 77, 79, 0.08);
+  border-radius: 4px;
+}
+
+/* Mermaid 图表 */
+.markdown-view .mermaid-wrapper {
+  margin: 16px 0;
+  padding: 16px;
+  background: var(--bg-secondary, #fafbfc);
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #e1e4e8);
+  overflow-x: auto;
+}
+
+.markdown-view .mermaid-code {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  color: var(--text-secondary, #999);
+}
+
+.markdown-view .mermaid-svg {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.markdown-view .mermaid-svg svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.markdown-view .mermaid-error {
+  color: #ff4d4f;
+  font-size: 13px;
+  padding: 8px;
+  text-align: center;
 }
 
 /* 分割线 */
@@ -192,74 +335,179 @@
   max-width: 100%;
   box-sizing: border-box;
   background-color: var(--bg-color, #fff);
+  border-radius: 4px;
 }
 
 /* ========== 深色主题 ========== */
-.dark .markdown-view {
+[data-theme="dark"] .markdown-view {
   color: #c9d1d9;
 }
 
-.dark .markdown-view h1,
-.dark .markdown-view h2,
-.dark .markdown-view h3,
-.dark .markdown-view h4,
-.dark .markdown-view h5,
-.dark .markdown-view h6 {
+[data-theme="dark"] .markdown-view h1,
+[data-theme="dark"] .markdown-view h2,
+[data-theme="dark"] .markdown-view h3,
+[data-theme="dark"] .markdown-view h4,
+[data-theme="dark"] .markdown-view h5,
+[data-theme="dark"] .markdown-view h6 {
   color: #c9d1d9;
   border-bottom-color: #30363d;
 }
 
-.dark .markdown-view a {
+[data-theme="dark"] .markdown-view a {
   color: #58a6ff;
 }
 
-.dark .markdown-view code {
+[data-theme="dark"] .markdown-view code {
   background-color: #343942;
   color: #c9d1d9;
 }
 
-.dark .markdown-view pre {
-  background-color: #282c34;
+[data-theme="dark"] .markdown-view pre,
+[data-theme="dark"] .markdown-view pre.hljs-code-block {
+  background-color: #1e2127;
+  border-color: #30363d;
 }
 
-.dark .markdown-view pre code {
+[data-theme="dark"] .markdown-view pre code,
+[data-theme="dark"] .markdown-view pre.hljs-code-block code {
   color: #abb2bf;
 }
 
-.dark .markdown-view pre .copy-btn {
+[data-theme="dark"] .markdown-view pre .copy-btn {
   background: #3e4451;
   border-color: #4b5263;
   color: #abb2bf;
 }
 
-.dark .markdown-view pre .copy-btn:hover {
+[data-theme="dark"] .markdown-view pre .copy-btn:hover {
   color: #61afef;
   border-color: #61afef;
 }
 
-.dark .markdown-view blockquote {
+[data-theme="dark"] .markdown-view blockquote {
   color: #8b949e;
   border-left-color: #3b434b;
 }
 
-.dark .markdown-view table th,
-.dark .markdown-view table td {
-  border-color: #30363d;
+/* 表格深色主题 */
+[data-theme="dark"] .markdown-view .table-wrapper {
+  border-color: #3a3a3a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .markdown-view .table-wrapper::-webkit-scrollbar-thumb {
+  background: #3a3a3a;
+}
+
+[data-theme="dark"] .markdown-view .table-wrapper::-webkit-scrollbar-track {
+  background: #252525;
+}
+
+[data-theme="dark"] .markdown-view table th,
+[data-theme="dark"] .markdown-view table td {
+  border-color: #2d2d2d;
   color: #c9d1d9;
 }
 
-.dark .markdown-view table th {
-  background-color: #21262d;
+[data-theme="dark"] .markdown-view table th:first-child,
+[data-theme="dark"] .markdown-view table td:first-child {
+  border-left: none;
 }
 
-.dark .markdown-view table tr {
-  background-color: transparent;
+[data-theme="dark"] .markdown-view table th:last-child,
+[data-theme="dark"] .markdown-view table td:last-child {
+  border-right: none;
 }
 
-.dark .markdown-view table tr:nth-child(2n) {
-  background-color: #161b22;
+[data-theme="dark"] .markdown-view table th {
+  background: linear-gradient(180deg, #2a2a2a 0%, #252525 100%);
+  border-top: none;
+  color: #e0e0e0;
 }
 
-.dark .markdown-view hr {
+[data-theme="dark"] .markdown-view table tbody tr {
+  background-color: #1f1f1f;
+}
+
+[data-theme="dark"] .markdown-view table tbody tr:nth-child(even) {
+  background-color: #252525;
+}
+
+[data-theme="dark"] .markdown-view table tbody tr:nth-child(odd) {
+  background-color: #1f1f1f;
+}
+
+[data-theme="dark"] .markdown-view table tbody tr:hover {
+  background-color: #2a2a3a;
+}
+
+[data-theme="dark"] .markdown-view table tbody tr td {
+  border-color: #2d2d2d;
+}
+
+[data-theme="dark"] .markdown-view hr {
   background-color: #30363d;
+}
+
+[data-theme="dark"] .markdown-view .katex-block {
+  background: #1e2127;
+}
+
+[data-theme="dark"] .markdown-view .mermaid-wrapper {
+  background: #1e2127;
+  border-color: #30363d;
+}
+
+[data-theme="dark"] .markdown-view .mermaid-code {
+  color: #6a737d;
+}
+
+/* highlight.js 深色主题覆盖 */
+[data-theme="dark"] .markdown-view .hljs {
+  background: transparent;
+  color: #abb2bf;
+}
+
+[data-theme="dark"] .markdown-view .hljs-keyword,
+[data-theme="dark"] .markdown-view .hljs-selector-tag,
+[data-theme="dark"] .markdown-view .hljs-built_in,
+[data-theme="dark"] .markdown-view .hljs-name,
+[data-theme="dark"] .markdown-view .hljs-tag {
+  color: #c678dd;
+}
+
+[data-theme="dark"] .markdown-view .hljs-string,
+[data-theme="dark"] .markdown-view .hljs-title,
+[data-theme="dark"] .markdown-view .hljs-section,
+[data-theme="dark"] .markdown-view .hljs-attribute,
+[data-theme="dark"] .markdown-view .hljs-literal,
+[data-theme="dark"] .markdown-view .hljs-template-tag,
+[data-theme="dark"] .markdown-view .hljs-template-variable,
+[data-theme="dark"] .markdown-view .hljs-type,
+[data-theme="dark"] .markdown-view .hljs-addition {
+  color: #e06c75;
+}
+
+[data-theme="dark"] .markdown-view .hljs-comment,
+[data-theme="dark"] .markdown-view .hljs-quote,
+[data-theme="dark"] .markdown-view .hljs-deletion,
+[data-theme="dark"] .markdown-view .hljs-meta {
+  color: #5c6370;
+  font-style: italic;
+}
+
+[data-theme="dark"] .markdown-view .hljs-number,
+[data-theme="dark"] .markdown-view .hljs-regexp,
+[data-theme="dark"] .markdown-view .hljs-symbol,
+[data-theme="dark"] .markdown-view .hljs-bullet,
+[data-theme="dark"] .markdown-view .hljs-link {
+  color: #d19a66;
+}
+
+[data-theme="dark"] .markdown-view .hljs-string {
+  color: #98c379;
+}
+
+[data-theme="dark"] .markdown-view .hljs-function .hljs-title {
+  color: #61afef;
 }

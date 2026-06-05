@@ -163,7 +163,8 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"
-          DESCRIPTION="1、修复了共享查询问题。"
+          DESCRIPTION="1、修复了共享查询问题。
+          2、修改了上传文档的ui。"
 
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \
