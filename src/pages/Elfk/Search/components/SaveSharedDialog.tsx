@@ -59,14 +59,10 @@ const SaveSharedDialog = ({ visible, projectInfo, viewId, viewName, keyword, onC
     setError('');
 
     try {
-      const res = await createSharedKeyword({
-        project: projectInfo.project,
-        category: projectInfo.category,
-        view_id: viewId,
-        keyword: keyword.trim(),
-        remark: remark.trim(),
-        is_shared: isShared,
-      });
+      const payload = isShared
+        ? { project: projectInfo.project, category: projectInfo.category, view_id: viewId, keyword: keyword.trim(), remark: remark.trim() }
+        : { project: projectInfo.project, category: projectInfo.category, view_id: viewId, keyword: keyword.trim(), remark: remark.trim(), is_personal: true };
+      const res = await createSharedKeyword(payload);
 
       if (res.code === 200) {
         onSuccess();

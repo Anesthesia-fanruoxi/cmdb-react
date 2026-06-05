@@ -5,6 +5,7 @@
 - 基础路径：ES `/api/elfk/keyword`，SQL `/api/sql/shared`
 - 认证：JWT Token（Header: `Authorization: Bearer xxx`）
 - 响应格式：`{ "code": 200, "message": "xxx", "data": {} }`
+- **字段说明**：`is_personal` 表示是否个人收藏，共享记录不传此字段，个人收藏传 `true`
 
 ---
 
@@ -21,7 +22,7 @@
   "view_id": 1,                // 必填，视图ID
   "keyword": "查询语句",       // 必填
   "remark": "备注说明",        // 可选
-  "is_shared": true            // 必填，true=共享，false=个人收藏
+  "is_personal": true          // 可选，true=个人收藏，不传=共享记录
 }
 ```
 
@@ -35,7 +36,7 @@
 | project | string | 否 | 项目过滤 |
 | category | string | 否 | 分类过滤 |
 | view_id | string | 否 | 视图ID过滤 |
-| is_shared | string | 否 | `0`=个人收藏，`1`=共享记录，空=全部 |
+| is_personal | bool | 否 | `true`=个人收藏，不传=全部/共享 |
 | search | string | 否 | 备注模糊搜索（支持拼音首字母，如 `cs` 匹配"测试"） |
 | page | int | 否 | 页码，从1开始，默认1，每页固定100条 |
 
@@ -47,12 +48,12 @@
 {
   "id": 1,                     // 必填
   "remark": "备注说明",        // 可选
-  "is_shared": false           // 可选，true/false切换个人/共享
+  "is_personal": false         // 可选，true/false切换个人/共享
 }
 ```
 - **更新逻辑**：
-  - `id` 必传，`remark` 和 `is_shared` 可选
-  - 传 `is_shared` 可切换共享状态，不传则保持原值
+  - `id` 必传，`remark` 和 `is_personal` 可选
+  - 传 `is_personal` 可切换共享状态，不传则保持原值
   - `remark` 更新时，`remark_pinyin` 由后端自动重新生成
 
 ### 1.4 删除关键词
@@ -73,12 +74,12 @@
   "db_name": "数据库名",       // 必填
   "query": "SELECT * FROM ...", // 必填
   "remark": "备注说明",        // 可选
-  "is_shared": true            // 必填，true=共享，false=个人收藏
+  "is_personal": true          // 可选，true=个人收藏，不传=共享记录
 }
 ```
 - **保存逻辑**：
   - `creator` 自动填充为当前登录用户
-  - `is_shared` 必填，决定记录是否对所有人可见
+  - `is_personal` 不传时为共享记录，传 `true` 时为个人收藏
   - `remark_pinyin` 由后端根据 `remark` 自动生成拼音首字母，前端无需传递
 
 ### 2.2 查询列表
@@ -90,7 +91,7 @@
 |------|------|------|------|
 | project | string | 否 | 项目过滤 |
 | db_name | string | 否 | 数据库过滤 |
-| is_shared | string | 否 | `0`=个人收藏，`1`=共享记录，空=全部 |
+| is_personal | bool | 否 | `true`=个人收藏，不传=全部/共享 |
 | search | string | 否 | 备注模糊搜索（支持拼音首字母） |
 | page | int | 否 | 页码，从1开始，默认1，每页固定100条 |
 
@@ -103,12 +104,12 @@
   "id": 1,                     // 必填
   "query": "SELECT * FROM ...", // 可选
   "remark": "备注说明",        // 可选
-  "is_shared": false           // 可选，true/false切换个人/共享
+  "is_personal": false         // 可选，true/false切换个人/共享
 }
 ```
 - **更新逻辑**：
-  - `id` 必传，`query`、`remark`、`is_shared` 可选
-  - 传 `is_shared` 可切换共享状态，不传则保持原值
+  - `id` 必传，`query`、`remark`、`is_personal` 可选
+  - 传 `is_personal` 可切换共享状态，不传则保持原值
   - `remark` 更新时，`remark_pinyin` 由后端自动重新生成
 
 ### 2.4 删除共享查询
@@ -121,7 +122,7 @@
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| is_shared | bool | `true`=共享记录（所有人可见），`false`=个人收藏（仅自己可见） |
+| is_personal | bool | `true`=个人收藏（仅自己可见），`false`或不传=共享记录（所有人可见） |
 | remark | string | 备注说明，支持拼音首字母搜索（如搜索 `cs` 可匹配"测试"、"ceshi"） |
 | page | int | 分页页码，每页固定返回100条，响应中包含 `total` 用于计算总页数 |
 
@@ -142,7 +143,7 @@
         "keyword": "error AND timeout",
         "remark": "测试环境错误日志",
         "remark_pinyin": "cshjcwrc",
-        "is_shared": true,
+        "is_personal": false,
         "creator": "zhangsan",
         "created_at": "2026-04-29 10:00:00"
       }

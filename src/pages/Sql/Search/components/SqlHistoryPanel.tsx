@@ -89,8 +89,10 @@ const SqlHistoryPanel = ({ visible, project, projectName, onClose, onSelect, onA
   const fetchShared = useCallback(async (page = 1, search = '') => {
     if (!project) return;
     setLoading(true);
+    const params = { project, search: search || undefined, page };
+    console.log('[SqlHistory] fetchShared 查询参数:', JSON.stringify(params));
     try {
-      const res = await getSqlSharedQueryList({ project, search: search || undefined, page, is_shared: '1' });
+      const res = await getSqlSharedQueryList(params);
       if (res.code === 200 && res.data) {
         setSharedList(res.data.list || []);
         setSharedTotal(res.data.total || 0);
@@ -107,8 +109,10 @@ const SqlHistoryPanel = ({ visible, project, projectName, onClose, onSelect, onA
   const fetchFavorite = useCallback(async (page = 1, search = '') => {
     if (!project) return;
     setLoading(true);
+    const params = { project, search: search || undefined, page, is_personal: true };
+    console.log('[SqlHistory] fetchFavorite 查询参数:', JSON.stringify(params));
     try {
-      const res = await getSqlSharedQueryList({ project, search: search || undefined, page, is_shared: '0' });
+      const res = await getSqlSharedQueryList(params);
       if (res.code === 200 && res.data) {
         setFavoriteList(res.data.list || []);
         setFavoriteTotal(res.data.total || 0);

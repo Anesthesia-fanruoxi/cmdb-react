@@ -23,7 +23,7 @@ const EditSqlSharedDialog = ({ visible, item, onClose, onSuccess }: Props) => {
     if (visible && item) {
       setQuery(item.query || '');
       setRemark(item.remark || '');
-      setIsShared(!!item.is_shared);
+      setIsShared(!item.is_personal);
       setError('');
     }
   }, [visible, item]);
@@ -56,7 +56,7 @@ const EditSqlSharedDialog = ({ visible, item, onClose, onSuccess }: Props) => {
         id: item.id,
         query: query.trim(),
         remark: remark.trim(),
-        is_shared: isShared,
+        is_personal: !isShared,
       });
 
       if (res.code === 200) {

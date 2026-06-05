@@ -4,7 +4,8 @@
 
 import { useState, useRef } from 'react';
 import { X, Upload, FileText } from 'lucide-react';
-import { createPublicDoc, DocItem } from '../../../../services/knowledge';
+import { createPublicDoc, updatePublicDoc, getPublicDocList, DocItem } from '../../../../services/knowledge';
+import { confirm } from '../../../../components/ConfirmModal';
 import type { DictItem } from '../../../../services/system/dict';
 import Markdown from '../../../../components/Markdown';
 import toast from '../../../../components/Toast';
@@ -48,8 +49,28 @@ const UploadDialog = ({ visible, onClose, onSuccess, categoryOptions }: Props) =
     if (!form.title || !form.category || !form.content) { toast.error('请填写完整信息'); return; }
     setUploading(true);
     try {
-      const res = await createPublicDoc(form);
-      if (res.code === 200) { toast.success('上传成功'); onSuccess({ id: 0, ...form } as any); handleClose(); }
+      // 检查同名文档
+      const listRes = await getPublicDocList();
+      const list = listRes.code === 200 ? (listRes.data as any)?.list || [] : [];
+      const existing = list.find((d: any) => d.title === form.title);
+
+      if (existing) {
+        const isOverwrite = await confirm({
+          title: '文档已存在',
+          content: `标题"${form.title}"已存在，是否覆盖？\n选择"取消"将新增一份`,
+          type: 'warning',
+        });
+        if (isOverwrite) {
+          const res = await updatePublicDoc({ id: existing.id, ...form });
+          if (res.code === 200) { toast.success('覆盖成功'); onSuccess({ id: existing.id, ...form } as any); handleClose(); }
+        } else {
+          const res = await createPublicDoc(form);
+          if (res.code === 200) { toast.success('新增成功'); onSuccess({ id: 0, ...form } as any); handleClose(); }
+        }
+      } else {
+        const res = await createPublicDoc(form);
+        if (res.code === 200) { toast.success('上传成功'); onSuccess({ id: 0, ...form } as any); handleClose(); }
+      }
     } catch (err) { toast.error('上传失败'); }
     finally { setUploading(false); }
   };

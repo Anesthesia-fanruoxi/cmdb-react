@@ -72,7 +72,6 @@ const HistoryDropdown = ({ visible, projectInfo, viewId, onClose, onSelect, onAp
         project: projectInfo.project,
         category: projectInfo.category,
         view_id: viewId,
-        is_shared: '1',
         search: search || undefined,
         page,
       });
@@ -97,7 +96,7 @@ const HistoryDropdown = ({ visible, projectInfo, viewId, onClose, onSelect, onAp
         project: projectInfo.project,
         category: projectInfo.category,
         view_id: viewId,
-        is_shared: '0',
+        is_personal: true,
         search: search || undefined,
         page,
       });

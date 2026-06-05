@@ -13,7 +13,7 @@ export interface SharedKeywordItem {
   view_id: number;
   keyword: string;
   remark: string;
-  is_shared: boolean;
+  is_personal: boolean;
   creator: string;
   created_at: string;
 }
@@ -24,7 +24,7 @@ export interface SharedKeywordQuery {
   category?: string;   // 分类名称（模糊搜索）
   view_id?: number;    // 视图ID（精确匹配）
   search?: string;     // 混合搜索（匹配关键词、备注、添加人）
-  is_shared?: '0' | '1' | ''; // 0=个人收藏, 1=共享记录, ''=全部
+  is_personal?: boolean; // true=个人收藏，不传=全部/共享
   page?: number;       // 页码
 }
 
@@ -35,14 +35,14 @@ export interface CreateSharedKeywordParams {
   view_id: number;
   keyword: string;
   remark?: string;
-  is_shared: boolean;  // true=共享, false=个人收藏
+  is_personal?: boolean;  // true=个人收藏，不传或false=共享
 }
 
 /** 更新共享关键词参数 */
 export interface UpdateSharedKeywordParams {
   id: number;
   remark?: string;
-  is_shared?: boolean; // 可选切换个人/共享
+  is_personal?: boolean; // 可选切换个人/共享
 }
 
 /** 分页响应 */

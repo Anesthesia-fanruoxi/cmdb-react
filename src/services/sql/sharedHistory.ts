@@ -12,7 +12,7 @@ export interface SqlSharedQueryItem {
   db_name: string;
   query: string;
   remark: string;
-  is_shared: boolean;
+  is_personal: boolean;
   creator: string;
   created_at: string;
 }
@@ -23,7 +23,7 @@ export interface SqlSharedQueryParams {
   project?: string;      // 项目名称（模糊搜索）
   db_name?: string;      // 数据库名称（模糊搜索）
   search?: string;       // 混合搜索（匹配备注、添加人）
-  is_shared?: '0' | '1' | ''; // 0=个人收藏, 1=共享记录, ''=全部
+  is_personal?: boolean; // true=个人收藏，不传=全部/共享
 }
 
 /** 创建共享查询参数 */
@@ -32,7 +32,7 @@ export interface CreateSqlSharedQueryParams {
   db_name: string;
   query: string;
   remark?: string;
-  is_shared: boolean;    // true=共享, false=个人收藏
+  is_personal?: boolean;    // true=个人收藏，不传或false=共享
 }
 
 /** 更新共享查询参数 */
@@ -40,7 +40,7 @@ export interface UpdateSqlSharedQueryParams {
   id: number;
   query?: string;
   remark?: string;
-  is_shared?: boolean;   // 可选切换个人/共享
+  is_personal?: boolean;   // 可选切换个人/共享
 }
 
 /** 分页响应 */

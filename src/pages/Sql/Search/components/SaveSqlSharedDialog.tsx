@@ -52,13 +52,10 @@ const SaveSqlSharedDialog = ({ visible, project, projectName, dbName, sql, onClo
     setError('');
 
     try {
-      const res = await createSqlSharedHistory({
-        project,
-        db_name: dbName,
-        query: sql.trim(),
-        remark: remark.trim(),
-        is_shared: isShared,
-      });
+      const payload = isShared
+        ? { project, db_name: dbName, query: sql.trim(), remark: remark.trim() }
+        : { project, db_name: dbName, query: sql.trim(), remark: remark.trim(), is_personal: true };
+      const res = await createSqlSharedHistory(payload);
 
       if (res.code === 200) {
         onSuccess();
@@ -67,8 +64,9 @@ const SaveSqlSharedDialog = ({ visible, project, projectName, dbName, sql, onClo
         setError(res.message || '保存失败');
       }
     } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
       setError('保存失败，请重试');
-      console.error('保存共享记录失败:', err);
+      console.error('[SaveSqlShared] 错误:', msg);
     } finally {
       setLoading(false);
     }
