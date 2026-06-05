@@ -1,200 +1,276 @@
 /**
- * 文档表单组件样式
+ * 文档表单组件样式 —— 居中弹框 + 左右分屏
  */
 
 .doc-form-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 1000;
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
 }
 
-.doc-form-drawer {
-  width: 70%;
-  max-width: 900px;
-  height: 100%;
+.doc-form-modal {
+  width: 80vw;
+  height: 85vh;
   background: var(--bg-color, #fff);
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
-  animation: slideIn 0.3s ease;
+  overflow: hidden;
+  animation: zoomIn 0.2s ease;
 }
 
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-  }
-  to {
-    transform: translateX(0);
-  }
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-.doc-form-drawer .drawer-header {
+@keyframes zoomIn {
+  from { transform: scale(0.96); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* ======== 头部 ======== */
+.doc-form-modal .modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
+  padding: 14px 20px;
   border-bottom: 1px solid var(--border-color, #e8e8e8);
 }
 
-.doc-form-drawer .drawer-header h3 {
+.doc-form-modal .modal-header h3 {
   margin: 0;
   font-size: 16px;
   font-weight: 500;
   color: var(--text-color, #333);
 }
 
-.doc-form-drawer .close-btn {
+.doc-form-modal .close-btn {
   padding: 4px;
   background: transparent;
   border: none;
   cursor: pointer;
   color: var(--text-secondary, #666);
   border-radius: 4px;
+  display: flex;
 }
 
-.doc-form-drawer .close-btn:hover {
+.doc-form-modal .close-btn:hover {
   background-color: var(--bg-hover, #f5f5f5);
 }
 
-.doc-form-drawer .drawer-content {
-  flex: 1;
-  padding: 20px;
-  overflow-y: auto;
+/* ======== 顶部表单区 ======== */
+.doc-form-modal .modal-meta {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-color, #e8e8e8);
+  background: var(--bg-secondary, #fafbfc);
+}
+
+.doc-form-modal .modal-meta:has(.form-item:nth-child(2):last-child) {
+  grid-template-columns: 2fr 1fr;
+}
+
+.doc-form-modal .form-item {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 4px;
+  min-width: 0;
 }
 
-.doc-form-drawer .form-item {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.doc-form-drawer .form-item.flex-1 {
-  flex: 1;
-  min-height: 0;
-}
-
-.doc-form-drawer .form-item label {
-  font-size: 14px;
-  color: var(--text-color, #333);
+.doc-form-modal .form-item label {
+  font-size: 12px;
+  color: var(--text-secondary, #666);
   font-weight: 500;
 }
 
-.doc-form-drawer .form-item input {
-  height: 36px;
-  padding: 0 12px;
+.doc-form-modal .form-item input,
+.doc-form-modal .form-item select {
+  height: 32px;
+  padding: 0 10px;
   border: 1px solid var(--border-color, #d9d9d9);
-  border-radius: 6px;
-  font-size: 14px;
+  border-radius: 4px;
+  font-size: 13px;
   color: var(--text-color, #333);
   background: var(--bg-color, #fff);
   outline: none;
   transition: border-color 0.2s;
 }
 
-.doc-form-drawer .form-item input:focus {
+.doc-form-modal .form-item input:focus,
+.doc-form-modal .form-item select:focus {
   border-color: var(--primary-color, #1890ff);
 }
 
-.doc-form-drawer .form-item textarea {
+/* ======== 主体：左右分屏 ======== */
+.doc-form-modal .modal-body {
   flex: 1;
-  min-height: 300px;
-  padding: 12px;
-  border: 1px solid var(--border-color, #d9d9d9);
-  border-radius: 6px;
-  font-size: 14px;
-  color: var(--text-color, #333);
-  background: var(--bg-color, #fff);
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.doc-form-modal .split-pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.doc-form-modal .split-pane + .split-pane {
+  border-left: 1px solid var(--border-color, #e8e8e8);
+}
+
+.doc-form-modal .pane-title {
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary, #666);
+  background: var(--bg-secondary, #fafbfc);
+  border-bottom: 1px solid var(--border-color, #e8e8e8);
+  letter-spacing: 0.04em;
+}
+
+.doc-form-modal .md-editor {
+  flex: 1;
+  width: 100%;
+  padding: 16px;
+  border: none;
   outline: none;
   resize: none;
-  font-family: 'Consolas', 'Monaco', monospace;
-  line-height: 1.6;
-  transition: border-color 0.2s;
+  font-family: 'Consolas', 'Monaco', 'SFMono-Regular', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-color, #333);
+  background: var(--bg-color, #fff);
 }
 
-.doc-form-drawer .form-item textarea:focus {
-  border-color: var(--primary-color, #1890ff);
+.doc-form-modal .md-preview {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--bg-color, #fff);
 }
 
-.doc-form-drawer .drawer-footer {
+.doc-form-modal .md-preview .markdown-view {
+  padding: 16px 20px;
+}
+
+.doc-form-modal .md-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-secondary, #999);
+  font-size: 13px;
+}
+
+/* ======== 底部 ======== */
+.doc-form-modal .modal-footer {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  padding: 16px 20px;
+  padding: 12px 20px;
   border-top: 1px solid var(--border-color, #e8e8e8);
 }
 
-.doc-form-drawer .btn-cancel {
-  padding: 8px 20px;
-  background: var(--bg-color, #fff);
-  border: 1px solid var(--border-color, #d9d9d9);
-  border-radius: 6px;
+.doc-form-modal .btn-cancel,
+.doc-form-modal .btn-submit {
+  padding: 7px 20px;
+  border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+
+.doc-form-modal .btn-cancel {
+  background: var(--bg-color, #fff);
+  border-color: var(--border-color, #d9d9d9);
   color: var(--text-color, #333);
 }
 
-.doc-form-drawer .btn-cancel:hover {
+.doc-form-modal .btn-cancel:hover {
   border-color: var(--primary-color, #1890ff);
   color: var(--primary-color, #1890ff);
 }
 
-.doc-form-drawer .btn-submit {
-  padding: 8px 20px;
+.doc-form-modal .btn-submit {
   background: var(--primary-color, #1890ff);
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
   color: #fff;
 }
 
-.doc-form-drawer .btn-submit:hover:not(:disabled) {
+.doc-form-modal .btn-submit:hover:not(:disabled) {
   background: var(--primary-color-hover, #40a9ff);
 }
 
-.doc-form-drawer .btn-submit:disabled {
+.doc-form-modal .btn-submit:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-/* 深色主题 */
-[data-theme="dark"] .doc-form-drawer {
-  background: var(--bg-color, #1f1f1f);
+/* ========== 深色主题 ========== */
+html.dark .doc-form-modal {
+  background: #1f1f1f;
 }
 
-[data-theme="dark"] .doc-form-drawer .drawer-header {
-  border-color: var(--border-color, #303030);
+html.dark .doc-form-modal .modal-header,
+html.dark .doc-form-modal .modal-meta,
+html.dark .doc-form-modal .modal-footer,
+html.dark .doc-form-modal .pane-title {
+  border-color: #303030;
 }
 
-[data-theme="dark"] .doc-form-drawer .drawer-header h3 {
-  color: var(--text-color, #e0e0e0);
+html.dark .doc-form-modal .modal-meta,
+html.dark .doc-form-modal .pane-title {
+  background: #181818;
 }
 
-[data-theme="dark"] .doc-form-drawer .form-item label {
-  color: var(--text-color, #e0e0e0);
+html.dark .doc-form-modal .modal-header h3 {
+  color: #e0e0e0;
 }
 
-[data-theme="dark"] .doc-form-drawer .form-item input,
-[data-theme="dark"] .doc-form-drawer .form-item textarea {
-  background: var(--bg-secondary, #141414);
-  border-color: var(--border-color, #303030);
-  color: var(--text-color, #e0e0e0);
+html.dark .doc-form-modal .close-btn {
+  color: #aaa;
 }
 
-[data-theme="dark"] .doc-form-drawer .drawer-footer {
-  border-color: var(--border-color, #303030);
+html.dark .doc-form-modal .close-btn:hover {
+  background: #2a2a2a;
 }
 
-[data-theme="dark"] .doc-form-drawer .btn-cancel {
-  background: var(--bg-secondary, #141414);
-  border-color: var(--border-color, #303030);
-  color: var(--text-color, #e0e0e0);
+html.dark .doc-form-modal .form-item label,
+html.dark .doc-form-modal .pane-title {
+  color: #aaa;
+}
+
+html.dark .doc-form-modal .form-item input,
+html.dark .doc-form-modal .form-item select {
+  background: #141414;
+  border-color: #303030;
+  color: #e0e0e0;
+}
+
+html.dark .doc-form-modal .split-pane + .split-pane {
+  border-left-color: #303030;
+}
+
+html.dark .doc-form-modal .md-editor {
+  background: #1a1a1a;
+  color: #d0d0d0;
+}
+
+html.dark .doc-form-modal .md-preview {
+  background: #1f1f1f;
+}
+
+html.dark .doc-form-modal .btn-cancel {
+  background: #141414;
+  border-color: #303030;
+  color: #e0e0e0;
 }

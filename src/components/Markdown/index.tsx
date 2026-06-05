@@ -78,10 +78,12 @@ const katexPlugin = (md: MarkdownIt) => {
   });
 
   md.renderer.rules.katex_block = (tokens, idx) => {
+    const t = tokens[idx];
+    const lineAttr = t.map ? ` data-source-line="${t.map[0]}"` : '';
     try {
-      return `<div class="katex-block">${katex.renderToString(tokens[idx].content, { displayMode: true, throwOnError: false })}</div>`;
+      return `<div class="katex-block"${lineAttr}>${katex.renderToString(t.content, { displayMode: true, throwOnError: false })}</div>`;
     } catch {
-      return `<div class="katex-error">${tokens[idx].content}</div>`;
+      return `<div class="katex-error"${lineAttr}>${t.content}</div>`;
     }
   };
 
@@ -121,20 +123,36 @@ const md: MarkdownIt = new MarkdownIt({
   html: true,
   breaks: true,
   linkify: true,
-  highlight: (str: string, lang: string): string => {
-    if (lang === 'mermaid') {
-      return `<div class="mermaid-wrapper"><pre class="mermaid-code" data-mermaid="${encodeURIComponent(str)}">${md.utils.escapeHtml(str)}</pre></div>`;
-    }
-    if (lang && hljs.getLanguage(lang)) {
-      try {
-        return `<pre class="hljs-code-block"><code class="hljs language-${lang}">${hljs.highlight(str, { language: lang, ignoreIllegals: true }).value}</code></pre>`;
-      } catch { /* fallback */ }
-    }
-    return `<pre class="hljs-code-block"><code class="hljs">${md.utils.escapeHtml(str)}</code></pre>`;
-  }
 });
 
 md.use(katexPlugin);
+
+// fence 代码块渲染（同时注入 data-source-line）
+md.renderer.rules.fence = (tokens, idx) => {
+  const token = tokens[idx];
+  const lang = token.info.trim();
+  const code = token.content;
+  const lineAttr = token.map ? ` data-source-line="${token.map[0]}"` : '';
+  if (lang === 'mermaid') {
+    return `<div class="mermaid-wrapper"${lineAttr}><pre class="mermaid-code" data-mermaid="${encodeURIComponent(code)}">${md.utils.escapeHtml(code)}</pre></div>`;
+  }
+  if (lang && hljs.getLanguage(lang)) {
+    try {
+      return `<pre class="hljs-code-block"${lineAttr}><code class="hljs language-${lang}">${hljs.highlight(code, { language: lang, ignoreIllegals: true }).value}</code></pre>`;
+    } catch { /* fallback */ }
+  }
+  return `<pre class="hljs-code-block"${lineAttr}><code class="hljs">${md.utils.escapeHtml(code)}</code></pre>`;
+};
+
+// 给所有带 map 的块级 _open token 注入 data-source-line
+md.core.ruler.push('inject_source_line', state => {
+  state.tokens.forEach(token => {
+    if (token.map && token.level === 0 && token.type.endsWith('_open')) {
+      token.attrSet('data-source-line', String(token.map[0]));
+    }
+  });
+  return true;
+});
 
 // mermaid 计数器
 let mermaidId = 0;
