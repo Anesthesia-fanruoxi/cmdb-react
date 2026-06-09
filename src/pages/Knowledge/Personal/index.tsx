@@ -5,6 +5,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { FileText, Plus, Edit, Trash2, Search, RefreshCw, X, BookOpen, FilePlus2, Clock, Sparkles } from 'lucide-react';
 import { getPersonalDocList, getPersonalDocDetail, deletePersonalDoc, DocItem } from '../../../services/knowledge';
+import { getDictDetail, DictItem } from '../../../services/system/dict';
 import toast from '../../../components/Toast';
 import { confirm } from '../../../components/ConfirmModal';
 import DocForm from '../components/DocForm';
@@ -19,6 +20,19 @@ const PersonalKnowledge = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingDoc, setEditingDoc] = useState<DocItem | null>(null);
   const [recentDocIds, setRecentDocIds] = useState<Set<number>>(new Set());
+  const [categoryOptions, setCategoryOptions] = useState<DictItem[]>([]);
+
+  // 加载分类字典（与 Vue 实现保持一致）
+  const fetchCategories = useCallback(async () => {
+    try {
+      const res = await getDictDetail('sys_category_dict');
+      if (res.code === 200 && res.data?.items) {
+        setCategoryOptions(res.data.items);
+      }
+    } catch {
+      toast.error('获取分类字典失败');
+    }
+  }, []);
 
   // 获取文档列表
   const fetchDocList = useCallback(async () => {
@@ -69,6 +83,7 @@ const PersonalKnowledge = () => {
 
   useEffect(() => {
     fetchDocList();
+    fetchCategories();
   }, []);
 
   // 选择文档
@@ -311,6 +326,7 @@ const PersonalKnowledge = () => {
         onClose={() => setShowForm(false)}
         onSuccess={handleFormSuccess}
         type="personal"
+        categoryOptions={categoryOptions}
       />
     </div>
   );

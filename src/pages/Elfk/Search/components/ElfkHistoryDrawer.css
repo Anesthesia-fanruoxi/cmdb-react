@@ -1,0 +1,256 @@
+/**
+ * ELFK 历史记录抽屉样式
+ * 复用全局 .drawer / .drawer-overlay / .drawer-header / .drawer-body
+ */
+
+.elfk-history-drawer {
+  width: 400px !important;
+  max-width: 90vw !important;
+}
+
+/* 标签页 */
+.elfk-history-drawer .modal-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  align-items: center;
+}
+
+.elfk-history-drawer .modal-tabs .tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.elfk-history-drawer .modal-tabs .tab-btn:hover {
+  color: var(--primary-color);
+}
+
+.elfk-history-drawer .modal-tabs .tab-btn.active {
+  background: var(--primary-color);
+  color: #fff;
+}
+
+.elfk-history-drawer .clear-local-btn {
+  margin-left: auto;
+  font-size: 12px;
+  color: #e74c3c;
+  cursor: pointer;
+}
+
+.elfk-history-drawer .clear-local-btn:hover {
+  text-decoration: underline;
+}
+
+/* 搜索框 */
+.elfk-history-drawer .drawer-search {
+  display: flex;
+  gap: 6px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.elfk-history-drawer .drawer-search input {
+  flex: 1;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  font-size: 13px;
+  outline: none;
+}
+
+.elfk-history-drawer .drawer-search input:focus {
+  border-color: var(--primary-color);
+}
+
+.elfk-history-drawer .drawer-search .search-btn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-color);
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/* 内容区 */
+.elfk-history-drawer .drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.elfk-history-drawer .history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  min-height: 100%;
+  box-sizing: border-box;
+}
+
+.elfk-history-drawer .empty-tip {
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+/* 卡片 */
+.elfk-history-drawer .history-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.elfk-history-drawer .history-card:hover {
+  border-color: var(--primary-color);
+  background: var(--bg-hover, var(--bg-secondary));
+}
+
+.elfk-history-drawer .history-card.shared {
+  border-left: 3px solid var(--primary-color);
+}
+
+.elfk-history-drawer .history-card .card-title {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--primary-color);
+  font-weight: 600;
+  word-break: break-all;
+  white-space: normal;
+}
+
+.elfk-history-drawer .history-card .card-keyword {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-color);
+  font-family: 'Consolas', 'Monaco', monospace;
+  word-break: break-all;
+  background: var(--bg-color);
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.elfk-history-drawer .history-card .card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.elfk-history-drawer .history-card .card-creator {
+  color: #fff;
+  background: #27ae60;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.elfk-history-drawer .history-card .card-time {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.elfk-history-drawer .history-card .append-btn {
+  font-size: 11px;
+  color: var(--primary-color);
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+}
+
+.elfk-history-drawer .history-card .append-btn:hover {
+  background: var(--primary-color);
+  color: #fff;
+  border-color: var(--primary-color);
+}
+
+.elfk-history-drawer .history-card .card-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.elfk-history-drawer .history-card .icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.elfk-history-drawer .history-card .icon-btn:hover {
+  color: var(--primary-color);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.elfk-history-drawer .history-card .icon-btn.danger:hover {
+  color: #e74c3c;
+  background: rgba(231, 76, 60, 0.1);
+}
+
+/* 分页 */
+.elfk-history-drawer .drawer-pager {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--border-color);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.elfk-history-drawer .drawer-pager button {
+  padding: 4px 10px;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--text-color);
+  cursor: pointer;
+}
+
+.elfk-history-drawer .drawer-pager button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.elfk-history-drawer .drawer-pager button:not(:disabled):hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}

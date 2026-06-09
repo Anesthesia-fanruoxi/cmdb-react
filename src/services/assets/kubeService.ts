@@ -34,7 +34,7 @@ export function getKubeProjects() {
 }
 
 // 获取命名空间列表
-export function getNamespaceList(data: { project: string; type: string }) {
+export function getNamespaceList(data: { project: string; type?: string }) {
   return apiClient.post<string[]>('/assets/kubeService/namespace', data);
 }
 

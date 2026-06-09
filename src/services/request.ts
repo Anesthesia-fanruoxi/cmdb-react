@@ -14,6 +14,11 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api
 // 默认超时时间（毫秒）
 const DEFAULT_TIMEOUT = 30000;
 
+// 客户端标识：区分桌面端与浏览器端
+const APP_VERSION = (import.meta.env.VITE_APP_VERSION || 'v1.0.0').replace(/^v/, '');
+const OS_NAME = navigator.platform?.startsWith('Win') ? 'Windows' : navigator.platform?.startsWith('Mac') ? 'Mac' : 'Linux';
+export const CLIENT_AGENT = `CMDB-Desktop/${APP_VERSION} (${OS_NAME})`;
+
 // Token 刷新状态
 let isRefreshing = false;
 let refreshPromise: Promise<string | null> | null = null;
@@ -167,6 +172,8 @@ async function request<T>(
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'User-Agent': CLIENT_AGENT,
+    'X-Client-Agent': CLIENT_AGENT,
     ...config.headers,
   };
 
@@ -328,7 +335,7 @@ export const apiClient = {
     const fullUrl = url.startsWith('http') ? url : `${BASE_URL}${url}`;
     const token = getToken();
 
-    const headers: Record<string, string> = { ...config?.headers };
+    const headers: Record<string, string> = { 'User-Agent': CLIENT_AGENT, 'X-Client-Agent': CLIENT_AGENT, ...config?.headers };
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
     try {

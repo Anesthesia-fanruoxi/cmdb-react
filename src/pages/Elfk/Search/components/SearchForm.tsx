@@ -7,7 +7,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { getViewList, getViewDetail } from '../../../../services/elfk/view';
 import { useUserPrefsStore } from '../../../../stores';
 import KibanaTimeRangePicker from './KibanaTimeRangePicker';
-import HistoryDropdown, { saveLocalHistory } from './HistoryDropdown';
+import ElfkHistoryDrawer, { saveLocalHistory } from './ElfkHistoryDrawer';
 import SaveSharedDialog from './SaveSharedDialog';
 import ShortcutSettings from './ShortcutSettings';
 import type { ViewListItem, ViewDetail } from '../../../../services/elfk/view';
@@ -375,14 +375,6 @@ const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, initial
               onBlur={() => setInputFocused(false)}
             />
           </div>
-          <HistoryDropdown
-            visible={historyVisible}
-            projectInfo={projectInfo}
-            viewId={Number(currentView?.id) || 0}
-            onClose={() => setHistoryVisible(false)}
-            onSelect={handleSelectHistory}
-            onAppend={handleAppendHistory}
-          />
         </div>
 
         {/* 时间范围选择器 - Kibana 风格 */}
@@ -419,6 +411,16 @@ const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, initial
         keyword={localKeyword}
         onClose={() => setSaveSharedVisible(false)}
         onSuccess={() => {}}
+      />
+
+      {/* 历史记录抽屉（侧边栏） */}
+      <ElfkHistoryDrawer
+        visible={historyVisible}
+        projectInfo={projectInfo}
+        viewId={Number(currentView?.id) || 0}
+        onClose={() => setHistoryVisible(false)}
+        onSelect={handleSelectHistory}
+        onAppend={handleAppendHistory}
       />
 
       {/* 快捷键设置 */}

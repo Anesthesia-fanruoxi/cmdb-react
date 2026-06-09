@@ -161,12 +161,12 @@ export function vagueGetFields(
 
 // 搜索日志
 export function searchLogs(data: SearchParams): Promise<ApiResponse<SearchResult>> {
-  return apiClient.post<SearchResult>('/elfk/search/list', data);
+  return apiClient.post<SearchResult>('/elfk/search/list', { ...data, platform: 'desktop' });
 }
 
 // 分页查询日志
 export function searchLogsPage(data: SearchParams): Promise<ApiResponse<SearchResult>> {
-  return apiClient.post<SearchResult>('/elfk/search/page', data);
+  return apiClient.post<SearchResult>('/elfk/search/page', { ...data, platform: 'desktop' });
 }
 
 // 获取日志上下文
@@ -190,5 +190,5 @@ export function exportLogs(data: {
   fields?: string[];
   view_name?: string;
 }): Promise<ApiResponse<{ task_id: string; message: string }>> {
-  return apiClient.post('/elfk/search/export', data);
+  return apiClient.post('/elfk/search/export', { ...data, platform: 'desktop' });
 }

@@ -28,6 +28,7 @@ export class SSEGateway {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private connectionTimer: ReturnType<typeof setTimeout> | null = null;
   private heartbeatTimer: ReturnType<typeof setTimeout> | null = null;
+  private lastHeartbeatAt = 0;
   private subscriptionManager: SubscriptionManager;
   private listeners = new Map<string, Set<EventHandler>>();
 
@@ -75,6 +76,11 @@ export class SSEGateway {
     return this.connectionState === 'open';
   }
 
+  /** 获取最后一次心跳时间戳 */
+  getLastHeartbeatAt(): number {
+    return this.lastHeartbeatAt;
+  }
+
   /** 建立连接 */
   connect(): void {
     // 防止重复连接
@@ -112,7 +118,7 @@ export class SSEGateway {
         this.clearConnectionTimer();
         this.resetHeartbeat();
 
-        // 重连后重新订阅
+        // 重连后重新订阅（首次连接也会在此同步补发之前 connectionId 为 null 时被丢弃的订阅）
         this.subscriptionManager.resubscribeAll();
 
         this.emit('connected', data);
@@ -133,15 +139,27 @@ export class SSEGateway {
       }
     });
 
+    // 心跳事件：后端每 30s 推送一次，记录时间戳并重置超时计时器
+    this.eventSource.addEventListener('heartbeat', () => {
+      this.lastHeartbeatAt = Date.now();
+      this.resetHeartbeat();
+    });
+
     // 完成事件
     this.eventSource.addEventListener('complete', () => {
       this.emit('complete');
     });
 
-    // 错误处理
+    // 错误处理：仅在连接真正关闭时重连，避免浏览器 CONNECTING 状态下的中间态 onerror 误重连
     this.eventSource.onerror = (e) => {
-      console.warn('[SSE Gateway] ❌ 连接错误, readyState:', this.eventSource?.readyState, e);
-      this.handleDisconnect();
+      const rs = this.eventSource?.readyState;
+      // 0 = CONNECTING（浏览器正在重试），1 = OPEN（2 = CLOSED
+      if (rs === EventSource.CLOSED) {
+        console.warn('[SSE Gateway] ❌ 连接已关闭，准备重连');
+        this.handleDisconnect();
+      } else {
+        console.warn('[SSE Gateway] ⚠️ 连接错误但未关闭，readyState:', rs, e);
+      }
     };
   }
 
@@ -253,12 +271,15 @@ export class SSEGateway {
     }
   }
 
-  /** 心跳超时：30s 内无任何消息则视为连接死亡 */
+  /**
+   * 重置心跳守护：后端每 30s 发一次心跳，60s 内未收到任何事件
+   * （connected/data/heartbeat）则认为连接已死，主动重连。
+   */
   private resetHeartbeat(): void {
     this.clearHeartbeat();
     this.heartbeatTimer = setTimeout(() => {
-      console.warn('[SSE] 心跳超时，主动断开重连');
+      console.warn('[SSE] 心跳超时（超 60s 未收到事件），主动断开重连');
       this.handleDisconnect();
-    }, 30_000);
+    }, 60_000);
   }
 }

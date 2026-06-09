@@ -37,12 +37,15 @@ const KubeServicePage = () => {
     return namespaceList.filter(ns => ns.toLowerCase().includes(nsSearch.toLowerCase()));
   }, [namespaceList, nsSearch]);
 
+  // 项目包含crm时不需要选择类型
+  const isCrm = useMemo(() => project.toLowerCase().includes('crm'), [project]);
+
   useEffect(() => { fetchProjects(); }, []);
 
   useEffect(() => {
-    if (project && type) fetchNamespaces();
+    if (project && (isCrm || type)) fetchNamespaces();
     else { setNamespaceList([]); setNamespace(''); }
-  }, [project, type]);
+  }, [project, type, isCrm]);
 
   useEffect(() => {
     if (namespace) fetchServices();
@@ -62,7 +65,8 @@ const KubeServicePage = () => {
 
   const fetchNamespaces = async () => {
     try {
-      const res = await getNamespaceList({ project, type });
+      const params = isCrm ? { project } : { project, type };
+      const res = await getNamespaceList(params);
       if (res.code === 200 && Array.isArray(res.data)) {
         setNamespaceList(res.data);
         setNamespace('');
@@ -107,7 +111,11 @@ const KubeServicePage = () => {
   const formattedServices = useMemo(() => {
     return serviceList.map(svc => {
       const debugPort = svc.ports.find(p => p.name === 'debug');
-      const servicePort = svc.ports.find(p => p.name === 'service');
+      // CRM 项目定制：服务端口的 name 与服务同名（如 'crm-dev'）而非 'service'
+      // 其他项目保持原逻辑，取 name === 'service' 的端口
+      const servicePort = isCrm
+        ? svc.ports.find(p => p.name === svc.name)
+        : svc.ports.find(p => p.name === 'service');
       return {
         ...svc,
         debugPort: debugPort?.port || '-',
@@ -116,7 +124,7 @@ const KubeServicePage = () => {
         serviceNodePort: servicePort?.node_port
       };
     });
-  }, [serviceList]);
+  }, [serviceList, isCrm]);
 
   return (
     <div className="kube-service-page">
@@ -134,17 +142,24 @@ const KubeServicePage = () => {
               </div>
             </div>
 
-            {/* 类型选择 */}
-            <div className="filter-row">
-              <span className="filter-label">选择类型：</span>
-              <div className="radio-group">
-                <button className={`radio-item ${type === 'service' ? 'active' : ''}`} onClick={() => setType('service')}>服务</button>
-                <button className={`radio-item ${type === 'middleware' ? 'active' : ''}`} onClick={() => setType('middleware')}>中间件</button>
+            {/* 类型选择（项目包含crm时隐藏） */}
+            {!isCrm && (
+              <div className="filter-row">
+                <span className="filter-label">选择类型：</span>
+                <div className="radio-group">
+                  <button className={`radio-item ${type === 'service' ? 'active' : ''}`} onClick={() => setType('service')}>服务</button>
+                  <button className={`radio-item ${type === 'middleware' ? 'active' : ''}`} onClick={() => setType('middleware')}>中间件</button>
+                </div>
+                {namespaceList.length > 0 && (
+                  <input className="search-input" placeholder="搜索命名空间" value={nsSearch} onChange={e => setNsSearch(e.target.value)} />
+                )}
               </div>
-              {namespaceList.length > 0 && (
+            )}
+            {isCrm && namespaceList.length > 0 && (
+              <div className="filter-row">
                 <input className="search-input" placeholder="搜索命名空间" value={nsSearch} onChange={e => setNsSearch(e.target.value)} />
-              )}
-            </div>
+              </div>
+            )}
 
             {/* 命名空间选择 */}
             {namespaceList.length > 0 && (
@@ -159,10 +174,10 @@ const KubeServicePage = () => {
             )}
           </div>
 
-          {/* 服务表格 */}
+          {/* 服务表格（crm项目默认按服务展示） */}
           {namespace && (
             <div className="table-container">
-              {type === 'service' ? (
+              {(isCrm || type === 'service') ? (
                 <table className="data-table">
                   <thead><tr><th>序号</th><th>命名空间</th><th>服务名称</th><th>容器debug端口</th><th>映射debug端口</th><th>容器服务端口</th><th>映射服务端口</th></tr></thead>
                   <tbody>
