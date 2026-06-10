@@ -16,7 +16,8 @@ const DEFAULT_TIMEOUT = 30000;
 
 // 客户端标识：区分桌面端与浏览器端
 const APP_VERSION = (import.meta.env.VITE_APP_VERSION || 'v1.0.0').replace(/^v/, '');
-const OS_NAME = navigator.platform?.startsWith('Win') ? 'Windows' : navigator.platform?.startsWith('Mac') ? 'Mac' : 'Linux';
+const UA = navigator.userAgent;
+const OS_NAME = UA.includes('Win') ? 'Windows' : UA.includes('Mac') ? 'Mac' : 'Linux';
 export const CLIENT_AGENT = `CMDB-Desktop/${APP_VERSION} (${OS_NAME})`;
 
 // Token 刷新状态

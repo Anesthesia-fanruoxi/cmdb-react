@@ -159,14 +159,14 @@ export function vagueGetFields(
   return apiClient.get('/elfk/search/vaguefields', { project, index });
 }
 
-// 搜索日志
+// 搜索日志 - platform 由后端通过 User-Agent / X-Client-Agent header 识别
 export function searchLogs(data: SearchParams): Promise<ApiResponse<SearchResult>> {
-  return apiClient.post<SearchResult>('/elfk/search/list', { ...data, platform: 'desktop' });
+  return apiClient.post<SearchResult>('/elfk/search/list', data);
 }
 
 // 分页查询日志
 export function searchLogsPage(data: SearchParams): Promise<ApiResponse<SearchResult>> {
-  return apiClient.post<SearchResult>('/elfk/search/page', { ...data, platform: 'desktop' });
+  return apiClient.post<SearchResult>('/elfk/search/page', data);
 }
 
 // 获取日志上下文
@@ -190,5 +190,5 @@ export function exportLogs(data: {
   fields?: string[];
   view_name?: string;
 }): Promise<ApiResponse<{ task_id: string; message: string }>> {
-  return apiClient.post('/elfk/search/export', { ...data, platform: 'desktop' });
+  return apiClient.post('/elfk/search/export', data);
 }

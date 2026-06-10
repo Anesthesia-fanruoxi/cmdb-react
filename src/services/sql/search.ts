@@ -113,8 +113,8 @@ export function getTableStructure(data: { agent: string; dbName: string; tbName:
 
 // 执行SQL查询
 export function executeQuery(data: { agent: string; dbName: string; query: string; query_id?: string }) {
-  // React 项目固定为桌面端
-  return apiClient.post<QueryResult>('/sql/search/data', { ...data, platform: 'desktop' }, { timeout: 600000 });
+  // platform 由后端通过 User-Agent / X-Client-Agent header 识别
+  return apiClient.post<QueryResult>('/sql/search/data', data, { timeout: 600000 });
 }
 
 // 取消SQL查询
@@ -129,20 +129,12 @@ export function executePageQuery(data: {
   size?: number;
   result_index?: number;
 }) {
-  return apiClient.post<QueryResult | { results: QueryResult[] }>('/sql/search/page', {
-    ...data,
-    platform: 'desktop'
-  }, { timeout: 600000 });
+  return apiClient.post<QueryResult | { results: QueryResult[] }>('/sql/search/page', data, { timeout: 600000 });
 }
 
 // 导出查询结果（异步导出,后端发送邮件）
 export function exportQueryResult(data: { query_id: string; db_name: string }) {
-  return apiClient.post<{ code: number; message: string }>('/sql/search/export', {
-    ...data,
-    platform: 'desktop'
-  }, { 
-    timeout: 60000
-  });
+  return apiClient.post<{ code: number; message: string }>('/sql/search/export', data, { timeout: 60000 });
 }
 
 // 获取历史记录
