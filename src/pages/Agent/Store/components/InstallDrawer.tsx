@@ -2,10 +2,11 @@
  * 插件安装抽屉
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { X, Loader2, Plus, Trash2 } from 'lucide-react';
-import { installPlugin, StorePlugin, StoreProject, InstallPluginData } from '@/services/agent/store';
+import { installContainerPlugin, installBinaryPlugin, getPluginDetail, StorePlugin, StoreProject, ContainerInstallRequest, BinaryInstallRequest } from '@/services/agent/store';
 import toast from '@/components/Toast';
+import { parseConfigTemplate, renderConfigTemplate, createEmptyItem, type TemplateVar, type SimpleVar, type ArrayVar } from './configTemplateParser';
 
 interface ConfigItem { key: string; value: string; }
 
@@ -91,6 +92,7 @@ const CONFIG_DESCRIPTIONS: Record<string, string> = {
   'key': '密钥',
 };
 
+
 // 获取配置项的中文说明
 const getConfigDescription = (key: string): string => {
   return CONFIG_DESCRIPTIONS[key] || '请输入参数值';
@@ -101,28 +103,67 @@ const getPluginDefaultConfig = (pluginName: string): ConfigItem[] => {
   return PLUGIN_DEFAULT_CONFIGS[pluginName] || [];
 };
 
+
+
 const InstallDrawer = ({ visible, plugin, projects, onClose, onSuccess }: Props) => {
   const [loading, setLoading] = useState(false);
   const [selectedProject, setSelectedProject] = useState('');
-  const [containerPort, setContainerPort] = useState<number | undefined>();
   const [enableConfig, setEnableConfig] = useState(false);
   const [configList, setConfigList] = useState<ConfigItem[]>([]);
-  const [command, setCommand] = useState('');
+  const [configContent, setConfigContent] = useState('');
+
+  // 配置模板（从后端获取的含 {{.VAR}} 变量模板）
+  const [configTemplate, setConfigTemplate] = useState('');
+
+  // 预览弹框
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [previewVars, setPreviewVars] = useState<TemplateVar[]>([]);
+  const [previewRendered, setPreviewRendered] = useState('');
 
   useEffect(() => {
     if (visible && plugin) {
+      console.log('[InstallDrawer] 抽屉打开，插件信息:', JSON.stringify({
+        id: plugin.id,
+        name: plugin.name,
+        plugin_type: plugin.plugin_type,
+        is_config: plugin.is_config,
+        port: plugin.port,
+      }, null, 2));
       setSelectedProject('');
-      setContainerPort(plugin.port || undefined);
-      setCommand('');
       
       // 获取插件默认配置
-      const defaultConfig = getPluginDefaultConfig(plugin.name);
-      if (defaultConfig.length > 0) {
+      if (plugin.plugin_type === 'binary') {
+        setConfigContent('');
+        if (plugin.is_config) {
+          // 有配置模板的二进制插件：从后端加载 config_template
+          setConfigTemplate('');
+          console.log('[InstallDrawer] 预加载配置模板...', { plugin_id: plugin.id, plugin_name: plugin.name });
+          getPluginDetail(plugin.id)
+            .then(res => {
+              const d = res.data as any;
+              if (d?.config_template) {
+                setConfigTemplate(d.config_template);
+                console.log('[InstallDrawer] 预加载成功，模板长度:', d.config_template.length);
+              } else {
+                console.warn('[InstallDrawer] 预加载：后端未返回 config_template');
+              }
+            })
+            .catch((err) => {
+              console.error('[InstallDrawer] 预加载配置模板失败:', err);
+            });
+        } else {
+          setConfigTemplate('');
+        }
         setEnableConfig(true);
-        setConfigList(defaultConfig.map(item => ({ ...item })));
       } else {
-        setEnableConfig(false);
-        setConfigList([]);
+        const defaultConfig = getPluginDefaultConfig(plugin.name);
+        if (defaultConfig.length > 0) {
+          setEnableConfig(true);
+          setConfigList(defaultConfig.map(item => ({ ...item })));
+        } else {
+          setEnableConfig(false);
+          setConfigList([]);
+        }
       }
     }
   }, [visible, plugin]);
@@ -159,39 +200,32 @@ const InstallDrawer = ({ visible, plugin, projects, onClose, onSuccess }: Props)
     return Object.keys(config).length > 0 ? config : undefined;
   };
 
-  const handleInstall = async () => {
+  // 执行安装（实际发送请求）
+  const performInstall = async (configContentOverride?: string) => {
     if (!plugin) return;
-    if (!selectedProject) { toast.error('请选择项目'); return; }
-
-    // 验证配置
-    if (enableConfig && configList.length > 0) {
-      const hasEmptyConfig = configList.some(v => !v.key || !v.value);
-      if (hasEmptyConfig) {
-        toast.warning('请填写完整的配置信息或删除空配置');
-        return;
-      }
-    }
 
     setLoading(true);
     try {
-      const data: InstallPluginData = {
-        plugin_id: plugin.id,
-        project: selectedProject
-      };
-
+      let res;
       if (plugin.plugin_type === 'container') {
-        data.container_port = containerPort || 8080;
+        const data: ContainerInstallRequest = {
+          plugin_id: plugin.id,
+          project: selectedProject,
+        };
         const config = buildConfig();
-        if (config) {
-          data.config = config;
-        }
-      } else if (plugin.plugin_type === 'binary') {
-        if (command) {
-          data.command = command;
-        }
+        if (config) data.config = config;
+        console.log('[InstallDrawer] 安装容器插件', data);
+        res = await installContainerPlugin(data);
+      } else {
+        const data: BinaryInstallRequest = {
+          plugin_id: plugin.id,
+          project: selectedProject,
+        };
+        const content = configContentOverride ?? configContent;
+        if (content?.trim()) data.config_content = content;
+        console.log('[InstallDrawer] 安装二进制插件', { ...data, config_content: data.config_content ? `(${data.config_content.length}字符)` : undefined });
+        res = await installBinaryPlugin(data);
       }
-
-      const res = await installPlugin(data);
 
       if (res.code === 200) { 
         onSuccess();
@@ -208,6 +242,124 @@ const InstallDrawer = ({ visible, plugin, projects, onClose, onSuccess }: Props)
     } finally { 
       setLoading(false); 
     }
+  };
+
+  // 点击安装按钮
+  const handleInstall = async () => {
+    if (!plugin) return;
+    if (!selectedProject) { toast.error('请选择项目'); return; }
+
+    // 验证容器插件键值对配置
+    if (plugin.plugin_type === 'container' && enableConfig && configList.length > 0) {
+      const hasEmptyConfig = configList.some(v => !v.key || !v.value);
+      if (hasEmptyConfig) {
+        toast.warning('请填写完整的配置信息或删除空配置');
+        return;
+      }
+    }
+
+    // 二进制插件：检查是否存在配置模板
+    console.log('[InstallDrawer] 安装检查:', { plugin_type: plugin.plugin_type, is_config: plugin.is_config, is_config_type: typeof plugin.is_config });
+    if (plugin.plugin_type === 'binary' && plugin.is_config) {
+      let template = configTemplate;
+
+      // 预加载可能失败，安装前重新获取
+      if (!template) {
+        console.log('[InstallDrawer] 配置模板未加载，重新获取...', { plugin_id: plugin.id, plugin_name: plugin.name });
+        try {
+          const res = await getPluginDetail(plugin.id);
+          const d = res.data as any;
+          if (d?.config_template) {
+            template = d.config_template;
+            setConfigTemplate(template);
+            console.log('[InstallDrawer] 配置模板获取成功，长度:', template.length);
+          } else {
+            console.warn('[InstallDrawer] 后端未返回 config_template', d);
+          }
+        } catch (error) {
+          console.error('[InstallDrawer] 获取配置模板失败:', error);
+        }
+      } else {
+        console.log('[InstallDrawer] 使用已缓存的配置模板，长度:', template.length);
+      }
+
+      if (template) {
+        const variables = parseConfigTemplate(template);
+        console.log('[InstallDrawer] 解析配置变量:', variables.map(v => v.key));
+
+        if (variables.length > 0) {
+          setPreviewVars(variables);
+          setPreviewRendered(template);
+          setPreviewVisible(true);
+          return;
+        }
+        // 模板没有变量，直接安装
+        console.log('[InstallDrawer] 配置模板无变量，直接安装');
+        await performInstall(template);
+        return;
+      }
+
+      console.warn('[InstallDrawer] 无法获取配置模板，跳过配置预览，直接安装');
+    }
+
+    console.log('[InstallDrawer] 直接安装', { type: plugin.plugin_type, project: selectedProject });
+    // 其他情况直接安装
+    await performInstall();
+  };
+
+  // 前端实时渲染预览
+  const updatePreview = useCallback(() => {
+    if (!configTemplate) return;
+    setPreviewRendered(renderConfigTemplate(configTemplate, previewVars));
+  }, [previewVars, configTemplate]);
+
+  // 变量变化时更新预览
+  useEffect(() => {
+    if (!previewVisible) return;
+    const timer = setTimeout(updatePreview, 300);
+    return () => clearTimeout(timer);
+  }, [previewVars, previewVisible, updatePreview]);
+
+  // 预览确认后安装
+  const handleConfirmPreviewInstall = async () => {
+    // 校验单变量是否填完（注释含"留空""可选""optional"的字段不强制）
+    const isOptional = (desc: string) => /留空|可选|optional|二选一/i.test(desc);
+    const hasEmptySimple = previewVars.some(v => v.type === 'simple' && !v.value && !isOptional(v.description));
+    if (hasEmptySimple) { toast.warning('请填写完整的变量值'); return; }
+    const rendered = renderConfigTemplate(configTemplate, previewVars);
+    setPreviewVisible(false);
+    await performInstall(rendered);
+  };
+
+  // 单变量值变化
+  const handleSimpleVarChange = (index: number, value: string) => {
+    setPreviewVars(prev => prev.map((v, i) => i === index ? { ...v, value } as SimpleVar : v));
+  };
+
+  // 数组项字段变化
+  const handleArrayFieldChange = (varIndex: number, itemIndex: number, field: string, value: string) => {
+    setPreviewVars(prev => prev.map((v, i) => {
+      if (i !== varIndex || v.type !== 'array') return v;
+      const items = [...v.items];
+      items[itemIndex] = { ...items[itemIndex], [field]: value };
+      return { ...v, items };
+    }));
+  };
+
+  // 添加数组项
+  const handleAddArrayItem = (varIndex: number) => {
+    setPreviewVars(prev => prev.map((v, i) => {
+      if (i !== varIndex || v.type !== 'array') return v;
+      return { ...v, items: [...v.items, createEmptyItem(v.fields)] };
+    }));
+  };
+
+  // 删除数组项
+  const handleRemoveArrayItem = (varIndex: number, itemIndex: number) => {
+    setPreviewVars(prev => prev.map((v, i) => {
+      if (i !== varIndex || v.type !== 'array') return v;
+      return { ...v, items: v.items.filter((_, idx) => idx !== itemIndex) };
+    }));
   };
 
   if (!visible) return null; 
@@ -251,12 +403,6 @@ const InstallDrawer = ({ visible, plugin, projects, onClose, onSuccess }: Props)
           {plugin?.plugin_type === 'container' && (
             <>
               <div className="form-item">
-                <label>容器端口</label>
-                <input type="number" value={containerPort || ''} onChange={e => setContainerPort(Number(e.target.value) || undefined)} placeholder="不填写默认使用8080端口" min={1} max={65535} />
-                <span className="form-tip">插件服务监听的端口（容器内端口）</span>
-              </div>
-
-              <div className="form-item">
                 <label>添加配置</label>
                 <div className="switch-row">
                   <div 
@@ -274,11 +420,16 @@ const InstallDrawer = ({ visible, plugin, projects, onClose, onSuccess }: Props)
                   <label>配置参数</label>
                   <div className="config-list">
                     {configList.map((item, index) => (
-                      <div key={index} className="config-row">
-                        <input type="text" value={item.key} onChange={e => handleConfigChange(index, 'key', e.target.value)} placeholder="参数名" />
-                        <span className="sep">=</span>
-                        <input type="text" value={item.value} onChange={e => handleConfigChange(index, 'value', e.target.value)} placeholder={getConfigDescription(item.key)} />
-                        <button className="btn-icon" onClick={() => handleRemoveConfig(index)}><Trash2 size={14} /></button>
+                      <div key={index} className="config-item">
+                        <div className="config-row">
+                          <input type="text" value={item.key} onChange={e => handleConfigChange(index, 'key', e.target.value)} placeholder="参数名" />
+                          <span className="sep">=</span>
+                          <input type="text" value={item.value} onChange={e => handleConfigChange(index, 'value', e.target.value)} placeholder={getConfigDescription(item.key)} />
+                          <button className="btn-icon" onClick={() => handleRemoveConfig(index)}><Trash2 size={14} /></button>
+                        </div>
+                        {item.key && CONFIG_DESCRIPTIONS[item.key] && (
+                          <div className="config-desc">{CONFIG_DESCRIPTIONS[item.key]}</div>
+                        )}
                       </div>
                     ))}
                     <button className="btn-add" onClick={handleAddConfig}><Plus size={14} /> 添加配置</button>
@@ -289,11 +440,28 @@ const InstallDrawer = ({ visible, plugin, projects, onClose, onSuccess }: Props)
           )}
 
           {plugin?.plugin_type === 'binary' && (
-            <div className="form-item">
-              <label>启动参数</label>
-              <input type="text" value={command} onChange={e => setCommand(e.target.value)} placeholder="例如: -port 8080" />
-              <span className="form-tip">插件启动参数 -port 指定服务启动时候的端口</span>
-            </div>
+            <>
+              {configTemplate ? (
+                <div className="form-item">
+                  <label>配置文件</label>
+                  <div className="config-file-tip">
+                    该插件包含配置模板，点击“确认安装”后将弹出变量填写框。
+                  </div>
+                </div>
+              ) : configContent ? (
+                <div className="form-item">
+                  <label>配置文件</label>
+                  <div className="config-file-tip">编辑 YAML 配置文件，安装时将写入插件目录</div>
+                  <textarea
+                    className="id-config-textarea"
+                    value={configContent}
+                    onChange={e => setConfigContent(e.target.value)}
+                    rows={18}
+                    spellCheck={false}
+                  />
+                </div>
+              ) : null}
+            </>
           )}
         </div>
         <div className="drawer-footer">
@@ -303,6 +471,87 @@ const InstallDrawer = ({ visible, plugin, projects, onClose, onSuccess }: Props)
           </button>
         </div>
       </div>
+
+      {/* 配置变量预览弹框 */}
+      {previewVisible && (
+        <>
+          <div className="modal-overlay" onClick={() => setPreviewVisible(false)} style={{ zIndex: 1200 }}>
+            <div className="modal-content modal-xl" onClick={e => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3>配置预览 - {plugin?.name}</h3>
+                <button className="close-btn" onClick={() => setPreviewVisible(false)}><X size={18} /></button>
+              </div>
+              <div className="modal-body">
+                <div className="pv-layout">
+                  <div className="pv-left">
+                    <div className="pv-label">配置变量</div>
+                    <div className="pv-vars">
+                      {previewVars.map((v, i) => v.type === 'simple' ? (
+                        <div key={v.key} className="pv-var-row">
+                          <div className="pv-var-key">
+                            <span className="pv-var-name">{v.key}</span>
+                            {v.description && <span className="pv-var-desc">{v.description}</span>}
+                          </div>
+                          <input
+                            type="text"
+                            value={v.value}
+                            onChange={e => handleSimpleVarChange(i, e.target.value)}
+                            placeholder={v.description || `请输入 ${v.key}`}
+                            className="pv-var-input"
+                          />
+                        </div>
+                      ) : (
+                        <div key={v.key} className="pv-array-block">
+                          <div className="pv-array-header">
+                            <span className="pv-var-name">{v.key}</span>
+                            {v.description && <span className="pv-var-desc">{v.description}</span>}
+                            <button className="pv-btn-add" onClick={() => handleAddArrayItem(i)}><Plus size={12} /> 添加</button>
+                          </div>
+                          {(v as ArrayVar).items.map((item, itemIdx) => (
+                            <div key={itemIdx} className="pv-array-item">
+                              <div className="pv-array-item-header">
+                                <span>#{itemIdx + 1}</span>
+                                {(v as ArrayVar).items.length > 1 && (
+                                  <button className="pv-btn-remove" onClick={() => handleRemoveArrayItem(i, itemIdx)}><Trash2 size={12} /></button>
+                                )}
+                              </div>
+                              {(v as ArrayVar).fields.map(field => (
+                                <div key={field.key} className="pv-var-row">
+                                  <div className="pv-var-key">
+                                    <span className="pv-var-name">{field.key}</span>
+                                    {field.description && <span className="pv-var-desc">{field.description}</span>}
+                                  </div>
+                                  <input
+                                    type="text"
+                                    value={item[field.key] || ''}
+                                    onChange={e => handleArrayFieldChange(i, itemIdx, field.key, e.target.value)}
+                                    placeholder={field.description || `请输入 ${field.key}`}
+                                    className="pv-var-input"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="pv-right">
+                    <div className="pv-label">渲染预览</div>
+                    <pre className="pv-preview">{previewRendered || configTemplate}</pre>
+                  </div>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button className="btn-default" onClick={() => setPreviewVisible(false)}>取消</button>
+                <button className="btn-primary" onClick={handleConfirmPreviewInstall} disabled={loading}>
+                  {loading && <Loader2 size={14} className="spin" />} 确认安装
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
       <style>{`
         .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1100; }
         .install-drawer { position: fixed; top: 0; right: 0; width: 800px; height: 100%; background: var(--bg-color); z-index: 1101; display: flex; flex-direction: column; }
@@ -336,9 +585,14 @@ const InstallDrawer = ({ visible, plugin, projects, onClose, onSuccess }: Props)
         .switch-toggle.active .switch-handle { left: 24px; }
         .switch-row .form-tip { margin-top: 0; }
         .config-list { display: flex; flex-direction: column; gap: 12px; }
+        .config-item { display: flex; flex-direction: column; gap: 4px; }
         .config-row { display: flex; align-items: center; gap: 8px; }
         .config-row input { flex: 1; }
         .config-row .sep { color: var(--text-secondary); font-weight: bold; }
+        .config-desc { padding-left: 4px; font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
+        .config-file-tip { padding: 8px 12px; margin-bottom: 8px; background: rgba(64, 158, 255, 0.08); border: 1px solid rgba(64, 158, 255, 0.2); border-radius: 4px; color: var(--text-secondary); font-size: 12px; }
+        .id-config-textarea { width: 100%; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; color: var(--text-color); resize: vertical; line-height: 1.6; tab-size: 2; box-sizing: border-box; }
+        .id-config-textarea:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.15); }
         .btn-icon { background: none; border: none; cursor: pointer; color: #ff4d4f; padding: 4px; }
         .btn-add { display: flex; align-items: center; gap: 4px; padding: 8px 12px; background: var(--bg-secondary); border: 1px dashed var(--border-color); border-radius: 4px; cursor: pointer; font-size: 13px; color: var(--primary-color); }
         .btn-default, .btn-primary { display: flex; align-items: center; gap: 4px; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; }
@@ -346,6 +600,28 @@ const InstallDrawer = ({ visible, plugin, projects, onClose, onSuccess }: Props)
         .btn-primary { background: var(--primary-color); border: none; color: #fff; }
         .btn-primary:disabled { opacity: 0.6; }
         .spin { animation: spin 1s linear infinite; }
+
+        .pv-layout { display: flex; gap: 20px; min-height: 400px; }
+        .pv-left { flex: 0 0 45%; display: flex; flex-direction: column; }
+        .pv-right { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .pv-label { display: flex; align-items: center; margin-bottom: 10px; font-size: 13px; font-weight: 500; color: var(--text-color); }
+        .pv-vars { display: flex; flex-direction: column; gap: 12px; overflow: auto; flex: 1; }
+        .pv-var-row { display: flex; flex-direction: row; align-items: flex-start; gap: 12px; }
+        .pv-var-key { display: flex; flex-direction: column; flex: 0 0 180px; min-width: 0; padding-top: 7px; }
+        .pv-var-name { font-size: 13px; font-weight: 500; color: var(--text-color); font-family: 'Consolas', monospace; word-break: break-all; }
+        .pv-var-desc { font-size: 11px; color: var(--text-secondary); margin-top: 2px; line-height: 1.4; }
+        .pv-var-input { flex: 1; min-width: 0; padding: 7px 12px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-secondary); color: var(--text-color); font-size: 13px; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
+        .pv-var-input:focus { outline: none; border-color: var(--primary-color); }
+        .pv-array-block { border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; }
+        .pv-array-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+        .pv-btn-add { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; padding: 4px 10px; background: var(--bg-secondary); border: 1px dashed var(--primary-color); border-radius: 4px; color: var(--primary-color); cursor: pointer; font-size: 12px; }
+        .pv-btn-add:hover { background: rgba(64, 158, 255, 0.08); }
+        .pv-array-item { padding: 10px; background: var(--bg-secondary); border-radius: 6px; margin-bottom: 8px; }
+        .pv-array-item:last-child { margin-bottom: 0; }
+        .pv-array-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 12px; color: var(--text-secondary); }
+        .pv-btn-remove { background: none; border: none; cursor: pointer; color: #ff4d4f; padding: 2px; }
+        .pv-btn-remove:hover { opacity: 0.7; }
+        .pv-preview { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; padding: 14px; font-size: 12px; font-family: 'Consolas', 'Monaco', monospace; color: var(--text-color); line-height: 1.6; flex: 1; overflow: auto; white-space: pre-wrap; word-break: break-all; margin: 0; }
       `}</style>
     </>
   );

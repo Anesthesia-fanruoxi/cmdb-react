@@ -33,7 +33,14 @@ const AgentStore = () => {
       if (pluginType) params.plugin_type = pluginType;
       const res = await getPluginStoreList(params);
       if (res.code === 200) {
-        setPlugins(Array.isArray(res.data) ? res.data : []);
+        const list = Array.isArray(res.data) ? res.data : [];
+        console.log('[Store] 插件列表接口返回:', JSON.stringify(list.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          plugin_type: p.plugin_type,
+          is_config: p.is_config,
+        })), null, 2));
+        setPlugins(list);
       }
     } catch { toast.error('获取插件列表失败'); }
     finally { setLoading(false); }

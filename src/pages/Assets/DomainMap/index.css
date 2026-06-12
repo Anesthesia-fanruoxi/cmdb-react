@@ -1,0 +1,182 @@
+/**
+ * 域名解析管理页面样式
+ * 通用样式来自 src/styles/common.css
+ */
+
+.domain-map-page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  background: var(--bg-color, #fff);
+  border-radius: 8px;
+}
+
+.domain-map-page .page-header {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color, #e8e8e8);
+}
+
+.domain-map-page .title-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.domain-map-page .title-section svg { color: var(--primary-color, #1890ff); }
+.domain-map-page .title-section h2 { margin: 0; font-size: 18px; color: var(--text-color, #333); }
+
+/* 操作栏 */
+.domain-map-page .action-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.domain-map-page .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.domain-map-page .form-group label {
+  font-size: 12px;
+  color: var(--text-secondary, #666);
+}
+.domain-map-page .form-group select,
+.domain-map-page .form-group input {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--border-color, #d9d9d9);
+  border-radius: 4px;
+  font-size: 13px;
+  min-width: 160px;
+  background: var(--bg-secondary, #fafafa);
+  color: var(--text-color, #333);
+}
+
+.domain-map-page .sub-group { flex: 1; min-width: 360px; }
+.domain-map-page .sub-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.domain-map-page .sub-input input { flex: 1; min-width: 140px; }
+.domain-map-page .sub-input select { min-width: 160px; }
+.domain-map-page .sub-input .dot {
+  font-weight: bold;
+  color: var(--text-secondary, #999);
+  user-select: none;
+}
+.domain-map-page .full-preview {
+  font-size: 12px;
+  color: var(--primary-color, #1890ff);
+  margin-top: 2px;
+}
+
+.domain-map-page .action-btns {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  height: 56px;
+}
+
+/* 表格 */
+.domain-map-page .table-container {
+  flex: 1;
+  overflow: auto;
+}
+
+.domain-map-page .path-cell {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+  color: var(--text-secondary, #666);
+  word-break: break-all;
+}
+
+.domain-map-page .action-cell {
+  display: flex;
+  gap: 8px;
+  white-space: nowrap;
+}
+.domain-map-page .action-cell .btn-link,
+.domain-map-page .test-cell .btn-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.domain-map-page .test-cell {
+  white-space: nowrap;
+}
+
+/* 状态标签 */
+.domain-map-page .status-tag,
+.dm-reload-modal .status-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+.dm-reload-modal .status-tag.success {
+  background: #f6ffed;
+  color: #52c41a;
+  border: 1px solid #b7eb8f;
+}
+.dm-reload-modal .status-tag.danger {
+  background: #fff1f0;
+  color: #ff4d4f;
+  border: 1px solid #ffa39e;
+}
+
+/* 预览弹框 */
+.dm-preview-modal {
+  width: 80vw;
+  max-width: 960px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+.dm-preview-modal .modal-body {
+  flex: 1;
+  overflow-y: auto;
+  max-height: calc(85vh - 120px);
+}
+.dm-file-path {
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: var(--text-secondary, #666);
+}
+.dm-file-path code {
+  background: var(--bg-secondary, #f5f5f5);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'Consolas', monospace;
+}
+.dm-config-preview {
+  margin: 0;
+  padding: 16px;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  border-radius: 6px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre;
+  overflow: auto;
+  max-height: 60vh;
+  min-height: 200px;
+}
+
+/* reload 结果弹框 */
+.dm-reload-modal {
+  width: 70vw;
+  max-width: 720px;
+}
+.dm-reload-tip {
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--text-secondary, #666);
+}

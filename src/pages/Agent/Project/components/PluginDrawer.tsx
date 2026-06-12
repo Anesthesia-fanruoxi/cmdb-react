@@ -3,9 +3,10 @@
  */
 
 import { useState } from 'react';
-import { X, RefreshCw, Loader2, Box, Play, Pause, RotateCw, Edit2, FileText, Trash2, Upload } from 'lucide-react';
+import { X, RefreshCw, Loader2, Box, Play, Pause, RotateCw, Edit2, FileText, Trash2, Upload, ChevronDown, ChevronRight } from 'lucide-react';
 import { controlPlugin, upgradePlugin, Project, Plugin, ProjectDetail } from '@/services/agent/project.ts';
 import toast from '../../../../components/Toast';
+import { confirm } from '@/components/ConfirmModal';
 import PluginEditDialog from './PluginEditDialog';
 import PluginLogsDialog from './PluginLogsDialog';
 import './PluginDrawer.css';
@@ -23,6 +24,11 @@ const PluginDrawer = ({ visible, project, detail, loading, onClose, onRefresh }:
   const [operating, setOperating] = useState<string | null>(null);
   const [editPlugin, setEditPlugin] = useState<Plugin | null>(null);
   const [logsPlugin, setLogsPlugin] = useState<Plugin | null>(null);
+  const [expandedConfigs, setExpandedConfigs] = useState<Record<string, boolean>>({});
+
+  const toggleConfig = (name: string) => {
+    setExpandedConfigs(prev => ({ ...prev, [name]: !prev[name] }));
+  };
 
   // 抽屉关闭时重置状态
   const handleClose = () => {
@@ -51,7 +57,10 @@ const PluginDrawer = ({ visible, project, detail, loading, onClose, onRefresh }:
   const handleOperate = async (plugin: Plugin, action: 'start' | 'stop' | 'restart' | 'uninstall') => {
     if (!project) return;
     const actionText: Record<string, string> = { start: '启动', stop: '停止', restart: '重启', uninstall: '卸载' };
-    if (action === 'uninstall' && !confirm(`确定要卸载插件 "${plugin.name}" 吗？`)) return;
+    if (action === 'uninstall') {
+      const ok = await confirm({ title: '卸载插件', content: `确定要卸载插件 "${plugin.name}" 吗？`, type: 'danger' });
+      if (!ok) return;
+    }
 
     setOperating(`${plugin.name}-${action}`);
     try {
@@ -68,7 +77,8 @@ const PluginDrawer = ({ visible, project, detail, loading, onClose, onRefresh }:
 
   const handleUpgrade = async (plugin: Plugin) => {
     if (!project) return;
-    if (!confirm(`确定要更新插件 "${plugin.name}" 到最新版本吗？`)) return;
+    const ok = await confirm({ title: '更新插件', content: `确定要更新插件 "${plugin.name}" 到最新版本吗？`, type: 'info' });
+    if (!ok) return;
     setOperating(`${plugin.name}-update`);
     try {
       const res = await upgradePlugin({ project: project.project, name: plugin.name });
@@ -137,11 +147,11 @@ const PluginDrawer = ({ visible, project, detail, loading, onClose, onRefresh }:
                       </div>
                       <div className="plugin-meta">
                         <span>{getCategoryText(plugin.category)}</span>
-                        {plugin.plugin_type === 'container' && (
-                          <>
-                            <span className="sep">|</span><span>容器端口: {plugin.container_port}</span>
-                            <span className="sep">|</span><span>宿主机端口: {plugin.port}</span>
-                          </>
+                        {plugin.host_port != null && (
+                          <><span className="sep">|</span><span>宿主机端口: {plugin.host_port}</span></>
+                        )}
+                        {plugin.category === 'container' && plugin.container_port != null && (
+                          <><span className="sep">|</span><span>容器端口: {plugin.container_port}</span></>
                         )}
                         <span className="sep">|</span><span>运行: {plugin.uptime || '-'}</span>
                         <span className="sep">|</span><span>{formatTime(plugin.installed_at)}</span>
@@ -151,12 +161,17 @@ const PluginDrawer = ({ visible, project, detail, loading, onClose, onRefresh }:
 
                   {plugin.config && Object.keys(plugin.config).length > 0 && (
                     <div className="plugin-config">
-                      <div className="config-header">配置信息</div>
-                      <div className="config-list">
-                        {Object.entries(plugin.config).map(([key, value]) => (
-                          <div key={key} className="config-item"><span className="config-key">{key}:</span><span className="config-value">{value}</span></div>
-                        ))}
+                      <div className="config-header" onClick={() => toggleConfig(plugin.name)}>
+                        {expandedConfigs[plugin.name] ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                        <span>配置信息 ({Object.keys(plugin.config).length})</span>
                       </div>
+                      {expandedConfigs[plugin.name] && (
+                        <div className="config-list">
+                          {Object.entries(plugin.config).map(([key, value]) => (
+                            <div key={key} className="config-item"><span className="config-key">{key}:</span><span className="config-value">{value}</span></div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
 

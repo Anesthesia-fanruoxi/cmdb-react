@@ -32,12 +32,14 @@ export const updatePluginConfig = (data: {
   name: string;
   config_set?: Record<string, string>;
   config_delete?: string[];
+  config_file_content?: string;
 }) =>
   apiClient.post('/agent/project/config', {
     project: data.project,
     plugin_name: data.name,
     ...(data.config_set && Object.keys(data.config_set).length > 0 && { config_set: data.config_set }),
     ...(data.config_delete && data.config_delete.length > 0 && { config_delete: data.config_delete }),
+    ...(data.config_file_content !== undefined && { config_file_content: data.config_file_content }),
   });
 
 // 类型定义
@@ -52,12 +54,14 @@ export interface Plugin {
   status: string;
   category: string;
   plugin_type: string;
+  host_port?: number;
   container_port?: number;
-  port?: number;
   uptime?: string;
   installed_at?: string;
   is_update?: boolean;
+  latest_version?: string;
   config?: Record<string, string>;
+  config_file_content?: string;
 }
 
 export interface ProjectDetail {
