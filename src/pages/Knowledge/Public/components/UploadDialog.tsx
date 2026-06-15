@@ -7,7 +7,7 @@ import { X, Upload, FileText } from 'lucide-react';
 import { createPublicDoc, updatePublicDoc, getPublicDocList, DocItem, ProjectOption } from '../../../../services/knowledge';
 import { confirmButtons } from '../../../../components/ConfirmModal';
 import type { DictItem } from '../../../../services/system/dict';
-import Markdown from '../../../../components/Markdown';
+
 import toast from '../../../../components/Toast';
 
 interface Props {
