@@ -127,30 +127,31 @@ const DocForm = ({
       toast.error('标题长度需在 2 到 50 个字符之间'); return;
     }
     if (!form.content.trim()) { toast.error('请输入文档内容'); return; }
-    if (type === 'document' && !form.project) { toast.error('请选择所属项目'); return; }
-    // personal / document 类型 category 必填（与后端校验一致）
-    if ((type === 'personal' || type === 'document') && !form.category) {
-      toast.error('请选择文档分类'); return;
-    }
+    if ((type === 'document' || type === 'public') && !form.project) { toast.error('请选择所属项目'); return; }
+    if (!form.category) { toast.error('请选择文档分类'); return; }
 
     setLoading(true);
     try {
-      // 按类型构造提交数据：personal/public 不传 project 字段
+      // 按类型构造提交数据
       const baseData = { id: doc?.id, title: form.title, content: form.content, category: form.category };
       const docData = { ...baseData, project: form.project };
+      console.log('[DocForm] 提交数据:', { type, isEdit, data: type === 'personal' ? baseData : docData });
       let res;
       if (type === 'personal') {
         res = isEdit ? await updatePersonalDoc(baseData) : await createPersonalDoc(baseData);
       } else if (type === 'document') {
         res = isEdit ? await updateDocument(doc!.id, docData) : await createDocument(docData);
       } else {
-        res = isEdit ? await updatePublicDoc(baseData) : await createPublicDoc(baseData);
+        // public 类型也需要传 project 字段
+        res = isEdit ? await updatePublicDoc(docData) : await createPublicDoc(docData);
       }
+      console.log('[DocForm] 接口响应:', res);
       if (res.code === 200) {
         toast.success(isEdit ? '更新成功' : '创建成功');
         onSuccess({ ...docData, id: doc?.id || (res.data as any)?.id || 0 } as DocItem);
       }
     } catch (err) {
+      console.error('[DocForm] 提交失败:', err);
       toast.error(isEdit ? '更新失败' : '创建失败');
     } finally {
       setLoading(false);
@@ -181,7 +182,7 @@ const DocForm = ({
             />
           </div>
 
-          {type === 'document' && (
+          {(type === 'document' || type === 'public') && (
             <div className="form-item">
               <label>所属项目</label>
               <select value={form.project} onChange={e => setForm({ ...form, project: e.target.value })}>

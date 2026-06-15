@@ -4,7 +4,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { FileText, Plus, Edit, Trash2, Search, Upload, User, Clock, Share2 } from 'lucide-react';
-import { getPublicDocList, getPublicDocDetail, getPublicShareList, getUserPublicDocList, deletePublicDoc, closePublicShare, DocItem } from '../../../services/knowledge';
+import { getPublicDocList, getPublicDocDetail, getPublicShareList, getUserPublicDocList, deletePublicDoc, closePublicShare, getDocProjects, DocItem, ProjectOption } from '../../../services/knowledge';
 import { getDictDetail } from '../../../services/system/dict';
 import type { DictItem } from '../../../services/system/dict';
 import toast from '../../../components/Toast';
@@ -28,13 +28,18 @@ const PublicKnowledge = () => {
   const [editingDoc, setEditingDoc] = useState<DocItem | null>(null);
   const [sharingDoc, setSharingDoc] = useState<DocItem | null>(null);
   const [categoryOptions, setCategoryOptions] = useState<DictItem[]>([]);
+  const [projectOptions, setProjectOptions] = useState<ProjectOption[]>([]);
   const [onlyMine, setOnlyMine] = useState(false);
 
   const fetchOptions = useCallback(async () => {
     try {
-      const res = await getDictDetail('sys_category_dict');
-      if (res.code === 200 && res.data?.items) setCategoryOptions(res.data.items);
-    } catch (err) { console.error('获取分类失败:', err); }
+      const [dictRes, projectRes] = await Promise.all([
+        getDictDetail('sys_category_dict'),
+        getDocProjects()
+      ]);
+      if (dictRes.code === 200 && dictRes.data?.items) setCategoryOptions(dictRes.data.items);
+      if (projectRes.code === 200 && projectRes.data) setProjectOptions(projectRes.data);
+    } catch (err) { console.error('获取选项失败:', err); }
   }, []);
 
   const fetchDocList = useCallback(async () => {
@@ -159,7 +164,7 @@ const PublicKnowledge = () => {
               <Search size={14} />
               <input type="text" value={searchKeyword} onChange={e => setSearchKeyword(e.target.value)} placeholder="搜索文档" />
             </div>
-            <button className="btn-upload" onClick={() => setShowUpload(true)}><Upload size={16} /></button>
+            <button className="btn-upload" onClick={() => setShowUpload(true)}><Upload size={40} /></button>
           </div>
           <div className="filter-row">
             <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)}>
@@ -220,8 +225,8 @@ const PublicKnowledge = () => {
         )}
       </div>
 
-      <DocForm visible={showForm} doc={editingDoc} onClose={() => setShowForm(false)} onSuccess={handleFormSuccess} type="public" categoryOptions={categoryOptions} />
-      <UploadDialog visible={showUpload} onClose={() => setShowUpload(false)} onSuccess={handleUploadSuccess} categoryOptions={categoryOptions} />
+      <DocForm visible={showForm} doc={editingDoc} onClose={() => setShowForm(false)} onSuccess={handleFormSuccess} type="public" projectOptions={projectOptions} categoryOptions={categoryOptions} />
+      <UploadDialog visible={showUpload} onClose={() => setShowUpload(false)} onSuccess={handleUploadSuccess} categoryOptions={categoryOptions} projectOptions={projectOptions} />
       <ShareDialog visible={showShare} doc={sharingDoc} onClose={() => setShowShare(false)} onSuccess={handleShareSuccess} />
     </div>
   );

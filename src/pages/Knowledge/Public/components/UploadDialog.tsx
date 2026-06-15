@@ -4,8 +4,8 @@
 
 import { useState, useRef } from 'react';
 import { X, Upload, FileText } from 'lucide-react';
-import { createPublicDoc, updatePublicDoc, getPublicDocList, DocItem } from '../../../../services/knowledge';
-import { confirm } from '../../../../components/ConfirmModal';
+import { createPublicDoc, updatePublicDoc, getPublicDocList, DocItem, ProjectOption } from '../../../../services/knowledge';
+import { confirmButtons } from '../../../../components/ConfirmModal';
 import type { DictItem } from '../../../../services/system/dict';
 import Markdown from '../../../../components/Markdown';
 import toast from '../../../../components/Toast';
@@ -15,12 +15,23 @@ interface Props {
   onClose: () => void;
   onSuccess: (doc: DocItem) => void;
   categoryOptions: DictItem[];
+  projectOptions: ProjectOption[];
 }
 
-const UploadDialog = ({ visible, onClose, onSuccess, categoryOptions }: Props) => {
+/** 读取文件为文本 */
+const readFileAsText = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (ev) => resolve(ev.target?.result as string || '');
+    reader.onerror = () => reject(new Error('文件读取失败'));
+    reader.readAsText(file);
+  });
+};
+
+const UploadDialog = ({ visible, onClose, onSuccess, categoryOptions, projectOptions }: Props) => {
   const [uploading, setUploading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  const [form, setForm] = useState({ title: '', category: '', content: '' });
+  const [form, setForm] = useState({ title: '', project: '', category: '' });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -29,9 +40,6 @@ const UploadDialog = ({ visible, onClose, onSuccess, categoryOptions }: Props) =
     if (!f.name.endsWith('.md')) { toast.error('只能上传 Markdown 文件'); return; }
     setFile(f);
     if (!form.title) setForm(prev => ({ ...prev, title: f.name.replace(/\.md$/, '') }));
-    const reader = new FileReader();
-    reader.onload = (ev) => setForm(prev => ({ ...prev, content: ev.target?.result as string || '' }));
-    reader.readAsText(f);
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -46,36 +54,55 @@ const UploadDialog = ({ visible, onClose, onSuccess, categoryOptions }: Props) =
   };
 
   const handleSubmit = async () => {
-    if (!form.title || !form.category || !form.content) { toast.error('请填写完整信息'); return; }
+    if (!form.title || !form.project || !form.category || !file) { toast.error('请填写完整信息'); return; }
     setUploading(true);
     try {
-      // 检查同名文档
-      const listRes = await getPublicDocList();
-      const list = listRes.code === 200 ? (listRes.data as any)?.list || [] : [];
-      const existing = list.find((d: any) => d.title === form.title);
+      // 提交时读取文件内容（与 Vue 版本一致）
+      const content = await readFileAsText(file);
+      const params = { title: form.title, project: form.project, category: form.category, content };
+
+      // 检查同名文档（独立 try-catch，失败不阻塞上传）
+      let existing: DocItem | null = null;
+      try {
+        const listRes = await getPublicDocList({ project: form.project });
+        const list = listRes.code === 200 ? (Array.isArray(listRes.data) ? listRes.data : []) : [];
+        existing = list.find((d: DocItem) => d.title === form.title) || null;
+      } catch (e) {
+        console.warn('[UploadDialog] 检查同名文档失败，跳过:', e);
+      }
 
       if (existing) {
-        const isOverwrite = await confirm({
+        const choice = await confirmButtons({
           title: '文档已存在',
-          content: `标题"${form.title}"已存在，是否覆盖？\n选择"取消"将新增一份`,
+          content: `标题"${form.title}"已存在，请选择操作：`,
           type: 'warning',
+          buttons: [
+            { text: '取消', type: 'cancel' },
+            { text: '覆盖文档', type: 'warning' },
+            { text: '新建文档', type: 'primary' },
+          ],
         });
-        if (isOverwrite) {
-          const res = await updatePublicDoc({ id: existing.id, ...form });
-          if (res.code === 200) { toast.success('覆盖成功'); onSuccess({ id: existing.id, ...form } as any); handleClose(); }
-        } else {
-          const res = await createPublicDoc(form);
-          if (res.code === 200) { toast.success('新增成功'); onSuccess({ id: 0, ...form } as any); handleClose(); }
+        if (choice === 0) return; // 取消
+        if (choice === 1) {
+          // 覆盖
+          const res = await updatePublicDoc({ id: existing.id, ...params });
+          if (res.code === 200) { toast.success('覆盖成功'); onSuccess({ id: existing.id, ...params } as DocItem); handleClose(); }
+        } else if (choice === 2) {
+          // 新建
+          const res = await createPublicDoc(params);
+          if (res.code === 200) { toast.success('新增成功'); onSuccess({ id: 0, ...params } as DocItem); handleClose(); }
         }
       } else {
-        const res = await createPublicDoc(form);
-        if (res.code === 200) { toast.success('上传成功'); onSuccess({ id: 0, ...form } as any); handleClose(); }
+        const res = await createPublicDoc(params);
+        if (res.code === 200) { toast.success('上传成功'); onSuccess({ id: 0, ...params } as DocItem); handleClose(); }
       }
-    } catch (err) { toast.error('上传失败'); }
+    } catch (err) { toast.error('上传失败: ' + (err instanceof Error ? err.message : String(err))); }
     finally { setUploading(false); }
   };
 
-  const handleClose = () => { setFile(null); setForm({ title: '', category: '', content: '' }); onClose(); };
+  const handleClose = () => { setFile(null); setForm({ title: '', project: '', category: '' }); onClose(); };
+
+  const canUpload = file && form.title && form.project && form.category;
 
   if (!visible) return null;
 
@@ -89,17 +116,23 @@ const UploadDialog = ({ visible, onClose, onSuccess, categoryOptions }: Props) =
             {file ? <><FileText size={32} /><span>{file.name}</span></> : <><Upload size={32} /><span>拖拽或点击上传 .md 文件</span></>}
           </div>
           <div className="form-group"><label>文档标题 *</label><input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="请输入标题" /></div>
+          <div className="form-group"><label>所属项目 *</label>
+            <select value={form.project} onChange={e => setForm(p => ({ ...p, project: e.target.value }))}>
+              <option value="">请选择项目</option>
+              {projectOptions.map(p => <option key={p.project} value={p.project}>{p.project_name}</option>)}
+            </select>
+          </div>
           <div className="form-group"><label>文档分类 *</label>
             <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value }))}>
               <option value="">请选择</option>
               {categoryOptions.map(c => <option key={c.key} value={c.key}>{c.value}</option>)}
             </select>
           </div>
-          {form.content && <div className="preview-section"><h4>预览</h4><div className="preview-content"><Markdown content={form.content} /></div></div>}
+          {file && <div className="preview-section"><h4>预览</h4><div className="preview-content"><span style={{ color: 'var(--text-secondary, #888)', fontSize: 13 }}>上传后可预览内容</span></div></div>}
         </div>
         <div className="modal-footer">
           <button className="btn-default" onClick={handleClose}>取消</button>
-          <button className="btn-primary" onClick={handleSubmit} disabled={uploading}>{uploading ? '上传中...' : '确认上传'}</button>
+          <button className="btn-primary" onClick={handleSubmit} disabled={uploading || !canUpload}>{uploading ? '上传中...' : '确认上传'}</button>
         </div>
       </div>
     </div>

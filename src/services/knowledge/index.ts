@@ -30,6 +30,7 @@ export interface DocParams {
   title: string;
   content: string;
   category?: string;
+  project?: string;
 }
 
 // ========== 个人文档 ==========
@@ -62,7 +63,7 @@ export const deletePersonalDoc = (id: number) => {
 // ========== 公开文档 ==========
 
 /** 获取公开文档列表 */
-export const getPublicDocList = (params?: { category?: string }) => {
+export const getPublicDocList = (params?: { category?: string; project?: string }) => {
   return apiClient.get<DocItem[]>('/knowledge/public/list', params);
 };
 

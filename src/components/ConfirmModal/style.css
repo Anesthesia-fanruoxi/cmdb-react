@@ -103,3 +103,31 @@
 .confirm-modal.warning .confirm-btn.ok:hover {
   background: #ffc53d;
 }
+
+/* 多按钮自定义类型 */
+.confirm-btn.primary {
+  background: var(--primary-color);
+  color: #fff;
+}
+
+.confirm-btn.primary:hover {
+  background: var(--primary-hover);
+}
+
+.confirm-btn.danger {
+  background: var(--danger-color, #ff4d4f);
+  color: #fff;
+}
+
+.confirm-btn.danger:hover {
+  background: #ff7875;
+}
+
+.confirm-btn.warning {
+  background: #faad14;
+  color: #fff;
+}
+
+.confirm-btn.warning:hover {
+  background: #ffc53d;
+}

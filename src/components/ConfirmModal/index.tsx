@@ -5,6 +5,12 @@
 import { createRoot } from 'react-dom/client';
 import './style.css';
 
+interface ConfirmButton {
+  text: string;
+  type?: 'ok' | 'cancel' | 'primary' | 'danger' | 'warning';
+  onClick?: () => void;
+}
+
 interface ConfirmOptions {
   title?: string;
   content: string;
@@ -12,14 +18,16 @@ interface ConfirmOptions {
   cancelText?: string;
   type?: 'info' | 'warning' | 'danger';
   mode?: 'confirm' | 'alert';
+  buttons?: ConfirmButton[];
 }
 
 interface ConfirmModalProps extends ConfirmOptions {
   onOk: () => void;
   onCancel?: () => void;
+  onClose?: (index: number) => void;
 }
 
-const ConfirmModal = ({ title, content, okText, cancelText, type, mode, onOk, onCancel }: ConfirmModalProps) => {
+const ConfirmModal = ({ title, content, okText, cancelText, type, mode, buttons, onOk, onCancel, onClose }: ConfirmModalProps) => {
   const isAlert = mode === 'alert';
   return (
     <div className="confirm-overlay" onClick={e => { e.stopPropagation(); if (isAlert) onOk(); else onCancel?.(); }}>
@@ -27,14 +35,24 @@ const ConfirmModal = ({ title, content, okText, cancelText, type, mode, onOk, on
         {title && <div className="confirm-title">{title}</div>}
         <div className="confirm-content">{content}</div>
         <div className="confirm-actions">
-          {!isAlert && (
-            <button className="confirm-btn cancel" onClick={onCancel}>
-              {cancelText || '取消'}
-            </button>
+          {buttons ? (
+            buttons.map((btn, idx) => (
+              <button key={idx} className={`confirm-btn ${btn.type || 'ok'}`} onClick={() => onClose?.(idx)}>
+                {btn.text}
+              </button>
+            ))
+          ) : (
+            <>
+              {!isAlert && (
+                <button className="confirm-btn cancel" onClick={onCancel}>
+                  {cancelText || '取消'}
+                </button>
+              )}
+              <button className="confirm-btn ok" onClick={onOk}>
+                {okText || '确定'}
+              </button>
+            </>
           )}
-          <button className="confirm-btn ok" onClick={onOk}>
-            {okText || '确定'}
-          </button>
         </div>
       </div>
     </div>
@@ -51,7 +69,6 @@ export const confirm = (options: ConfirmOptions): Promise<boolean> => {
     const root = createRoot(container);
 
     const cleanup = () => {
-      // 延迟移除，避免 DOM 移除后点击事件冒泡穿透到底层元素
       setTimeout(() => {
         root.unmount();
         container.remove();
@@ -70,6 +87,33 @@ export const confirm = (options: ConfirmOptions): Promise<boolean> => {
 
     root.render(
       <ConfirmModal {...options} onOk={handleOk} onCancel={handleCancel} />
+    );
+  });
+};
+
+/**
+ * 显示多按钮确认弹框，返回按钮索引
+ */
+export const confirmButtons = (options: ConfirmOptions): Promise<number> => {
+  return new Promise((resolve) => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    const cleanup = () => {
+      setTimeout(() => {
+        root.unmount();
+        container.remove();
+      }, 0);
+    };
+
+    root.render(
+      <ConfirmModal
+        {...options}
+        onOk={() => { cleanup(); resolve(-1); }}
+        onCancel={() => { cleanup(); resolve(-1); }}
+        onClose={(idx) => { cleanup(); resolve(idx); }}
+      />
     );
   });
 };

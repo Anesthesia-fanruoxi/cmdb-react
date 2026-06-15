@@ -164,7 +164,7 @@ jobs:
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"
           DESCRIPTION="1、优化部分已知问题。
-          2、新增域名映射功能。"
+          2、优化文档管理部分新增覆盖功能。"
 
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \
