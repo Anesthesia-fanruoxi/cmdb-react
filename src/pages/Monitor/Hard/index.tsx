@@ -27,7 +27,7 @@ const HardwareMonitor = () => {
   const [selectedHost, setSelectedHost] = useState('');
   const [timeRange, setTimeRange] = useState<TimeRangeType>('1h');
   const [autoRefresh, setAutoRefresh] = useState(false);
-  
+
   const timeRangeRef = useRef(timeRange);
   const eventSourceRef = useRef<{ close: () => void } | null>(null);
   timeRangeRef.current = timeRange;
@@ -136,6 +136,7 @@ const HardwareMonitor = () => {
       },
       (data) => {
         // 将 vector 数据追加到现有的 matrix 数据中（增量更新，不重载）
+        console.log('[Monitor SSE] 收到推送:', { count: data.length, sample: data[0] });
         setMetrics(prevMetrics => {
           return prevMetrics.map(oldItem => {
             // 查找对应的新数据
@@ -150,6 +151,7 @@ const HardwareMonitor = () => {
             }
             
             // 更新每个主机的数据
+            let matchedCount = 0;
             const updatedResult = oldItem.data.result.map(oldResult => {
               // 查找对应主机的新数据
               const newResult = newItem.data!.result.find(
@@ -159,6 +161,7 @@ const HardwareMonitor = () => {
               if (!newResult?.value || !oldResult.values) {
                 return oldResult;
               }
+              matchedCount++;
               
               // 追加新数据点，移除最旧的数据点（保持数据点数量不变）
               const newValues = [...oldResult.values, newResult.value];
@@ -171,6 +174,15 @@ const HardwareMonitor = () => {
                 values: newValues,
               };
             });
+            
+            if (oldItem.view_id === prevMetrics[0]?.view_id) {
+              const firstResult = updatedResult[0];
+              const firstTs = firstResult?.values?.[0]?.[0];
+              const lastTs = firstResult?.values?.[firstResult.values.length - 1]?.[0];
+              console.log('[Monitor SSE] view_id=' + oldItem.view_id + ' 主机匹配:', matchedCount, '/', oldItem.data.result.length,
+                '窗口:', firstTs ? new Date(firstTs * 1000).toLocaleTimeString() : 'null',
+                '~', lastTs ? new Date(lastTs * 1000).toLocaleTimeString() : 'null');
+            }
             
             return {
               ...oldItem,
@@ -227,16 +239,15 @@ const HardwareMonitor = () => {
   const handleAutoRefreshToggle = () => {
     const newValue = !autoRefresh;
     setAutoRefresh(newValue);
-    
+
     if (newValue) {
       // 开启自动刷新：固定时间范围为1小时，启动 SSE
       setTimeRange('1h');
       timeRangeRef.current = '1h';
       startSSE();
     } else {
-      // 关闭自动刷新：关闭 SSE，恢复普通查询
+      // 关闭自动刷新：仅关闭 SSE，保留最后一帧图表状态（不重拉避免后端 step 对齐导致 X 轴回退）
       closeSSE();
-      refreshData();
     }
   };
 

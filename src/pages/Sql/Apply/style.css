@@ -35,62 +35,6 @@
   gap: 8px;
 }
 
-/* SSE 连接状态指示灯 - 呼吸灯 */
-.sse-dot-wrap {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: default;
-  padding: 4px;
-}
-
-.sse-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  display: inline-block;
-  flex-shrink: 0;
-  transition: background 0.3s;
-}
-
-.sse-dot--open {
-  background: #52c41a;
-  box-shadow: 0 0 6px rgba(82, 196, 26, 0.6);
-  animation: sse-breathe 2.4s ease-in-out infinite;
-}
-
-.sse-dot--connecting {
-  background: #faad14;
-  box-shadow: 0 0 6px rgba(250, 173, 20, 0.6);
-  animation: sse-breathe 0.8s ease-in-out infinite;
-}
-
-.sse-dot--closed {
-  background: #ff4d4f;
-  box-shadow: 0 0 6px rgba(255, 77, 79, 0.4);
-}
-
-@keyframes sse-breathe {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.3; transform: scale(0.8); }
-}
-
-.sse-tooltip {
-  position: absolute;
-  left: calc(100% + 8px);
-  top: 50%;
-  transform: translateY(-50%);
-  white-space: nowrap;
-  padding: 4px 10px;
-  font-size: 12px;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.75);
-  color: #fff;
-  pointer-events: none;
-  z-index: 1000;
-}
-
 .apply-card .card-actions { display: flex; gap: 12px; }
 .apply-card .card-body { 
   flex: 1; 

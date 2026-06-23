@@ -4,7 +4,7 @@
  * 本页只负责 UI 展示与筛选条件下发
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   type ApplyItem, type ApplyDetail, getApplyDetail,
   APPLY_STATUS_MAP
@@ -17,12 +17,7 @@ import './index.css';
 const SqlApply = () => {
   const applyList = useSqlApplyStore(s => s.applyList);
   const loading = useSqlApplyStore(s => s.loading);
-  const sseStatus = useSqlApplyStore(s => s.sseStatus);
-  const sseConnectedAt = useSqlApplyStore(s => s.sseConnectedAt);
   const appliedFilter = useSqlApplyStore(s => s.filter);
-
-  const [sseDuration, setSseDuration] = useState('');
-  const [sseTooltipVisible, setSseTooltipVisible] = useState(false);
 
   // 筛选输入态
   const [filterSubmitter, setFilterSubmitter] = useState<string>(appliedFilter.submitter_name);
@@ -32,29 +27,6 @@ const SqlApply = () => {
   const [detailVisible, setDetailVisible] = useState(false);
   const [currentDetail, setCurrentDetail] = useState<ApplyDetail | null>(null);
   const [prefillData, setPrefillData] = useState<Partial<ApplyItem> | null>(null);
-
-  // 格式化连接时长
-  const formatDuration = (ms: number) => {
-    if (ms < 1000) return '刚刚连接';
-    const s = Math.floor(ms / 1000);
-    if (s < 60) return `${s} 秒`;
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    if (m < 60) return `${m} 分 ${sec} 秒`;
-    const h = Math.floor(m / 60);
-    const min = m % 60;
-    return `${h} 时 ${min} 分`;
-  };
-
-  // 连接时长计时
-  useEffect(() => {
-    const timer = setInterval(() => {
-      if (sseStatus === 'open' && sseConnectedAt) {
-        setSseDuration(formatDuration(Date.now() - sseConnectedAt));
-      }
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [sseStatus, sseConnectedAt]);
 
   const handleViewDetail = async (item: ApplyItem) => {
     try {
@@ -107,18 +79,6 @@ const SqlApply = () => {
         <div className="card-header">
           <span className="card-title">
             SQL变更申请
-            <span
-              className="sse-dot-wrap"
-              onMouseEnter={() => setSseTooltipVisible(true)}
-              onMouseLeave={() => setSseTooltipVisible(false)}
-            >
-              <span className={`sse-dot sse-dot--${sseStatus === 'reconnecting' ? 'connecting' : sseStatus}`} />
-              {sseTooltipVisible && (
-                <span className="sse-tooltip">
-                  {sseStatus === 'open' ? `SSE 已连接 · ${sseDuration}` : sseStatus === 'connecting' || sseStatus === 'reconnecting' ? 'SSE 重连中...' : 'SSE 已断开'}
-                </span>
-              )}
-            </span>
           </span>
           <div className="card-actions">
             <input

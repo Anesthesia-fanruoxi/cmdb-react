@@ -164,7 +164,8 @@ jobs:
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"
           DESCRIPTION="1、优化部分已知问题。
-          2、优化文档管理部分新增覆盖功能。"
+          2、优化sse网关，显示订阅详情。
+          3、优化清除缓存逻辑，完善存储文档。"
 
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \

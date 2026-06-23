@@ -45,6 +45,7 @@ const AuditSearch = () => {
 
   // 详情弹框
   const [detailVisible, setDetailVisible] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [detailData, setDetailData] = useState<any>(null);
   const [pageOperations, setPageOperations] = useState<any[]>([]);
 
@@ -112,16 +113,24 @@ const AuditSearch = () => {
 
   const handleViewDetail = async (row: LogItem) => {
     setDetailVisible(true);
+    setDetailLoading(true);
     try {
       const res = await getSearchDetail({ query_id: row.query_id });
       if (res.code === 200 && res.data) {
         const resData = res.data as { search_detail?: any; page_operations?: any[] };
-        setDetailData(resData.search_detail || row);
+        const detail = resData.search_detail || {};
+        // 字段回退：详情接口字段缺失时从列表行数据补全
+        if (!detail.nick_name) detail.nick_name = detail.user_name || row.nick_name;
+        if (!detail.keyword) detail.keyword = detail.q_keyword || row.keyword;
+        if (!detail.project_name) detail.project_name = detail.project || row.project_name;
+        if (!detail.search_time) detail.search_time = detail.created_at || row.search_time;
+        setDetailData(detail);
         setPageOperations(resData.page_operations || []);
       } else {
         setDetailData(row); setPageOperations([]);
       }
     } catch { setDetailData(row); setPageOperations([]); }
+    finally { setDetailLoading(false); }
   };
 
   const formatLocation = (row: LogItem) => row.city || row.region || row.country || '未知';
@@ -190,7 +199,7 @@ const AuditSearch = () => {
         </div>
       </div>
 
-      <DetailDialog visible={detailVisible} data={detailData} operations={pageOperations} onClose={() => setDetailVisible(false)} />
+      <DetailDialog visible={detailVisible} loading={detailLoading} data={detailData} operations={pageOperations} onClose={() => setDetailVisible(false)} />
     </div>
   );
 };

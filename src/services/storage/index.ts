@@ -9,6 +9,7 @@ export {
   initAllStorage,
   waitForStorageInit,
   clearMemoryCache,
+  removeStorageFile,
 } from './core';
 
 // App 公共存储

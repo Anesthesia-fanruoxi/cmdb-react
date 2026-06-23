@@ -16,5 +16,7 @@ export type {
   SubscribeRequest,
   UnsubscribeRequest,
   ChannelParams,
+  SubscriptionInfo,
+  BufferedMessage,
 } from './types';
 export { CHANNELS } from './types';

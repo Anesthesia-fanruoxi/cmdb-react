@@ -11,7 +11,8 @@ import { useAppStore } from './stores/appStore';
 import { usePageStateStore } from './stores/pageStateStore';
 import { useMenuStore } from './stores/menuStore';
 import { initSecurity } from './utils/security';
-import { startAutoSave, stopAutoSave, forceSave, initAllStorage, getDefaultTheme } from './services/storage';
+import { startAutoSave, stopAutoSave, forceSave, initAllStorage, getDefaultTheme, scheduler, removeStorageFile } from './services/storage';
+import { useSqlApplyStore } from './stores/sqlApplyStore';
 import { getLoginHistory, getLastUser } from './services/loginHistory';
 import type { UpdateInfo } from './services/storage';
 import { StatusModalContainer } from './components/StatusModal';
@@ -319,19 +320,49 @@ const startup = async () => {
 
       const hasToken = !!useAuthStore.getState().token;
 
-      // 清除缓存
+      // ========== 清除缓存 ==========
+      // 设计原则：
+      // ✅ 清除: states.dat（标签页/页面快照/SQL元数据）、profiles.dat（用户信息/权限/菜单快照）
+      // ❌ 保留: app.dat、tokens.dat、preferences.dat、credentials.dat
       if (clear === '1') {
+        // 校验前置条件：必须有 token，否则直接跳登录
+        const initToken = useAuthStore.getState().token;
+        const initUser = useAuthStore.getState().userName;
+
+        if (!initToken || !initUser) {
+          window.location.href = '/login';
+          return;
+        }
+
         await runFlow('clear', [
           async () => {},
           async () => {
+            // 取消所有未完成的防抖保存任务
+            scheduler.dispose();
+
+            // 停止 SSE
+            try { useSqlApplyStore.getState().stop(); } catch (_) {}
+
+            // 清除内存 store
+            useMenuStore.getState().clearMenus();
             usePageStateStore.getState().clearAllPageStates();
             useMenuStore.getState().delAllViews();
+
+            // 物理删除 states.dat + profiles.dat
+            await Promise.allSettled([
+              removeStorageFile('states.dat'),
+              removeStorageFile('profiles.dat'),
+            ]);
           },
           async () => {
-            await Promise.all([
+            // 重新拉取菜单与用户信息
+            await Promise.allSettled([
               useMenuStore.getState().fetchUserMenus(),
               useAuthStore.getState().fetchProfile(),
             ]);
+
+            // 重建 SSE
+            try { useSqlApplyStore.getState().start(); } catch (_) {}
           },
           async () => {},
         ]);

@@ -10,6 +10,7 @@ import type {
   SSEMessage,
   SubscribeRequest,
   UnsubscribeRequest,
+  SubscriptionInfo,
 } from './types';
 import { getToken } from '../storage/tokenStorage';
 
@@ -18,10 +19,14 @@ interface SubscriptionEntry {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   config: SubscriptionConfig<any>;
   state: SubscriptionState;
+  createdAt: number;
+  msgCount: number;
 }
 
 export class SubscriptionManager {
   private subscriptions = new Map<string, SubscriptionEntry>();
+  /** 已知的孤儿订阅 ID（后端仍在推但前端已 unsub），用于去重日志与限制重发 unsub */
+  private orphanIds = new Set<string>();
   private getConnectionId: () => string | null;
   private getApiUrl: () => string;
 
@@ -32,9 +37,13 @@ export class SubscriptionManager {
 
   /** 创建订阅 */
   subscribe<T>(config: SubscriptionConfig<T>): SubscriptionInstance<T> {
+    // 新订阅覆盖同 ID 的孤儿记录
+    this.orphanIds.delete(config.id);
     const entry: SubscriptionEntry = {
       config: config as SubscriptionConfig,
       state: 'pending',
+      createdAt: Date.now(),
+      msgCount: 0,
     };
 
     this.subscriptions.set(config.id, entry);
@@ -70,6 +79,7 @@ export class SubscriptionManager {
   unsubscribeAll(): void {
     const ids = Array.from(this.subscriptions.keys());
     this.subscriptions.clear();
+    this.orphanIds.clear();
     if (ids.length > 0) {
       this.sendUnsubscribeRequest(ids);
     }
@@ -100,7 +110,7 @@ export class SubscriptionManager {
     if (message.subscription_id) {
       const entry = this.subscriptions.get(message.subscription_id);
       if (!entry) {
-        console.warn('[SSE Sub] ⚠️ 未找到订阅:', message.subscription_id, '当前订阅:', [...this.subscriptions.keys()]);
+        this.handleOrphanMessage(message.subscription_id);
         return;
       }
 
@@ -128,8 +138,17 @@ export class SubscriptionManager {
     }
   }
 
+  /** 孤儿订阅消息处理：同一 ID 只警告一次并补发 unsubscribe，避免后端持续推送刷屏 */
+  private handleOrphanMessage(subscriptionId: string): void {
+    if (this.orphanIds.has(subscriptionId)) return;
+    this.orphanIds.add(subscriptionId);
+    console.warn('[SSE Sub] ⚠️ 孤儿订阅，补发 unsubscribe:', subscriptionId);
+    this.sendUnsubscribeRequest([subscriptionId]);
+  }
+
   /** 分发消息到订阅回调 */
   private dispatchMessage(entry: SubscriptionEntry, message: SSEMessage): void {
+    entry.msgCount++;
     switch (message.event) {
       case 'data':
         entry.state = 'active';
@@ -159,6 +178,18 @@ export class SubscriptionManager {
   /** 获取当前订阅数量 */
   getSubscriptionCount(): number {
     return this.subscriptions.size;
+  }
+
+  /** 获取订阅快照列表（供监控面板读取） */
+  listSubscriptions(): SubscriptionInfo[] {
+    return Array.from(this.subscriptions.entries()).map(([id, e]) => ({
+      id,
+      channel: e.config.channel,
+      params: e.config.params,
+      state: e.state,
+      createdAt: e.createdAt,
+      msgCount: e.msgCount,
+    }));
   }
 
   /** 发送订阅请求 */

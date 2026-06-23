@@ -29,10 +29,11 @@ const TrafficSwitching = () => {
   const [timeRange, setTimeRange] = useState<TimeRangeType>('1h');
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [zoomMetric, setZoomMetric] = useState<MonitorMetric | null>(null);
-  
+
   // 用 ref 存储最新的 timeRange，避免闭包问题
   const timeRangeRef = useRef(timeRange);
   const eventSourceRef = useRef<{ close: () => void } | null>(null);
+  const savedTimeRangeRef = useRef<TimeRangeType>('1h'); // 保存用户原来的时间范围
   timeRangeRef.current = timeRange;
 
   // 关闭 SSE 连接
@@ -244,16 +245,20 @@ const TrafficSwitching = () => {
   const handleAutoRefreshToggle = () => {
     const newValue = !autoRefresh;
     setAutoRefresh(newValue);
-    
+
     if (newValue) {
-      // 开启自动刷新：固定时间范围为1小时，启动 SSE
+      // 开启自动刷新：保存当前时间范围，然后固定为1小时启动 SSE
+      savedTimeRangeRef.current = timeRangeRef.current;
       setTimeRange('1h');
       timeRangeRef.current = '1h';
       startSSE();
     } else {
-      // 关闭自动刷新：关闭 SSE，恢复普通查询
+      // 关闭自动刷新：恢复用户原来的时间范围，再刷新数据
       closeSSE();
-      refreshData();
+      const restoredRange = savedTimeRangeRef.current;
+      setTimeRange(restoredRange);
+      timeRangeRef.current = restoredRange;
+      setTimeout(() => refreshData(), 0);
     }
   };
 

@@ -20,6 +20,7 @@ import { getUserAvatar } from '../../services/storage';
 import MessageCenter from '../MessageCenter';
 import ProfileDrawer from '../ProfileDrawer';
 import TaskCenter from '../TaskCenter';
+import SSEMonitor from '../SSEMonitor';
 import { openComponentWindow } from '../../utils/window';
 import { isTauriEnv } from '../../services/machine';
 import './Sidebar.css';
@@ -189,6 +190,7 @@ const Sidebar = ({ collapsed = false }: SidebarProps) => {
       <div className="sidebar-logo">
         <Circle size={24} className="logo-icon" />
         {!collapsed && <span className="logo-text">CMDB系统</span>}
+        {!collapsed && <SSEMonitor />}
       </div>
       
       <nav className="sidebar-nav">

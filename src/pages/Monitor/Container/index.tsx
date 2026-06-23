@@ -36,9 +36,10 @@ const ContainerMonitor = () => {
   const [selectedNamespace, setSelectedNamespace] = useState('');
   const [timeRange, setTimeRange] = useState<TimeRangeType>('1h');
   const [autoRefresh, setAutoRefresh] = useState(false);
-  
+
   const timeRangeRef = useRef(timeRange);
   const eventSourceRef = useRef<{ close: () => void } | null>(null);
+  const savedTimeRangeRef = useRef<TimeRangeType>('1h'); // 保存用户原来的时间范围
   timeRangeRef.current = timeRange;
 
   // 可用的 Namespace 列表
@@ -253,16 +254,22 @@ const ContainerMonitor = () => {
   const handleAutoRefreshToggle = () => {
     const newValue = !autoRefresh;
     setAutoRefresh(newValue);
-    
+
     if (newValue) {
-      // 开启自动刷新：固定时间范围为1小时，启动 SSE
+      // 开启自动刷新：保存当前时间范围，然后固定为1小时启动 SSE
+      savedTimeRangeRef.current = timeRangeRef.current;
       setTimeRange('1h');
       timeRangeRef.current = '1h';
       startSSE();
     } else {
-      // 关闭自动刷新：关闭 SSE，恢复普通查询
+      // 关闭自动刷新：仅在用户原选时间范围 ≠ 1h 时重拉；否则保留 SSE 最后一帧图表状态
       closeSSE();
-      refreshData();
+      const restoredRange = savedTimeRangeRef.current;
+      if (restoredRange !== '1h') {
+        setTimeRange(restoredRange);
+        timeRangeRef.current = restoredRange;
+        setTimeout(() => refreshData(), 0);
+      }
     }
   };
 

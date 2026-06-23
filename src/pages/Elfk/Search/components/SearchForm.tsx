@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { RefreshCw } from 'lucide-react';
 import { getViewList, getViewDetail } from '../../../../services/elfk/view';
 import { useUserPrefsStore } from '../../../../stores';
 import KibanaTimeRangePicker from './KibanaTimeRangePicker';
@@ -358,6 +359,14 @@ const SearchForm = ({ projectInfo, currentView, loading, initialKeyword, initial
             <option value="">{viewLoading ? '加载中...' : '请选择视图'}</option>
             {views.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
           </select>
+          <button
+            className="btn-refresh-view"
+            onClick={fetchViews}
+            disabled={viewLoading}
+            title="刷新视图列表"
+          >
+            <RefreshCw size={32} strokeWidth={2} className={viewLoading ? 'spin' : ''} />
+          </button>
         </div>
 
         {/* 搜索框 */}

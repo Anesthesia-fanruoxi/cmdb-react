@@ -115,3 +115,29 @@ export interface ChannelParams {
     task_id: string;
   };
 }
+
+/** 订阅信息快照（供监控面板读取） */
+export interface SubscriptionInfo {
+  id: string;
+  channel: string;
+  params: Record<string, unknown>;
+  state: SubscriptionState;
+  /** 创建时间戳 */
+  createdAt: number;
+  /** 订阅后收到的消息数 */
+  msgCount: number;
+}
+
+/** 环形缓冲消息项 */
+export interface BufferedMessage {
+  /** 推送到前端的时间戳 */
+  ts: number;
+  /** 订阅 ID（可能为空，例如 channel 广播消息） */
+  subscriptionId?: string;
+  /** 频道名 */
+  channel?: string;
+  /** 事件类型 */
+  event: SSEMessage['event'];
+  /** 完整原始消息 */
+  raw: SSEMessage;
+}

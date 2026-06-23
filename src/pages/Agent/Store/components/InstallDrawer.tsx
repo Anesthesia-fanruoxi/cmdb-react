@@ -122,13 +122,6 @@ const InstallDrawer = ({ visible, plugin, projects, onClose, onSuccess }: Props)
 
   useEffect(() => {
     if (visible && plugin) {
-      console.log('[InstallDrawer] 抽屉打开，插件信息:', JSON.stringify({
-        id: plugin.id,
-        name: plugin.name,
-        plugin_type: plugin.plugin_type,
-        is_config: plugin.is_config,
-        port: plugin.port,
-      }, null, 2));
       setSelectedProject('');
       
       // 获取插件默认配置
@@ -137,20 +130,14 @@ const InstallDrawer = ({ visible, plugin, projects, onClose, onSuccess }: Props)
         if (plugin.is_config) {
           // 有配置模板的二进制插件：从后端加载 config_template
           setConfigTemplate('');
-          console.log('[InstallDrawer] 预加载配置模板...', { plugin_id: plugin.id, plugin_name: plugin.name });
           getPluginDetail(plugin.id)
             .then(res => {
               const d = res.data as any;
               if (d?.config_template) {
                 setConfigTemplate(d.config_template);
-                console.log('[InstallDrawer] 预加载成功，模板长度:', d.config_template.length);
-              } else {
-                console.warn('[InstallDrawer] 预加载：后端未返回 config_template');
               }
             })
-            .catch((err) => {
-              console.error('[InstallDrawer] 预加载配置模板失败:', err);
-            });
+            .catch(() => { /* ignore */ });
         } else {
           setConfigTemplate('');
         }
@@ -214,7 +201,6 @@ const InstallDrawer = ({ visible, plugin, projects, onClose, onSuccess }: Props)
         };
         const config = buildConfig();
         if (config) data.config = config;
-        console.log('[InstallDrawer] 安装容器插件', data);
         res = await installContainerPlugin(data);
       } else {
         const data: BinaryInstallRequest = {
@@ -223,7 +209,6 @@ const InstallDrawer = ({ visible, plugin, projects, onClose, onSuccess }: Props)
         };
         const content = configContentOverride ?? configContent;
         if (content?.trim()) data.config_content = content;
-        console.log('[InstallDrawer] 安装二进制插件', { ...data, config_content: data.config_content ? `(${data.config_content.length}字符)` : undefined });
         res = await installBinaryPlugin(data);
       }
 
@@ -259,33 +244,23 @@ const InstallDrawer = ({ visible, plugin, projects, onClose, onSuccess }: Props)
     }
 
     // 二进制插件：检查是否存在配置模板
-    console.log('[InstallDrawer] 安装检查:', { plugin_type: plugin.plugin_type, is_config: plugin.is_config, is_config_type: typeof plugin.is_config });
     if (plugin.plugin_type === 'binary' && plugin.is_config) {
       let template = configTemplate;
 
       // 预加载可能失败，安装前重新获取
       if (!template) {
-        console.log('[InstallDrawer] 配置模板未加载，重新获取...', { plugin_id: plugin.id, plugin_name: plugin.name });
         try {
           const res = await getPluginDetail(plugin.id);
           const d = res.data as any;
           if (d?.config_template) {
             template = d.config_template;
             setConfigTemplate(template);
-            console.log('[InstallDrawer] 配置模板获取成功，长度:', template.length);
-          } else {
-            console.warn('[InstallDrawer] 后端未返回 config_template', d);
           }
-        } catch (error) {
-          console.error('[InstallDrawer] 获取配置模板失败:', error);
-        }
-      } else {
-        console.log('[InstallDrawer] 使用已缓存的配置模板，长度:', template.length);
+        } catch { /* ignore */ }
       }
 
       if (template) {
         const variables = parseConfigTemplate(template);
-        console.log('[InstallDrawer] 解析配置变量:', variables.map(v => v.key));
 
         if (variables.length > 0) {
           setPreviewVars(variables);
@@ -294,15 +269,11 @@ const InstallDrawer = ({ visible, plugin, projects, onClose, onSuccess }: Props)
           return;
         }
         // 模板没有变量，直接安装
-        console.log('[InstallDrawer] 配置模板无变量，直接安装');
         await performInstall(template);
         return;
       }
-
-      console.warn('[InstallDrawer] 无法获取配置模板，跳过配置预览，直接安装');
     }
 
-    console.log('[InstallDrawer] 直接安装', { type: plugin.plugin_type, project: selectedProject });
     // 其他情况直接安装
     await performInstall();
   };

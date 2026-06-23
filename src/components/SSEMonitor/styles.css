@@ -1,0 +1,293 @@
+/* SSE 监控 - 入口容器 */
+.sse-monitor {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+}
+
+/* ============ 小绿灯 ============ */
+.sse-monitor-dot {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+.sse-monitor-dot:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.sse-monitor-dot__core {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: block;
+}
+.sse-monitor-dot--open .sse-monitor-dot__core {
+  background: #22c55e;
+  box-shadow: 0 0 6px #22c55e;
+  animation: sse-monitor-pulse 2.4s ease-in-out infinite;
+}
+.sse-monitor-dot--connecting .sse-monitor-dot__core {
+  background: #facc15;
+  box-shadow: 0 0 6px #facc15;
+  animation: sse-monitor-pulse 0.8s ease-in-out infinite;
+}
+.sse-monitor-dot--closed .sse-monitor-dot__core {
+  background: #94a3b8;
+}
+.sse-monitor-dot--stale .sse-monitor-dot__core {
+  background: #ef4444;
+  box-shadow: 0 0 6px #ef4444;
+  animation: sse-monitor-pulse 1.2s ease-in-out infinite;
+}
+@keyframes sse-monitor-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(0.8); }
+}
+
+/* ============ 浮层面板（贴 Sidebar 右侧，fixed 定位避免被同级容器遮挡） ============ */
+.sse-monitor-panel {
+  position: fixed;
+  width: 340px;
+  max-height: 480px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  color: #e2e8f0;
+  font-size: 12px;
+  z-index: 99999;
+  overflow: hidden;
+}
+.sse-monitor-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid #334155;
+  font-weight: 600;
+}
+.sse-monitor-panel__title { font-size: 13px; }
+.sse-monitor-panel__close {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+.sse-monitor-panel__close:hover { color: #e2e8f0; }
+
+/* Tabs */
+.sse-monitor-panel__tabs {
+  display: flex;
+  border-bottom: 1px solid #334155;
+}
+.sse-monitor-panel__tabs button {
+  flex: 1;
+  padding: 8px 0;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 12px;
+  border-bottom: 2px solid transparent;
+}
+.sse-monitor-panel__tabs button:hover { color: #e2e8f0; }
+.sse-monitor-panel__tabs button.is-active {
+  color: #22c55e;
+  border-bottom-color: #22c55e;
+}
+
+.sse-monitor-panel__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 14px;
+}
+
+/* ============ 通用组件 ============ */
+.sse-monitor-empty {
+  text-align: center;
+  color: #64748b;
+  padding: 32px 0;
+}
+.sse-monitor-mono {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: #cbd5e1;
+}
+.sse-monitor-tag {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  background: #475569;
+  color: #f1f5f9;
+}
+.sse-monitor-tag--open,
+.sse-monitor-tag--active { background: #166534; color: #bbf7d0; }
+.sse-monitor-tag--connecting,
+.sse-monitor-tag--pending { background: #854d0e; color: #fef08a; }
+.sse-monitor-tag--closed { background: #475569; color: #cbd5e1; }
+.sse-monitor-tag--stale,
+.sse-monitor-tag--error { background: #991b1b; color: #fecaca; }
+.sse-monitor-tag--paused { background: #475569; color: #94a3b8; }
+.sse-monitor-tag--data { background: #1e3a8a; color: #bfdbfe; }
+.sse-monitor-tag--complete { background: #166534; color: #bbf7d0; }
+.sse-monitor-tag--connected { background: #166534; color: #bbf7d0; }
+.sse-monitor-tag--heartbeat { background: #475569; color: #cbd5e1; }
+
+/* ============ Tab1 连接 ============ */
+.sse-monitor-conn { display: flex; flex-direction: column; gap: 10px; }
+.sse-monitor-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+.sse-monitor-row label {
+  color: #94a3b8;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.sse-monitor-row > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sse-monitor-btn {
+  margin-top: 4px;
+  padding: 6px 12px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  width: 100%;
+}
+.sse-monitor-btn:hover:not(:disabled) { background: #1d4ed8; }
+.sse-monitor-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ============ Tab2 订阅 ============ */
+.sse-monitor-subs { display: flex; flex-direction: column; gap: 8px; }
+.sse-monitor-sub {
+  padding: 8px 10px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.sse-monitor-sub:hover { border-color: #475569; }
+.sse-monitor-sub.is-active {
+  border-color: #22c55e;
+  background: #14302a;
+}
+.sse-monitor-sub__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.sse-monitor-sub__channel {
+  font-weight: 600;
+  color: #f1f5f9;
+}
+.sse-monitor-sub__meta {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+.sse-monitor-sub__id {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 10px;
+  color: #64748b;
+  word-break: break-all;
+}
+
+/* ============ Tab3 消息 ============ */
+.sse-monitor-msgs { display: flex; flex-direction: column; gap: 6px; }
+.sse-monitor-filter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  background: #14302a;
+  border: 1px solid #166534;
+  border-radius: 4px;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+.sse-monitor-filter button {
+  background: none;
+  border: 1px solid #475569;
+  color: #cbd5e1;
+  border-radius: 3px;
+  padding: 2px 8px;
+  cursor: pointer;
+  font-size: 11px;
+}
+.sse-monitor-filter button:hover { background: #334155; }
+
+.sse-monitor-msg {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.sse-monitor-msg__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  cursor: pointer;
+  user-select: none;
+}
+.sse-monitor-msg__head:hover { background: #1e293b; }
+.sse-monitor-msg__ts {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 10px;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+.sse-monitor-msg__sub {
+  flex: 1;
+  font-size: 11px;
+  color: #cbd5e1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sse-monitor-msg__chevron {
+  color: #64748b;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.sse-monitor-msg__json {
+  margin: 0;
+  padding: 8px 10px;
+  background: #020617;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 10px;
+  color: #bfdbfe;
+  border-top: 1px solid #334155;
+  max-height: 200px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}

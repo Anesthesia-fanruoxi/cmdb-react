@@ -10,12 +10,17 @@ import type {
   GatewayConfig,
   SubscriptionConfig,
   Subscription,
+  SubscriptionInfo,
+  BufferedMessage,
 } from './types';
 import { SubscriptionManager } from './SubscriptionManager';
 import { getToken } from '../storage/tokenStorage';
 
 /** 事件处理器类型 */
 type EventHandler = (...args: unknown[]) => void;
+
+/** 环形缓冲最大容量（供监控面板查看近期消息） */
+const MESSAGE_BUFFER_SIZE = 20;
 
 export class SSEGateway {
   private static instance: SSEGateway | null = null;
@@ -31,6 +36,8 @@ export class SSEGateway {
   private lastHeartbeatAt = 0;
   private subscriptionManager: SubscriptionManager;
   private listeners = new Map<string, Set<EventHandler>>();
+  /** 环形缓冲：最近 N 条消息（connected/heartbeat 不入缓冲） */
+  private messageBuffer: BufferedMessage[] = [];
 
   private constructor(config: GatewayConfig) {
     this.config = {
@@ -79,6 +86,28 @@ export class SSEGateway {
   /** 获取最后一次心跳时间戳 */
   getLastHeartbeatAt(): number {
     return this.lastHeartbeatAt;
+  }
+
+  /** 获取重连尝试次数 */
+  getReconnectAttempts(): number {
+    return this._reconnectAttempts;
+  }
+
+  /** 获取订阅列表快照 */
+  listSubscriptions(): SubscriptionInfo[] {
+    return this.subscriptionManager.listSubscriptions();
+  }
+
+  /** 获取环形缓冲中的消息。传 subId 仅返回匹配该订阅的 */
+  getMessageHistory(subId?: string): BufferedMessage[] {
+    if (!subId) return [...this.messageBuffer];
+    return this.messageBuffer.filter(m => m.subscriptionId === subId);
+  }
+
+  /** 手动强制重连（供监控面板调用） */
+  forceReconnect(): void {
+    this._reconnectAttempts = 0;
+    this.handleDisconnect();
   }
 
   /** 建立连接 */
@@ -132,6 +161,7 @@ export class SSEGateway {
       try {
         const message: SSEMessage = JSON.parse(event.data);
         this.resetHeartbeat();
+        this.pushMessageBuffer(message);
         this.emit('message', message);
         this.subscriptionManager.handleMessage(message);
       } catch (e) {
@@ -246,6 +276,20 @@ export class SSEGateway {
     this.connectionState = state;
     if (prev !== state) {
       this.emit('stateChange', state);
+    }
+  }
+
+  /** 推入环形缓冲（超出容量则按 FIFO 弹出） */
+  private pushMessageBuffer(message: SSEMessage): void {
+    this.messageBuffer.push({
+      ts: Date.now(),
+      subscriptionId: message.subscription_id,
+      channel: message.channel,
+      event: message.event,
+      raw: message,
+    });
+    if (this.messageBuffer.length > MESSAGE_BUFFER_SIZE) {
+      this.messageBuffer.splice(0, this.messageBuffer.length - MESSAGE_BUFFER_SIZE);
     }
   }
 
