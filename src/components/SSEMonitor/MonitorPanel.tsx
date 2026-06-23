@@ -1,13 +1,13 @@
 /**
  * SSE 监控面板（贴 Sidebar 右侧弹出）
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { SSEMonitorSnapshot } from './useSSEMonitor';
 import { ConnectionTab } from './ConnectionTab';
 import { SubscriptionsTab } from './SubscriptionsTab';
-import { MessagesTab } from './MessagesTab';
+import { SubscriptionMessages } from './SubscriptionMessages';
 
-type TabKey = 'conn' | 'subs' | 'msgs';
+type TabKey = 'conn' | 'subs';
 
 interface Props {
   snap: SSEMonitorSnapshot;
@@ -20,9 +20,10 @@ export function MonitorPanel({ snap, anchorRef, onClose }: Props) {
   const [tab, setTab] = useState<TabKey>('conn');
   const [selectedSubId, setSelectedSubId] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const submsgRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
 
-  // 计算浮层位置（贴 anchor 右侧 + 顶端对齐 anchor 顶部）
+  // 主面板定位：贴 anchor 右侧 + 顶端对齐
   useEffect(() => {
     const update = () => {
       const a = anchorRef.current?.getBoundingClientRect();
@@ -34,11 +35,12 @@ export function MonitorPanel({ snap, anchorRef, onClose }: Props) {
     return () => window.removeEventListener('resize', update);
   }, [anchorRef]);
 
-  // 点击外部 / ESC 关闭
+  // 点击外部 / ESC 关闭（副浮层视为内部，不触发关闭）
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
       const t = e.target as Node;
       if (panelRef.current?.contains(t)) return;
+      if (submsgRef.current?.contains(t)) return;
       if (anchorRef.current?.contains(t)) return;
       onClose();
     };
@@ -51,55 +53,65 @@ export function MonitorPanel({ snap, anchorRef, onClose }: Props) {
     };
   }, [anchorRef, onClose]);
 
+  // 切换 Tab 离开订阅则收起副浮层
+  useEffect(() => {
+    if (tab !== 'subs') setSelectedSubId(null);
+  }, [tab]);
+
   const handleSelectSub = (id: string | null) => {
-    setSelectedSubId(id);
-    if (id) setTab('msgs');
+    setSelectedSubId(prev => (prev === id ? null : id));
   };
 
+  const selectedChannel = useMemo(() => {
+    if (!selectedSubId) return '';
+    return snap.subscriptions.find(s => s.id === selectedSubId)?.channel ?? '';
+  }, [selectedSubId, snap.subscriptions]);
+
   return (
-    <div
-      className="sse-monitor-panel"
-      ref={panelRef}
-      style={{ top: pos.top, left: pos.left }}
-    >
-      <div className="sse-monitor-panel__head">
-        <span className="sse-monitor-panel__title">SSE 网关</span>
-        <button type="button" className="sse-monitor-panel__close" onClick={onClose}>×</button>
+    <>
+      <div
+        className="sse-monitor-panel"
+        ref={panelRef}
+        style={{ top: pos.top, left: pos.left }}
+      >
+        <div className="sse-monitor-panel__head">
+          <span className="sse-monitor-panel__title">SSE 网关</span>
+          <button type="button" className="sse-monitor-panel__close" onClick={onClose}>×</button>
+        </div>
+        <div className="sse-monitor-panel__tabs">
+          <button
+            type="button"
+            className={tab === 'conn' ? 'is-active' : ''}
+            onClick={() => setTab('conn')}
+          >连接</button>
+          <button
+            type="button"
+            className={tab === 'subs' ? 'is-active' : ''}
+            onClick={() => setTab('subs')}
+          >订阅 ({snap.subscriptions.length})</button>
+        </div>
+        <div className="sse-monitor-panel__body">
+          {tab === 'conn' && <ConnectionTab snap={snap} />}
+          {tab === 'subs' && (
+            <SubscriptionsTab
+              subscriptions={snap.subscriptions}
+              selectedId={selectedSubId}
+              onSelect={handleSelectSub}
+            />
+          )}
+        </div>
       </div>
-      <div className="sse-monitor-panel__tabs">
-        <button
-          type="button"
-          className={tab === 'conn' ? 'is-active' : ''}
-          onClick={() => setTab('conn')}
-        >连接</button>
-        <button
-          type="button"
-          className={tab === 'subs' ? 'is-active' : ''}
-          onClick={() => setTab('subs')}
-        >订阅 ({snap.subscriptions.length})</button>
-        <button
-          type="button"
-          className={tab === 'msgs' ? 'is-active' : ''}
-          onClick={() => setTab('msgs')}
-        >消息 ({snap.messages.length})</button>
-      </div>
-      <div className="sse-monitor-panel__body">
-        {tab === 'conn' && <ConnectionTab snap={snap} />}
-        {tab === 'subs' && (
-          <SubscriptionsTab
-            subscriptions={snap.subscriptions}
-            selectedId={selectedSubId}
-            onSelect={handleSelectSub}
-          />
-        )}
-        {tab === 'msgs' && (
-          <MessagesTab
+      {selectedSubId && (
+        <div ref={submsgRef}>
+          <SubscriptionMessages
+            subId={selectedSubId}
+            channel={selectedChannel}
             messages={snap.messages}
-            filterSubId={selectedSubId}
-            onClearFilter={() => setSelectedSubId(null)}
+            panelRef={panelRef}
+            onClose={() => setSelectedSubId(null)}
           />
-        )}
-      </div>
-    </div>
+        </div>
+      )}
+    </>
   );
 }
