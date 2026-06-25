@@ -41,6 +41,11 @@ export function deleteDept(id: string): Promise<ApiResponse<null>> {
   return apiClient.delete<null>(`/system/dept/delete?id=${id}`);
 }
 
+/** 获取部门可选项目列表 */
+export function getDeptProjects() {
+  return apiClient.get('/system/dept/projects');
+}
+
 /** 获取部门项目关联 */
 export function getDeptProject(deptId: string): Promise<ApiResponse<{ project: string[] }>> {
   return apiClient.get<{ project: string[] }>('/system/dept/project/detail', { dept_id: deptId });

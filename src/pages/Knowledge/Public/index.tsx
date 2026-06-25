@@ -34,7 +34,7 @@ const PublicKnowledge = () => {
   const fetchOptions = useCallback(async () => {
     try {
       const [dictRes, projectRes] = await Promise.all([
-        getDictDetail('sys_category_dict'),
+        getDictDetail('knowledge'),
         getDocProjects()
       ]);
       if (dictRes.code === 200 && dictRes.data?.items) setCategoryOptions(dictRes.data.items);
@@ -169,7 +169,7 @@ const PublicKnowledge = () => {
           <div className="filter-row">
             <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)}>
               <option value="">选择分类</option>
-              {categoryOptions.map(c => <option key={c.key} value={c.key}>{c.value}</option>)}
+              {categoryOptions.map(c => <option key={c.item_key} value={c.item_key}>{c.item_value}</option>)}
             </select>
             <label className="switch-label">
               <span className={`switch ${onlyMine ? 'on' : ''}`} onClick={() => setOnlyMine(!onlyMine)}><span className="switch-dot" /></span>

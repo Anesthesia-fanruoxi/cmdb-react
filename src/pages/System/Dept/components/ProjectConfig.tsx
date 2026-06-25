@@ -3,20 +3,9 @@
  */
 
 import { useState, useEffect } from 'react';
-import { getDeptProject, updateDeptProject } from '../../../../services/system/dept';
-import { apiClient } from '../../../../services/request';
+import { getDeptProject, updateDeptProject, getDeptProjects } from '../../../../services/system/dept';
 import { closeCurrentWindow } from '../../../../utils/window';
-import type { ApiResponse } from '../../../../types/api';
 import './ProjectConfig.css';
-
-interface DictItem {
-  key: string;
-  value: string;
-}
-
-interface DictDetail {
-  items: DictItem[];
-}
 
 interface Props {
   deptId: string;
@@ -25,28 +14,22 @@ interface Props {
   onSave?: () => void;
 }
 
-function getDictDetail(targetTable: string): Promise<ApiResponse<DictDetail>> {
-  return apiClient.get<DictDetail>('/system/dict/detail', { target_table: targetTable });
-}
-
 const ProjectConfig = ({ deptId, deptName, onClose, onSave }: Props) => {
   const [loading, setLoading] = useState(true);
-  const [projectOptions, setProjectOptions] = useState<DictItem[]>([]);
+  const [projectOptions, setProjectOptions] = useState<{ key: string; value: string }[]>([]);
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [dictRes, deptProjectRes] = await Promise.all([
-          getDictDetail('sys_project_dict'),
+        const [projectsRes, deptProjectRes] = await Promise.all([
+          getDeptProjects(),
           getDeptProject(deptId)
         ]);
-        if (dictRes.code === 200 && dictRes.data?.items) {
-          setProjectOptions(dictRes.data.items.map(item => ({
-            key: item.key,
-            value: item.value
-          })));
+        if (projectsRes.code === 200 && projectsRes.data) {
+          const items: any[] = Array.isArray(projectsRes.data) ? projectsRes.data : (projectsRes.data as any).items || [];
+          setProjectOptions(items.map(item => ({ key: item.project || item.key || '', value: item.project_name || item.value || '' })));
         }
         if (deptProjectRes.code === 200 && deptProjectRes.data) {
           const projects = deptProjectRes.data.project;

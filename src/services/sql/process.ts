@@ -40,6 +40,11 @@ export interface UpdateProcessData {
   executor_id: number;
 }
 
+// 获取SQL流程项目列表
+export function getSqlProcessProjects() {
+  return apiClient.get('/sql/process/projects');
+}
+
 // 获取SQL流程列表
 export function getProcessList(params?: { project_id?: string }) {
   return apiClient.get<{ list: ProcessItem[]; total: number }>('/sql/process/list', params);

@@ -25,7 +25,7 @@ const PersonalKnowledge = () => {
   // 加载分类字典（与 Vue 实现保持一致）
   const fetchCategories = useCallback(async () => {
     try {
-      const res = await getDictDetail('sys_category_dict');
+      const res = await getDictDetail('knowledge');
       if (res.code === 200 && res.data?.items) {
         setCategoryOptions(res.data.items);
       }

@@ -42,7 +42,7 @@ const ProjectSelect = ({ onConfirm }: ProjectSelectProps) => {
     try {
       const [projectRes, categoryRes] = await Promise.all([
         getElfkSearchProjects(),
-        getDictDetail('sys_view_dict')
+        getDictDetail('view')
       ]);
 
       if (projectRes.code === 200 && projectRes.data) {

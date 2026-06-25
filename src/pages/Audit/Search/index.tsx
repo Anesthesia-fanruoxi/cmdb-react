@@ -4,8 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { Search, RefreshCw, Loader2 } from 'lucide-react';
-import { getSearchLog, getSearchDetail } from '../../../services/audit/audit';
-import { getDictDetail } from '../../../services/system/dict';
+import { getSearchLog, getSearchDetail, getAuditSearchProjects } from '../../../services/audit/audit';
 import toast from '../../../components/Toast';
 import DetailDialog from './components/DetailDialog';
 import AuditDateRangePicker from '../components/AuditDateRangePicker';
@@ -83,11 +82,12 @@ const AuditSearch = () => {
 
   const fetchProjects = async () => {
     try {
-      const res = await getDictDetail('sys_project_dict');
-      if (res.code === 200 && res.data?.items) {
-        setProjects(res.data.items);
+      const res = await getAuditSearchProjects();
+      if (res.code === 200 && res.data) {
+        const items: any[] = Array.isArray(res.data) ? res.data : (res.data as any).items || [];
+        setProjects(items.map(item => ({ key: item.project || item.key || '', value: item.project_name || item.value || '' })));
       }
-    } catch { /* ignore */ }
+    } catch (e) { console.error('获取项目列表失败:', e); }
   };
 
   useEffect(() => { fetchProjects(); }, []);

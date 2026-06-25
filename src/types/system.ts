@@ -77,14 +77,24 @@ export interface UpdateUserRequest {
   password?: string;
 }
 
+/** 字典分组 */
+export interface DictGroup {
+  group_key: string;
+  group_name: string;
+  count: number;
+}
+
 /** 字典项 */
 export interface DictItem {
-  id: string;
-  dict_type: string;
-  dict_label: string;
-  dict_value: string;
-  sort?: number;
-  is_enabled?: boolean;
+  id: number;
+  group_key: string;
+  group_name: string;
+  item_key: string;
+  item_value: string;
+  color?: string;
+  created_by?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 /** 分页参数 */

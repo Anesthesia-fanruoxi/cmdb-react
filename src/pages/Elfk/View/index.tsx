@@ -58,7 +58,9 @@ const ElfkView = () => {
   // 获取分类列表
   const fetchCategories = async () => {
     try {
-      const res = await getDictDetail('sys_view_dict');
+      const res = await getDictDetail('view');
+      console.log('[Elfk/View] 请求: GET /system/dict/items?group=sys_view_dict');
+      console.log('[Elfk/View] 响应:', JSON.stringify(res, null, 2));
       if (res.code === 200 && res.data) {
         setCategoryOptions(res.data.items || []);
       }

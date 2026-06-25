@@ -40,6 +40,12 @@ export const getSqlUserHourlyList = (params: Record<string, unknown>) =>
 export const getEsUserHourlyList = (params: Record<string, unknown>) => 
   apiClient.post('/audit/es/user/list', params);
 
+// SQL审计项目列表
+export const getAuditSqlProjects = () => apiClient.get('/audit/sql/projects');
+
+// ES审计项目列表
+export const getAuditSearchProjects = () => apiClient.get('/audit/search/projects');
+
 // 获取加解密审计日志 (GET)
 export const getKeyAuditLog = (params: Record<string, unknown>) => 
   apiClient.get('/audit/key/list', params);

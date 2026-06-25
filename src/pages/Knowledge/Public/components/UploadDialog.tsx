@@ -125,7 +125,7 @@ const UploadDialog = ({ visible, onClose, onSuccess, categoryOptions, projectOpt
           <div className="form-group"><label>文档分类 *</label>
             <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value }))}>
               <option value="">请选择</option>
-              {categoryOptions.map(c => <option key={c.key} value={c.key}>{c.value}</option>)}
+              {categoryOptions.map(c => <option key={c.item_key} value={c.item_key}>{c.item_value}</option>)}
             </select>
           </div>
           {file && <div className="preview-section"><h4>预览</h4><div className="preview-content"><span style={{ color: 'var(--text-secondary, #888)', fontSize: 13 }}>上传后可预览内容</span></div></div>}

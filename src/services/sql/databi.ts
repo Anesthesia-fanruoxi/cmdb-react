@@ -118,9 +118,14 @@ export const getDatabiTables = (
   // 监听 error 事件
   eventSource.addEventListener('error', (event: MessageEvent) => {
     try {
-      const data = JSON.parse(event.data);
-      hasReceivedFinalEvent = true;
-      onMessage?.({ type: 'error', ...data });
+      if (event.data) {
+        const data = JSON.parse(event.data);
+        hasReceivedFinalEvent = true;
+        onMessage?.({ type: 'error', ...data });
+      } else {
+        hasReceivedFinalEvent = true;
+        onMessage?.({ type: 'error', message: 'SSE 连接错误' });
+      }
     } catch (e) {
       console.error('SSE 解析错误:', e);
     }

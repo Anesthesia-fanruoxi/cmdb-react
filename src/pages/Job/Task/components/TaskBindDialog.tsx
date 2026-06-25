@@ -4,8 +4,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { X, Loader2, ChevronLeft, ChevronRight, Copy } from 'lucide-react';
-import { getTaskDetail, getTaskBindDetail, bindProjects, unbindProject, Task } from '../../../../services/job/task';
-import { getDictDetail } from '../../../../services/system/dict';
+import { getTaskDetail, getTaskBindDetail, bindProjects, unbindProject, getJobTaskProjects, Task } from '../../../../services/job/task';
 import toast from '../../../../components/Toast';
 
 interface Variable { key: string; value: string; description: string; }
@@ -71,11 +70,12 @@ const TaskBindDialog = ({ visible, task, onClose, onSuccess }: Props) => {
     setLoading(true);
 
     Promise.all([
-      getDictDetail('sys_project_dict'),
+      getJobTaskProjects(),
       getTaskBindDetail(task.id)
     ]).then(([dictRes, bindRes]) => {
-      if (dictRes.code === 200 && dictRes.data?.items) {
-        setProjectOptions(dictRes.data.items.map(item => ({ key: item.key, name: item.value })));
+      if (dictRes.code === 200 && dictRes.data) {
+        const items: any[] = Array.isArray(dictRes.data) ? dictRes.data : (dictRes.data as any).items || [];
+        setProjectOptions(items.map(item => ({ key: item.project || item.key || '', name: item.project_name || item.value || '' })));
       }
       if (bindRes.code === 200 && bindRes.data) {
         setBoundProjects((bindRes.data as any).projects || []);

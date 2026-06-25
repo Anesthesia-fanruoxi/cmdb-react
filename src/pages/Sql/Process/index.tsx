@@ -4,10 +4,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { 
-  getProcessList, getProcessUsers, createProcess, updateProcess, deleteProcess,
+  getProcessList, getProcessUsers, getSqlProcessProjects, createProcess, updateProcess, deleteProcess,
   type ProcessItem, type ProcessUser 
 } from '../../../services/sql/process';
-import { getDictDetail } from '../../../services/system/dict';
 import { toast } from '../../../components/AppNotification';
 import { confirm } from '../../../components/ConfirmModal';
 import './style.css';
@@ -53,16 +52,12 @@ const SqlProcess = () => {
   // 获取项目列表
   const fetchProjectList = useCallback(async () => {
     try {
-      const res = await getDictDetail('sys_project_dict');
-      if (res.code === 200 && res.data?.items) {
-        setProjectOptions(res.data.items.map((item: { id?: string; key?: string; value?: string }) => ({
-          value: item.id || item.key || '',
-          label: item.value || ''
-        })));
+      const res = await getSqlProcessProjects();
+      if (res.code === 200 && res.data) {
+        const items: any[] = Array.isArray(res.data) ? res.data : (res.data as any).items || [];
+        setProjectOptions(items.map(item => ({ value: item.project || item.key || '', label: item.project_name || item.value || '' })));
       }
-    } catch (error) {
-      console.error('获取项目列表失败:', error);
-    }
+    } catch (e) { console.error('获取项目列表失败:', e); }
   }, []);
 
   // 获取用户列表

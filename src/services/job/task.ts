@@ -7,6 +7,9 @@ import { apiClient } from '../request';
 // 获取任务列表
 export const getTaskList = () => apiClient.get('/job/task/list');
 
+// 获取任务可绑定项目列表
+export const getJobTaskProjects = () => apiClient.get('/job/task/projects');
+
 // 创建任务
 export const createTask = (data: TaskFormData) => apiClient.post('/job/task/create', data);
 

@@ -34,7 +34,7 @@ const DocumentKnowledge = () => {
     try {
       const [projectRes, categoryRes] = await Promise.all([
         getDocProjects(),
-        getDictDetail('sys_category_dict')
+        getDictDetail('knowledge')
       ]);
       if (projectRes.code === 200 && projectRes.data) {
         const items = Array.isArray(projectRes.data) ? projectRes.data : (projectRes.data as any).items || [];

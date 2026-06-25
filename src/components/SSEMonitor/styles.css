@@ -56,7 +56,7 @@
 .sse-monitor-panel {
   position: fixed;
   width: 340px;
-  max-height: 480px;
+  max-height: calc(100vh - 80px);
   background: #1e293b;
   border: 1px solid #334155;
   border-radius: 8px;
@@ -224,7 +224,7 @@
 .sse-monitor-submsg {
   position: fixed;
   width: 380px;
-  max-height: 480px;
+  max-height: calc(100vh - 80px);
   background: #1e293b;
   border: 1px solid #334155;
   border-radius: 8px;
@@ -280,7 +280,7 @@
   padding: 10px 14px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .sse-monitor-msg {
@@ -293,7 +293,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 8px;
+  padding: 8px 10px;
   cursor: pointer;
   user-select: none;
 }

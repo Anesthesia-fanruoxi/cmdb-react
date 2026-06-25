@@ -4,8 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { Search, RefreshCw, Loader2 } from 'lucide-react';
-import { getSqlLog, getSqlDetail } from '../../../services/audit/audit';
-import { getDictDetail } from '../../../services/system/dict';
+import { getSqlLog, getSqlDetail, getAuditSqlProjects } from '../../../services/audit/audit';
 import toast from '../../../components/Toast';
 import SqlDetailDialog from './components/SqlDetailDialog';
 import AuditDateRangePicker from '../components/AuditDateRangePicker';
@@ -78,9 +77,12 @@ const AuditSql = () => {
 
   const fetchProjects = async () => {
     try {
-      const res = await getDictDetail('sys_project_dict');
-      if (res.code === 200 && res.data?.items) setProjects(res.data.items);
-    } catch { /* ignore */ }
+      const res = await getAuditSqlProjects();
+      if (res.code === 200 && res.data) {
+        const items: any[] = Array.isArray(res.data) ? res.data : (res.data as any).items || [];
+        setProjects(items.map(item => ({ key: item.project || item.key || '', value: item.project_name || item.value || '' })));
+      }
+    } catch (e) { console.error('获取项目列表失败:', e); }
   };
 
   useEffect(() => { fetchProjects(); }, []);
