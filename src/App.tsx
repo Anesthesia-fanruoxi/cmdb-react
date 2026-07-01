@@ -13,6 +13,7 @@ import { useMenuStore } from './stores/menuStore';
 import { initSecurity } from './utils/security';
 import { startAutoSave, stopAutoSave, forceSave, initAllStorage, getDefaultTheme, scheduler, removeStorageFile } from './services/storage';
 import { useSqlApplyStore } from './stores/sqlApplyStore';
+import { useTaskCenterStore } from './stores/taskCenterStore';
 import { getLoginHistory, getLastUser } from './services/loginHistory';
 import type { UpdateInfo } from './services/storage';
 import { StatusModalContainer } from './components/StatusModal';
@@ -363,6 +364,7 @@ const startup = async () => {
 
             // 重建 SSE
             try { useSqlApplyStore.getState().start(); } catch (_) {}
+            try { useTaskCenterStore.getState().start(); } catch (_) {}
           },
           async () => {},
         ]);

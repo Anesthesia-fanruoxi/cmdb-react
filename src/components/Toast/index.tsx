@@ -14,6 +14,7 @@ interface ToastProps {
   message: string;
   duration?: number;
   onClose: () => void;
+  onClick?: () => void;
 }
 
 const icons = {
@@ -23,7 +24,7 @@ const icons = {
   info: <AlertCircle size={20} />,
 };
 
-const ToastItem = ({ type, message, duration = 3000, onClose }: ToastProps) => {
+const ToastItem = ({ type, message, duration = 3000, onClose, onClick }: ToastProps) => {
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
@@ -35,7 +36,10 @@ const ToastItem = ({ type, message, duration = 3000, onClose }: ToastProps) => {
   }, [duration, onClose]);
 
   return (
-    <div className={`toast-item toast-${type} ${visible ? 'show' : 'hide'}`}>
+    <div
+      className={`toast-item toast-${type} ${visible ? 'show' : 'hide'} ${onClick ? 'toast-clickable' : ''}`}
+      onClick={() => { onClick?.(); setVisible(false); setTimeout(onClose, 300); }}
+    >
       <span className="toast-icon">{icons[type]}</span>
       <span className="toast-message">{message}</span>
       <button className="toast-close" onClick={() => { setVisible(false); setTimeout(onClose, 300); }}>
@@ -48,7 +52,7 @@ const ToastItem = ({ type, message, duration = 3000, onClose }: ToastProps) => {
 // Toast 容器
 let container: HTMLDivElement | null = null;
 let root: ReturnType<typeof createRoot> | null = null;
-let toasts: { id: number; type: ToastType; message: string; duration?: number }[] = [];
+let toasts: { id: number; type: ToastType; message: string; duration?: number; onClick?: () => void }[] = [];
 let idCounter = 0;
 
 const renderToasts = () => {
@@ -67,22 +71,22 @@ const renderToasts = () => {
   root?.render(
     <>
       {toasts.map(t => (
-        <ToastItem key={t.id} type={t.type} message={t.message} duration={t.duration} onClose={() => removeToast(t.id)} />
+        <ToastItem key={t.id} type={t.type} message={t.message} duration={t.duration} onClick={t.onClick} onClose={() => removeToast(t.id)} />
       ))}
     </>
   );
 };
 
-const show = (type: ToastType, message: string, duration?: number) => {
-  toasts.push({ id: ++idCounter, type, message, duration });
+const show = (type: ToastType, message: string, duration?: number, onClick?: () => void) => {
+  toasts.push({ id: ++idCounter, type, message, duration, onClick });
   renderToasts();
 };
 
 export const toast = {
-  success: (msg: string, duration?: number) => show('success', msg, duration),
-  error: (msg: string, duration?: number) => show('error', msg, duration),
-  warning: (msg: string, duration?: number) => show('warning', msg, duration),
-  info: (msg: string, duration?: number) => show('info', msg, duration),
+  success: (msg: string, duration?: number, onClick?: () => void) => show('success', msg, duration, onClick),
+  error: (msg: string, duration?: number, onClick?: () => void) => show('error', msg, duration, onClick),
+  warning: (msg: string, duration?: number, onClick?: () => void) => show('warning', msg, duration, onClick),
+  info: (msg: string, duration?: number, onClick?: () => void) => show('info', msg, duration, onClick),
 };
 
 export default toast;

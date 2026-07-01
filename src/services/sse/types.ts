@@ -78,6 +78,9 @@ export const CHANNELS = {
   SQL_DATABI_TABLES: 'sql.databi.tables',
   SQL_EXPORT_LIST: 'sql.export.list',
   TASKS_LIST: 'tasks.list',
+  TASKS_LIST_ANALYSIS: 'tasks.list.analysis',
+  TASKS_LIST_ES_EXPORT: 'tasks.list.es_export',
+  TASKS_LIST_SQL_EXPORT: 'tasks.list.sql_export',
   TASKS_DETAIL: 'tasks.detail',
   MONITOR_METRICS: 'monitor.metrics',
   ASSETS_PROJECT_DETAIL: 'assets.project.detail',
@@ -98,6 +101,9 @@ export interface ChannelParams {
     type: string;
     keyword?: string;
   };
+  'tasks.list.analysis': Record<string, never>;
+  'tasks.list.es_export': Record<string, never>;
+  'tasks.list.sql_export': Record<string, never>;
   'tasks.detail': {
     task_id: string;
   };

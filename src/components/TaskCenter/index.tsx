@@ -36,7 +36,6 @@ const TaskCenter = ({ visible, onClose }: TaskCenterProps) => {
     loading,
     setActiveType,
     setSearchKeyword,
-    startSSE,
     refreshTaskList,
   } = useTaskCenterStore();
 
@@ -49,7 +48,6 @@ const TaskCenter = ({ visible, onClose }: TaskCenterProps) => {
     rows: [],
     total: 0,
     total_rows: 0,
-    cache_total: 0,
     page: 1,
     page_size: 20,
   });
@@ -57,30 +55,36 @@ const TaskCenter = ({ visible, onClose }: TaskCenterProps) => {
 
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // 按 activeType 和 searchKeyword 过滤任务列表
+  const filteredTaskList = taskList.filter(t => {
+    if (t.type !== activeType) return false;
+    if (!searchKeyword) return true;
+    const keyword = searchKeyword.toLowerCase();
+    return (
+      (t.type_text && t.type_text.toLowerCase().includes(keyword)) ||
+      (t.nick_name && t.nick_name.toLowerCase().includes(keyword)) ||
+      (t.error_message && t.error_message.toLowerCase().includes(keyword))
+    );
+  });
+
   // 是否显示搜索框（管理员或有多个用户的任务）
   const showSearch = String(user?.role_id) === '1' || taskList.some(t => t.nick_name);
 
-  // visible 变化时启动/停止 SSE
+  // visible 变化时刷新任务列表
   useEffect(() => {
     if (visible) {
-      startSSE();
+      refreshTaskList();
     }
-  }, [visible, startSSE]);
+  }, [visible, refreshTaskList]);
 
   // 切换任务类型
   const handleTabSwitch = (type: typeof activeType) => {
     setActiveType(type);
   };
 
-  // 搜索防抖
+  // 搜索防抖（客户端过滤，无需重新订阅）
   const handleSearch = (value: string) => {
     setSearchKeyword(value);
-    if (searchTimerRef.current) {
-      clearTimeout(searchTimerRef.current);
-    }
-    searchTimerRef.current = setTimeout(() => {
-      startSSE();
-    }, 300);
   };
 
   // ESC 关闭（只在最顶层时响应）
@@ -109,19 +113,23 @@ const TaskCenter = ({ visible, onClose }: TaskCenterProps) => {
 
   // 获取预览数据
   const handlePreview = async (task: Task, page = 1) => {
+    console.log('[TaskCenter] 点击预览的任务:', task);
     setCurrentPreviewTask(task);
     setPreviewVisible(true);
     setPreviewLoading(true);
 
     try {
+      console.log('[TaskCenter] 预览请求:', { id: task.id, type: task.type, page });
       const res = await previewTaskData({ id: task.id, type: task.type, page });
+      console.log('[TaskCenter] 预览返回:', res);
       if (res.code === 200) {
         setPreviewData(res.data);
       } else {
-        toast.error('获取预览数据失败');
+        toast.error(res.message || '获取预览数据失败');
       }
-    } catch {
-      toast.error('获取预览数据失败');
+    } catch (e: any) {
+      console.error('[TaskCenter] 预览异常:', e);
+      toast.error(e?.message || '获取预览数据失败');
     } finally {
       setPreviewLoading(false);
     }
@@ -194,7 +202,7 @@ const TaskCenter = ({ visible, onClose }: TaskCenterProps) => {
         {/* 任务列表 */}
         <div className="drawer-content">
           <TaskList
-            tasks={taskList}
+            tasks={filteredTaskList}
             loading={loading}
             onPreview={handlePreview}
             onRefresh={refreshTaskList}

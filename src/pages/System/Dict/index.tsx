@@ -3,17 +3,12 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { getDictGroups, getDictItems, createDictItem, updateDictItem, deleteDictItem } from '../../../services/system/dict';
+import { getDictGroups, getDictItems, createDictItem, updateDictItem, deleteDictItem, createDictGroup, deleteDictGroup } from '../../../services/system/dict';
 import { toast } from '../../../components/AppNotification';
 import { confirm } from '../../../components/ConfirmModal';
 import type { DictGroup, DictItem } from '../../../types/system';
+import { ItemDialog, GroupDialog, type ItemForm } from './components/DictModals';
 import './style.css';
-
-interface ItemForm {
-  item_key: string;
-  item_value: string;
-  color: string;
-}
 
 const DictManagement = () => {
   const [loading, setLoading] = useState(false);
@@ -24,7 +19,9 @@ const DictManagement = () => {
 
   // 对话框状态
   const [itemDialog, setItemDialog] = useState({ visible: false, title: '' });
-  const [itemForm, setItemForm] = useState<ItemForm>({ item_key: '', item_value: '', color: '' });
+  const [itemForm, setItemForm] = useState<ItemForm>({ group_key: '', group_name: '', item_key: '', item_name: '', item_value: '', color: '' });
+  const [groupDialog, setGroupDialog] = useState(false);
+  const [groupForm, setGroupForm] = useState({ group_key: '', group_name: '' });
 
   const fetchGroupList = useCallback(async () => {
     try {
@@ -58,37 +55,84 @@ const DictManagement = () => {
   };
 
   const handleAddItem = () => {
-    if (!currentGroup) { toast.warning('请先选择分组'); return; }
     setItemDialog({ visible: true, title: '新增字典项' });
-    setItemForm({ item_key: '', item_value: '', color: '' });
+    setItemForm({
+      group_key: currentGroup?.group_key || '',
+      group_name: currentGroup?.group_name || '',
+      item_key: '', item_name: '', item_value: '', color: '',
+    });
   };
 
   const handleEditItem = (row: DictItem) => {
-    if (!currentGroup) { toast.warning('请先选择分组'); return; }
     setItemDialog({ visible: true, title: '编辑字典项' });
     setItemForm({
+      group_key: currentGroup?.group_key || '',
+      group_name: currentGroup?.group_name || '',
       item_key: row.item_key,
+      item_name: row.item_name || '',
       item_value: row.item_value,
       color: row.color?.toUpperCase() || '',
     });
   };
 
+  const handleCreateGroup = async () => {
+    if (!groupForm.group_key || !groupForm.group_name) { toast.warning('请填写完整分组信息'); return; }
+    try {
+      const res = await createDictGroup(groupForm);
+      if (res.code === 200) {
+        toast.success('分组创建成功');
+        setGroupDialog(false);
+        setGroupForm({ group_key: '', group_name: '' });
+        fetchGroupList();
+      }
+    } catch (error) {
+      console.error('创建分组失败:', error);
+    }
+  };
+
+  const handleDeleteGroup = async () => {
+    if (!currentGroup) return;
+    const ok = await confirm({
+      title: '确认删除分组',
+      content: `删除分组“${currentGroup.group_name}”将同时删除该分组下所有字典项，确认继续？`,
+      type: 'danger',
+    });
+    if (!ok) return;
+    try {
+      const res = await deleteDictGroup(currentGroup.group_key);
+      if (res.code === 200) {
+        toast.success('分组删除成功');
+        setCurrentGroup(null);
+        setDictItems([]);
+        fetchGroupList();
+      }
+    } catch (error) {
+      console.error('删除分组失败:', error);
+    }
+  };
+
   const handleItemSubmit = async () => {
     if (!itemForm.item_key || !itemForm.item_value) { toast.warning('请填写完整信息'); return; }
+    if (!itemForm.group_key) { toast.warning('请选择或填写分组'); return; }
     try {
       const isAdd = itemDialog.title === '新增字典项';
       if (isAdd) {
+        // 若分组不存在，先自动创建
+        if (!groupList.some(g => g.group_key === itemForm.group_key)) {
+          const gRes = await createDictGroup({ group_key: itemForm.group_key, group_name: itemForm.group_name || itemForm.group_key });
+          if (gRes.code !== 200) { toast.error('分组创建失败'); return; }
+        }
         const res = await createDictItem({
-          group_key: currentGroup!.group_key,
-          group_name: currentGroup!.group_name,
+          group_key: itemForm.group_key,
           item_key: itemForm.item_key,
+          item_name: itemForm.item_name || undefined,
           item_value: itemForm.item_value,
           color: itemForm.color || '',
         });
         if (res.code === 200) {
           toast.success('新增成功');
           setItemDialog({ visible: false, title: '' });
-          fetchDictItems(currentGroup!.group_key);
+          fetchDictItems(itemForm.group_key);
           fetchGroupList();
         }
       } else {
@@ -96,6 +140,7 @@ const DictManagement = () => {
         if (!existing) { toast.error('未找到要编辑的字典项'); return; }
         const res = await updateDictItem({
           id: existing.id,
+          item_name: itemForm.item_name || undefined,
           item_value: itemForm.item_value,
           color: itemForm.color || '',
         });
@@ -131,6 +176,7 @@ const DictManagement = () => {
       <div className="dict-panel">
         <div className="panel-header">
           <h3>字典分组</h3>
+          <button className="btn-primary btn-sm" onClick={() => setGroupDialog(true)}>+ 新建分组</button>
         </div>
         <div className="panel-body">
           {loading ? <div className="loading">加载中...</div> : (
@@ -165,7 +211,10 @@ const DictManagement = () => {
         <div className="dict-panel">
           <div className="panel-header">
             <h3>{currentGroup.group_name} - 字典项</h3>
-            <button className="btn-primary" onClick={handleAddItem}>+ 新增</button>
+            <div className="panel-actions">
+              <button className="btn-primary" onClick={handleAddItem}>+ 新增</button>
+              <button className="btn-default btn-sm danger" onClick={handleDeleteGroup}>删除分组</button>
+            </div>
           </div>
           <div className="panel-body">
             {itemsLoading ? <div className="loading">加载中...</div> : (
@@ -174,6 +223,7 @@ const DictManagement = () => {
                   <tr>
                     <th>标识</th>
                     <th>名称</th>
+                    <th>值</th>
                     <th>颜色</th>
                     <th style={{ width: 160 }}>操作</th>
                   </tr>
@@ -182,6 +232,7 @@ const DictManagement = () => {
                   {dictItems.map(item => (
                     <tr key={item.id}>
                       <td>{item.item_key}</td>
+                      <td>{item.item_name || '-'}</td>
                       <td>{item.item_value}</td>
                       <td>
                         {item.color ? (
@@ -201,35 +252,25 @@ const DictManagement = () => {
         </div>
       )}
 
-      {/* 新增/编辑对话框 */}
-      {itemDialog.visible && (
-        <div className="modal-overlay" onClick={() => setItemDialog({ visible: false, title: '' })}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>{itemDialog.title}</h3>
-              <button className="btn-close" onClick={() => setItemDialog({ visible: false, title: '' })}>×</button>
-            </div>
-            <div className="modal-body">
-              <div className="form-group">
-                <label>标识 *</label>
-                <input value={itemForm.item_key} onChange={e => setItemForm({ ...itemForm, item_key: e.target.value })} placeholder="英文标识" />
-              </div>
-              <div className="form-group">
-                <label>名称 *</label>
-                <input value={itemForm.item_value} onChange={e => setItemForm({ ...itemForm, item_value: e.target.value })} placeholder="显示名称" />
-              </div>
-              <div className="form-group">
-                <label>颜色</label>
-                <input type="color" value={itemForm.color || '#1890ff'} onChange={e => setItemForm({ ...itemForm, color: e.target.value })} />
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button className="btn-default" onClick={() => setItemDialog({ visible: false, title: '' })}>取消</button>
-              <button className="btn-primary" onClick={handleItemSubmit}>确定</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 新增/编辑字典项对话框 */}
+      <ItemDialog
+        visible={itemDialog.visible}
+        title={itemDialog.title}
+        form={itemForm}
+        groupList={groupList}
+        onClose={() => setItemDialog({ visible: false, title: '' })}
+        onFormChange={setItemForm}
+        onSubmit={handleItemSubmit}
+      />
+
+      {/* 新建分组对话框 */}
+      <GroupDialog
+        visible={groupDialog}
+        form={groupForm}
+        onClose={() => setGroupDialog(false)}
+        onFormChange={setGroupForm}
+        onSubmit={handleCreateGroup}
+      />
     </div>
   );
 };

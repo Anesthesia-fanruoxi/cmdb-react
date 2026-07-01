@@ -171,7 +171,7 @@ const ExportDetailDrawer = ({ visible, exportId, onClose, onRefresh }: Props) =>
     try {
       setLoading(true);
       await updateExport({ id: detail.id, process_type: 0 });
-      toast.success('已拒绝该申请');
+      toast.success('已驳回该申请');
       onRefresh();
       onClose();
     } catch {

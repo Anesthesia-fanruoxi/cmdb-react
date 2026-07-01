@@ -1,7 +1,7 @@
 /**
  * SSE 监控面板（贴 Sidebar 右侧弹出）
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SSEMonitorSnapshot } from './useSSEMonitor';
 import { ConnectionTab } from './ConnectionTab';
 import { SubscriptionsTab } from './SubscriptionsTab';
@@ -22,6 +22,9 @@ export function MonitorPanel({ snap, anchorRef, onClose }: Props) {
   const panelRef = useRef<HTMLDivElement>(null);
   const submsgRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const [dragging, setDragging] = useState(false);
+  const dragOffset = useRef({ x: 0, y: 0 });
+  const hasDragged = useRef(false);
 
   // 主面板定位：贴 anchor 右侧 + 顶端对齐
   useEffect(() => {
@@ -37,21 +40,36 @@ export function MonitorPanel({ snap, anchorRef, onClose }: Props) {
 
   // 点击外部 / ESC 关闭（副浮层视为内部，不触发关闭）
   useEffect(() => {
-    const onDocClick = (e: MouseEvent) => {
-      const t = e.target as Node;
-      if (panelRef.current?.contains(t)) return;
-      if (submsgRef.current?.contains(t)) return;
-      if (anchorRef.current?.contains(t)) return;
-      onClose();
-    };
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('mousedown', onDocClick);
     document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDocClick);
-      document.removeEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  // 拖拽
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('button')) return;
+    setDragging(true);
+    hasDragged.current = false;
+    const rect = panelRef.current?.getBoundingClientRect();
+    if (rect) {
+      dragOffset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!dragging) return;
+    const onMove = (e: MouseEvent) => {
+      hasDragged.current = true;
+      setPos({ top: e.clientY - dragOffset.current.y, left: e.clientX - dragOffset.current.x });
     };
-  }, [anchorRef, onClose]);
+    const onUp = () => setDragging(false);
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    return () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+  }, [dragging]);
 
   // 切换 Tab 离开订阅则收起副浮层
   useEffect(() => {
@@ -74,7 +92,7 @@ export function MonitorPanel({ snap, anchorRef, onClose }: Props) {
         ref={panelRef}
         style={{ top: pos.top, left: pos.left }}
       >
-        <div className="sse-monitor-panel__head">
+        <div className="sse-monitor-panel__head" onMouseDown={handleMouseDown} style={{ cursor: dragging ? 'grabbing' : 'grab' }}>
           <span className="sse-monitor-panel__title">SSE 网关</span>
           <button type="button" className="sse-monitor-panel__close" onClick={onClose}>×</button>
         </div>

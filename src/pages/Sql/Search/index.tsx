@@ -9,9 +9,8 @@ import {
   type Project
 } from '../../../services/sql/search';
 import { openComponentWindow, onReattachTab } from '../../../utils/window';
-import { usePageStateStore, useMessageStore, useUserPrefsStore, useAuthStore } from '../../../stores';
+import { usePageStateStore, useMessageStore, useUserPrefsStore, useAuthStore, useTaskCenterStore } from '../../../stores';
 import { toast } from '../../../components/Toast';
-import { appNotification } from '../../../components/AppNotification';
 import TableTree from './components/TableTree';
 import SqlWorkspace from './components/SqlWorkspace';
 import DraggableTabs from './components/DraggableTabs';
@@ -927,69 +926,9 @@ const SqlSearch = () => {
         const taskId = (res as any).data?.task_id;
         
         if (taskId) {
-          // 有任务ID，开始监听任务状态
-          
-          // 使用 toast 提示请求已提交
+          // 有任务ID，注册到全局任务中心（依赖 tasks.list SSE 订阅）
+          useTaskCenterStore.getState().addRunningTask(taskId, 'sql_export');
           toast.success('导出请求已提交，正在处理中...');
-          
-          // 导入任务监听API
-          const { getTaskDetail } = await import('../../../services/task');
-          
-          let messageCount = 0;
-          const eventSource = getTaskDetail(
-            taskId,
-            (data) => {
-              messageCount++;
-              
-              if (data.status === 'success') {
-                eventSource.close();
-                
-                // 1. 发送带按钮的系统通知（5秒后自动关闭）
-                appNotification.withButtons(
-                  'success',
-                  'SQL导出完成',
-                  'SQL导出',
-                  [
-                    {
-                      text: '点击查看',
-                      primary: true,
-                      onClick: () => {
-                        import('../../../stores/taskCenterStore').then(({ useTaskCenterStore }) => {
-                          const { open, setActiveType } = useTaskCenterStore.getState();
-                          setActiveType('sql_export');
-                          open();
-                        });
-                      }
-                    }
-                  ],
-                  5000
-                );
-                
-                // 2. 同时添加到消息中心（铃铛显示未读）
-                addMessage({
-                  type: 'success',
-                  title: 'SQL导出完成',
-                  content: 'SQL导出',
-                  action: {
-                    type: 'task-center'
-                  }
-                });
-              } else if (data.status === 'failed') {
-                eventSource.close();
-                
-                addMessage({
-                  type: 'error',
-                  title: '导出失败',
-                  content: data.error_message || '导出任务执行失败',
-                });
-              }
-            },
-            () => {
-              console.error('[导出] ❌ SSE连接错误');
-            },
-            () => {
-            }
-          );
         } else {
           // 没有任务ID，使用旧的通知方式
           toast.success(res.message || '导出任务已提交，请稍后查收邮件');

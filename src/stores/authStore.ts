@@ -37,6 +37,7 @@ import { useMenuStore } from './menuStore';
 import { useAppStore } from './appStore';
 import { usePageStateStore } from './pageStateStore';
 import { useUserPrefsStore } from './userPrefsStore';
+import { useTaskCenterStore } from './taskCenterStore';
 import { useSqlApplyStore } from './sqlApplyStore';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
@@ -146,6 +147,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         });
         // 启动全局 SQL 申请订阅
         useSqlApplyStore.getState().start();
+        // 启动全局任务中心订阅
+        useTaskCenterStore.getState().start();
         return true;
       }
       
@@ -265,6 +268,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   executeLogout: async () => {
     // 停止全局 SQL 申请订阅
     useSqlApplyStore.getState().stop();
+    // 停止全局任务中心订阅（登出时完整重置，清空状态追踪）
+    useTaskCenterStore.getState().reset();
 
     // 调用登出接口
     try {
@@ -339,6 +344,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
           // 启动全局 SQL 申请订阅
           useSqlApplyStore.getState().start();
+          // 启动全局任务中心订阅
+          useTaskCenterStore.getState().start();
 
           // 恢复主题
           if (prefs?.theme) {

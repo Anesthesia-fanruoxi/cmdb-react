@@ -1,54 +1,134 @@
 /**
- * 任务中心状态管理
- * 管理任务中心显示状态、运行中任务、SSE 连接
+ * 任务中心全局 Store
+ * - 登录后由 authStore 调用 start() 建立全局订阅 tasks.list
+ * - 桌面通知 + 消息中心写入由本 store 集中处理
+ * - 登出时由 authStore 调用 stop() 清理
  */
 
 import { create } from 'zustand';
-import { getToken } from '../services/storage/tokenStorage';
 import { useMessageStore } from './messageStore';
 import { useAuthStore } from './authStore';
-import { createGatewayConnection } from '../services/sse/compat';
+import { SSEGateway } from '@/services/sse';
+import type { SSEConnectionState, Subscription } from '@/services/sse';
 import type { Task } from '../services/task';
+import { toast } from '@/components/Toast';
 
-// 任务类型名称映射
 const TASK_TYPE_NAMES: Record<string, string> = {
   analysis: '数据分析',
   es_export: '日志导出',
   sql_export: 'SQL导出',
 };
 
-interface TaskCenterState {
-  // 弹框显示状态
-  visible: boolean;
-  // 当前激活的任务类型
-  activeType: 'analysis' | 'es_export' | 'sql_export';
-  // 搜索关键词
-  searchKeyword: string;
-  // 任务列表
-  taskList: Task[];
-  // 加载状态
-  loading: boolean;
-  // 运行中的任务 ID 集合（用于判断是否需要保持 SSE）
-  runningTaskIds: Set<string>;
-  // 上次任务状态（用于检测状态变化）
-  prevTaskStatus: Map<string, string>;
-  // SSE 连接实例
-  eventSource: { close: () => void } | null;
+type SSEData = { tasks?: Task[] };
 
-  // Actions
+interface TaskCenterState {
+  visible: boolean;
+  activeType: 'analysis' | 'es_export' | 'sql_export';
+  searchKeyword: string;
+  /** 全量任务列表（3种类型合并） */
+  taskList: Task[];
+  loading: boolean;
+  runningTaskIds: Set<string>;
+  prevTaskStatus: Map<string, string>;
+  sseStatus: SSEConnectionState;
+
   open: () => void;
   close: () => void;
   toggle: () => void;
   setActiveType: (type: 'analysis' | 'es_export' | 'sql_export') => void;
   setSearchKeyword: (keyword: string) => void;
-  
-  // SSE 管理
-  startSSE: () => void;
-  stopSSE: () => void;
-  
-  // 任务管理
-  addRunningTask: (taskId: string, taskType: string) => void;
+  start: () => void;
+  stop: () => void;
+  reset: () => void;
   refreshTaskList: () => void;
+  addRunningTask: (taskId: string, taskType: string) => void;
+}
+
+const SUBSCRIPTION_IDS = ['analysis_list', 'es_export_list', 'sql_export_list'] as const;
+const SUBSCRIPTION_CHANNELS = ['tasks.list.analysis', 'tasks.list.es_export', 'tasks.list.sql_export'] as const;
+
+let analysisListRef: Subscription<SSEData> | null = null;
+let esExportListRef: Subscription<SSEData> | null = null;
+let sqlExportListRef: Subscription<SSEData> | null = null;
+let started = false;
+
+const prevTaskStatus = new Map<string, string>();
+
+function ensureGateway(): SSEGateway {
+  let gateway = SSEGateway.getInstance();
+  if (!gateway) {
+    const baseUrl = import.meta.env.VITE_SSE_BASE_URL || import.meta.env.VITE_API_BASE_URL || '';
+    SSEGateway.getInstance({ url: `${baseUrl}/gateway`, subscribeApiUrl: baseUrl });
+    gateway = SSEGateway.getInstance()!;
+  }
+  return gateway;
+}
+
+/**
+ * 创建按类型合并数据的回调
+ * 每个订阅推送时，用新数据替换同类型的旧数据，保留其他类型
+ */
+function createHandleData(taskType: string) {
+  return (data: SSEData) => {
+    const incoming: Task[] = (data.tasks || []);
+
+    const addMessage = useMessageStore.getState().addMessage;
+    const currentUser = useAuthStore.getState().user;
+    const currentNickName = currentUser?.nick_name || '';
+    const newRunningIds = new Set<string>();
+
+    incoming.forEach((task: Task) => {
+      const prevStatus = prevTaskStatus.get(task.id);
+      if (task.status === 'pending' || task.status === 'running') {
+        newRunningIds.add(task.id);
+      }
+      const isOwnTask = !task.nick_name || task.nick_name === currentNickName;
+      if (prevStatus && prevStatus !== task.status && isOwnTask) {
+        if (task.status === 'success') {
+          addMessage({
+            type: 'success',
+            title: `${TASK_TYPE_NAMES[task.type] || '任务'}完成`,
+            content: task.type_text || '任务执行成功',
+            action: { type: 'task-center' },
+          });
+          toast.success(`${TASK_TYPE_NAMES[task.type] || '任务'}成功，点击跳转任务中心`, undefined, () => {
+            useTaskCenterStore.getState().open();
+          });
+        } else if (task.status === 'failed') {
+          addMessage({
+            type: 'error',
+            title: `${TASK_TYPE_NAMES[task.type] || '任务'}失败`,
+            content: task.error_message || '任务执行失败',
+            action: { type: 'task-center' },
+          });
+          toast.error(`${TASK_TYPE_NAMES[task.type] || '任务'}失败，点击跳转任务中心`, undefined, () => {
+            useTaskCenterStore.getState().open();
+          });
+        }
+      }
+      prevTaskStatus.set(task.id, task.status);
+    });
+
+    // 合并：保留其他类型的任务，用新数据替换当前类型
+    const current = useTaskCenterStore.getState().taskList;
+    const other = current.filter(t => t.type !== taskType);
+    const merged = [...other, ...incoming].sort((a, b) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+
+    // 收集所有非 pending/running 的 runningTaskIds
+    merged.forEach(t => {
+      if (t.status === 'pending' || t.status === 'running') {
+        newRunningIds.add(t.id);
+      }
+    });
+
+    useTaskCenterStore.setState({
+      taskList: merged,
+      loading: false,
+      runningTaskIds: newRunningIds,
+    });
+  };
 }
 
 export const useTaskCenterStore = create<TaskCenterState>((set, get) => ({
@@ -59,233 +139,88 @@ export const useTaskCenterStore = create<TaskCenterState>((set, get) => ({
   loading: false,
   runningTaskIds: new Set(),
   prevTaskStatus: new Map(),
-  eventSource: null,
+  sseStatus: 'closed',
 
-  open: () => {
-    set({ visible: true });
-    // SSE 由组件的 useEffect 触发，避免重复调用
-  },
-
-  close: () => {
-    set({ visible: false });
-    // 关闭时检查是否需要断开 SSE
-    const { runningTaskIds } = get();
-    if (runningTaskIds.size === 0) {
-      get().stopSSE();
-    }
-  },
-
-  toggle: () => {
-    const { visible } = get();
-    if (visible) {
-      get().close();
-    } else {
-      get().open();
-    }
-  },
+  open: () => set({ visible: true }),
+  close: () => set({ visible: false }),
+  toggle: () => set(s => ({ visible: !s.visible })),
 
   setActiveType: (type) => {
     set({ activeType: type, searchKeyword: '' });
-    get().startSSE();
   },
 
-  setSearchKeyword: (keyword) => {
-    set({ searchKeyword: keyword });
-  },
+  setSearchKeyword: (keyword) => set({ searchKeyword: keyword }),
 
-  // 启动 SSE 连接
-  startSSE: () => {
-    const { eventSource: existingES, activeType, searchKeyword } = get();
-    
-    // 关闭现有连接
-    if (existingES) {
-      existingES.close();
-    }
+  // 全局启动（登录时调用）
+  start: () => {
+    if (started) return;
+    started = true;
 
-    set({ loading: true });
+    const gateway = ensureGateway();
+    if (gateway.getState() === 'closed') gateway.connect();
 
-    // 网关模式
-    const gatewayResult = createGatewayConnection<{ tasks?: Task[] }>(
-      'tasks.list',
-      { type: activeType, keyword: searchKeyword || '' },
-      (data) => {
-        const tasks: Task[] = (data.tasks || []).sort((a: Task, b: Task) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
+    const taskTypes = ['analysis', 'es_export', 'sql_export'] as const;
 
-        const { prevTaskStatus, visible } = get();
-        const addMessage = useMessageStore.getState().addMessage;
-        const currentUser = useAuthStore.getState().user;
-        const currentNickName = currentUser?.nick_name;
-        const newRunningIds = new Set<string>();
-
-        tasks.forEach((task: Task) => {
-          const prevStatus = prevTaskStatus.get(task.id);
-          
-          // 更新运行中任务集合
-          if (task.status === 'pending' || task.status === 'running') {
-            newRunningIds.add(task.id);
-          }
-
-          // 检测状态变化，判断是否需要发送消息通知
-          const isOwnTask = !task.nick_name || task.nick_name === currentNickName;
-          
-          if (prevStatus && prevStatus !== task.status && isOwnTask) {
-            if (task.status === 'success') {
-              addMessage({
-                type: 'success',
-                title: `${TASK_TYPE_NAMES[task.type] || '任务'}完成`,
-                content: task.type_text || '任务执行成功',
-                action: { type: 'task-center' },
-              });
-            } else if (task.status === 'failed') {
-              addMessage({
-                type: 'error',
-                title: `${TASK_TYPE_NAMES[task.type] || '任务'}失败`,
-                content: task.error_message || '任务执行失败',
-                action: { type: 'task-center' },
-              });
-            }
-          }
-
-          prevTaskStatus.set(task.id, task.status);
-        });
-
-        set({
-          taskList: tasks,
-          loading: false,
-          runningTaskIds: newRunningIds,
-          prevTaskStatus: new Map(prevTaskStatus),
-        });
-
-        // 如果没有运行中的任务且弹框已关闭，断开 SSE
-        if (newRunningIds.size === 0 && !visible) {
-          get().stopSSE();
-        }
-      },
-      () => {
-        set({ loading: false });
-        get().stopSSE();
-      },
+    [analysisListRef, esExportListRef, sqlExportListRef] = SUBSCRIPTION_IDS.map((id, i) =>
+      gateway.subscribe<SSEData>({
+        id,
+        channel: SUBSCRIPTION_CHANNELS[i],
+        params: {},
+        onData: createHandleData(taskTypes[i]),
+        onError: () => {
+          useTaskCenterStore.setState({ loading: false });
+        },
+      })
     );
 
-    if (gatewayResult) {
-      set({ eventSource: gatewayResult });
-      return;
-    }
-
-    // 旧模式
-    const token = getToken();
-    const baseUrl = import.meta.env.VITE_SSE_BASE_URL || import.meta.env.VITE_API_BASE_URL || '';
-    const keyword = searchKeyword ? `&keyword=${encodeURIComponent(searchKeyword)}` : '';
-    const url = `${baseUrl}/tasks/list?type=${activeType}${keyword}&token=${token}`;
-
-    const eventSource = new EventSource(url);
-
-    eventSource.addEventListener('data', (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        const tasks: Task[] = (data.tasks || []).sort((a: Task, b: Task) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-
-        const { prevTaskStatus, visible } = get();
-        const addMessage = useMessageStore.getState().addMessage;
-        const currentUser = useAuthStore.getState().user;
-        const currentNickName = currentUser?.nick_name;
-        const newRunningIds = new Set<string>();
-
-        tasks.forEach((task: Task) => {
-          const prevStatus = prevTaskStatus.get(task.id);
-          
-          // 更新运行中任务集合
-          if (task.status === 'pending' || task.status === 'running') {
-            newRunningIds.add(task.id);
-          }
-
-          // 检测状态变化，判断是否需要发送消息通知
-          const isOwnTask = !task.nick_name || task.nick_name === currentNickName;
-          
-          if (prevStatus && prevStatus !== task.status && isOwnTask) {
-            if (task.status === 'success') {
-              addMessage({
-                type: 'success',
-                title: `${TASK_TYPE_NAMES[task.type] || '任务'}完成`,
-                content: task.type_text || '任务执行成功',
-                action: { type: 'task-center' },
-              });
-            } else if (task.status === 'failed') {
-              addMessage({
-                type: 'error',
-                title: `${TASK_TYPE_NAMES[task.type] || '任务'}失败`,
-                content: task.error_message || '任务执行失败',
-                action: { type: 'task-center' },
-              });
-            }
-          }
-
-          prevTaskStatus.set(task.id, task.status);
-        });
-
-        set({
-          taskList: tasks,
-          loading: false,
-          runningTaskIds: newRunningIds,
-          prevTaskStatus: new Map(prevTaskStatus),
-        });
-
-        // 如果没有运行中的任务且弹框已关闭，断开 SSE
-        if (newRunningIds.size === 0 && !visible) {
-          get().stopSSE();
-        }
-      } catch {
-        // 静默处理解析错误
-      }
-    });
-
-    eventSource.onerror = () => {
-      set({ loading: false });
-      get().stopSSE();
-    };
-
-    eventSource.addEventListener('complete', () => {
-      get().stopSSE();
-    });
-
-    set({ eventSource });
+    useTaskCenterStore.setState({ sseStatus: gateway.getState() });
   },
 
-  // 停止 SSE 连接
-  stopSSE: () => {
-    const { eventSource } = get();
-    if (eventSource) {
-      eventSource.close();
-      set({ eventSource: null });
+  // 全局停止（登出时调用）
+  stop: () => {
+    if (analysisListRef) {
+      analysisListRef.unsubscribe();
+      analysisListRef = null;
     }
+    if (esExportListRef) {
+      esExportListRef.unsubscribe();
+      esExportListRef = null;
+    }
+    if (sqlExportListRef) {
+      sqlExportListRef.unsubscribe();
+      sqlExportListRef = null;
+    }
+    started = false;
+    // 注意：不清空 prevTaskStatus，保留状态追踪以避免 refreshTaskList 后丢失通知
+    useTaskCenterStore.setState({
+      taskList: [],
+      runningTaskIds: new Set(),
+      loading: false,
+      sseStatus: 'closed',
+    });
+  },
+
+  // 登出时完整重置（清空状态追踪）
+  reset: () => {
+    get().stop();
+    prevTaskStatus.clear();
+  },
+
+  // 刷新任务列表（重新订阅）
+  refreshTaskList: () => {
+    get().stop();
+    get().start();
   },
 
   // 添加运行中的任务（创建任务时调用）
-  addRunningTask: (taskId, taskType) => {
-    const { runningTaskIds: currentRunningIds, activeType, eventSource } = get();
-    
-    // 添加到运行中任务集合
+  addRunningTask: (taskId: string, taskType: string) => {
+    const { runningTaskIds: currentRunningIds } = get();
     const newRunningIds = new Set(currentRunningIds);
     newRunningIds.add(taskId);
     set({ runningTaskIds: newRunningIds });
 
-    // 如果当前没有 SSE 连接，或者任务类型与当前激活类型一致，启动/刷新 SSE
-    if (!eventSource) {
-      // 切换到对应的任务类型
-      set({ activeType: taskType as 'analysis' | 'es_export' | 'sql_export' });
-      get().startSSE();
-    } else if (taskType === activeType) {
-      // 刷新当前列表
-      get().startSSE();
-    }
-  },
-
-  // 刷新任务列表
-  refreshTaskList: () => {
-    get().startSSE();
+    // 预设初始状态，确保后续 SSE 推送有对比基准（不会因 stop 清空而丢失通知）
+    prevTaskStatus.set(taskId, 'pending');
+    // 不主动 refreshTaskList，后端 eventbus.Task 会通过 SSE 自然推送任务列表更新
   },
 }));

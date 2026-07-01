@@ -33,14 +33,6 @@ export interface ExportItem {
   download_url?: string; // 下载链接
 }
 
-// 导出进度信息
-export interface ExportProgress {
-  export_id: string;
-  current_rows: number;
-  total_rows: number;
-  message: string;
-}
-
 export interface ExportDetail extends ExportItem {
   file_url?: string;
   error_message?: string;
@@ -81,12 +73,12 @@ export function getSqlExportProjects() {
 
 // 获取SQL导出申请列表（SSE流式）
 export function getExportListSSE(
-  onMessage: (data: { export: ExportItem[]; progress?: ExportProgress[]; total_count: number }) => void,
+  onMessage: (data: { export: ExportItem[]; total_count: number }) => void,
   onError?: (error: Event) => void,
   onComplete?: () => void
 ): { close: () => void } {
   // 网关模式
-  const gatewayResult = createGatewayConnection<{ export: ExportItem[]; progress?: ExportProgress[]; total_count: number }>(
+  const gatewayResult = createGatewayConnection<{ export: ExportItem[]; total_count: number }>(
     'sql.export.list',
     {},
     onMessage,
@@ -170,16 +162,14 @@ export function generateExportDownloadLink(id: string) {
 
 // 状态映射
 export const EXPORT_STATUS_MAP: Record<number, { text: string; type: string }> = {
-  0: { text: '待提交', type: 'info' },
+  0: { text: '待审批', type: 'info' },
   1: { text: '待审核', type: 'warning' },
   2: { text: '待执行', type: 'primary' },
   3: { text: '执行中', type: 'primary' },
-  4: { text: '执行成功', type: 'success' },
-  5: { text: '已撤销', type: 'info' },
-  6: { text: '已拒绝', type: 'danger' },
-  7: { text: '执行失败', type: 'danger' },
-  8: { text: 'SQL执行中', type: 'primary' },
-  9: { text: 'SQL导出中', type: 'primary' },
-  10: { text: '邮件发送中', type: 'primary' },
-  11: { text: '邮件发送失败', type: 'danger' },
+  4: { text: '导出中', type: 'primary' },
+  5: { text: '上传文件', type: 'primary' },
+  6: { text: '成功', type: 'success' },
+  7: { text: '失败', type: 'danger' },
+  8: { text: '撤回', type: 'info' },
+  9: { text: '驳回', type: 'danger' },
 };

@@ -90,6 +90,7 @@ export interface DictItem {
   group_key: string;
   group_name: string;
   item_key: string;
+  item_name: string;
   item_value: string;
   color?: string;
   created_by?: string;

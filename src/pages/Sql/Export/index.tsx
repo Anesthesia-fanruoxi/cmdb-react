@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   getExportListSSE, getSqlExportProjects, submitExport, getProcessList, getDatabases,
   generateExportDownloadLink, EXPORT_STATUS_MAP, 
-  type ExportItem, type ExportProject, type ProcessInfo, type ExportProgress
+  type ExportItem, type ExportProject, type ProcessInfo
 } from '@/services/sql';
 import { toast } from '@/components/AppNotification';
 import ExportDetailDrawer from './ExportDetail';
@@ -18,10 +18,6 @@ const SqlExport = () => {
   const [exportList, setExportList] = useState<ExportItem[]>([]);
   const [projects, setProjects] = useState<ExportProject[]>([]);
   const eventSourceRef = useRef<{ close: () => void } | null>(null);
-  
-  // 进度数据
-  const [progressData, setProgressData] = useState<ExportProgress[]>([]);
-  const progressHistoryRef = useRef<Record<string, Array<{ time: number; rows: number }>>>({});
   
   // 下载相关
   const [showDownloadDialog, setShowDownloadDialog] = useState(false);
@@ -74,26 +70,6 @@ const SqlExport = () => {
     const eventSource = getExportListSSE(
       (data) => {
         setExportList(data.export || []);
-        
-        // 处理进度数据
-        const newProgress = data.progress || [];
-        newProgress.forEach(p => {
-          const id = p.export_id;
-          if (!progressHistoryRef.current[id]) {
-            progressHistoryRef.current[id] = [];
-          }
-          // 添加新记录
-          progressHistoryRef.current[id].push({
-            time: Date.now(),
-            rows: p.current_rows
-          });
-          // 只保留最近10条记录
-          if (progressHistoryRef.current[id].length > 10) {
-            progressHistoryRef.current[id].shift();
-          }
-        });
-        setProgressData(newProgress);
-        
         setLoading(false);
       },
       () => {
@@ -289,51 +265,6 @@ const SqlExport = () => {
     return EXPORT_STATUS_MAP[status] || { text: '未知', type: 'default' };
   };
 
-  // 获取进度信息
-  const getProgress = (exportId: string) => {
-    return progressData.find(p => p.export_id === exportId);
-  };
-
-  // 计算进度百分比
-  const getProgressPercent = (exportId: string) => {
-    const progress = getProgress(exportId);
-    if (!progress || !progress.total_rows) return 0;
-    return Math.round((progress.current_rows / progress.total_rows) * 100);
-  };
-
-  // 计算预估剩余时间
-  const getEstimatedTime = (exportId: string) => {
-    const progress = getProgress(exportId);
-    const history = progressHistoryRef.current[exportId];
-    
-    if (!progress || !history || history.length < 2 || !progress.total_rows) {
-      return '计算中...';
-    }
-    
-    // 计算速度（基于最近的记录）
-    const oldest = history[0];
-    const newest = history[history.length - 1];
-    const elapsed = (newest.time - oldest.time) / 1000; // 秒
-    const processedRows = newest.rows - oldest.rows;
-    
-    if (elapsed === 0 || processedRows === 0) {
-      return '计算中...';
-    }
-    
-    const speed = processedRows / elapsed; // 行/秒
-    const remainingRows = progress.total_rows - progress.current_rows;
-    const remainingSeconds = remainingRows / speed;
-    
-    // 格式化时间
-    if (remainingSeconds < 60) {
-      return `${Math.ceil(remainingSeconds)}秒`;
-    } else if (remainingSeconds < 3600) {
-      return `${Math.ceil(remainingSeconds / 60)}分钟`;
-    } else {
-      return `${Math.ceil(remainingSeconds / 3600)}小时`;
-    }
-  };
-
   // 处理下载
   const handleDownload = async (item: ExportItem) => {
     // 如果已有下载链接，直接下载
@@ -398,8 +329,6 @@ const SqlExport = () => {
               ) : (
                 exportList.map(item => {
                   const statusInfo = getStatusInfo(item.status);
-                  const progress = getProgress(item.id);
-                  const showProgress = item.status === 8 && progress;
                   
                   return (
                     <tr key={item.id}>
@@ -409,24 +338,11 @@ const SqlExport = () => {
                       <td>{item.created_at?.replace('T', ' ').substring(0, 19)}</td>
                       <td className={item.current_operator ? 'highlight-cell' : ''}>{item.current_operator || '-'}</td>
                       <td>
-                        {showProgress ? (
-                          <div className="progress-wrapper">
-                            <div className="progress-info">
-                              <span className="progress-text">{progress.message}</span>
-                              <span className="progress-percent">{getProgressPercent(item.id)}%</span>
-                            </div>
-                            <div className="progress-bar">
-                              <div className="progress-fill" style={{ width: `${getProgressPercent(item.id)}%` }} />
-                            </div>
-                            <div className="progress-eta">预计剩余: {getEstimatedTime(item.id)}</div>
-                          </div>
-                        ) : (
-                          <span className={`tag tag-${statusInfo.type}`}>{statusInfo.text}</span>
-                        )}
+                        <span className={`tag tag-${statusInfo.type}`}>{statusInfo.text}</span>
                       </td>
                       <td className="action-cell">
                         <button className="btn btn-link" onClick={() => handleViewDetail(item)}>详情</button>
-                        {item.status === 4 && (
+                        {item.status === 6 && (
                           <button 
                             className="btn btn-link" 
                             onClick={() => handleDownload(item)}

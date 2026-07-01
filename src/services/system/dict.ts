@@ -18,6 +18,7 @@ export interface DictItem {
   key: string;         // 兼容旧代码，映射自 item_key
   value: string;       // 兼容旧代码，映射自 item_value
   item_key: string;
+  item_name: string;
   item_value: string;
   group_key: string;
   group_name: string;
@@ -34,6 +35,7 @@ function mapDictItem(raw: any): DictItem {
     key: raw.item_key || '',
     value: raw.item_value || '',
     item_key: raw.item_key || '',
+    item_name: raw.item_name || '',
     item_value: raw.item_value || '',
     group_key: raw.group_key || '',
     group_name: raw.group_name || '',
@@ -49,6 +51,16 @@ export function getDictGroups(): Promise<ApiResponse<DictGroup[]>> {
   return apiClient.get<DictGroup[]>('/system/dict/groups');
 }
 
+/** 创建分组 */
+export function createDictGroup(data: { group_key: string; group_name: string }): Promise<ApiResponse<null>> {
+  return apiClient.post<null>('/system/dict/group/create', data);
+}
+
+/** 删除分组 */
+export function deleteDictGroup(groupKey: string): Promise<ApiResponse<null>> {
+  return apiClient.delete<null>(`/system/dict/group/delete?group_key=${groupKey}`);
+}
+
 /** 获取某分组下的字典项 */
 export function getDictItems(group: string): Promise<ApiResponse<{ items: DictItem[] }>> {
   return apiClient.get<any>('/system/dict/items', { group }).then(res => ({
@@ -60,8 +72,8 @@ export function getDictItems(group: string): Promise<ApiResponse<{ items: DictIt
 /** 创建字典项 */
 export function createDictItem(data: {
   group_key: string;
-  group_name?: string;
   item_key: string;
+  item_name?: string;
   item_value: string;
   color?: string;
 }): Promise<ApiResponse<DictItem>> {
@@ -74,6 +86,7 @@ export function createDictItem(data: {
 /** 更新字典项 */
 export function updateDictItem(data: {
   id: number;
+  item_name?: string;
   item_value?: string;
   color?: string;
 }): Promise<ApiResponse<null>> {

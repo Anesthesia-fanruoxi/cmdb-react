@@ -119,7 +119,7 @@ export async function previewTaskData(params: {
   id: string;
   type: string;
   page: number;
-}): Promise<{ code: number; data: PreviewData }> {
+}): Promise<{ code: number; data: PreviewData; message?: string }> {
   return apiClient.post('/tasks/preview', params);
 }
 
