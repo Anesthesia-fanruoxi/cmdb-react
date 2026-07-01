@@ -184,6 +184,7 @@ const LogsPanel = ({
     if (currentQueryId && currentQueryId !== lastQueryIdRef.current) {
       lastQueryIdRef.current = currentQueryId;
       setShouldResetScroll(true);
+      autoFillInFlight.current = false; // 新搜索时重置自动填充守卫
     }
   }, [searchParams?.query_id, searchParams?.page]);
 
@@ -272,29 +273,43 @@ const LogsPanel = ({
     }
   }, [queryId, searchParams, pageLoading, isLoadingMore, onPageData, onLoadingChange]);
 
+  const fetchPageDataRef = useRef(fetchPageData);
+  fetchPageDataRef.current = fetchPageData;
+
+  // 自动填充防重入标志：避免 effect 因 isLoadingMore 等状态反复变化而多次发起请求
+  const autoFillInFlight = useRef(false);
+
   const handlePageChange = (page: number) => {
     if (page < 1 || page > totalPages) return;
-    fetchPageData(page, false);
+    fetchPageDataRef.current(page, false);
   };
 
   const loadMoreData = useCallback(() => {
     if (isLoadingMore || !hasMore) return;
     const nextPage = currentPage + 1;
-    if (nextPage <= totalPages) fetchPageData(nextPage, true);
-  }, [currentPage, totalPages, hasMore, isLoadingMore, fetchPageData]);
+    if (nextPage <= totalPages) fetchPageDataRef.current(nextPage, true);
+  }, [currentPage, totalPages, hasMore, isLoadingMore]);
 
   // 数据加载完成后，检测内容是否未撑满容器，未撑满则自动加载下一页
+  // 使用 ref 调用 + inFlight 守卫，避免因 isLoadingMore 等状态抖动导致重复请求
   useEffect(() => {
     if (!contentRef.current || !hasMore || isLoadingMore || loading || !queryId) return;
+    if (autoFillInFlight.current) return;
     const el = contentRef.current;
     const raf = requestAnimationFrame(() => {
       if (el.scrollHeight <= el.clientHeight) {
         const nextPage = currentPage + 1;
-        if (nextPage <= totalPages) fetchPageData(nextPage, true);
+        if (nextPage <= totalPages) {
+          autoFillInFlight.current = true;
+          fetchPageDataRef.current(nextPage, true);
+          // 延迟释放守卫，确保 DOM 渲染完成后才允许下次自动填充
+          setTimeout(() => { autoFillInFlight.current = false; }, 300);
+        }
       }
     });
     return () => cancelAnimationFrame(raf);
-  }, [logs, hasMore, isLoadingMore, loading, queryId, currentPage, totalPages, fetchPageData]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [logs, hasMore, isLoadingMore, loading, queryId, currentPage, totalPages]);
 
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const target = e.target as HTMLDivElement;

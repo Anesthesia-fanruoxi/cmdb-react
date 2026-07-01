@@ -21,6 +21,15 @@ const STATUS_MAP: Record<string, string> = {
   canceled: '已取消',
 };
 
+// 步骤图标映射
+const STEP_ICON_MAP: Record<string, string> = {
+  waiting: '○',
+  running: '◉',
+  success: '✓',
+  failed: '✗',
+  '': '○',
+};
+
 // 步骤状态映射
 const STEP_STATUS_MAP: Record<string, string> = {
   waiting: '等待中',
@@ -85,8 +94,8 @@ const TaskDetailPanel = ({ taskDetail, loading, onCancel }: TaskDetailPanelProps
         </span>
       </div>
 
-      {/* 进度信息 */}
-      {taskDetail.status === 'running' && (
+      {/* 进度信息（SSE 不再推送进度数据，仅当后端返回 total_count 时展示） */}
+      {taskDetail.status === 'running' && taskDetail.total_count && (
         <div className="detail-item">
           <span className="detail-label">进度：</span>
           <div className="progress-info">
@@ -115,14 +124,14 @@ const TaskDetailPanel = ({ taskDetail, loading, onCancel }: TaskDetailPanelProps
           <div className="setup-steps">
             {sortedSteps.map(([key, step]) => (
               <div key={key} className="setup-step">
-                <span className="step-name">{key}：</span>
-                <span className={getStepStatusClass(step.status)}>
+                <span className={`step-icon ${getStepStatusClass(step.status)}`}>
+                  {STEP_ICON_MAP[step.status] || '○'}
+                </span>
+                <span className="step-desc">{step.description || key}</span>
+                <span className={`step-status-text ${getStepStatusClass(step.status)}`}>
                   {STEP_STATUS_MAP[step.status] || step.status}
                 </span>
-                {step.description && (
-                  <span className="step-desc">{step.description}</span>
-                )}
-                {step.duration != null && (
+                {step.duration != null && step.duration > 0 && (
                   <span className="step-duration">耗时：{formatDuration(step.duration)}</span>
                 )}
               </div>

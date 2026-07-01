@@ -389,13 +389,18 @@
   flex-wrap: wrap;
 }
 
-.step-name {
-  color: var(--text-secondary);
-  min-width: 60px;
+.step-icon {
+  font-size: 14px;
+  width: 16px;
+  text-align: center;
 }
 
 .step-desc {
-  color: var(--text-secondary);
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.step-status-text {
   font-size: 12px;
 }
 

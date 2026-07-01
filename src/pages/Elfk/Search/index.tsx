@@ -437,22 +437,28 @@ const ElfkSearch = () => {
     return () => clearInterval(timer);
   }, [activeTab?.autoRefresh, activeTab?.lastParams, activeTab?.id, handleSearch]);
 
-  const handlePageData = (data: { logs: LogHit[]; page: number; pages: number; append?: boolean }) => {
+  const handlePageData = useCallback((data: { logs: LogHit[]; page: number; pages: number; append?: boolean }) => {
     if (!activeTab) return;
     if (data.append) {
-      // 滚动加载：追加数据
       updateTab(activeTab.id, { 
         logs: [...activeTab.logs, ...data.logs], 
         lastParams: { ...activeTab.lastParams, page: data.page, pages: data.pages } 
       });
     } else {
-      // 翻页：替换数据
       updateTab(activeTab.id, { 
         logs: data.logs, 
         lastParams: { ...activeTab.lastParams, page: data.page, pages: data.pages } 
       });
     }
-  };
+  }, [activeTab, updateTab]);
+
+  const handleLogsLoadingChange = useCallback((l: boolean) => {
+    if (activeTab) updateTab(activeTab.id, { loading: l });
+  }, [activeTab, updateTab]);
+
+  const handleScrollPositionChange = useCallback((pos: number) => {
+    if (activeTab) updateTab(activeTab.id, { scrollPosition: pos });
+  }, [activeTab, updateTab]);
 
   return (
     <div className="elfk-search-page">
@@ -511,8 +517,8 @@ const ElfkSearch = () => {
                   scrollPosition={activeTab.scrollPosition}
                   onSortChange={handleSortChange}
                   onPageData={handlePageData}
-                  onLoadingChange={(l: boolean) => updateTab(activeTab.id, { loading: l })}
-                  onScrollPositionChange={(pos: number) => updateTab(activeTab.id, { scrollPosition: pos })}
+                  onLoadingChange={handleLogsLoadingChange}
+                  onScrollPositionChange={handleScrollPositionChange}
                   onAddFilter={(_field, value, operator = 'AND') => {
                     const current = activeTab.keyword?.trim();
                     // 值使用单引号包裹（短语匹配）
