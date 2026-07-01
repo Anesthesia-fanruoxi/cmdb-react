@@ -2,7 +2,7 @@
  * 字典管理 - 对话框组件
  */
 
-import type { DictGroup } from '../../../types/system';
+import type { DictGroup } from '../../../../types/system';
 
 export interface ItemForm {
   group_key: string;

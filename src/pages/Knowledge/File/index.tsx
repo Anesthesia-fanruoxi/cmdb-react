@@ -12,13 +12,6 @@ import './style.css';
 
 const PAGE_SIZE = 20;
 
-const CATEGORY_LABELS: Record<string, string> = {
-  es_export: 'ES导出',
-  analysis: '分析',
-  sql_export: 'SQL导出',
-  local: '本地上传',
-};
-
 const FileManagement = () => {
   const [activeTab, setActiveTab] = useState<'public' | 'private'>('public');
   const [fileList, setFileList] = useState<FileItem[]>([]);
@@ -186,7 +179,7 @@ const FileManagement = () => {
           {totalSizeStr && <span className="size-total">总计: {totalSizeStr}</span>}
           {Object.entries(categorySizes).map(([key, val]) => (
             <span key={key} className="size-cat">
-              {CATEGORY_LABELS[key] || key}: {val.size_str}
+              {val.category_name || key}: {val.size_str}
             </span>
           ))}
         </div>

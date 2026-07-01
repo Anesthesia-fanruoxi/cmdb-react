@@ -32,6 +32,7 @@ export interface GenerateLinkResponse {
 export interface CategorySize {
   size: number;
   size_str: string;
+  category_name?: string;
 }
 
 /** 文件列表响应 */

@@ -213,7 +213,7 @@ export const useTaskCenterStore = create<TaskCenterState>((set, get) => ({
   },
 
   // 添加运行中的任务（创建任务时调用）
-  addRunningTask: (taskId: string, taskType: string) => {
+  addRunningTask: (taskId: string, _taskType: string) => {
     const { runningTaskIds: currentRunningIds } = get();
     const newRunningIds = new Set(currentRunningIds);
     newRunningIds.add(taskId);
