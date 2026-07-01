@@ -194,20 +194,18 @@ export async function openDesktopNotifyWindow(options: DesktopNotifyWindowOption
   const height = 170;
   const margin = 24;
 
-  // 获取主窗口所在屏幕的尺寸，把通知窗放在其右下角
+  // 获取主窗口所在屏幕的尺寸，把通知窗放在其右上角
   let screenWidth = window.screen.width;
-  let screenHeight = window.screen.height;
   try {
     const monitor = await currentMonitor();
     if (monitor) {
       screenWidth = monitor.size.width;
-      screenHeight = monitor.size.height;
     }
   } catch { /* 兜底用 window.screen */ }
 
   const x = Math.max(0, screenWidth - width - margin);
-  // taskbar 大约占 50px，再留 margin 间距
-  const y = Math.max(0, screenHeight - height - 50 - margin);
+  // 右上角：距顶部 margin 间距，避免与系统通知冲突
+  const y = margin;
   const label = `desktop-notify-${Date.now()}`;
   const data = encodeURIComponent(JSON.stringify(options));
 
