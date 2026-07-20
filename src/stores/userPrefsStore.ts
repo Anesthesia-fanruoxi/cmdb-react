@@ -51,6 +51,7 @@ export interface UiPrefs {
   sqlEditorHeightPercent: number; // 编辑器高度百分比
   sqlSidebarWidth: number; // SQL 左侧 TableTree 宽度（px）
   sqlRowHighlightColor: string; // 查询结果选中行高亮颜色
+  sqlEyeProtect: boolean; // SQL编辑器护眼模式
 }
 
 /** 默认值 */
@@ -94,6 +95,7 @@ const DEFAULT_UI_PREFS: UiPrefs = {
   sqlEditorHeightPercent: 50,
   sqlSidebarWidth: 260,
   sqlRowHighlightColor: '#8b5cf6',
+  sqlEyeProtect: false,
 };
 
 interface UserPrefsState {

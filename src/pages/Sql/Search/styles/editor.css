@@ -72,6 +72,33 @@
 
 .toolbar-left { display: flex; align-items: center; gap: 8px; }
 
+.btn-eye-protect {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--bg-color);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-eye-protect:hover {
+  background-color: var(--bg-secondary);
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.btn-eye-protect.active {
+  background-color: var(--primary-color);
+  color: #fff;
+  border-color: var(--primary-color);
+}
+
 .toolbar-shortcuts { display: flex; gap: 8px; flex-wrap: wrap; }
 
 .shortcut-hint {
@@ -160,7 +187,7 @@
   border-bottom: 1px solid var(--border-color);
   background: var(--bg-secondary);
   flex-shrink: 0;
-  max-height: 150px;
+  max-height: 40%;
   overflow-y: auto;
 }
 
@@ -180,6 +207,8 @@
   background: rgba(255, 77, 79, 0.1);
   color: #ff4d4f;
   border: 1px solid rgba(255, 77, 79, 0.2);
+  word-break: break-all;
+  white-space: pre-wrap;
 }
 
 .message-warning {

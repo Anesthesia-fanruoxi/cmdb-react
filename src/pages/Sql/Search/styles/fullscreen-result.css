@@ -51,24 +51,24 @@
 .fullscreen-thead-wrapper {
   overflow: hidden;
   flex-shrink: 0;
-  border-bottom: 2px solid var(--border-color-dark, #4a5568);
 }
 
 .fullscreen-table {
   width: 100%;
   min-width: max-content;
-  border-collapse: collapse;
-  font-size: 12px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
 }
 
 .fullscreen-table th,
 .fullscreen-table td {
-  padding: 4px 8px;
+  padding: 7px 12px;
   text-align: left;
-  border-bottom: 1px solid var(--border-color);
-  border-right: 1px solid var(--border-color);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-right: 1px solid rgba(255, 255, 255, 0.04);
   white-space: nowrap;
-  max-width: 300px;
+  max-width: 360px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -79,12 +79,19 @@
 }
 
 .fullscreen-table th {
-  background: var(--bg-secondary);
+  background: #334155;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: #e2e8f0;
   position: sticky;
   top: 0;
   z-index: 3;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.fullscreen-table th:last-child {
+  border-right: none;
 }
 
 /* 行号列左侧固定 */
@@ -93,21 +100,27 @@
   position: sticky;
   left: 0;
   z-index: 2;
-  background: var(--bg-secondary);
+  background: #1e293b;
 }
 
 /* 左上角交叉单元格层级最高 */
 .fullscreen-table th.row-num {
-  z-index: 3;
+  z-index: 4;
+  background: #334155;
 }
 
 .fullscreen-table td {
   color: var(--text-color);
-  line-height: 1.4;
+  background: #1e293b;
+  line-height: 1.5;
 }
 
-.fullscreen-table tbody tr:hover {
-  background: var(--bg-hover);
+.fullscreen-table tbody tr:nth-child(even) td {
+  background: rgba(30, 41, 59, 0.7);
+}
+
+.fullscreen-table tbody tr:hover td {
+  background: rgba(71, 85, 105, 0.5);
 }
 
 .fullscreen-footer {

@@ -7,6 +7,8 @@ import ace from 'ace-builds'
 import 'ace-builds/src-noconflict/mode-sql'
 import 'ace-builds/src-noconflict/theme-xcode'
 import 'ace-builds/src-noconflict/theme-tomorrow_night'
+import 'ace-builds/src-noconflict/theme-solarized_light'
+import 'ace-builds/src-noconflict/theme-solarized_dark'
 import 'ace-builds/src-noconflict/ext-language_tools'
 import { createSqlCompleter } from '@/utils/sql'
 import { updateTabTables } from '@/utils/sql/tableExtractor'
@@ -64,8 +66,9 @@ const SqlEditor = forwardRef<SqlEditorRef, Props>(({
   const [showFindDialog, setShowFindDialog] = useState(false)
   const [showReplaceDialog, setShowReplaceDialog] = useState(false)
   
-  // 从用户偏好获取字体大小
+  // 从用户偏好获取字体大小和护眼模式
   const { uiPrefs, setUiPref, _hasHydrated } = useUserPrefsStore()
+  const sqlEyeProtect = uiPrefs.sqlEyeProtect ?? false;
   const [fontSize, setFontSize] = useState(16) // 默认16px
   
   // 字体大小提示框状态
@@ -110,6 +113,17 @@ const SqlEditor = forwardRef<SqlEditorRef, Props>(({
     }
   }, [fontSize])
 
+  // 护眼模式切换时实时更新主题
+  useEffect(() => {
+    if (aceEditorRef.current) {
+      const isDark = document.documentElement.classList.contains('dark');
+      const theme = sqlEyeProtect
+        ? (isDark ? 'ace/theme/solarized_dark' : 'ace/theme/solarized_light')
+        : (isDark ? 'ace/theme/tomorrow_night' : 'ace/theme/xcode');
+      aceEditorRef.current.setTheme(theme);
+    }
+  }, [sqlEyeProtect])
+
   useImperativeHandle(ref, () => ({
     format: () => {
       if (aceEditorRef.current) formatSqlContent(aceEditorRef.current)
@@ -140,15 +154,22 @@ const SqlEditor = forwardRef<SqlEditorRef, Props>(({
     const editor = ace.edit(editorRef.current)
     aceEditorRef.current = editor
 
-    // 设置主题（根据系统主题）
+    // 设置主题（根据系统主题 + 护眼模式）
     const isDark = document.documentElement.classList.contains('dark')
-    editor.setTheme(isDark ? 'ace/theme/tomorrow_night' : 'ace/theme/xcode')
+    const getTheme = (dark: boolean, eyeProtect: boolean) => {
+      if (eyeProtect) {
+        return dark ? 'ace/theme/solarized_dark' : 'ace/theme/solarized_light';
+      }
+      return dark ? 'ace/theme/tomorrow_night' : 'ace/theme/xcode';
+    };
+    editor.setTheme(getTheme(isDark, sqlEyeProtect))
     editor.session.setMode('ace/mode/sql')
 
     // 监听主题变化
     const observer = new MutationObserver(() => {
       const isDarkNow = document.documentElement.classList.contains('dark')
-      editor.setTheme(isDarkNow ? 'ace/theme/tomorrow_night' : 'ace/theme/xcode')
+      const currentEyeProtect = useUserPrefsStore.getState().uiPrefs.sqlEyeProtect ?? false;
+      editor.setTheme(getTheme(isDarkNow, currentEyeProtect))
     })
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
 

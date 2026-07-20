@@ -2,8 +2,17 @@
  * BI 查询结果组件
  */
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useUserPrefsStore } from '@/stores/userPrefsStore';
+import { toast } from '@/components/AppNotification';
+
+interface ContextMenuState {
+  visible: boolean;
+  x: number;
+  y: number;
+  rowIndex: number;
+  cellValue: string;
+}
 
 interface QueryResultProps {
   loading: boolean;
@@ -27,13 +36,32 @@ export const QueryResult = ({
   // 多选
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
   const lastClickedRow = useRef<number | null>(null);
+
+  // 右键菜单
+  const [contextMenu, setContextMenu] = useState<ContextMenuState>({
+    visible: false, x: 0, y: 0, rowIndex: -1, cellValue: ''
+  });
+  const menuRef = useRef<HTMLDivElement>(null);
   
   // 颜色选取器
   const { uiPrefs, setUiPref } = useUserPrefsStore();
   const highlightColor = uiPrefs.sqlRowHighlightColor || '#8b5cf6';
   const colorInputRef = useRef<HTMLInputElement>(null);
 
-  // 行点击：普通=单选，Ctrl=切换，Shift=范围选
+  // 点击其他地方关闭右键菜单
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setContextMenu(prev => ({ ...prev, visible: false }));
+      }
+    };
+    if (contextMenu.visible) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [contextMenu.visible]);
+
+  // 单击行：选中（已选中则不重复操作）
   const handleRowClick = useCallback((idx: number, e: React.MouseEvent) => {
     if (e.shiftKey && lastClickedRow.current !== null) {
       const start = Math.min(lastClickedRow.current, idx);
@@ -51,9 +79,57 @@ export const QueryResult = ({
       });
       lastClickedRow.current = idx;
     } else {
-      setSelectedRows(prev => (prev.size === 1 && prev.has(idx) ? new Set() : new Set([idx])));
+      setSelectedRows(new Set([idx]));
       lastClickedRow.current = idx;
     }
+  }, []);
+
+  // 双击行：取消选中
+  const handleRowDoubleClick = useCallback((idx: number) => {
+    setSelectedRows(prev => {
+      const next = new Set(prev);
+      next.delete(idx);
+      return next;
+    });
+  }, []);
+
+  // 右键菜单
+  const handleContextMenu = useCallback((e: React.MouseEvent, rowIndex: number, cellValue: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // 如果右键的行未选中，先选中它
+    setSelectedRows(prev => {
+      if (!prev.has(rowIndex)) {
+        return new Set([rowIndex]);
+      }
+      return prev;
+    });
+    lastClickedRow.current = rowIndex;
+    setContextMenu({ visible: true, x: e.clientX, y: e.clientY, rowIndex, cellValue });
+  }, []);
+
+  // 复制单元格
+  const handleCopyCell = useCallback(() => {
+    navigator.clipboard.writeText(contextMenu.cellValue).then(() => {
+      const display = contextMenu.cellValue.length > 50
+        ? contextMenu.cellValue.slice(0, 50) + '...'
+        : contextMenu.cellValue;
+      toast.success(`已复制: ${display}`);
+    });
+    setContextMenu(prev => ({ ...prev, visible: false }));
+  }, [contextMenu.cellValue]);
+
+  // 复制整行（通过右键菜单）
+  const handleCopyRowFromMenu = useCallback(() => {
+    onCopyRow(contextMenu.rowIndex);
+    setContextMenu(prev => ({ ...prev, visible: false }));
+  }, [contextMenu.rowIndex, onCopyRow]);
+
+  // 双击复制表头
+  const handleDoubleClickHeader = useCallback((col: string) => {
+    navigator.clipboard.writeText(col).then(() => {
+      toast.success(`已复制表头: ${col}`);
+    });
   }, []);
 
   const formatValue = (value: unknown): string => {
@@ -114,7 +190,7 @@ export const QueryResult = ({
               <tr>
                 <th className="copy-column">#</th>
                 {resultColumns.map((col, colIndex) => (
-                  <th key={col}>
+                  <th key={col} onDoubleClick={() => handleDoubleClickHeader(col)} style={{ cursor: 'pointer' }}>
                     <div className="th-content">
                       <span>{col}</span>
                       <button
@@ -142,30 +218,26 @@ export const QueryResult = ({
                     key={rowIndex}
                     className={isSelected ? 'row-selected' : ''}
                     style={{ 
-                      background: isSelected ? `rgba(${r},${g},${b},0.18)` : undefined,
+                      '--row-highlight': isSelected ? `rgba(${r},${g},${b},0.35)` : undefined,
                       userSelect: 'none'
-                    }}
+                    } as React.CSSProperties}
                     onClick={(e) => handleRowClick(rowIndex, e)}
+                    onDoubleClick={() => handleRowDoubleClick(rowIndex)}
                   >
                     <td className="copy-column">
-                      <button
-                        className="copy-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onCopyRow(rowIndex);
-                        }}
-                        title="复制整行"
-                      >
-                        📋
-                      </button>
+                      {rowIndex + 1}
                     </td>
                     {resultColumns.map((col, colIndex) => {
                       const value = typeof row === 'object' && !Array.isArray(row)
                         ? row[col]
                         : row[colIndex];
+                      const formatted = formatValue(value);
                       return (
-                        <td key={colIndex}>
-                          {formatValue(value)}
+                        <td
+                          key={colIndex}
+                          onContextMenu={(e) => handleContextMenu(e, rowIndex, formatted)}
+                        >
+                          {formatted}
                         </td>
                       );
                     })}
@@ -180,7 +252,22 @@ export const QueryResult = ({
           </div>
         )}
       </div>
+
+      {/* 右键菜单 */}
+      {contextMenu.visible && (
+        <div
+          ref={menuRef}
+          className="databi-context-menu"
+          style={{ position: 'fixed', left: contextMenu.x, top: contextMenu.y }}
+        >
+          <div className="context-menu-item" onClick={handleCopyCell}>
+            📋 复制单元格
+          </div>
+          <div className="context-menu-item" onClick={handleCopyRowFromMenu}>
+            📄 复制整行
+          </div>
+        </div>
+      )}
     </div>
   );
 };
-

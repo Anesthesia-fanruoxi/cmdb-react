@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { Upload } from 'lucide-react';
+import { Upload, Eye, EyeOff, Search, X } from 'lucide-react';
 import { 
   getDatabiColumnList,
   updateDatabiColumnComment
@@ -11,6 +11,7 @@ import {
 import { toast } from '@/components/AppNotification';
 import type { SqlEditorRef } from '../Search/components/SqlEditor';
 import { usePageStateStore } from '@/stores';
+import { useUserPrefsStore } from '@/stores/userPrefsStore';
 import { useDatabiProjects } from './hooks/useDatabiProjects';
 import { useDatabiTables } from './hooks/useDatabiTables';
 import { useDatabiQuery } from './hooks/useDatabiQuery';
@@ -58,6 +59,10 @@ const SqlDatabi = () => {
   const PAGE_KEY = 'sql/databi';
   const hasRestored = useRef(false);
 
+  // 护眼模式
+  const { uiPrefs, setUiPref } = useUserPrefsStore();
+  const sqlEyeProtect = uiPrefs.sqlEyeProtect ?? false;
+
   // 标签页状态
   const [tabs, setTabs] = useState<DatabiTab[]>([createTab('1')]);
   const [activeTabId, setActiveTabId] = useState('1');
@@ -65,6 +70,9 @@ const SqlDatabi = () => {
   
   // 全屏状态
   const [fullscreenVisible, setFullscreenVisible] = useState(false);
+
+  // 表名过滤搜索
+  const [tableSearchKey, setTableSearchKey] = useState('');
 
   // 当前标签页
   const currentTab = tabs.find(t => t.id === activeTabId) || tabs[0];
@@ -76,8 +84,6 @@ const SqlDatabi = () => {
 
   // 使用自定义 Hooks
   const {
-    projectList,
-    projectLoading,
     currentProject,
     setCurrentProject,
     fetchProjects
@@ -168,13 +174,6 @@ const SqlDatabi = () => {
       const tabMap = new Map(prev.map(t => [t.id, t]));
       return newTabs.map(t => tabMap.get(t.id)!).filter(Boolean);
     });
-  };
-
-  // 项目切换
-  const handleProjectChangeWrapper = async (project: string) => {
-    setCurrentProject(project);
-    await handleTablesProjectChange(project);
-    updateTab(activeTabId, { project });
   };
 
   // 树节点点击
@@ -644,17 +643,20 @@ const SqlDatabi = () => {
         {/* 左侧表树 */}
         <div className="sidebar">
           <div className="project-selector">
-            <select
-              value={currentProject}
-              onChange={(e) => handleProjectChangeWrapper(e.target.value)}
-              disabled={projectLoading}
-            >
-              {projectList.map(project => (
-                <option key={project.value} value={project.value}>
-                  {project.label}
-                </option>
-              ))}
-            </select>
+            <div className="table-search-wrapper">
+              <Search size={14} className="table-search-icon" />
+              <input
+                className="table-search-input"
+                placeholder="过滤表名..."
+                value={tableSearchKey}
+                onChange={e => setTableSearchKey(e.target.value)}
+              />
+              {tableSearchKey && (
+                <button className="table-search-clear" onClick={() => setTableSearchKey('')}>
+                  <X size={12} />
+                </button>
+              )}
+            </div>
             <button
               className="btn-refresh"
               onClick={() => handleRefresh(currentProject)}
@@ -678,6 +680,13 @@ const SqlDatabi = () => {
             >
               <Upload size={16} />
             </button>
+            <button
+              className={`btn-eye-protect ${sqlEyeProtect ? 'active' : ''}`}
+              onClick={() => setUiPref('sqlEyeProtect', !sqlEyeProtect)}
+              title={sqlEyeProtect ? '关闭护眼模式' : '开启护眼模式'}
+            >
+              {sqlEyeProtect ? <Eye size={16} /> : <EyeOff size={16} />}
+            </button>
           </div>
 
           <TableTree
@@ -687,6 +696,7 @@ const SqlDatabi = () => {
             refreshLoading={refreshLoading}
             refreshProgress={refreshProgress}
             refreshMessage={refreshMessage}
+            searchKey={tableSearchKey}
             onNodeClick={handleNodeClick}
             onNodeContextMenu={handleNodeContextMenu}
             onToggleExpand={toggleExpand}

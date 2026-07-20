@@ -46,17 +46,9 @@ const copyColumnData = async (results: unknown[][], colIndex: number, colName: s
   } catch { toast.error('复制失败'); }
 };
 
-const copyCellValue = async (value: unknown) => {
-  try {
-    const text = formatValueForCopy(value);
-    await navigator.clipboard.writeText(text);
-    const display = text.length > 20 ? text.substring(0, 20) + '...' : text;
-    toast.success(`已复制: ${display}`);
-  } catch { toast.error('复制失败'); }
-};
-
-const DEFAULT_COL_WIDTH = 120;
-const MIN_COL_WIDTH = 40;
+const DEFAULT_COL_WIDTH = 150;
+const MIN_COL_WIDTH = 80;
+const MAX_COL_WIDTH = 360;
 
 
 const ResultPanel = ({
@@ -71,7 +63,7 @@ const ResultPanel = ({
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
   const lastClickedRow = useRef<number | null>(null);
   const tableWrapperRef = useRef<HTMLDivElement>(null);
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; rowIndex: number; cellValue: string; colName?: string; colIdx?: number } | null>(null);
 
   // 列宽
   const [colWidths, setColWidths] = useState<number[]>([]);
@@ -79,18 +71,36 @@ const ResultPanel = ({
   const resizingCol = useRef<{ colIdx: number; startX: number; startWidth: number } | null>(null);
 
   useEffect(() => {
-    // 用 canvas 测量表头文字宽度，加上 padding + 复制按钮宽度
+    // 用 canvas 测量表头 + 采样前10行数据，取最大宽度
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    if (ctx) ctx.font = '500 13px sans-serif';
-    const widths = columns.map(col => {
-      const textWidth = ctx ? ctx.measureText(col).width : col.length * 8;
-      // padding(20) + 复制按钮(28) + 手柄(6) + 余量(8)
-      return Math.max(MIN_COL_WIDTH, Math.ceil(textWidth) + 62);
+    const headerFont = '500 12px sans-serif';
+    const cellFont = '13px sans-serif';
+    const sampleRows = results.slice(0, 10);
+
+    const widths = columns.map((col, colIdx) => {
+      // 测量表头宽度
+      if (ctx) ctx.font = headerFont;
+      const headerWidth = ctx ? ctx.measureText(col).width : col.length * 7;
+
+      // 采样数据行，取最大内容宽度
+      if (ctx) ctx.font = cellFont;
+      let maxDataWidth = 0;
+      for (const row of sampleRows) {
+        if (Array.isArray(row) && row[colIdx] !== undefined && row[colIdx] !== null) {
+          const text = String(row[colIdx]);
+          const w = ctx ? ctx.measureText(text).width : text.length * 7;
+          if (w > maxDataWidth) maxDataWidth = w;
+        }
+      }
+
+      // 取表头和数据中较大的，加 padding(24) + 余量(16)
+      const contentWidth = Math.max(headerWidth, maxDataWidth) + 40;
+      return Math.min(MAX_COL_WIDTH, Math.max(MIN_COL_WIDTH, Math.ceil(contentWidth)));
     });
     colWidthsRef.current = widths;
     setColWidths(widths);
-  }, [columns]);
+  }, [columns, results]);
 
   const { uiPrefs, setUiPref } = useUserPrefsStore();
   const highlightColor = uiPrefs.sqlRowHighlightColor || '#8b5cf6';
@@ -119,6 +129,10 @@ const ResultPanel = ({
     if (typeof value === 'object') return JSON.stringify(value);
     return String(value);
   };
+
+  // 检测是否为错误结果（API返回错误信息作为结果）
+  const isErrorResult = columns.length === 1 && columns[0] === 'error' && results.length > 0;
+  const errorMessage = isErrorResult && Array.isArray(results[0]) ? formatValue(results[0][0]) : '';
 
   // 横向滚动位置独立管理：实时记录，每次渲染后恢复
   const scrollLeftRef = useRef<number>(0);
@@ -226,11 +240,11 @@ const ResultPanel = ({
     }
   }, []);
 
-  const handleRowContextMenu = useCallback((absoluteIndex: number, e: React.MouseEvent) => {
+  const handleRowContextMenu = useCallback((absoluteIndex: number, cellValue: string, e: React.MouseEvent) => {
     e.preventDefault();
     setSelectedRows(prev => (!prev.has(absoluteIndex) ? new Set([absoluteIndex]) : prev));
     lastClickedRow.current = absoluteIndex;
-    setContextMenu({ x: e.clientX, y: e.clientY });
+    setContextMenu({ x: e.clientX, y: e.clientY, rowIndex: absoluteIndex, cellValue });
   }, []);
 
   const handleCopySelectedRows = useCallback(async () => {
@@ -248,6 +262,49 @@ const ResultPanel = ({
     } catch { toast.error('复制失败'); }
     setContextMenu(null);
   }, [selectedRows, currentData, currentPage, pageSize]);
+
+  const handleCopyCurrentRow = useCallback(async () => {
+    if (!contextMenu) return;
+    const rowStart = (currentPage - 1) * pageSize;
+    const row = currentData[contextMenu.rowIndex - rowStart];
+    if (!Array.isArray(row)) return;
+    const text = row.map(v => formatValueForCopy(v)).join('\t');
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success('已复制当前行');
+    } catch { toast.error('复制失败'); }
+    setContextMenu(null);
+  }, [contextMenu, currentData, currentPage, pageSize]);
+
+  const handleCopyCell = useCallback(async () => {
+    if (!contextMenu) return;
+    try {
+      await navigator.clipboard.writeText(contextMenu.cellValue);
+      const display = contextMenu.cellValue.length > 20 ? contextMenu.cellValue.substring(0, 20) + '...' : contextMenu.cellValue;
+      toast.success(`已复制: ${display}`);
+    } catch { toast.error('复制失败'); }
+    setContextMenu(null);
+  }, [contextMenu]);
+
+  const handleHeaderContextMenu = useCallback((e: React.MouseEvent, col: string, colIdx: number) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, rowIndex: -1, cellValue: '', colName: col, colIdx });
+  }, []);
+
+  const handleCopyColumnName = useCallback(async () => {
+    if (!contextMenu?.colName) return;
+    try {
+      await navigator.clipboard.writeText(contextMenu.colName);
+      toast.success(`已复制字段名: ${contextMenu.colName}`);
+    } catch { toast.error('复制失败'); }
+    setContextMenu(null);
+  }, [contextMenu]);
+
+  const handleCopyColumnData = useCallback(async () => {
+    if (!contextMenu || contextMenu.colIdx === undefined) return;
+    await copyColumnData(results, contextMenu.colIdx, contextMenu.colName || '');
+    setContextMenu(null);
+  }, [contextMenu, results]);
 
   const rowNumberStart = (currentPage - 1) * pageSize;
 
@@ -278,13 +335,24 @@ const ResultPanel = ({
     <div className={`result-panel ${isFullscreen ? 'fullscreen' : ''}`} onClick={() => setContextMenu(null)}>
       {contextMenu && (
         <div className="row-context-menu" style={{ top: contextMenu.y, left: contextMenu.x }} onClick={e => e.stopPropagation()}>
-          <button onClick={handleCopySelectedRows}>📋 复制选中行 ({selectedRows.size})</button>
+          {contextMenu.rowIndex === -1 ? (
+            <>
+              <button onClick={handleCopyColumnName}>📝 复制字段名</button>
+              <button onClick={handleCopyColumnData}>📋 复制此列数据</button>
+            </>
+          ) : (
+            <>
+              <button onClick={handleCopyCell}>📋 复制此单元格</button>
+              <button onClick={handleCopyCurrentRow}>📄 复制当前行</button>
+              <button onClick={handleCopySelectedRows}>📑 复制选中行 ({selectedRows.size})</button>
+            </>
+          )}
         </div>
       )}
 
       <div className="result-header">
         <div className="header-left">
-          <span className="header-title">{isExecuting ? '执行中' : hasResults ? '查询结果' : '暂无结果'}</span>
+          <span className="header-title" style={isErrorResult ? { color: '#ef4444' } : undefined}>{isExecuting ? '执行中' : isErrorResult ? '查询错误' : hasResults ? '查询结果' : '暂无结果'}</span>
           {(isExecuting || elapsedTime > 0) && <span className="elapsed-timer">{elapsedTime.toFixed(1)}s</span>}
           {showResultSelector && (
             <div className="result-selector">
@@ -326,6 +394,10 @@ const ResultPanel = ({
           <div className="result-loading">查询中...</div>
         ) : columns.length === 0 ? (
           <div className="result-empty">执行SQL查询后，结果将显示在这里</div>
+        ) : isErrorResult ? (
+          <div className="result-error-display">
+            <div className="error-text">{errorMessage}</div>
+          </div>
         ) : (
           <table className="result-table" style={{ tableLayout: 'fixed', width: 'max-content' }}>
             <thead>
@@ -335,7 +407,8 @@ const ResultPanel = ({
                   const comment = columnComments.get(col.toLowerCase()) || '';
                   const w = colWidths[colIdx] ?? DEFAULT_COL_WIDTH;
                   return (
-                    <th key={col} style={{ width: w, minWidth: w, maxWidth: w, overflow: 'visible', position: 'relative' }}>
+                    <th key={col} style={{ width: w, minWidth: w, maxWidth: w, overflow: 'visible', position: 'relative' }}
+                      onContextMenu={(e) => handleHeaderContextMenu(e, col, colIdx)}>
                       <div className="column-header">
                         <span
                           className={comment ? 'col-name-has-comment' : ''}
@@ -350,12 +423,10 @@ const ResultPanel = ({
                           {col}
                           {comment && <span className="col-comment-popup">{comment}</span>}
                         </span>
-                        <button className="copy-col-btn" title="复制此列数据"
-                          onClick={(e) => { e.stopPropagation(); copyColumnData(results, colIdx, col); }}>
-                          📋
-                        </button>
                       </div>
-                      <div className="col-resize-handle" onMouseDown={(e) => handleResizeMouseDown(colIdx, e)} />
+                      {colIdx < columns.length - 1 && (
+                        <div className="col-resize-handle" onMouseDown={(e) => handleResizeMouseDown(colIdx, e)} />
+                      )}
                     </th>
                   );
                 })}
@@ -370,14 +441,14 @@ const ResultPanel = ({
                   <tr key={absoluteIndex} className={isSelected ? 'row-selected' : ''}
                     style={{ userSelect: 'none' }}
                     onClick={(e) => handleRowClick(absoluteIndex, e)}
-                    onContextMenu={(e) => handleRowContextMenu(absoluteIndex, e)}>
+                    onContextMenu={(e) => handleRowContextMenu(absoluteIndex, '', e)}>
                     <td className="row-num" style={selectedTdStyle}>{absoluteIndex + 1}</td>
                     {Array.isArray(row) && row.map((val, colIdx) => {
                       const w = colWidths[colIdx] ?? DEFAULT_COL_WIDTH;
                       return (
-                        <td key={colIdx} title={`双击复制: ${formatValue(val)}`}
-                          onDoubleClick={() => copyCellValue(val)}
+                        <td key={colIdx}
                           className="cell-copyable"
+                          onContextMenu={(e) => handleRowContextMenu(absoluteIndex, formatValue(val), e)}
                           style={{ ...selectedTdStyle, width: w, minWidth: w, maxWidth: w }}>
                           {formatValue(val)}
                         </td>

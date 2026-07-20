@@ -41,7 +41,8 @@ interface Props {
 }
 
 const PAGE_SIZE = 20;
-const MIN_COL_WIDTH = 40;
+const MIN_COL_WIDTH = 80;
+const MAX_COL_WIDTH = 360;
 // 初始化时自动预加载的最大页数
 const PRELOAD_PAGES = 3;
 
@@ -87,18 +88,34 @@ const FullscreenResultPanel = ({
 
   const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
 
-  // 根据列名自动计算初始列宽
+  // 根据列名 + 采样数据自动计算初始列宽
   useEffect(() => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    if (ctx) ctx.font = '500 12px sans-serif';
-    const widths = columns.map((col) => {
-      const textWidth = ctx ? ctx.measureText(col).width : col.length * 8;
-      return Math.max(MIN_COL_WIDTH, Math.ceil(textWidth) + 62);
+    const headerFont = '500 12px sans-serif';
+    const cellFont = '13px sans-serif';
+    const sampleRows = results.slice(0, 10);
+
+    const widths = columns.map((col, colIdx) => {
+      if (ctx) ctx.font = headerFont;
+      const headerWidth = ctx ? ctx.measureText(col).width : col.length * 7;
+
+      if (ctx) ctx.font = cellFont;
+      let maxDataWidth = 0;
+      for (const row of sampleRows) {
+        if (Array.isArray(row) && row[colIdx] !== undefined && row[colIdx] !== null) {
+          const text = String(row[colIdx]);
+          const w = ctx ? ctx.measureText(text).width : text.length * 7;
+          if (w > maxDataWidth) maxDataWidth = w;
+        }
+      }
+
+      const contentWidth = Math.max(headerWidth, maxDataWidth) + 40;
+      return Math.min(MAX_COL_WIDTH, Math.max(MIN_COL_WIDTH, Math.ceil(contentWidth)));
     });
     colWidthsRef.current = widths;
     setColWidths(widths);
-  }, [columns]);
+  }, [columns, results]);
 
   // 列宽拖拽
   const handleResizeMouseDown = useCallback(

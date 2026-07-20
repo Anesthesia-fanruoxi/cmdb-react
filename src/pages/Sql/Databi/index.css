@@ -10,7 +10,7 @@
   padding: 16px;
 }
 
-.main-content {
+.sql-databi-container .main-content {
   flex: 1;
   display: flex;
   gap: 16px;
@@ -35,21 +35,71 @@
   border-bottom: 1px solid var(--border-color-light);
   display: flex;
   gap: 8px;
+  align-items: center;
 }
 
-.project-selector select {
+.project-name {
   flex: 1;
   padding: 8px 12px;
   border: 1px solid var(--border-color);
   border-radius: 4px;
-  background-color: var(--bg-color);
+  background-color: var(--bg-secondary);
   color: var(--text-color);
   font-size: 14px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.project-selector select:focus {
+/* 表名搜索框（在顶部工具栏） */
+.table-search-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  min-width: 0;
+}
+
+.table-search-icon {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.table-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
   outline: none;
-  border-color: var(--primary-color);
+  font-size: 13px;
+  color: var(--text-color);
+  min-width: 0;
+}
+
+.table-search-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.table-search-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 2px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.table-search-clear:hover {
+  color: var(--text-color);
+  background-color: var(--border-color-light);
 }
 
 .btn-refresh {
@@ -92,68 +142,20 @@
   }
 }
 
-.table-tree {
+.sql-databi-container .table-tree {
   flex: 1;
   overflow-y: auto;
   padding: 8px;
 }
 
-.tree-search-box {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 8px;
-  margin-bottom: 8px;
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-color-light);
-  border-radius: 6px;
-}
-
-.tree-search-icon {
-  color: var(--text-secondary);
-  flex-shrink: 0;
-}
-
-.tree-search-input {
-  flex: 1;
-  border: none;
-  background: transparent;
-  outline: none;
-  font-size: 13px;
-  color: var(--text-color);
-  min-width: 0;
-}
-
-.tree-search-input::placeholder {
-  color: var(--text-secondary);
-}
-
-.tree-search-clear {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-secondary);
-  padding: 2px;
-  border-radius: 3px;
-  flex-shrink: 0;
-}
-
-.tree-search-clear:hover {
-  color: var(--text-color);
-  background-color: var(--border-color-light);
-}
-
-.refresh-status {
+.sql-databi-container .refresh-status {
   padding: 12px;
   margin-bottom: 12px;
   background-color: var(--bg-secondary);
   border-radius: 4px;
 }
 
-.progress-bar {
+.sql-databi-container .progress-bar {
   width: 100%;
   height: 8px;
   background-color: var(--border-color-light);
@@ -162,25 +164,25 @@
   margin-bottom: 8px;
 }
 
-.progress-fill {
+.sql-databi-container .progress-fill {
   height: 100%;
   background-color: var(--primary-color);
   transition: width 0.3s ease;
   border-radius: 4px;
 }
 
-.status-text {
+.sql-databi-container .status-text {
   display: block;
   font-size: 12px;
   color: var(--text-secondary);
   text-align: center;
 }
 
-.tree-node-wrapper {
+.sql-databi-container .tree-node-wrapper {
   margin-bottom: 2px;
 }
 
-.tree-node {
+.sql-databi-container .tree-node {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -192,20 +194,20 @@
   transition: background-color 0.2s;
 }
 
-.tree-node:hover {
+.sql-databi-container .tree-node:hover {
   background-color: var(--bg-secondary);
 }
 
-.tree-node.database {
+.sql-databi-container .tree-node.database {
   font-weight: 500;
 }
 
-.tree-node.table {
+.sql-databi-container .tree-node.table {
   margin-left: 12px;
   color: var(--text-secondary);
 }
 
-.expand-icon {
+.sql-databi-container .expand-icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -215,7 +217,7 @@
   color: var(--text-secondary);
 }
 
-.node-icon {
+.sql-databi-container .node-icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -224,15 +226,15 @@
   flex-shrink: 0;
 }
 
-.tree-node.database .node-icon {
+.sql-databi-container .tree-node.database .node-icon {
   color: var(--primary-color);
 }
 
-.tree-node.table .node-icon {
+.sql-databi-container .tree-node.table .node-icon {
   color: var(--text-secondary);
 }
 
-.node-label {
+.sql-databi-container .node-label {
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -240,7 +242,7 @@
   display: inline-block;
 }
 
-.tree-children {
+.sql-databi-container .tree-children {
   margin-left: 8px;
   border-left: 1px solid var(--border-color-light);
   padding-left: 4px;
@@ -350,7 +352,7 @@
   overflow: hidden;
 }
 
-.result-header {
+.sql-databi-container .result-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -360,33 +362,39 @@
   flex-shrink: 0;
 }
 
-.result-header .title {
+.sql-databi-container .result-header .title {
   font-weight: 500;
   font-size: 14px;
   color: var(--text-color);
 }
 
-.result-header .info {
+.sql-databi-container .result-header .info {
   font-size: 12px;
   color: var(--text-secondary);
 }
 
-.result-content {
+.sql-databi-container .result-content {
   flex: 1;
   min-height: 0;
   overflow: auto;
 }
 
-.result-table {
+.sql-databi-container .result-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 13px;
   margin: 8px;
 }
 
-.result-table th,
-.result-table td {
-  border: 1px solid var(--border-color-light);
+.sql-databi-container .result-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.sql-databi-container .result-table th,
+.sql-databi-container .result-table td {
   padding: 8px 12px;
   text-align: left;
   min-width: 120px;
@@ -394,10 +402,17 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-right: 1px solid rgba(255, 255, 255, 0.04);
 }
 
-.result-table th.copy-column,
-.result-table td.copy-column {
+.sql-databi-container .result-table th:last-child,
+.sql-databi-container .result-table td:last-child {
+  border-right: none;
+}
+
+.sql-databi-container .result-table th.copy-column,
+.sql-databi-container .result-table td.copy-column {
   width: 50px;
   min-width: 50px;
   max-width: 50px;
@@ -405,34 +420,40 @@
   padding: 4px;
 }
 
-.result-table th {
-  background-color: var(--bg-secondary);
+.sql-databi-container .result-table th {
+  background: #334155;
   font-weight: 500;
-  color: var(--text-color);
-  position: sticky;
-  top: 0;
-  z-index: 1;
+  color: #e2e8f0;
+  padding: 8px 12px;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.result-table td {
-  color: var(--text-color);
+.sql-databi-container .result-table th:last-child {
+  border-right: none;
 }
 
-.th-content {
+.sql-databi-container .result-table td {
+  color: var(--text-color);
+  background: #1e293b;
+}
+
+.sql-databi-container .th-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
 }
 
-.th-content span {
+.sql-databi-container .th-content span {
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.copy-btn {
+.sql-databi-container .copy-btn {
   background: none;
   border: none;
   cursor: pointer;
@@ -443,16 +464,22 @@
   flex-shrink: 0;
 }
 
-.copy-btn:hover {
+.sql-databi-container .copy-btn:hover {
   opacity: 1;
 }
 
-.result-table tbody tr:nth-child(even) {
-  background-color: var(--bg-secondary);
+.sql-databi-container .result-table tbody tr:nth-child(even) td {
+  background: rgba(30, 41, 59, 0.7);
 }
 
-.result-table tbody tr:hover {
-  background-color: var(--primary-color-light);
+.sql-databi-container .result-table tbody tr:hover td {
+  background: rgba(71, 85, 105, 0.5);
+}
+
+.sql-databi-container .result-table tbody tr.row-selected td,
+.sql-databi-container .result-table tbody tr.row-selected:hover td,
+.sql-databi-container .result-table tbody tr.row-selected:nth-child(even) td {
+  background-color: var(--row-highlight, rgba(139, 92, 246, 0.35)) !important;
 }
 
 /* 加载状态 */
@@ -565,6 +592,34 @@
 .btn-csv-upload:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* 护眼模式按钮 */
+.btn-eye-protect {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.btn-eye-protect:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.btn-eye-protect.active {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #fff;
 }
 
 /* ============================================
@@ -1137,13 +1192,13 @@
 
 .fullscreen-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 13px;
 }
 
 .fullscreen-table th,
 .fullscreen-table td {
-  border: 1px solid var(--border-color-light);
   padding: 10px 14px;
   text-align: left;
   min-width: 120px;
@@ -1151,6 +1206,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-right: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.fullscreen-table th:last-child,
+.fullscreen-table td:last-child {
+  border-right: none;
 }
 
 .fullscreen-table th.row-num,
@@ -1169,13 +1231,19 @@
 }
 
 .fullscreen-table thead th {
-  background-color: var(--bg-secondary);
+  background: #334155;
   font-weight: 500;
-  color: var(--text-color);
+  color: #e2e8f0;
   position: sticky;
   top: 0;
   z-index: 100;
-  border-bottom: 2px solid var(--border-color);
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.fullscreen-table thead th:last-child {
+  border-right: none;
 }
 
 .fullscreen-table thead th.row-num {
@@ -1186,12 +1254,14 @@
   transition: background-color 0.15s;
 }
 
-.fullscreen-table tbody tr:hover {
-  background-color: var(--bg-secondary);
+.fullscreen-table tbody tr:hover td {
+  background: rgba(71, 85, 105, 0.5);
 }
 
-.fullscreen-table tbody tr.row-selected {
-  background-color: rgba(139, 92, 246, 0.18);
+.fullscreen-table tbody tr.row-selected td,
+.fullscreen-table tbody tr.row-selected:hover td,
+.fullscreen-table tbody tr.row-selected:nth-child(even) td {
+  background-color: var(--row-highlight, rgba(139, 92, 246, 0.35)) !important;
 }
 
 .fullscreen-footer {
@@ -1270,12 +1340,44 @@
   color: var(--primary-color);
 }
 
-/* 行选中样式 */
-.result-table tbody tr.row-selected {
-  background-color: rgba(139, 92, 246, 0.18) !important;
-}
-
-.result-table tbody tr {
+.sql-databi-container .result-table tbody tr {
   cursor: pointer;
   transition: background-color 0.15s;
+}
+
+/* 右键菜单 */
+.databi-context-menu {
+  position: fixed;
+  z-index: 9999;
+  min-width: 140px;
+  background: var(--bg-color, #fff);
+  border: 1px solid var(--border-color, #e5e5e5);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 4px 0;
+  animation: context-menu-in 0.12s ease-out;
+}
+
+@keyframes context-menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.databi-context-menu .context-menu-item {
+  padding: 8px 14px;
+  font-size: 13px;
+  color: var(--text-color, #333);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.databi-context-menu .context-menu-item:hover {
+  background: var(--bg-hover, #f0f0f0);
 }

@@ -163,8 +163,11 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"
-          DESCRIPTION="1、优化部分已知问题。
-          2、优化了日志查询bug。"
+          DESCRIPTION="1、sql查询中，优化了表格显示，比之前更美观。
+          2、sql查询中，优化了表头和内容复制逻辑，改成右键功能键进行复制。
+          3、sql查询中，优化了列宽的计算。
+          4、sql查询中，优化了报错提示，使其更加明显清楚。
+          5、在sql和bi查询中，添加了编辑框的护眼模式，可以自行打开关闭。"
 
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \

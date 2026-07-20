@@ -2,8 +2,8 @@
  * BI 查询表树组件
  */
 
-import { useState, useMemo } from 'react';
-import { Database, Table, ChevronRight, ChevronDown, Search, X } from 'lucide-react';
+import { useMemo } from 'react';
+import { Database, Table, ChevronRight, ChevronDown } from 'lucide-react';
 import type { TreeNode } from '../types';
 
 interface TableTreeProps {
@@ -13,6 +13,7 @@ interface TableTreeProps {
   refreshLoading: boolean;
   refreshProgress: number;
   refreshMessage: string;
+  searchKey: string;
   onNodeClick: (node: TreeNode) => void;
   onNodeContextMenu: (e: React.MouseEvent, node: TreeNode) => void;
   onToggleExpand: (nodeId: string) => void;
@@ -25,11 +26,11 @@ export const TableTree = ({
   refreshLoading,
   refreshProgress,
   refreshMessage,
+  searchKey,
   onNodeClick,
   onNodeContextMenu,
   onToggleExpand
 }: TableTreeProps) => {
-  const [searchKey, setSearchKey] = useState('');
 
   // 顺序模糊匹配（忽略下划线），返回匹配位置用于排序
   const fuzzyMatch = (tableName: string, keyword: string): { match: boolean; positions: number[] } => {
@@ -125,22 +126,6 @@ export const TableTree = ({
 
   return (
     <div className="table-tree">
-      {/* 搜索框 */}
-      <div className="tree-search-box">
-        <Search size={14} className="tree-search-icon" />
-        <input
-          className="tree-search-input"
-          placeholder="过滤表名..."
-          value={searchKey}
-          onChange={e => setSearchKey(e.target.value)}
-        />
-        {searchKey && (
-          <button className="tree-search-clear" onClick={() => setSearchKey('')}>
-            <X size={12} />
-          </button>
-        )}
-      </div>
-
       {/* 刷新进度提示 */}
       {refreshLoading && refreshMessage && (
         <div className="refresh-status">

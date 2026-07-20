@@ -4,6 +4,15 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useUserPrefsStore } from '@/stores/userPrefsStore';
+import { toast } from '@/components/AppNotification';
+
+interface ContextMenuState {
+  visible: boolean;
+  x: number;
+  y: number;
+  rowIndex: number;
+  cellValue: string;
+}
 
 interface Props {
   columns: string[];
@@ -16,6 +25,12 @@ const FullscreenResultPanel = ({ columns, results, took, onClose }: Props) => {
   // 多选
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
   const lastClickedRow = useRef<number | null>(null);
+
+  // 右键菜单
+  const [contextMenu, setContextMenu] = useState<ContextMenuState>({
+    visible: false, x: 0, y: 0, rowIndex: -1, cellValue: ''
+  });
+  const menuRef = useRef<HTMLDivElement>(null);
   
   // 颜色选取器
   const { uiPrefs, setUiPref } = useUserPrefsStore();
@@ -34,7 +49,20 @@ const FullscreenResultPanel = ({ columns, results, took, onClose }: Props) => {
     return String(value);
   };
 
-  // 行点击：普通=单选，Ctrl=切换，Shift=范围选
+  // 点击其他地方关闭右键菜单
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setContextMenu(prev => ({ ...prev, visible: false }));
+      }
+    };
+    if (contextMenu.visible) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [contextMenu.visible]);
+
+  // 单击行：选中
   const handleRowClick = useCallback((idx: number, e: React.MouseEvent) => {
     if (e.shiftKey && lastClickedRow.current !== null) {
       const start = Math.min(lastClickedRow.current, idx);
@@ -52,9 +80,64 @@ const FullscreenResultPanel = ({ columns, results, took, onClose }: Props) => {
       });
       lastClickedRow.current = idx;
     } else {
-      setSelectedRows(prev => (prev.size === 1 && prev.has(idx) ? new Set() : new Set([idx])));
+      setSelectedRows(new Set([idx]));
       lastClickedRow.current = idx;
     }
+  }, []);
+
+  // 双击行：取消选中
+  const handleRowDoubleClick = useCallback((idx: number) => {
+    setSelectedRows(prev => {
+      const next = new Set(prev);
+      next.delete(idx);
+      return next;
+    });
+  }, []);
+
+  // 右键菜单
+  const handleContextMenu = useCallback((e: React.MouseEvent, rowIndex: number, cellValue: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSelectedRows(prev => {
+      if (!prev.has(rowIndex)) {
+        return new Set([rowIndex]);
+      }
+      return prev;
+    });
+    lastClickedRow.current = rowIndex;
+    setContextMenu({ visible: true, x: e.clientX, y: e.clientY, rowIndex, cellValue });
+  }, []);
+
+  // 复制单元格
+  const handleCopyCell = useCallback(() => {
+    navigator.clipboard.writeText(contextMenu.cellValue).then(() => {
+      const display = contextMenu.cellValue.length > 50
+        ? contextMenu.cellValue.slice(0, 50) + '...'
+        : contextMenu.cellValue;
+      toast.success(`已复制: ${display}`);
+    });
+    setContextMenu(prev => ({ ...prev, visible: false }));
+  }, [contextMenu.cellValue]);
+
+  // 复制整行
+  const handleCopyRowFromMenu = useCallback(() => {
+    const rowIdx = contextMenu.rowIndex;
+    if (rowIdx < 0 || rowIdx >= results.length) return;
+    const row = results[rowIdx];
+    const text = Array.isArray(row)
+      ? row.map(v => formatValue(v)).join('\t')
+      : columns.map(col => formatValue((row as any)[col])).join('\t');
+    navigator.clipboard.writeText(text).then(() => {
+      toast.success(`已复制第 ${rowIdx + 1} 行`);
+    });
+    setContextMenu(prev => ({ ...prev, visible: false }));
+  }, [contextMenu.rowIndex, results, columns, formatValue]);
+
+  // 双击复制表头
+  const handleDoubleClickHeader = useCallback((col: string) => {
+    navigator.clipboard.writeText(col).then(() => {
+      toast.success(`已复制表头: ${col}`);
+    });
   }, []);
 
   // 键盘方向键控制滚动 + ESC 退出全屏
@@ -149,7 +232,7 @@ const FullscreenResultPanel = ({ columns, results, took, onClose }: Props) => {
             <tr>
               <th className="row-num">#</th>
               {columns.map((col) => (
-                <th key={col}>{col}</th>
+                <th key={col} onDoubleClick={() => handleDoubleClickHeader(col)} style={{ cursor: 'pointer' }}>{col}</th>
               ))}
             </tr>
           </thead>
@@ -165,20 +248,27 @@ const FullscreenResultPanel = ({ columns, results, took, onClose }: Props) => {
                   key={idx}
                   className={isSelected ? 'row-selected' : ''}
                   style={{ 
-                    background: isSelected ? `rgba(${r},${g},${b},0.18)` : undefined, 
+                    '--row-highlight': isSelected ? `rgba(${r},${g},${b},0.35)` : undefined,
                     userSelect: 'none' 
-                  }}
+                  } as React.CSSProperties}
                   onClick={(e) => handleRowClick(idx, e)}
+                  onDoubleClick={() => handleRowDoubleClick(idx)}
                 >
                   <td className="row-num">{idx + 1}</td>
                   {Array.isArray(row) ? (
-                    row.map((val, colIdx) => (
-                      <td key={colIdx}>{formatValue(val)}</td>
-                    ))
+                    row.map((val, colIdx) => {
+                      const formatted = formatValue(val);
+                      return (
+                        <td key={colIdx} onContextMenu={(e) => handleContextMenu(e, idx, formatted)}>{formatted}</td>
+                      );
+                    })
                   ) : (
-                    columns.map((col, colIdx) => (
-                      <td key={colIdx}>{formatValue((row as any)[col])}</td>
-                    ))
+                    columns.map((col, colIdx) => {
+                      const formatted = formatValue((row as any)[col]);
+                      return (
+                        <td key={colIdx} onContextMenu={(e) => handleContextMenu(e, idx, formatted)}>{formatted}</td>
+                      );
+                    })
                   )}
                 </tr>
               );
@@ -195,6 +285,22 @@ const FullscreenResultPanel = ({ columns, results, took, onClose }: Props) => {
           {selectedRows.size > 0 && <span>已选中: {selectedRows.size} 行</span>}
         </div>
       </div>
+
+      {/* 右键菜单 */}
+      {contextMenu.visible && (
+        <div
+          ref={menuRef}
+          className="databi-context-menu"
+          style={{ position: 'fixed', left: contextMenu.x, top: contextMenu.y }}
+        >
+          <div className="context-menu-item" onClick={handleCopyCell}>
+            📋 复制单元格
+          </div>
+          <div className="context-menu-item" onClick={handleCopyRowFromMenu}>
+            📄 复制整行
+          </div>
+        </div>
+      )}
     </div>
   );
 };

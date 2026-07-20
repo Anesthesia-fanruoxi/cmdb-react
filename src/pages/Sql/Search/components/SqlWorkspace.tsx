@@ -3,6 +3,7 @@
  */
 
 import { useState, useRef, useCallback, useEffect, useMemo, memo } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import SqlEditor, { type SqlEditorRef } from './SqlEditor';
 import ResultPanel from './ResultPanel';
 import { getTableStructure } from '@/services/sql/search';
@@ -97,6 +98,7 @@ const SqlWorkspace = ({
 
   // 从用户偏好获取编辑器高度百分比
   const { uiPrefs, setUiPref, _hasHydrated } = useUserPrefsStore();
+  const sqlEyeProtect = uiPrefs.sqlEyeProtect ?? false;
   const [editorHeightPercent, setEditorHeightPercent] = useState(50); // 默认50%
   // 是否正在拖动
   const [isDragging, setIsDragging] = useState(false);
@@ -297,6 +299,13 @@ const SqlWorkspace = ({
           </button>
           <button className="btn btn-default" onClick={() => stableSqlChange('')} disabled={!sql}>
             清空
+          </button>
+          <button
+            className={`btn btn-eye-protect ${sqlEyeProtect ? 'active' : ''}`}
+            onClick={() => setUiPref('sqlEyeProtect', !sqlEyeProtect)}
+            title={sqlEyeProtect ? '关闭护眼模式' : '开启护眼模式'}
+          >
+            {sqlEyeProtect ? <Eye size={16} /> : <EyeOff size={16} />}
           </button>
         </div>
       </div>

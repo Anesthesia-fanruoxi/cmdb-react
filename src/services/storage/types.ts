@@ -177,6 +177,7 @@ export interface UiPrefs {
   sqlEditorHeightPercent: number; // 编辑器高度百分比
   sqlSidebarWidth: number; // SQL 左侧 TableTree 宽度（px）
   sqlRowHighlightColor: string; // 查询结果选中行高亮颜色
+  sqlEyeProtect: boolean; // SQL编辑器护眼模式
 }
 
 export interface PreferencesData {

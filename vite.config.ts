@@ -110,6 +110,9 @@ export default defineConfig({
     chunkSizeWarningLimit: 1500,
     // 目标浏览器
     target: 'esnext',
+    // 禁用 CSS 代码分割：将所有 CSS 合并到一个文件
+    // 防止 import.meta.glob 动态页面的 CSS 在生产构建中丢失
+    cssCodeSplit: false,
   },
   // 优化依赖预构建
   optimizeDeps: {
