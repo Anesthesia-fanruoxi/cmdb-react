@@ -24,14 +24,14 @@
 
 .pro-update-page .page-card .card-header .title { font-size: 18px; font-weight: 600; }
 
-.type-switch {
+.pro-update-page .type-switch {
   display: flex;
   border: 1px solid var(--border-color, #d9d9d9);
   border-radius: 4px;
   overflow: hidden;
 }
 
-.type-switch button {
+.pro-update-page .type-switch button {
   padding: 6px 14px;
   border: none;
   background: var(--bg-color, #fff);
@@ -39,9 +39,9 @@
   font-size: 13px;
 }
 
-.type-switch button.active { background: var(--primary-color); color: #fff; }
+.pro-update-page .type-switch button.active { background: var(--primary-color); color: #fff; }
 
-.btn-edit {
+.pro-update-page .btn-edit {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -53,52 +53,52 @@
   border: 1px solid;
 }
 
-.btn-edit.primary { background: var(--primary-color); border-color: var(--primary-color); color: #fff; }
-.btn-edit.warning { background: #faad14; border-color: #faad14; color: #fff; }
+.pro-update-page .btn-edit.primary { background: var(--primary-color); border-color: var(--primary-color); color: #fff; }
+.pro-update-page .btn-edit.warning { background: #faad14; border-color: #faad14; color: #fff; }
 
-.table-container { flex: 1; overflow: auto; padding: 0 20px 20px; }
+.pro-update-page .table-container { flex: 1; overflow: auto; padding: 0 20px 20px; }
 
-.data-table td.editable-cell { position: relative; }
+.pro-update-page .data-table td.editable-cell { position: relative; }
 
-.editable-cell .cell-content {
+.pro-update-page .editable-cell .cell-content {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   max-width: 100%;
 }
 
-.cell-text {
+.pro-update-page .cell-text {
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.cell-text.feishu { font-family: monospace; font-size: 12px; color: #52c41a; }
-.edit-icon { color: var(--primary-color); cursor: pointer; flex-shrink: 0; }
+.pro-update-page .cell-text.feishu { font-family: monospace; font-size: 12px; color: #52c41a; }
+.pro-update-page .edit-icon { color: var(--primary-color); cursor: pointer; flex-shrink: 0; }
 
 /* 状态标签 */
-.status-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
-.status-tag.success { background: #f6ffed; color: #52c41a; }
-.status-tag.danger { background: #fff2f0; color: #ff4d4f; }
-.status-tag.warning { background: #fff7e6; color: #fa8c16; }
-.status-tag.default { background: #f0f0f0; color: #666; }
+.pro-update-page .status-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+.pro-update-page .status-tag.success { background: #f6ffed; color: #52c41a; }
+.pro-update-page .status-tag.danger { background: #fff2f0; color: #ff4d4f; }
+.pro-update-page .status-tag.warning { background: #fff7e6; color: #fa8c16; }
+.pro-update-page .status-tag.default { background: #f0f0f0; color: #666; }
 
 /* 链路追踪 checkbox */
-.data-table input[type="checkbox"] {
+.pro-update-page .data-table input[type="checkbox"] {
   width: 16px;
   height: 16px;
   cursor: pointer;
   accent-color: var(--primary-color);
 }
 
-.data-table input[type="checkbox"]:disabled {
+.pro-update-page .data-table input[type="checkbox"]:disabled {
   cursor: not-allowed;
   opacity: 0.6;
 }
 
 /* 工具 select */
-.data-table select {
+.pro-update-page .data-table select {
   min-width: 90px;
   padding: 4px 8px;
   border: 1px solid var(--border-color, #d9d9d9);
@@ -108,10 +108,10 @@
   font-size: 13px;
 }
 
-.data-table select:disabled {
+.pro-update-page .data-table select:disabled {
   cursor: not-allowed;
   opacity: 0.7;
   background: var(--bg-secondary, #f5f5f5);
 }
 
-.loading-cell { text-align: center; padding: 40px !important; color: var(--text-secondary, #999); }
+.pro-update-page .loading-cell { text-align: center; padding: 40px !important; color: var(--text-secondary, #999); }

@@ -1,5 +1,9 @@
 /**
  * 树形选择组件样式
+ * 命名空间：
+ * - 主组件限定在根类名 `.tree-select` 下；
+ * - 下拉框通过 createPortal 挂载到 document.body，
+ *   限定在自身根类名 `.tree-select-dropdown` 下。
  */
 
 .tree-select {
@@ -7,7 +11,7 @@
   width: 100%;
 }
 
-.tree-select-input {
+.tree-select .tree-select-input {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -22,15 +26,15 @@
   box-sizing: border-box;
 }
 
-.tree-select-input:hover {
+.tree-select .tree-select-input:hover {
   border-color: var(--primary-color);
 }
 
-.tree-select-input .placeholder {
+.tree-select .tree-select-input .placeholder {
   color: var(--text-tertiary);
 }
 
-.tree-select-arrow {
+.tree-select .tree-select-arrow {
   font-size: 10px;
   color: var(--text-tertiary);
   margin-left: 8px;
@@ -51,7 +55,7 @@
   z-index: 1000;
 }
 
-.tree-node {
+.tree-select-dropdown .tree-node {
   display: flex;
   align-items: center;
   padding: 8px 12px;
@@ -61,29 +65,29 @@
   transition: background 0.2s;
 }
 
-.tree-node:hover {
+.tree-select-dropdown .tree-node:hover {
   background: var(--bg-hover);
 }
 
-.tree-node.selected {
+.tree-select-dropdown .tree-node.selected {
   background: var(--primary-color-light, rgba(99, 102, 241, 0.1));
   color: var(--primary-color);
 }
 
-.tree-node.parent {
+.tree-select-dropdown .tree-node.parent {
   color: var(--text-secondary);
   cursor: default;
 }
 
-.tree-node.parent:hover {
+.tree-select-dropdown .tree-node.parent:hover {
   background: transparent;
 }
 
-.tree-node.leaf {
+.tree-select-dropdown .tree-node.leaf {
   cursor: pointer;
 }
 
-.tree-expand {
+.tree-select-dropdown .tree-expand {
   width: 16px;
   height: 16px;
   display: flex;
@@ -96,27 +100,27 @@
   flex-shrink: 0;
 }
 
-.tree-expand:hover {
+.tree-select-dropdown .tree-expand:hover {
   color: var(--primary-color);
 }
 
-.tree-expand-placeholder {
+.tree-select-dropdown .tree-expand-placeholder {
   width: 16px;
   margin-right: 6px;
   flex-shrink: 0;
 }
 
-.tree-label {
+.tree-select-dropdown .tree-label {
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.tree-label.placeholder {
+.tree-select-dropdown .tree-label.placeholder {
   color: var(--text-tertiary);
 }
 
-.tree-children {
+.tree-select-dropdown .tree-children {
   /* 子节点容器 */
 }

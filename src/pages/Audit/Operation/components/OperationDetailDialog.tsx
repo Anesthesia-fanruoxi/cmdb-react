@@ -34,7 +34,7 @@ const OperationDetailDialog = ({ visible, data, onClose }: Props) => {
 
   return (
     <>
-      <div className="dialog-overlay" onClick={onClose} />
+      <div className="dialog-overlay operation-detail-overlay" onClick={onClose} />
       <div className="operation-detail-dialog">
         <div className="dialog-header"><h3>操作详情</h3></div>
         <div className="dialog-body">
@@ -69,20 +69,20 @@ const OperationDetailDialog = ({ visible, data, onClose }: Props) => {
         </div>
       </div>
       <style>{`
-        .dialog-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1100; cursor: pointer; }
+        .operation-detail-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1100; cursor: pointer; }
         .operation-detail-dialog { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 800px; max-width: 90%; max-height: 80vh; background: var(--bg-color); border-radius: 8px; z-index: 1101; border: 1px solid var(--border-color); box-shadow: 0 8px 24px rgba(0,0,0,0.15); display: flex; flex-direction: column; }
         .operation-detail-dialog .dialog-header { padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
         .operation-detail-dialog .dialog-header h3 { margin: 0; font-size: 16px; color: var(--text-color); }
         .operation-detail-dialog .dialog-body { padding: 20px; overflow: auto; flex: 1; }
-        .detail-table { border: 1px solid var(--border-color); border-radius: 4px; overflow: hidden; margin-bottom: 20px; }
-        .detail-row { display: flex; border-bottom: 1px solid var(--border-color); }
-        .detail-row:last-child { border-bottom: none; }
-        .detail-row .label { width: 100px; padding: 10px 12px; background: var(--bg-secondary); color: var(--text-secondary); font-size: 13px; flex-shrink: 0; }
-        .detail-row span:last-child { flex: 1; padding: 10px 12px; color: var(--text-color); font-size: 13px; word-break: break-all; }
-        .detail-section { margin-bottom: 16px; }
-        .section-title { font-weight: 500; margin-bottom: 8px; color: var(--text-color); font-size: 14px; }
-        .code-block { margin: 0; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; font-family: 'Courier New', monospace; color: var(--text-color); max-height: 200px; overflow: auto; white-space: pre-wrap; word-break: break-all; }
-        .code-block.error { background: rgba(255, 77, 79, 0.1); border-left: 3px solid #ff4d4f; }
+        .operation-detail-dialog .detail-table { border: 1px solid var(--border-color); border-radius: 4px; overflow: hidden; margin-bottom: 20px; }
+        .operation-detail-dialog .detail-row { display: flex; border-bottom: 1px solid var(--border-color); }
+        .operation-detail-dialog .detail-row:last-child { border-bottom: none; }
+        .operation-detail-dialog .detail-row .label { width: 100px; padding: 10px 12px; background: var(--bg-secondary); color: var(--text-secondary); font-size: 13px; flex-shrink: 0; }
+        .operation-detail-dialog .detail-row span:last-child { flex: 1; padding: 10px 12px; color: var(--text-color); font-size: 13px; word-break: break-all; }
+        .operation-detail-dialog .detail-section { margin-bottom: 16px; }
+        .operation-detail-dialog .section-title { font-weight: 500; margin-bottom: 8px; color: var(--text-color); font-size: 14px; }
+        .operation-detail-dialog .code-block { margin: 0; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; font-family: 'Courier New', monospace; color: var(--text-color); max-height: 200px; overflow: auto; white-space: pre-wrap; word-break: break-all; }
+        .operation-detail-dialog .code-block.error { background: rgba(255, 77, 79, 0.1); border-left: 3px solid #ff4d4f; }
       `}</style>
     </>
   );

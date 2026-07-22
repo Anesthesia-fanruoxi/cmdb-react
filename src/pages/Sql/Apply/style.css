@@ -1,5 +1,5 @@
 /**
- * SQL变更申请页面样式
+ * SQL变更申请页面样式（作用域：.sql-apply-page）
  * 通用样式已移至 src/styles/common.css
  */
 
@@ -11,14 +11,14 @@
 }
 
 /* 卡片容器 */
-.apply-card {
+.sql-apply-page .apply-card {
   height: 100%;
   background: var(--bg-color);
   display: flex;
   flex-direction: column;
 }
 
-.apply-card .card-header {
+.sql-apply-page .apply-card .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -26,7 +26,7 @@
   border-bottom: 1px solid var(--border-color);
 }
 
-.apply-card .card-title {
+.sql-apply-page .apply-card .card-title {
   font-size: 18px;
   font-weight: 600;
   color: var(--text-color);
@@ -35,8 +35,8 @@
   gap: 8px;
 }
 
-.apply-card .card-actions { display: flex; gap: 12px; }
-.apply-card .card-body { 
+.sql-apply-page .apply-card .card-actions { display: flex; gap: 12px; }
+.sql-apply-page .apply-card .card-body { 
   flex: 1; 
   padding: 0;
   overflow: auto; 
@@ -44,7 +44,7 @@
 }
 
 /* 链接按钮 */
-.link-btn {
+.sql-apply-page .link-btn {
   background: transparent;
   border: none;
   color: var(--primary-color);
@@ -52,10 +52,10 @@
   font-size: 14px;
   padding: 4px 8px;
 }
-.link-btn:hover { color: var(--primary-hover); }
+.sql-apply-page .link-btn:hover { color: var(--primary-hover); }
 
 /* 申请表格 */
-.apply-table {
+.sql-apply-page .apply-table {
   width: 100%;
   min-width: 1300px; /* 调整最小宽度 */
   border-collapse: collapse;
@@ -63,7 +63,7 @@
   table-layout: fixed;
 }
 
-.apply-table th, .apply-table td {
+.sql-apply-page .apply-table th, .sql-apply-page .apply-table td {
   padding: 12px 14px;
   text-align: left;
   border-bottom: 1px solid var(--border-color);
@@ -73,7 +73,7 @@
   text-overflow: ellipsis;
 }
 
-.apply-table th {
+.sql-apply-page .apply-table th {
   background: var(--bg-secondary);
   font-weight: 600;
   color: var(--text-color);
@@ -85,20 +85,20 @@
 }
 
 /* 列宽设置 - 11列布局 */
-.apply-table th:nth-child(1), .apply-table td:nth-child(1) { width: 6%; } /* 申请ID */
-.apply-table th:nth-child(2), .apply-table td:nth-child(2) { width: 5%; } /* 所属项目 */
-.apply-table th:nth-child(3), .apply-table td:nth-child(3) { width: 8%; } /* 创建人 */
-.apply-table th:nth-child(4), .apply-table td:nth-child(4) { width: 8%; } /* 审批人 */
-.apply-table th:nth-child(5), .apply-table td:nth-child(5) { width: 8%; } /* 执行人 */
-.apply-table th:nth-child(6), .apply-table td:nth-child(6) { width: 9%; } /* 当前操作人 */
-.apply-table th:nth-child(7), .apply-table td:nth-child(7) { width: 25%; } /* 申请说明 */
-.apply-table th:nth-child(8), .apply-table td:nth-child(8) { width: 11%; } /* 执行时间 */
-.apply-table th:nth-child(9), .apply-table td:nth-child(9) { width: 11%; } /* 申请时间 */
-.apply-table th:nth-child(10), .apply-table td:nth-child(10) { width: 6%; } /* 状态 */
-.apply-table th:nth-child(11), .apply-table td:nth-child(11) { width: 6%; } /* 操作 */
+.sql-apply-page .apply-table th:nth-child(1), .sql-apply-page .apply-table td:nth-child(1) { width: 6%; } /* 申请ID */
+.sql-apply-page .apply-table th:nth-child(2), .sql-apply-page .apply-table td:nth-child(2) { width: 5%; } /* 所属项目 */
+.sql-apply-page .apply-table th:nth-child(3), .sql-apply-page .apply-table td:nth-child(3) { width: 8%; } /* 创建人 */
+.sql-apply-page .apply-table th:nth-child(4), .sql-apply-page .apply-table td:nth-child(4) { width: 8%; } /* 审批人 */
+.sql-apply-page .apply-table th:nth-child(5), .sql-apply-page .apply-table td:nth-child(5) { width: 8%; } /* 执行人 */
+.sql-apply-page .apply-table th:nth-child(6), .sql-apply-page .apply-table td:nth-child(6) { width: 9%; } /* 当前操作人 */
+.sql-apply-page .apply-table th:nth-child(7), .sql-apply-page .apply-table td:nth-child(7) { width: 25%; } /* 申请说明 */
+.sql-apply-page .apply-table th:nth-child(8), .sql-apply-page .apply-table td:nth-child(8) { width: 11%; } /* 执行时间 */
+.sql-apply-page .apply-table th:nth-child(9), .sql-apply-page .apply-table td:nth-child(9) { width: 11%; } /* 申请时间 */
+.sql-apply-page .apply-table th:nth-child(10), .sql-apply-page .apply-table td:nth-child(10) { width: 6%; } /* 状态 */
+.sql-apply-page .apply-table th:nth-child(11), .sql-apply-page .apply-table td:nth-child(11) { width: 6%; } /* 操作 */
 
 /* 筛选输入框 */
-.filter-input {
+.sql-apply-page .filter-input {
   padding: 6px 12px;
   border: 1px solid var(--border-color);
   border-radius: 4px;
@@ -108,17 +108,17 @@
   min-width: 150px;
 }
 
-.filter-input:focus {
+.sql-apply-page .filter-input:focus {
   outline: none;
   border-color: var(--primary-color);
 }
 
-.filter-input::placeholder {
+.sql-apply-page .filter-input::placeholder {
   color: var(--text-muted);
 }
 
 /* 筛选下拉框 */
-.filter-select {
+.sql-apply-page .filter-select {
   padding: 6px 12px;
   border: 1px solid var(--border-color);
   border-radius: 4px;
@@ -129,24 +129,24 @@
   min-width: 120px;
 }
 
-.filter-select:focus {
+.sql-apply-page .filter-select:focus {
   outline: none;
   border-color: var(--primary-color);
 }
 
-.apply-table tbody tr:hover { background: var(--bg-hover); }
-.apply-table .empty-row { text-align: center; color: var(--text-muted); padding: 60px 14px; }
+.sql-apply-page .apply-table tbody tr:hover { background: var(--bg-hover); }
+.sql-apply-page .apply-table .empty-row { text-align: center; color: var(--text-muted); padding: 60px 14px; }
 
 /* 状态标签（页面特有） */
-.status-tag { display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 12px; }
-.status-warning { background: rgba(250, 173, 20, 0.1); color: #faad14; }
-.status-success { background: rgba(82, 196, 26, 0.1); color: #52c41a; }
-.status-danger { background: rgba(255, 77, 79, 0.1); color: #ff4d4f; }
-.status-info { background: var(--bg-secondary); color: var(--text-secondary); }
-.status-primary { background: rgba(102, 126, 234, 0.1); color: var(--primary-color); }
+.sql-apply-page .status-tag { display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 12px; }
+.sql-apply-page .status-warning { background: rgba(250, 173, 20, 0.1); color: #faad14; }
+.sql-apply-page .status-success { background: rgba(82, 196, 26, 0.1); color: #52c41a; }
+.sql-apply-page .status-danger { background: rgba(255, 77, 79, 0.1); color: #ff4d4f; }
+.sql-apply-page .status-info { background: var(--bg-secondary); color: var(--text-secondary); }
+.sql-apply-page .status-primary { background: rgba(102, 126, 234, 0.1); color: var(--primary-color); }
 
 /* 加载状态 */
-.loading-state {
+.sql-apply-page .loading-state {
   display: flex;
   justify-content: center;
   align-items: center;

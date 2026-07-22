@@ -1,4 +1,8 @@
-/* Toast 消息提示 */
+/*
+ * Toast 消息提示
+ * 命名空间：组件通过 document.body.appendChild 挂载，
+ * 所有子元素样式限定在根类名 `.toast-container` 下，避免全局冲突。
+ */
 
 .toast-container {
   position: fixed;
@@ -10,7 +14,7 @@
   gap: 10px;
 }
 
-.toast-item {
+.toast-container .toast-item {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -25,23 +29,23 @@
   transition: all 0.3s ease;
 }
 
-.toast-item.hide {
+.toast-container .toast-item.hide {
   transform: translateX(100%);
   opacity: 0;
 }
 
-.toast-clickable {
+.toast-container .toast-clickable {
   cursor: pointer;
 }
 
-.toast-clickable:hover {
+.toast-container .toast-clickable:hover {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 }
 
-.toast-icon { flex-shrink: 0; display: flex; }
-.toast-message { flex: 1; font-size: 14px; color: #333; word-break: break-word; }
+.toast-container .toast-icon { flex-shrink: 0; display: flex; }
+.toast-container .toast-message { flex: 1; font-size: 14px; color: #333; word-break: break-word; }
 
-.toast-close {
+.toast-container .toast-close {
   flex-shrink: 0;
   background: none;
   border: none;
@@ -50,16 +54,16 @@
   padding: 2px;
   display: flex;
 }
-.toast-close:hover { color: #666; }
+.toast-container .toast-close:hover { color: #666; }
 
-.toast-success { border-left: 4px solid #52c41a; }
-.toast-success .toast-icon { color: #52c41a; }
+.toast-container .toast-success { border-left: 4px solid #52c41a; }
+.toast-container .toast-success .toast-icon { color: #52c41a; }
 
-.toast-error { border-left: 4px solid #ff4d4f; }
-.toast-error .toast-icon { color: #ff4d4f; }
+.toast-container .toast-error { border-left: 4px solid #ff4d4f; }
+.toast-container .toast-error .toast-icon { color: #ff4d4f; }
 
-.toast-warning { border-left: 4px solid #faad14; }
-.toast-warning .toast-icon { color: #faad14; }
+.toast-container .toast-warning { border-left: 4px solid #faad14; }
+.toast-container .toast-warning .toast-icon { color: #faad14; }
 
-.toast-info { border-left: 4px solid #1890ff; }
-.toast-info .toast-icon { color: #1890ff; }
+.toast-container .toast-info { border-left: 4px solid #1890ff; }
+.toast-container .toast-info .toast-icon { color: #1890ff; }

@@ -1,5 +1,8 @@
 /**
  * Loading 组件样式
+ * 命名空间：共享组件，子元素样式限定在自身根类名
+ * `.loading-content` / `.loading-overlay` 下。
+ * @keyframes 改为 loading-spin，避免与全局 spin 撞名。
  */
 
 .loading-overlay {
@@ -22,46 +25,46 @@
   gap: 12px;
 }
 
-.loading-spinner {
+.loading-content .loading-spinner {
   border: 3px solid rgba(100, 108, 255, 0.2);
   border-top-color: #646cff;
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation: loading-spin 0.8s linear infinite;
 }
 
 /* 尺寸变体 */
-.loading-small .loading-spinner {
+.loading-content.loading-small .loading-spinner {
   width: 20px;
   height: 20px;
   border-width: 2px;
 }
 
-.loading-medium .loading-spinner {
+.loading-content.loading-medium .loading-spinner {
   width: 36px;
   height: 36px;
   border-width: 3px;
 }
 
-.loading-large .loading-spinner {
+.loading-content.loading-large .loading-spinner {
   width: 48px;
   height: 48px;
   border-width: 4px;
 }
 
-.loading-text {
+.loading-content .loading-text {
   color: rgba(255, 255, 255, 0.87);
   font-size: 0.9em;
 }
 
-.loading-small .loading-text {
+.loading-content.loading-small .loading-text {
   font-size: 0.8em;
 }
 
-.loading-large .loading-text {
+.loading-content.loading-large .loading-text {
   font-size: 1em;
 }
 
-@keyframes spin {
+@keyframes loading-spin {
   to {
     transform: rotate(360deg);
   }
@@ -73,7 +76,7 @@
     background-color: rgba(255, 255, 255, 0.8);
   }
 
-  .loading-text {
+  .loading-content .loading-text {
     color: #213547;
   }
 }

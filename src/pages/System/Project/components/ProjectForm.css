@@ -12,15 +12,15 @@
   width: 100%;
 }
 
-.logo-input-wrapper {
+.project-form-modal .logo-input-wrapper {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.logo-input-wrapper input { flex: 1; }
+.project-form-modal .logo-input-wrapper input { flex: 1; }
 
-.logo-preview {
+.project-form-modal .logo-preview {
   width: 36px;
   height: 36px;
   border-radius: 4px;

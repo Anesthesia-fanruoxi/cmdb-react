@@ -222,11 +222,11 @@
   color: var(--text-color);
 }
 
-.spin {
-  animation: spin 1s linear infinite;
+.exec-page .spin {
+  animation: exec-page-spin 1s linear infinite;
 }
 
-@keyframes spin {
+@keyframes exec-page-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }

@@ -1,10 +1,13 @@
 /**
  * Kibana 风格时间选择器样式
  * 更新时间：2025-01-23
+ * 作用域说明：
+ * - .kibana-time-btn 为页面内联按钮，scope 到 .elfk-search-page
+ * - antd Modal 默认挂载到 body（portal），弹窗内选择器 scope 到组件自身根类名 .kibana-time-modal
  */
 
 /* 主按钮 */
-.kibana-time-btn {
+.elfk-search-page .kibana-time-btn {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -22,21 +25,21 @@
   width: auto;
 }
 
-.kibana-time-btn:hover {
+.elfk-search-page .kibana-time-btn:hover {
   background: #e9edf2;
   border-color: #98a2b3;
 }
 
-.kibana-time-btn:active {
+.elfk-search-page .kibana-time-btn:active {
   background: #dfe3e8;
 }
 
-.kibana-time-btn .icon {
+.elfk-search-page .kibana-time-btn .icon {
   color: #69707d;
   font-size: 14px;
 }
 
-.kibana-time-btn .time-text {
+.elfk-search-page .kibana-time-btn .time-text {
   flex: 0 1 auto;
   text-align: left;
   font-weight: 500;
@@ -45,7 +48,7 @@
   text-overflow: ellipsis;
 }
 
-.kibana-time-btn .arrow {
+.elfk-search-page .kibana-time-btn .arrow {
   font-size: 10px;
   color: #69707d;
 }
@@ -132,11 +135,11 @@
   position: relative;
 }
 
-.custom-range-panel .ant-picker-range {
+.kibana-time-modal .custom-range-panel .ant-picker-range {
   width: 100%;
 }
 
-.selected-range {
+.kibana-time-modal .selected-range {
   margin-top: 20px;
   padding: 16px;
   background: #f7f8fa;
@@ -146,19 +149,19 @@
   gap: 12px;
 }
 
-.range-info {
+.kibana-time-modal .range-info {
   display: flex;
   align-items: center;
   font-size: 14px;
 }
 
-.range-info .label {
+.kibana-time-modal .range-info .label {
   color: #69707d;
   margin-right: 8px;
   min-width: 80px;
 }
 
-.range-info .value {
+.kibana-time-modal .range-info .value {
   color: #343741;
   font-weight: 500;
 }
@@ -171,25 +174,25 @@
   position: relative;
 }
 
-.relative-time-input {
+.kibana-time-modal .relative-time-input {
   display: flex;
   align-items: center;
   gap: 12px;
   margin-bottom: 16px;
 }
 
-.relative-time-input .input-label {
+.kibana-time-modal .relative-time-input .input-label {
   font-size: 14px;
   color: #343741;
   font-weight: 500;
 }
 
-.relative-time-input .ant-input-number,
-.relative-time-input .ant-select {
+.kibana-time-modal .relative-time-input .ant-input-number,
+.kibana-time-modal .relative-time-input .ant-select {
   flex: 0 0 auto;
 }
 
-.relative-time-hint {
+.kibana-time-modal .relative-time-hint {
   padding: 12px;
   background: #f0f5ff;
   border-left: 3px solid #1890ff;
@@ -200,7 +203,7 @@
 }
 
 /* 面板底部确认按钮 - 固定在右下角 */
-.panel-footer {
+.kibana-time-modal .panel-footer {
   position: absolute;
   bottom: 0;
   right: 0;
@@ -214,7 +217,7 @@
   z-index: 10;
 }
 
-.confirm-btn {
+.kibana-time-modal .confirm-btn {
   padding: 8px 24px;
   background: #1890ff;
   color: #ffffff;
@@ -226,15 +229,15 @@
   transition: all 0.2s;
 }
 
-.confirm-btn:hover:not(:disabled) {
+.kibana-time-modal .confirm-btn:hover:not(:disabled) {
   background: #40a9ff;
 }
 
-.confirm-btn:active:not(:disabled) {
+.kibana-time-modal .confirm-btn:active:not(:disabled) {
   background: #096dd9;
 }
 
-.confirm-btn:disabled {
+.kibana-time-modal .confirm-btn:disabled {
   background: #d9d9d9;
   color: rgba(0, 0, 0, 0.25);
   cursor: not-allowed;
@@ -288,23 +291,23 @@ body.dark .ant-modal-root .kibana-time-modal .ant-picker-suffix {
   color: rgba(255, 255, 255, 0.45);
 }
 
-.dark .kibana-time-btn {
+.dark .elfk-search-page .kibana-time-btn {
   background: #25262e;
   border-color: #343741;
   color: #dfe5ef;
 }
 
-.dark .kibana-time-btn:hover {
+.dark .elfk-search-page .kibana-time-btn:hover {
   background: #2e2f3a;
   border-color: #535966;
 }
 
-.dark .kibana-time-btn:active {
+.dark .elfk-search-page .kibana-time-btn:active {
   background: #1a1b20;
 }
 
-.dark .kibana-time-btn .icon,
-.dark .kibana-time-btn .arrow {
+.dark .elfk-search-page .kibana-time-btn .icon,
+.dark .elfk-search-page .kibana-time-btn .arrow {
   color: #98a2b3;
 }
 
@@ -330,64 +333,64 @@ body.dark .ant-modal-root .kibana-time-modal .ant-picker-suffix {
 }
 
 /* 深色模式 - 自定义时间范围 */
-.dark .selected-range {
+.dark .kibana-time-modal .selected-range {
   background: #25262e;
 }
 
-.dark .range-info .label {
+.dark .kibana-time-modal .range-info .label {
   color: #98a2b3;
 }
 
-.dark .range-info .value {
+.dark .kibana-time-modal .range-info .value {
   color: #dfe5ef;
 }
 
 /* 深色模式 - 过去时间 */
-.dark .relative-time-input .input-label {
+.dark .kibana-time-modal .relative-time-input .input-label {
   color: #dfe5ef;
 }
 
-.dark .relative-time-hint {
+.dark .kibana-time-modal .relative-time-hint {
   background: #111b26;
   border-left-color: #177ddc;
   color: #98a2b3;
 }
 
 /* 深色模式 - 确认按钮 */
-.dark .panel-footer {
+.dark .kibana-time-modal .panel-footer {
   border-top-color: #434343;
   background: #1f1f1f;
 }
 
-.dark .confirm-btn {
+.dark .kibana-time-modal .confirm-btn {
   background: #177ddc;
 }
 
-.dark .confirm-btn:hover:not(:disabled) {
+.dark .kibana-time-modal .confirm-btn:hover:not(:disabled) {
   background: #1890ff;
 }
 
-.dark .confirm-btn:active:not(:disabled) {
+.dark .kibana-time-modal .confirm-btn:active:not(:disabled) {
   background: #0050b3;
 }
 
-.dark .confirm-btn:disabled {
+.dark .kibana-time-modal .confirm-btn:disabled {
   background: #434343;
   color: rgba(255, 255, 255, 0.25);
 }
 
 /* 响应式调整 */
 @media (max-width: 768px) {
-  .kibana-time-btn {
+  .elfk-search-page .kibana-time-btn {
     min-width: 160px;
     font-size: 12px;
   }
   
-  .quick-options-grid {
+  .kibana-time-modal .quick-options-grid {
     grid-template-columns: repeat(2, 1fr);
   }
   
-  .relative-time-input {
+  .kibana-time-modal .relative-time-input {
     flex-wrap: wrap;
   }
 }

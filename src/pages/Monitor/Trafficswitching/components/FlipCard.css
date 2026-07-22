@@ -2,14 +2,14 @@
  * 翻转卡片样式
  */
 
-.flip-card {
+.traffic-monitor .flip-card {
   perspective: 1000px;
   cursor: pointer;
   height: 100px;
   margin-bottom: 16px;
 }
 
-.flip-card-inner {
+.traffic-monitor .flip-card-inner {
   position: relative;
   width: 100%;
   height: 100%;
@@ -17,12 +17,12 @@
   transform-style: preserve-3d;
 }
 
-.flip-card-inner.flipped {
+.traffic-monitor .flip-card-inner.flipped {
   transform: rotateY(180deg);
 }
 
-.flip-card-front,
-.flip-card-back {
+.traffic-monitor .flip-card-front,
+.traffic-monitor .flip-card-back {
   position: absolute;
   width: 100%;
   height: 100%;
@@ -32,22 +32,22 @@
   justify-content: center;
 }
 
-.flip-card-back {
+.traffic-monitor .flip-card-back {
   transform: rotateY(180deg);
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
   border-left-color: #667eea !important;
 }
 
-.flip-card-back .stat-value {
+.traffic-monitor .flip-card-back .stat-value {
   color: #fff !important;
   font-size: 18px;
 }
 
-.flip-card-back .stat-label {
+.traffic-monitor .flip-card-back .stat-label {
   color: rgba(255, 255, 255, 0.8) !important;
 }
 
-.flip-card-back .stat-note {
+.traffic-monitor .flip-card-back .stat-note {
   font-size: 10px;
   color: rgba(255, 255, 255, 0.7);
   margin-top: 4px;
@@ -56,7 +56,7 @@
   border-radius: 4px;
 }
 
-.stat-card {
+.traffic-monitor .stat-card {
   background: var(--bg-color);
   border-radius: 8px;
   padding: 16px;
@@ -65,22 +65,22 @@
   border-left: 4px solid var(--primary-color);
 }
 
-.stat-card.success { border-left-color: #52c41a; }
-.stat-card.warning { border-left-color: #faad14; }
-.stat-card.danger { border-left-color: #ff4d4f; }
+.traffic-monitor .stat-card.success { border-left-color: #52c41a; }
+.traffic-monitor .stat-card.warning { border-left-color: #faad14; }
+.traffic-monitor .stat-card.danger { border-left-color: #ff4d4f; }
 
-.stat-value {
+.traffic-monitor .stat-value {
   font-size: 24px;
   font-weight: 700;
   color: var(--text-color);
   line-height: 1.2;
 }
 
-.stat-value.raw {
+.traffic-monitor .stat-value.raw {
   font-size: 18px;
 }
 
-.stat-label {
+.traffic-monitor .stat-label {
   font-size: 12px;
   color: var(--text-muted);
   margin-top: 4px;
@@ -90,19 +90,19 @@
 }
 
 /* 深色主题 */
-[data-theme="dark"] .stat-card {
+[data-theme="dark"] .traffic-monitor .stat-card {
   background: linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
-[data-theme="dark"] .stat-card.success {
+[data-theme="dark"] .traffic-monitor .stat-card.success {
   background: linear-gradient(135deg, #1e1e1e 0%, rgba(82, 196, 26, 0.2) 100%);
 }
 
-[data-theme="dark"] .stat-card.warning {
+[data-theme="dark"] .traffic-monitor .stat-card.warning {
   background: linear-gradient(135deg, #1e1e1e 0%, rgba(250, 173, 20, 0.2) 100%);
 }
 
-[data-theme="dark"] .stat-card.danger {
+[data-theme="dark"] .traffic-monitor .stat-card.danger {
   background: linear-gradient(135deg, #1e1e1e 0%, rgba(255, 77, 79, 0.2) 100%);
 }

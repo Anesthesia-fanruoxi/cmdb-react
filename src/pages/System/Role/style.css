@@ -300,5 +300,5 @@
 }
 
 /* 动画 */
-.role-management .spin { animation: spin 1s linear infinite; }
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.role-management .spin { animation: role-spin 1s linear infinite; }
+@keyframes role-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

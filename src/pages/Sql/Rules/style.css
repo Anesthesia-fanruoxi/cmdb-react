@@ -1,5 +1,5 @@
 /**
- * SQL规则管理页面样式
+ * SQL规则管理页面样式（作用域：.sql-rules）
  * 通用样式已移至 src/styles/common.css
  */
 
@@ -13,13 +13,13 @@
 }
 
 /* 统计卡片 */
-.stats-row {
+.sql-rules .stats-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
 
-.stat-card {
+.sql-rules .stat-card {
   display: flex;
   align-items: center;
   gap: 16px;
@@ -29,7 +29,7 @@
   box-shadow: var(--shadow-sm);
 }
 
-.stat-icon {
+.sql-rules .stat-icon {
   width: 56px;
   height: 56px;
   border-radius: 12px;
@@ -40,17 +40,17 @@
   color: #fff;
 }
 
-.stat-icon.total { background: linear-gradient(135deg, #667eea, #764ba2); }
-.stat-icon.enabled { background: linear-gradient(135deg, #52c41a, #73d13d); }
-.stat-icon.disabled { background: linear-gradient(135deg, #ff4d4f, #ff7875); }
-.stat-icon.types { background: linear-gradient(135deg, #1890ff, #69c0ff); }
+.sql-rules .stat-icon.total { background: linear-gradient(135deg, #667eea, #764ba2); }
+.sql-rules .stat-icon.enabled { background: linear-gradient(135deg, #52c41a, #73d13d); }
+.sql-rules .stat-icon.disabled { background: linear-gradient(135deg, #ff4d4f, #ff7875); }
+.sql-rules .stat-icon.types { background: linear-gradient(135deg, #1890ff, #69c0ff); }
 
-.stat-info { flex: 1; }
-.stat-value { font-size: 28px; font-weight: 600; color: var(--text-color); }
-.stat-label { font-size: 14px; color: var(--text-secondary); margin-top: 4px; }
+.sql-rules .stat-info { flex: 1; }
+.sql-rules .stat-value { font-size: 28px; font-weight: 600; color: var(--text-color); }
+.sql-rules .stat-label { font-size: 14px; color: var(--text-secondary); margin-top: 4px; }
 
 /* 筛选区域 */
-.filter-bar {
+.sql-rules .filter-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -61,9 +61,9 @@
   box-shadow: var(--shadow-sm);
 }
 
-.filter-tags { flex: 1; display: flex; flex-wrap: wrap; gap: 10px; }
+.sql-rules .filter-tags { flex: 1; display: flex; flex-wrap: wrap; gap: 10px; }
 
-.filter-tag {
+.sql-rules .filter-tag {
   padding: 6px 14px;
   border-radius: 6px;
   font-size: 13px;
@@ -73,17 +73,17 @@
   transition: all 0.2s;
 }
 
-.filter-tag:hover {
+.sql-rules .filter-tag:hover {
   transform: translateY(-2px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.filter-tag.active { background: var(--primary-color); color: #fff; }
-.filter-tag.tag-success.active { background: #52c41a; }
-.filter-tag.tag-warning.active { background: #faad14; }
-.filter-tag.tag-danger.active { background: #ff4d4f; }
+.sql-rules .filter-tag.active { background: var(--primary-color); color: #fff; }
+.sql-rules .filter-tag.tag-success.active { background: #52c41a; }
+.sql-rules .filter-tag.tag-warning.active { background: #faad14; }
+.sql-rules .filter-tag.tag-danger.active { background: #ff4d4f; }
 
-.search-input {
+.sql-rules .search-input {
   width: 280px;
   padding: 8px 14px;
   border: 1px solid var(--border-color);
@@ -93,10 +93,10 @@
   color: var(--text-color);
 }
 
-.search-input:focus { outline: none; border-color: var(--primary-color); }
+.sql-rules .search-input:focus { outline: none; border-color: var(--primary-color); }
 
 /* 表格容器 */
-.table-container {
+.sql-rules .table-container {
   flex: 1;
   overflow: auto;
   background: var(--bg-color);
@@ -104,18 +104,18 @@
   box-shadow: var(--shadow-sm);
 }
 
-.data-table tbody tr.expanded { background: var(--bg-hover); }
-.expand-btn { cursor: pointer; color: var(--text-muted); font-size: 10px; }
-.rule-name { font-weight: 500; }
+.sql-rules .data-table tbody tr.expanded { background: var(--bg-hover); }
+.sql-rules .expand-btn { cursor: pointer; color: var(--text-muted); font-size: 10px; }
+.sql-rules .rule-name { font-weight: 500; }
 
-.desc-cell, .error-cell {
+.sql-rules .desc-cell, .sql-rules .error-cell {
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.error-cell { color: var(--danger-color); }
+.sql-rules .error-cell { color: var(--danger-color); }
 
 /* 开关 */
 .sql-rules .switch {
@@ -153,14 +153,14 @@
 .sql-rules input:checked + .slider:before { transform: translateX(16px); }
 
 /* 详情行 */
-.detail-row td { padding: 0 !important; background: var(--bg-secondary); }
+.sql-rules .detail-row td { padding: 0 !important; background: var(--bg-secondary); }
 
-.rule-detail { padding: 20px; }
+.sql-rules .rule-detail { padding: 20px; }
 
-.detail-section { margin-bottom: 16px; }
-.detail-section:last-child { margin-bottom: 0; }
+.sql-rules .detail-section { margin-bottom: 16px; }
+.sql-rules .detail-section:last-child { margin-bottom: 0; }
 
-.detail-section h4 {
+.sql-rules .detail-section h4 {
   margin: 0 0 12px 0;
   font-size: 14px;
   font-weight: 600;
@@ -169,7 +169,7 @@
   border-left: 3px solid var(--primary-color);
 }
 
-.rule-content {
+.sql-rules .rule-content {
   margin: 0;
   padding: 12px;
   background: var(--bg-color);
@@ -183,11 +183,11 @@
 
 /* 响应式 */
 @media (max-width: 1200px) {
-  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .sql-rules .stats-row { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 768px) {
-  .stats-row { grid-template-columns: 1fr; }
-  .filter-bar { flex-direction: column; align-items: stretch; }
-  .search-input { width: 100%; }
+  .sql-rules .stats-row { grid-template-columns: 1fr; }
+  .sql-rules .filter-bar { flex-direction: column; align-items: stretch; }
+  .sql-rules .search-input { width: 100%; }
 }

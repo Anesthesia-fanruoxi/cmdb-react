@@ -1,13 +1,13 @@
 /* ELFK 快捷键设置弹窗样式 */
 
-.elfk-shortcut-overlay {
+.elfk-search-page .elfk-shortcut-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
   z-index: 1300;
 }
 
-.elfk-shortcut-dialog {
+.elfk-search-page .elfk-shortcut-dialog {
   position: fixed;
   top: 50%;
   left: 50%;
@@ -20,7 +20,7 @@
   z-index: 1301;
 }
 
-.elfk-shortcut-dialog .shortcut-header {
+.elfk-search-page .elfk-shortcut-dialog .shortcut-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -28,14 +28,14 @@
   border-bottom: 1px solid var(--border-color);
 }
 
-.elfk-shortcut-dialog .shortcut-header h3 {
+.elfk-search-page .elfk-shortcut-dialog .shortcut-header h3 {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
   color: var(--text-color);
 }
 
-.elfk-shortcut-dialog .close-btn {
+.elfk-search-page .elfk-shortcut-dialog .close-btn {
   background: none;
   border: none;
   cursor: pointer;
@@ -45,23 +45,23 @@
   display: flex;
 }
 
-.elfk-shortcut-dialog .close-btn:hover {
+.elfk-search-page .elfk-shortcut-dialog .close-btn:hover {
   background: var(--bg-secondary);
 }
 
-.elfk-shortcut-dialog .shortcut-body {
+.elfk-search-page .elfk-shortcut-dialog .shortcut-body {
   padding: 16px 20px;
   max-height: 400px;
   overflow-y: auto;
 }
 
-.elfk-shortcut-dialog .shortcut-list {
+.elfk-search-page .elfk-shortcut-dialog .shortcut-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.elfk-shortcut-dialog .shortcut-item {
+.elfk-search-page .elfk-shortcut-dialog .shortcut-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -70,24 +70,24 @@
   border-radius: 6px;
 }
 
-.elfk-shortcut-dialog .shortcut-info {
+.elfk-search-page .elfk-shortcut-dialog .shortcut-info {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.elfk-shortcut-dialog .shortcut-label {
+.elfk-search-page .elfk-shortcut-dialog .shortcut-label {
   font-size: 14px;
   font-weight: 500;
   color: var(--text-color);
 }
 
-.elfk-shortcut-dialog .shortcut-desc {
+.elfk-search-page .elfk-shortcut-dialog .shortcut-desc {
   font-size: 12px;
   color: var(--text-secondary);
 }
 
-.elfk-shortcut-dialog .shortcut-btn {
+.elfk-search-page .elfk-shortcut-dialog .shortcut-btn {
   padding: 6px 12px;
   background: var(--bg-color);
   border: 1px solid var(--border-color);
@@ -98,24 +98,24 @@
   cursor: pointer;
 }
 
-.elfk-shortcut-dialog .shortcut-btn:hover {
+.elfk-search-page .elfk-shortcut-dialog .shortcut-btn:hover {
   border-color: var(--primary-color);
   color: var(--primary-color);
 }
 
-.elfk-shortcut-dialog .shortcut-editing {
+.elfk-search-page .elfk-shortcut-dialog .shortcut-editing {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.elfk-shortcut-dialog .shortcut-input-wrapper {
+.elfk-search-page .elfk-shortcut-dialog .shortcut-input-wrapper {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.elfk-shortcut-dialog .shortcut-input {
+.elfk-search-page .elfk-shortcut-dialog .shortcut-input {
   width: 140px;
   padding: 6px 10px;
   border: 2px solid var(--primary-color);
@@ -127,18 +127,18 @@
   text-align: center;
 }
 
-.elfk-shortcut-dialog .shortcut-input.conflict {
+.elfk-search-page .elfk-shortcut-dialog .shortcut-input.conflict {
   border-color: #e74c3c;
   color: #e74c3c;
 }
 
-.elfk-shortcut-dialog .conflict-tip {
+.elfk-search-page .elfk-shortcut-dialog .conflict-tip {
   font-size: 11px;
   color: #e74c3c;
   white-space: nowrap;
 }
 
-.elfk-shortcut-dialog .btn-sm {
+.elfk-search-page .elfk-shortcut-dialog .btn-sm {
   padding: 4px 10px;
   font-size: 12px;
   border-radius: 4px;
@@ -148,25 +148,25 @@
   border: none;
 }
 
-.elfk-shortcut-dialog .btn-sm:disabled {
+.elfk-search-page .elfk-shortcut-dialog .btn-sm:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.elfk-shortcut-dialog .btn-sm.btn-cancel {
+.elfk-search-page .elfk-shortcut-dialog .btn-sm.btn-cancel {
   background: var(--bg-color);
   border: 1px solid var(--border-color);
   color: var(--text-color);
 }
 
-.elfk-shortcut-dialog .shortcut-footer {
+.elfk-search-page .elfk-shortcut-dialog .shortcut-footer {
   display: flex;
   justify-content: space-between;
   padding: 12px 20px;
   border-top: 1px solid var(--border-color);
 }
 
-.elfk-shortcut-dialog .btn-reset {
+.elfk-search-page .elfk-shortcut-dialog .btn-reset {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -179,11 +179,11 @@
   cursor: pointer;
 }
 
-.elfk-shortcut-dialog .btn-reset:hover {
+.elfk-search-page .elfk-shortcut-dialog .btn-reset:hover {
   color: var(--text-color);
 }
 
-.elfk-shortcut-dialog .btn-primary {
+.elfk-search-page .elfk-shortcut-dialog .btn-primary {
   padding: 8px 20px;
   background: var(--primary-color);
   color: #fff;

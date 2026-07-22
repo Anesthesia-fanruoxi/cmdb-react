@@ -1,11 +1,16 @@
-.databi-column-detail {
+/**
+ * Databi 组件样式（作用域：.sql-databi-container）
+ * 注：本文件当前未被任何组件 import，实际样式定义在 ../index.css
+ */
+
+.sql-databi-container .databi-column-detail {
   height: 100%;
   display: flex;
   flex-direction: column;
   background: var(--bg-color, #fff);
 }
 
-.detail-header {
+.sql-databi-container .detail-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -14,14 +19,14 @@
   background: var(--bg-secondary, #f5f5f5);
 }
 
-.detail-title {
+.sql-databi-container .detail-title {
   margin: 0;
   font-size: 16px;
   font-weight: 500;
   color: var(--text-color, #333);
 }
 
-.btn-close {
+.sql-databi-container .btn-close {
   background: none;
   border: none;
   font-size: 24px;
@@ -36,17 +41,17 @@
   border-radius: 4px;
 }
 
-.btn-close:hover {
+.sql-databi-container .btn-close:hover {
   background: var(--bg-hover, #eee);
 }
 
-.detail-content {
+.sql-databi-container .detail-content {
   flex: 1;
   overflow: auto;
   padding: 16px;
 }
 
-.loading-state {
+.sql-databi-container .loading-state {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -54,20 +59,20 @@
   color: var(--text-secondary, #999);
 }
 
-.column-table {
+.sql-databi-container .column-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
 }
 
-.column-table th,
-.column-table td {
+.sql-databi-container .column-table th,
+.sql-databi-container .column-table td {
   padding: 12px;
   text-align: left;
   border-bottom: 1px solid var(--border-color-light, #eee);
 }
 
-.column-table th {
+.sql-databi-container .column-table th {
   background: var(--bg-secondary, #f5f5f5);
   font-weight: 500;
   color: var(--text-color, #333);
@@ -76,38 +81,38 @@
   z-index: 1;
 }
 
-.column-table .col-name {
+.sql-databi-container .column-table .col-name {
   width: 200px;
   font-family: monospace;
   color: var(--primary-color, #1890ff);
 }
 
-.column-table .col-type {
+.sql-databi-container .column-table .col-type {
   width: 150px;
   font-family: monospace;
   color: var(--text-secondary, #666);
 }
 
-.column-table .col-comment {
+.sql-databi-container .column-table .col-comment {
   min-width: 200px;
 }
 
 /* 显示模式 */
-.display-mode {
+.sql-databi-container .display-mode {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
 }
 
-.display-mode span {
+.sql-databi-container .display-mode span {
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.btn-edit {
+.sql-databi-container .btn-edit {
   background: none;
   border: none;
   cursor: pointer;
@@ -117,22 +122,22 @@
   padding: 4px;
 }
 
-.display-mode:hover .btn-edit {
+.sql-databi-container .display-mode:hover .btn-edit {
   opacity: 1;
 }
 
-.btn-edit:hover {
+.sql-databi-container .btn-edit:hover {
   transform: scale(1.2);
 }
 
 /* 编辑模式 */
-.edit-mode {
+.sql-databi-container .edit-mode {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.comment-input {
+.sql-databi-container .comment-input {
   flex: 1;
   padding: 6px 10px;
   border: 1px solid var(--border-color, #d9d9d9);
@@ -140,20 +145,20 @@
   font-size: 14px;
 }
 
-.comment-input:focus {
+.sql-databi-container .comment-input:focus {
   outline: none;
   border-color: var(--primary-color, #1890ff);
   box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
 }
 
-.edit-actions {
+.sql-databi-container .edit-actions {
   display: flex;
   gap: 4px;
   flex-shrink: 0;
 }
 
-.btn-save,
-.btn-cancel {
+.sql-databi-container .btn-save,
+.sql-databi-container .btn-cancel {
   padding: 4px 12px;
   border-radius: 4px;
   font-size: 12px;
@@ -162,32 +167,32 @@
   transition: all 0.2s;
 }
 
-.btn-save {
+.sql-databi-container .btn-save {
   background: var(--success-color, #52c41a);
   color: #fff;
 }
 
-.btn-save:hover {
+.sql-databi-container .btn-save:hover {
   background: var(--success-color-dark, #389e0d);
 }
 
-.btn-save:disabled {
+.sql-databi-container .btn-save:disabled {
   background: var(--bg-disabled, #ccc);
   cursor: not-allowed;
 }
 
-.btn-cancel {
+.sql-databi-container .btn-cancel {
   background: var(--bg-secondary, #f5f5f5);
   color: var(--text-color, #333);
   border: 1px solid var(--border-color, #d9d9d9);
 }
 
-.btn-cancel:hover {
+.sql-databi-container .btn-cancel:hover {
   background: var(--bg-hover, #eee);
 }
 
 /* 底部按钮 */
-.detail-footer {
+.sql-databi-container .detail-footer {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
@@ -196,7 +201,7 @@
   background: var(--bg-secondary, #f5f5f5);
 }
 
-.btn {
+.sql-databi-container .btn {
   padding: 8px 16px;
   border-radius: 4px;
   font-size: 14px;
@@ -205,27 +210,27 @@
   transition: all 0.2s;
 }
 
-.btn-primary {
+.sql-databi-container .btn-primary {
   background: var(--primary-color, #1890ff);
   color: #fff;
 }
 
-.btn-primary:hover {
+.sql-databi-container .btn-primary:hover {
   background: var(--primary-color-dark, #096dd9);
 }
 
-.btn-primary:disabled {
+.sql-databi-container .btn-primary:disabled {
   background: var(--bg-disabled, #ccc);
   cursor: not-allowed;
 }
 
-.btn-secondary {
+.sql-databi-container .btn-secondary {
   background: var(--bg-secondary, #f5f5f5);
   color: var(--text-color, #333);
   border: 1px solid var(--border-color, #d9d9d9);
 }
 
-.btn-secondary:hover {
+.sql-databi-container .btn-secondary:hover {
   background: var(--bg-hover, #eee);
 }
 
@@ -233,14 +238,14 @@
    CSV 导入组件样式
    ============================================ */
 
-.databi-csv-import {
+.sql-databi-container .databi-csv-import {
   height: 100%;
   display: flex;
   flex-direction: column;
   background: var(--bg-color, #fff);
 }
 
-.import-header {
+.sql-databi-container .import-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -249,21 +254,21 @@
   background: var(--bg-secondary, #f5f5f5);
 }
 
-.import-title {
+.sql-databi-container .import-title {
   margin: 0;
   font-size: 16px;
   font-weight: 500;
   color: var(--text-color, #333);
 }
 
-.import-content {
+.sql-databi-container .import-content {
   flex: 1;
   overflow: auto;
   padding: 16px;
 }
 
 /* 文件选择区域 */
-.file-select-area {
+.sql-databi-container .file-select-area {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -273,11 +278,11 @@
   border-radius: 8px;
 }
 
-.file-input {
+.sql-databi-container .file-input {
   display: none;
 }
 
-.file-label {
+.sql-databi-container .file-label {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -290,17 +295,17 @@
   transition: background 0.2s;
 }
 
-.file-label:hover {
+.sql-databi-container .file-label:hover {
   background: var(--primary-color-dark, #096dd9);
 }
 
-.file-name {
+.sql-databi-container .file-name {
   font-size: 14px;
   color: var(--text-color, #333);
 }
 
 /* 未匹配警告 */
-.unmatched-warning {
+.sql-databi-container .unmatched-warning {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -313,32 +318,32 @@
   font-size: 14px;
 }
 
-.warning-icon {
+.sql-databi-container .warning-icon {
   font-size: 16px;
 }
 
 /* 预览表格 */
-.preview-table-wrapper {
+.sql-databi-container .preview-table-wrapper {
   max-height: 350px;
   overflow: auto;
   border: 1px solid var(--border-color-light, #eee);
   border-radius: 4px;
 }
 
-.preview-table {
+.sql-databi-container .preview-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
 }
 
-.preview-table th,
-.preview-table td {
+.sql-databi-container .preview-table th,
+.sql-databi-container .preview-table td {
   padding: 10px 12px;
   text-align: left;
   border-bottom: 1px solid var(--border-color-light, #eee);
 }
 
-.preview-table th {
+.sql-databi-container .preview-table th {
   background: var(--bg-secondary, #f5f5f5);
   font-weight: 500;
   color: var(--text-color, #333);
@@ -347,22 +352,22 @@
   z-index: 1;
 }
 
-.preview-table .col-name {
+.sql-databi-container .preview-table .col-name {
   font-family: monospace;
   color: var(--primary-color, #1890ff);
 }
 
-.preview-table .col-old {
+.sql-databi-container .preview-table .col-old {
   color: var(--text-secondary, #666);
 }
 
-.preview-table .col-new {
+.sql-databi-container .preview-table .col-new {
   color: var(--success-color, #52c41a);
   font-weight: 500;
 }
 
 /* 统计信息 */
-.import-summary {
+.sql-databi-container .import-summary {
   margin-top: 12px;
   text-align: center;
   font-size: 14px;
@@ -370,7 +375,7 @@
 }
 
 /* 底部按钮 */
-.import-footer {
+.sql-databi-container .import-footer {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
@@ -383,7 +388,7 @@
    右键菜单样式
    ============================================ */
 
-.databi-context-menu {
+.sql-databi-container .databi-context-menu {
   position: fixed;
   z-index: 9999;
   min-width: 140px;
@@ -392,10 +397,10 @@
   border-radius: 6px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   padding: 4px 0;
-  animation: context-menu-in 0.12s ease-out;
+  animation: databi-context-menu-in 0.12s ease-out;
 }
 
-@keyframes context-menu-in {
+@keyframes databi-context-menu-in {
   from {
     opacity: 0;
     transform: scale(0.95);
@@ -406,7 +411,7 @@
   }
 }
 
-.databi-context-menu .context-menu-item {
+.sql-databi-container .databi-context-menu .context-menu-item {
   padding: 8px 14px;
   font-size: 13px;
   color: var(--text-color, #333);
@@ -415,6 +420,6 @@
   transition: background 0.15s;
 }
 
-.databi-context-menu .context-menu-item:hover {
+.sql-databi-container .databi-context-menu .context-menu-item:hover {
   background: var(--bg-hover, #f0f0f0);
 }

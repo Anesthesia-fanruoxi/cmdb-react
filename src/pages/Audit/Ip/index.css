@@ -142,4 +142,5 @@
 
 .audit-ip-page .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.spin { animation: spin 1s linear infinite; }
+.audit-ip-page .spin { animation: audit-ip-spin 1s linear infinite; }
+@keyframes audit-ip-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

@@ -55,6 +55,7 @@ const PreviewModal = ({ visible, loading, data, currentTask, onClose, onPageChan
 
   return createPortal(
     <div
+      className="task-preview-modal"
       style={{
         position: 'fixed',
         top: 0,

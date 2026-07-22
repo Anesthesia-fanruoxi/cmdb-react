@@ -190,7 +190,7 @@ const RecordDetailDialog = ({ visible, record, projectDetail, onClose, onRefresh
 
   return (
     <>
-      <div className="dialog-overlay" onClick={onClose} />
+      <div className="dialog-overlay record-detail-overlay" onClick={onClose} />
       <div className="dialog-container record-detail-dialog">
         <div className="dialog-header">
           <h3>发版记录详情</h3>
@@ -254,47 +254,47 @@ const RecordDetailDialog = ({ visible, record, projectDetail, onClose, onRefresh
         </div>
       </div>
       <style>{`
-        .dialog-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1100; }
+        .record-detail-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1100; }
         .record-detail-dialog { position: fixed; top: 5vh; left: 50%; transform: translateX(-50%); width: 35%; min-width: 500px; max-width: 90%; max-height: 90vh; background: var(--bg-color, #fff); border-radius: 8px; z-index: 1101; display: flex; flex-direction: column; box-shadow: 0 6px 30px rgba(0,0,0,0.2); }
-        .dialog-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color, #e8e8e8); }
-        .dialog-header h3 { margin: 0; font-size: 16px; color: var(--text-color, #e0e0e0); }
-        .dialog-close { background: none; border: none; cursor: pointer; color: var(--text-secondary, #666); }
-        .dialog-body { flex: 1; overflow: auto; padding: 20px; }
-        .dialog-loading { display: flex; align-items: center; justify-content: center; gap: 8px; height: 150px; color: var(--text-secondary, #999); }
-        .dialog-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--border-color, #e8e8e8); }
-        .detail-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 12px; background: var(--bg-secondary, #fafafa); border-radius: 6px; border: 1px solid var(--border-color, #e8e8e8); }
-        .detail-item { display: flex; flex-direction: column; gap: 4px; }
-        .detail-item.span-2 { grid-column: span 2; }
-        .detail-item.no-bg .status-tag, .detail-item.no-bg .tag { background: transparent !important; border: none !important; box-shadow: none !important; }
-        .detail-item .label { font-size: 12px; color: var(--text-secondary, #999); }
-        .detail-item .mono { font-family: monospace; font-size: 13px; word-break: break-all; }
-        .tag { display: inline-block; padding: 2px 8px; font-size: 12px; }
-        .tag.warning { color: #ffa940; }
-        .tag.info { color: #40a9ff; }
-        .step-section { margin-top: 20px; }
-        .step-section h4 { margin: 0 0 12px; font-size: 15px; color: var(--text-color, #e0e0e0); }
-        .description-section { margin-top: 16px; }
-        .description-section h4 { margin: 0 0 8px; font-size: 14px; color: var(--text-color, #e0e0e0); }
-        .description-content { padding: 12px; background: var(--bg-secondary, #fafafa); border: 1px solid var(--border-color, #e8e8e8); border-radius: 6px; font-size: 13px; line-height: 1.6; color: var(--text-color, #333); white-space: pre-wrap; word-break: break-word; }
-        .step-table { border: 1px solid var(--border-color, #e8e8e8); border-radius: 4px; overflow: auto; max-height: calc(100vh - 400px); }
-        .step-table table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .step-table th, .step-table td { padding: 8px; border-bottom: 1px solid var(--border-color, #e8e8e8); text-align: center; }
-        .step-table th { background: var(--bg-secondary, #fafafa); font-weight: 600; position: sticky; top: 0; }
-        .btn-logs { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border: 1px solid var(--border-color, #d9d9d9); background: #fff; border-radius: 4px; cursor: pointer; font-size: 12px; }
-        .btn-logs:hover { color: var(--primary-color, #1890ff); border-color: var(--primary-color, #1890ff); }
-        .btn-danger { display: flex; align-items: center; gap: 4px; padding: 6px 12px; background: #ff4d4f; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
-        .btn-danger:disabled { opacity: 0.6; cursor: not-allowed; }
-        .btn-default { padding: 6px 16px; border: 1px solid var(--border-color, #d9d9d9); background: var(--bg-secondary, #2a2a2a); color: var(--text-color, #e0e0e0); border-radius: 4px; cursor: pointer; }
-        .status-tag { display: inline-block; padding: 2px 8px; font-size: 12px; border: none; background: none; }
-        .status-tag.success { color: #73d13d; }
-        .status-tag.danger { color: #ff7875; }
-        .status-tag.warning { color: #ffa940; }
-        .status-tag.default { color: var(--text-secondary, #999); }
-        .step-table .status-tag { background: rgba(82, 196, 26, 0.15); border-radius: 4px; }
-        .step-table .status-tag.danger { background: rgba(255, 77, 79, 0.15); }
-        .step-table .status-tag.warning { background: rgba(250, 140, 22, 0.15); }
-        .spin { animation: spin 1s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .record-detail-dialog .dialog-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color, #e8e8e8); }
+        .record-detail-dialog .dialog-header h3 { margin: 0; font-size: 16px; color: var(--text-color, #e0e0e0); }
+        .record-detail-dialog .dialog-close { background: none; border: none; cursor: pointer; color: var(--text-secondary, #666); }
+        .record-detail-dialog .dialog-body { flex: 1; overflow: auto; padding: 20px; }
+        .record-detail-dialog .dialog-loading { display: flex; align-items: center; justify-content: center; gap: 8px; height: 150px; color: var(--text-secondary, #999); }
+        .record-detail-dialog .dialog-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--border-color, #e8e8e8); }
+        .record-detail-dialog .detail-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 12px; background: var(--bg-secondary, #fafafa); border-radius: 6px; border: 1px solid var(--border-color, #e8e8e8); }
+        .record-detail-dialog .detail-item { display: flex; flex-direction: column; gap: 4px; }
+        .record-detail-dialog .detail-item.span-2 { grid-column: span 2; }
+        .record-detail-dialog .detail-item.no-bg .status-tag, .record-detail-dialog .detail-item.no-bg .tag { background: transparent !important; border: none !important; box-shadow: none !important; }
+        .record-detail-dialog .detail-item .label { font-size: 12px; color: var(--text-secondary, #999); }
+        .record-detail-dialog .detail-item .mono { font-family: monospace; font-size: 13px; word-break: break-all; }
+        .record-detail-dialog .tag { display: inline-block; padding: 2px 8px; font-size: 12px; }
+        .record-detail-dialog .tag.warning { color: #ffa940; }
+        .record-detail-dialog .tag.info { color: #40a9ff; }
+        .record-detail-dialog .step-section { margin-top: 20px; }
+        .record-detail-dialog .step-section h4 { margin: 0 0 12px; font-size: 15px; color: var(--text-color, #e0e0e0); }
+        .record-detail-dialog .description-section { margin-top: 16px; }
+        .record-detail-dialog .description-section h4 { margin: 0 0 8px; font-size: 14px; color: var(--text-color, #e0e0e0); }
+        .record-detail-dialog .description-content { padding: 12px; background: var(--bg-secondary, #fafafa); border: 1px solid var(--border-color, #e8e8e8); border-radius: 6px; font-size: 13px; line-height: 1.6; color: var(--text-color, #333); white-space: pre-wrap; word-break: break-word; }
+        .record-detail-dialog .step-table { border: 1px solid var(--border-color, #e8e8e8); border-radius: 4px; overflow: auto; max-height: calc(100vh - 400px); }
+        .record-detail-dialog .step-table table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .record-detail-dialog .step-table th, .record-detail-dialog .step-table td { padding: 8px; border-bottom: 1px solid var(--border-color, #e8e8e8); text-align: center; }
+        .record-detail-dialog .step-table th { background: var(--bg-secondary, #fafafa); font-weight: 600; position: sticky; top: 0; }
+        .record-detail-dialog .btn-logs { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border: 1px solid var(--border-color, #d9d9d9); background: #fff; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .record-detail-dialog .btn-logs:hover { color: var(--primary-color, #1890ff); border-color: var(--primary-color, #1890ff); }
+        .record-detail-dialog .btn-danger { display: flex; align-items: center; gap: 4px; padding: 6px 12px; background: #ff4d4f; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+        .record-detail-dialog .btn-danger:disabled { opacity: 0.6; cursor: not-allowed; }
+        .record-detail-dialog .btn-default { padding: 6px 16px; border: 1px solid var(--border-color, #d9d9d9); background: var(--bg-secondary, #2a2a2a); color: var(--text-color, #e0e0e0); border-radius: 4px; cursor: pointer; }
+        .record-detail-dialog .status-tag { display: inline-block; padding: 2px 8px; font-size: 12px; border: none; background: none; }
+        .record-detail-dialog .status-tag.success { color: #73d13d; }
+        .record-detail-dialog .status-tag.danger { color: #ff7875; }
+        .record-detail-dialog .status-tag.warning { color: #ffa940; }
+        .record-detail-dialog .status-tag.default { color: var(--text-secondary, #999); }
+        .record-detail-dialog .step-table .status-tag { background: rgba(82, 196, 26, 0.15); border-radius: 4px; }
+        .record-detail-dialog .step-table .status-tag.danger { background: rgba(255, 77, 79, 0.15); }
+        .record-detail-dialog .step-table .status-tag.warning { background: rgba(250, 140, 22, 0.15); }
+        .record-detail-dialog .spin { animation: record-detail-spin 1s linear infinite; }
+        @keyframes record-detail-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
 
       <LogViewerDialog

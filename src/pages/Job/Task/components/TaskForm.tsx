@@ -73,7 +73,7 @@ const TaskForm = ({ visible, task, onClose, onSuccess }: Props) => {
 
   return (
     <>
-      <div className="drawer-overlay" onClick={onClose} />
+      <div className="drawer-overlay task-form-overlay" onClick={onClose} />
       <div className="drawer-container task-form-drawer">
         <div className="drawer-header">
           <h3>{isEdit ? '编辑任务' : '新建任务'}</h3>
@@ -153,29 +153,29 @@ const TaskForm = ({ visible, task, onClose, onSuccess }: Props) => {
         </>
       )}
       <style>{`
-        .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1100; }
+        .task-form-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1100; }
         .task-form-drawer { position: fixed; top: 0; right: 0; width: 420px; height: 100%; background: var(--bg-color); z-index: 1101; display: flex; flex-direction: column; }
-        .drawer-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
-        .drawer-header h3 { margin: 0; font-size: 16px; color: var(--text-color); }
-        .drawer-close { background: none; border: none; cursor: pointer; color: var(--text-secondary); }
-        .drawer-body { flex: 1; overflow: auto; padding: 20px; }
-        .drawer-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--border-color); }
-        .form-item { margin-bottom: 16px; }
-        .form-item label { display: flex; align-items: center; gap: 4px; margin-bottom: 8px; font-size: 14px; color: var(--text-color); }
-        .form-item .required { color: #ff4d4f; }
-        .form-item input, .form-item select, .form-item textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-color); color: var(--text-color); font-size: 13px; }
-        .form-item input:disabled { background: var(--bg-secondary); cursor: not-allowed; }
-        .form-item textarea { resize: vertical; }
-        .form-tip { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
-        .help-btn { background: none; border: none; cursor: pointer; color: var(--text-secondary); padding: 0; }
-        .cron-preview { margin-top: 8px; padding: 12px; background: var(--bg-secondary); border-radius: 4px; }
-        .preview-title { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
-        .time-list { display: flex; flex-wrap: wrap; gap: 8px; }
-        .time-tag { padding: 2px 8px; background: var(--primary-color); color: #fff; border-radius: 4px; font-size: 12px; }
-        .btn-default, .btn-primary { display: flex; align-items: center; gap: 4px; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; }
-        .btn-default { background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-color); }
-        .btn-primary { background: var(--primary-color); border: none; color: #fff; }
-        .btn-primary:disabled { opacity: 0.6; }
+        .task-form-drawer .drawer-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
+        .task-form-drawer .drawer-header h3 { margin: 0; font-size: 16px; color: var(--text-color); }
+        .task-form-drawer .drawer-close { background: none; border: none; cursor: pointer; color: var(--text-secondary); }
+        .task-form-drawer .drawer-body { flex: 1; overflow: auto; padding: 20px; }
+        .task-form-drawer .drawer-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--border-color); }
+        .task-form-drawer .form-item { margin-bottom: 16px; }
+        .task-form-drawer .form-item label { display: flex; align-items: center; gap: 4px; margin-bottom: 8px; font-size: 14px; color: var(--text-color); }
+        .task-form-drawer .form-item .required { color: #ff4d4f; }
+        .task-form-drawer .form-item input, .task-form-drawer .form-item select, .task-form-drawer .form-item textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-color); color: var(--text-color); font-size: 13px; }
+        .task-form-drawer .form-item input:disabled { background: var(--bg-secondary); cursor: not-allowed; }
+        .task-form-drawer .form-item textarea { resize: vertical; }
+        .task-form-drawer .form-tip { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+        .task-form-drawer .help-btn { background: none; border: none; cursor: pointer; color: var(--text-secondary); padding: 0; }
+        .task-form-drawer .cron-preview { margin-top: 8px; padding: 12px; background: var(--bg-secondary); border-radius: 4px; }
+        .task-form-drawer .preview-title { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
+        .task-form-drawer .time-list { display: flex; flex-wrap: wrap; gap: 8px; }
+        .task-form-drawer .time-tag { padding: 2px 8px; background: var(--primary-color); color: #fff; border-radius: 4px; font-size: 12px; }
+        .task-form-drawer .btn-default, .task-form-drawer .btn-primary { display: flex; align-items: center; gap: 4px; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+        .task-form-drawer .btn-default { background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-color); }
+        .task-form-drawer .btn-primary { background: var(--primary-color); border: none; color: #fff; }
+        .task-form-drawer .btn-primary:disabled { opacity: 0.6; }
         .cron-help-dialog { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 600px; max-height: 80vh; background: var(--bg-color); border-radius: 8px; z-index: 1201; overflow: hidden; display: flex; flex-direction: column; }
         .cron-help-dialog .dialog-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
         .cron-help-dialog .dialog-header h3 { margin: 0; font-size: 16px; color: var(--text-color); }
@@ -188,7 +188,8 @@ const TaskForm = ({ visible, task, onClose, onSuccess }: Props) => {
         .cron-help-dialog li { margin: 6px 0; line-height: 1.6; }
         .cron-help-dialog code { background: var(--bg-secondary); padding: 2px 6px; border-radius: 4px; font-family: monospace; color: #e6a23c; }
         .cron-help-dialog strong { color: var(--primary-color); }
-        .spin { animation: spin 1s linear infinite; }
+        .task-form-drawer .spin { animation: task-form-spin 1s linear infinite; }
+        @keyframes task-form-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </>
   );

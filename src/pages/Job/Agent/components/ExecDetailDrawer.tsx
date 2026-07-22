@@ -62,7 +62,7 @@ const ExecDetailDrawer = ({ visible, execId, onClose }: Props) => {
 
   return (
     <>
-      <div className="drawer-overlay" onClick={onClose} />
+      <div className="drawer-overlay agent-exec-detail-overlay" onClick={onClose} />
       <div className="drawer-container exec-detail-drawer">
         <div className="drawer-header">
           <h3>执行记录详情</h3>
@@ -106,24 +106,26 @@ const ExecDetailDrawer = ({ visible, execId, onClose }: Props) => {
         </div>
       </div>
       <style>{`
+        .agent-exec-detail-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1100; }
         .exec-detail-drawer { position: fixed; top: 0; right: 0; width: 50%; min-width: 500px; height: 100vh; background: var(--bg-color); z-index: 1200; display: flex; flex-direction: column; box-shadow: -4px 0 20px rgba(0,0,0,0.15); }
-        .drawer-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
-        .drawer-header h3 { margin: 0; font-size: 16px; color: var(--text-color); }
-        .drawer-close { background: none; border: none; cursor: pointer; color: var(--text-secondary); }
-        .drawer-body { flex: 1; overflow: auto; padding: 20px; }
-        .loading-state, .empty-state { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 60px; color: var(--text-secondary); }
-        .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; padding: 16px; background: var(--bg-secondary); border-radius: 6px; margin-bottom: 20px; }
-        .info-item { display: flex; flex-direction: column; gap: 4px; }
-        .info-item .label { font-size: 12px; color: var(--text-secondary); }
-        .status-tag { display: inline-block; font-size: 13px; }
-        .status-tag.success { color: #52c41a; }
-        .status-tag.danger { color: #ff4d4f; }
-        .status-tag.warning { color: #faad14; }
-        .output-section, .error-section { margin-bottom: 20px; }
-        .output-section h4, .error-section h4 { margin: 0 0 12px; font-size: 14px; color: var(--text-color); }
-        .output-content { background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 6px; font-family: monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap; max-height: 300px; overflow: auto; margin: 0; }
-        .error-content { background: rgba(255, 77, 79, 0.1); color: #ff4d4f; padding: 16px; border-radius: 6px; font-family: monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap; max-height: 200px; overflow: auto; margin: 0; }
-        .spin { animation: spin 1s linear infinite; }
+        .exec-detail-drawer .drawer-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
+        .exec-detail-drawer .drawer-header h3 { margin: 0; font-size: 16px; color: var(--text-color); }
+        .exec-detail-drawer .drawer-close { background: none; border: none; cursor: pointer; color: var(--text-secondary); }
+        .exec-detail-drawer .drawer-body { flex: 1; overflow: auto; padding: 20px; }
+        .exec-detail-drawer .loading-state, .exec-detail-drawer .empty-state { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 60px; color: var(--text-secondary); }
+        .exec-detail-drawer .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; padding: 16px; background: var(--bg-secondary); border-radius: 6px; margin-bottom: 20px; }
+        .exec-detail-drawer .info-item { display: flex; flex-direction: column; gap: 4px; }
+        .exec-detail-drawer .info-item .label { font-size: 12px; color: var(--text-secondary); }
+        .exec-detail-drawer .status-tag { display: inline-block; font-size: 13px; }
+        .exec-detail-drawer .status-tag.success { color: #52c41a; }
+        .exec-detail-drawer .status-tag.danger { color: #ff4d4f; }
+        .exec-detail-drawer .status-tag.warning { color: #faad14; }
+        .exec-detail-drawer .output-section, .exec-detail-drawer .error-section { margin-bottom: 20px; }
+        .exec-detail-drawer .output-section h4, .exec-detail-drawer .error-section h4 { margin: 0 0 12px; font-size: 14px; color: var(--text-color); }
+        .exec-detail-drawer .output-content { background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 6px; font-family: monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap; max-height: 300px; overflow: auto; margin: 0; }
+        .exec-detail-drawer .error-content { background: rgba(255, 77, 79, 0.1); color: #ff4d4f; padding: 16px; border-radius: 6px; font-family: monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap; max-height: 200px; overflow: auto; margin: 0; }
+        .exec-detail-drawer .spin { animation: agent-exec-detail-spin 1s linear infinite; }
+        @keyframes agent-exec-detail-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </>
   );

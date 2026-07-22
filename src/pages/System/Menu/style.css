@@ -11,14 +11,14 @@
   box-sizing: border-box;
 }
 
-.table-container {
+.menu-management .table-container {
   flex: 1;
   background: var(--bg-color);
   overflow: auto;
 }
 
 /* 树形表格特有样式 */
-.tree-table .expand-icon {
+.menu-management .tree-table .expand-icon {
   cursor: pointer;
   margin-right: 8px;
   font-size: 10px;
@@ -26,20 +26,20 @@
   display: inline-block;
   width: 16px;
 }
-.tree-table .expand-placeholder { display: inline-block; width: 24px; }
-.menu-icon { margin-right: 8px; color: var(--text-secondary); }
+.menu-management .tree-table .expand-placeholder { display: inline-block; width: 24px; }
+.menu-management .menu-icon { margin-right: 8px; color: var(--text-secondary); }
 
 /* 状态标签 */
-.status-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
-.status-tag.enabled { background: rgba(82, 196, 26, 0.1); color: var(--success-color); }
-.status-tag.disabled { background: rgba(0, 0, 0, 0.05); color: var(--text-muted); }
+.menu-management .status-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+.menu-management .status-tag.enabled { background: rgba(82, 196, 26, 0.1); color: var(--success-color); }
+.menu-management .status-tag.disabled { background: rgba(0, 0, 0, 0.05); color: var(--text-muted); }
 
 /* 表单扩展 */
-.modal-content form { padding: 20px; }
+.menu-management .modal-content form { padding: 20px; }
 
-.input-with-prefix { display: flex; align-items: stretch; }
-.input-with-prefix.full-width { flex: 1; }
-.input-with-prefix .input-prefix {
+.menu-management .input-with-prefix { display: flex; align-items: stretch; }
+.menu-management .input-with-prefix.full-width { flex: 1; }
+.menu-management .input-with-prefix .input-prefix {
   padding: 8px 12px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color-dark);
@@ -49,14 +49,14 @@
   white-space: nowrap;
   font-size: 13px;
 }
-.input-with-prefix input { border-radius: 0 6px 6px 0; flex: 1; min-width: 80px; }
+.menu-management .input-with-prefix input { border-radius: 0 6px 6px 0; flex: 1; min-width: 80px; }
 
-.input-with-btn { display: flex; gap: 8px; }
-.input-with-btn input { flex: 1; }
-.input-with-btn .btn { white-space: nowrap; }
+.menu-management .input-with-btn { display: flex; gap: 8px; }
+.menu-management .input-with-btn input { flex: 1; }
+.menu-management .input-with-btn .btn { white-space: nowrap; }
 
-.form-tip { margin-top: 6px; font-size: 12px; color: var(--primary-color); }
+.menu-management .form-tip { margin-top: 6px; font-size: 12px; color: var(--primary-color); }
 
-.switch-group { display: flex; gap: 24px; align-items: center; padding-top: 28px; }
-.switch-label { display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal !important; }
-.switch-label input[type="checkbox"] { width: 18px; height: 18px; }
+.menu-management .switch-group { display: flex; gap: 24px; align-items: center; padding-top: 28px; }
+.menu-management .switch-label { display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal !important; }
+.menu-management .switch-label input[type="checkbox"] { width: 18px; height: 18px; }

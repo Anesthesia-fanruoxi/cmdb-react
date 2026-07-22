@@ -1,8 +1,15 @@
 /**
  * SQL查询页面 - 表详情样式
+ *
+ * 命名空间：所有规则均以 `.table-detail-content` 作为父作用域。
+ * TableDetailContent 组件在两种场景下使用：
+ *   1) 主窗口抽屉内（位于 .sql-search 下）
+ *   2) 独立分离窗口（Detached 路由），此时无 .sql-search 包裹
+ * 因此不能使用 `.sql-search` 作为作用域，而是复用组件根类名 `.table-detail-content`
+ * 来承载模块命名空间，避免类似 `.table-meta` / `.detail-table` 等通用类名与其他模块冲突。
  */
 
-.table-meta {
+.table-detail-content .table-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
@@ -11,24 +18,24 @@
   border-bottom: 1px solid var(--border-color);
 }
 
-.meta-item { 
-  display: flex; 
-  align-items: center; 
-  gap: 8px; 
-  font-size: 13px; 
+.table-detail-content .meta-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
 }
 
-.meta-label { 
-  color: var(--text-muted); 
+.table-detail-content .meta-label {
+  color: var(--text-muted);
   white-space: nowrap;
 }
 
-.meta-value { 
-  color: var(--text-color); 
+.table-detail-content .meta-value {
+  color: var(--text-color);
   font-weight: 500;
 }
 
-.meta-detail {
+.table-detail-content .meta-detail {
   font-size: 12px;
   color: var(--text-muted);
   font-weight: normal;
@@ -36,15 +43,16 @@
 }
 
 /* 详情表格 */
-.detail-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.table-detail-content .detail-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 
-.detail-table th, .detail-table td {
+.table-detail-content .detail-table th,
+.table-detail-content .detail-table td {
   padding: 10px 12px;
   text-align: left;
   border: 1px solid var(--border-color);
 }
 
-.detail-table th {
+.table-detail-content .detail-table th {
   background: var(--bg-secondary);
   font-weight: 500;
   color: var(--text-secondary);
@@ -54,22 +62,22 @@
   z-index: 1;
 }
 
-.detail-table td { color: var(--text-color); }
-.detail-table tbody tr:hover { background: var(--bg-hover); }
+.table-detail-content .detail-table td { color: var(--text-color); }
+.table-detail-content .detail-table tbody tr:hover { background: var(--bg-hover); }
 
-.detail-table .field-name {
+.table-detail-content .detail-table .field-name {
   font-family: 'Consolas', 'Monaco', monospace;
   color: var(--primary-color);
   font-weight: 500;
 }
 
-.detail-table .field-type {
+.table-detail-content .detail-table .field-type {
   font-family: 'Consolas', 'Monaco', monospace;
   color: #059669;
   font-size: 12px;
 }
 
-.detail-table .field-comment {
+.table-detail-content .detail-table .field-comment {
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -78,20 +86,20 @@
 }
 
 /* 键类型标签 */
-.key-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
-.key-primary { background: rgba(255, 77, 79, 0.1); color: #ff4d4f; }
-.key-unique { background: rgba(250, 173, 20, 0.1); color: #faad14; }
-.key-index { background: rgba(102, 126, 234, 0.1); color: var(--primary-color); }
+.table-detail-content .key-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+.table-detail-content .key-primary { background: rgba(255, 77, 79, 0.1); color: #ff4d4f; }
+.table-detail-content .key-unique { background: rgba(250, 173, 20, 0.1); color: #faad14; }
+.table-detail-content .key-index { background: rgba(102, 126, 234, 0.1); color: var(--primary-color); }
 
 /* DDL Tab */
-.ddl-tab .ddl-actions { margin-bottom: 12px; text-align: right; }
-.fields-tab { overflow-x: auto; }
-.indexes-tab { overflow-x: auto; }
+.table-detail-content .ddl-tab .ddl-actions { margin-bottom: 12px; text-align: right; }
+.table-detail-content .fields-tab { overflow-x: auto; }
+.table-detail-content .indexes-tab { overflow-x: auto; }
 
 /* Preview Tab */
-.preview-tab { display: flex; flex-direction: column; height: 100%; }
+.table-detail-content .preview-tab { display: flex; flex-direction: column; height: 100%; }
 
-.preview-info {
+.table-detail-content .preview-info {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -103,13 +111,13 @@
   border-radius: 4px;
 }
 
-.preview-table-wrapper { flex: 1; overflow: auto; max-height: 500px; }
-.preview-table { min-width: 100%; }
-.preview-table td { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.preview-table .null-value { color: var(--text-muted); font-style: italic; }
-.preview-table .row-num { width: 50px; text-align: center; color: var(--text-muted); background: var(--bg-secondary); }
+.table-detail-content .preview-table-wrapper { flex: 1; overflow: auto; max-height: 500px; }
+.table-detail-content .preview-table { min-width: 100%; }
+.table-detail-content .preview-table td { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.table-detail-content .preview-table .null-value { color: var(--text-muted); font-style: italic; }
+.table-detail-content .preview-table .row-num { width: 50px; text-align: center; color: var(--text-muted); background: var(--bg-secondary); }
 
-.ddl-content {
+.table-detail-content .ddl-content {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: 6px;
@@ -137,7 +145,8 @@
   box-sizing: border-box;
 }
 
-.table-detail-content .table-meta {
+/* 独立窗口下的表元数据行调整 */
+.table-detail-content > .table-meta {
   display: flex;
   gap: 20px;
   padding: 8px 16px;
@@ -179,19 +188,29 @@
 .table-detail-content .detail-table .field-type { font-size: 11px; }
 .table-detail-content .key-tag { padding: 1px 6px; font-size: 10px; }
 
+/* 独立窗口下的通用状态提示（避免与 .sql-search 下 modal.css 重复定义冲突） */
 .table-detail-content .loading-state,
 .table-detail-content .error-state,
-.table-detail-content .empty-state { height: 100%; min-height: 200px; font-size: 13px; }
+.table-detail-content .empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  height: 100%;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.table-detail-content .error-state { color: var(--danger-color); }
 
 .table-detail-content .preview-tab { display: flex; flex-direction: column; }
-.table-detail-content .preview-info { 
+.table-detail-content .preview-info {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 10px; 
-  font-size: 12px; 
-  margin-bottom: 8px; 
-  flex-shrink: 0; 
+  padding: 6px 10px;
+  font-size: 12px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
 }
 .table-detail-content .preview-table-wrapper { flex: 1; overflow: auto; max-height: none; }
 .table-detail-content .ddl-tab { display: flex; flex-direction: column; }

@@ -1,28 +1,28 @@
 /**
- * SQL分析详情样式
+ * SQL分析详情样式（作用域：.sql-apply-page）
  */
 
 /* 分析详情 */
-.analysis-detail { display: flex; flex-direction: column; gap: 16px; }
+.sql-apply-page .analysis-detail { display: flex; flex-direction: column; gap: 16px; }
 
-.blocker-alert {
+.sql-apply-page .blocker-alert {
   padding: 16px;
   background: rgba(255, 77, 79, 0.1);
   border: 1px solid var(--danger-color);
   border-radius: 8px;
   color: var(--danger-color);
 }
-.blocker-alert strong { display: block; margin-bottom: 4px; }
-.blocker-alert p { margin: 0; font-size: 13px; }
+.sql-apply-page .blocker-alert strong { display: block; margin-bottom: 4px; }
+.sql-apply-page .blocker-alert p { margin: 0; font-size: 13px; }
 
 /* 信息区块 */
-.info-section { background: var(--bg-secondary); border-radius: 6px; padding: 14px 16px; }
-.section-label { font-size: 13px; font-weight: 600; color: var(--text-color); margin-bottom: 12px; }
+.sql-apply-page .info-section { background: var(--bg-secondary); border-radius: 6px; padding: 14px 16px; }
+.sql-apply-page .section-label { font-size: 13px; font-weight: 600; color: var(--text-color); margin-bottom: 12px; }
 
 /* 卡片式信息布局 - 参照 Vue 版本优化 */
-.info-cards { display: flex; flex-wrap: wrap; gap: 12px; }
+.sql-apply-page .info-cards { display: flex; flex-wrap: wrap; gap: 12px; }
 
-.info-card {
+.sql-apply-page .info-card {
   background: var(--bg-color);
   border-radius: 6px;
   padding: 12px 16px;
@@ -32,18 +32,18 @@
   flex-direction: column;
   gap: 4px;
 }
-.info-card.full-width { flex: 1 1 100%; }
+.sql-apply-page .info-card.full-width { flex: 1 1 100%; }
 
-.card-label { font-size: 12px; color: var(--text-secondary); }
-.card-value { font-size: 14px; font-weight: 600; color: var(--text-color); word-break: break-word; }
-.card-value.highlight { color: var(--primary-color); }
-.card-value.valid { color: var(--success-color); }
-.card-value.rule { color: var(--warning-color); }
-.card-value.danger { color: var(--danger-color); }
+.sql-apply-page .card-label { font-size: 12px; color: var(--text-secondary); }
+.sql-apply-page .card-value { font-size: 14px; font-weight: 600; color: var(--text-color); word-break: break-word; }
+.sql-apply-page .card-value.highlight { color: var(--primary-color); }
+.sql-apply-page .card-value.valid { color: var(--success-color); }
+.sql-apply-page .card-value.rule { color: var(--warning-color); }
+.sql-apply-page .card-value.danger { color: var(--danger-color); }
 
 /* 字段列表 */
-.columns-list { display: flex; flex-wrap: wrap; gap: 8px; }
-.column-tag {
+.sql-apply-page .columns-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.sql-apply-page .column-tag {
   display: inline-block;
   padding: 4px 10px;
   background: var(--bg-color);
@@ -53,24 +53,24 @@
   font-size: 12px;
 }
 
-.no-analysis-tip { text-align: center; padding: 40px; color: var(--text-muted); }
+.sql-apply-page .no-analysis-tip { text-align: center; padding: 40px; color: var(--text-muted); }
 
 /* 字段详情表格 - 参照 Vue 版本优化 */
-.field-table { border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; }
-.field-table .table-row { display: flex; border-bottom: 1px solid var(--border-color-light); }
-.field-table .table-row:last-child { border-bottom: none; }
-.field-table .table-row.header { background: var(--bg-secondary); font-weight: 600; font-size: 12px; color: var(--text-secondary); }
-.field-table .table-row:not(.header):hover { background: var(--bg-hover); }
-.field-table .table-row.warning-row { background: rgba(250, 173, 20, 0.08); }
-.field-table .col { flex: 1; padding: 10px 12px; font-size: 13px; display: flex; align-items: center; }
-.field-table .col-name { flex: 1.2; font-family: 'Consolas', 'Monaco', monospace; font-weight: 500; }
-.field-table .col-type { flex: 1; }
-.field-table .col-null { flex: 0.5; justify-content: center; }
-.field-table .col-default { flex: 0.8; color: var(--text-secondary); }
-.field-table .col-comment { flex: 1.5; }
-.field-table .col-comment.missing { color: var(--warning-color); }
+.sql-apply-page .field-table { border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; }
+.sql-apply-page .field-table .table-row { display: flex; border-bottom: 1px solid var(--border-color-light); }
+.sql-apply-page .field-table .table-row:last-child { border-bottom: none; }
+.sql-apply-page .field-table .table-row.header { background: var(--bg-secondary); font-weight: 600; font-size: 12px; color: var(--text-secondary); }
+.sql-apply-page .field-table .table-row:not(.header):hover { background: var(--bg-hover); }
+.sql-apply-page .field-table .table-row.warning-row { background: rgba(250, 173, 20, 0.08); }
+.sql-apply-page .field-table .col { flex: 1; padding: 10px 12px; font-size: 13px; display: flex; align-items: center; }
+.sql-apply-page .field-table .col-name { flex: 1.2; font-family: 'Consolas', 'Monaco', monospace; font-weight: 500; }
+.sql-apply-page .field-table .col-type { flex: 1; }
+.sql-apply-page .field-table .col-null { flex: 0.5; justify-content: center; }
+.sql-apply-page .field-table .col-default { flex: 0.8; color: var(--text-secondary); }
+.sql-apply-page .field-table .col-comment { flex: 1.5; }
+.sql-apply-page .field-table .col-comment.missing { color: var(--warning-color); }
 
-.type-tag {
+.sql-apply-page .type-tag {
   display: inline-block;
   padding: 2px 8px;
   background: var(--bg-secondary);
@@ -80,9 +80,9 @@
   font-family: 'Consolas', 'Monaco', monospace;
 }
 
-.check-icon { color: var(--success-color); font-size: 14px; }
+.sql-apply-page .check-icon { color: var(--success-color); font-size: 14px; }
 
-.warning-tag {
+.sql-apply-page .warning-tag {
   display: inline-block;
   padding: 2px 8px;
   background: rgba(250, 173, 20, 0.15);
@@ -92,24 +92,24 @@
 }
 
 /* 索引详情表格 - 参照 Vue 版本优化 */
-.index-table { border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; }
-.index-table .table-row { display: flex; padding: 10px 16px; border-bottom: 1px solid var(--border-color-light); }
-.index-table .table-row:last-child { border-bottom: none; }
-.index-table .table-row.header { background: var(--bg-secondary); font-weight: 600; font-size: 12px; color: var(--text-secondary); }
-.index-table .table-row:not(.header):hover { background: var(--bg-hover); }
-.index-table .col { flex: 1; font-size: 13px; display: flex; align-items: center; }
+.sql-apply-page .index-table { border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; }
+.sql-apply-page .index-table .table-row { display: flex; padding: 10px 16px; border-bottom: 1px solid var(--border-color-light); }
+.sql-apply-page .index-table .table-row:last-child { border-bottom: none; }
+.sql-apply-page .index-table .table-row.header { background: var(--bg-secondary); font-weight: 600; font-size: 12px; color: var(--text-secondary); }
+.sql-apply-page .index-table .table-row:not(.header):hover { background: var(--bg-hover); }
+.sql-apply-page .index-table .col { flex: 1; font-size: 13px; display: flex; align-items: center; }
 
 /* 数据预览表格 */
-.values-table-wrapper { overflow-x: auto; border: 1px solid var(--border-color); border-radius: 6px; }
-.values-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.values-table th, .values-table td { padding: 10px 12px; border-bottom: 1px solid var(--border-color-light); text-align: left; white-space: nowrap; }
-.values-table tr:last-child td { border-bottom: none; }
-.values-table th { background: var(--bg-secondary); font-weight: 600; font-size: 12px; color: var(--text-secondary); position: sticky; top: 0; }
-.values-table tbody tr:hover { background: var(--bg-hover); }
-.values-table .row-num { width: 50px; text-align: center; color: var(--text-secondary); background: var(--bg-secondary); }
-.values-table .value-cell { font-family: 'Consolas', 'Monaco', monospace; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+.sql-apply-page .values-table-wrapper { overflow-x: auto; border: 1px solid var(--border-color); border-radius: 6px; }
+.sql-apply-page .values-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.sql-apply-page .values-table th, .sql-apply-page .values-table td { padding: 10px 12px; border-bottom: 1px solid var(--border-color-light); text-align: left; white-space: nowrap; }
+.sql-apply-page .values-table tr:last-child td { border-bottom: none; }
+.sql-apply-page .values-table th { background: var(--bg-secondary); font-weight: 600; font-size: 12px; color: var(--text-secondary); position: sticky; top: 0; }
+.sql-apply-page .values-table tbody tr:hover { background: var(--bg-hover); }
+.sql-apply-page .values-table .row-num { width: 50px; text-align: center; color: var(--text-secondary); background: var(--bg-secondary); }
+.sql-apply-page .values-table .value-cell { font-family: 'Consolas', 'Monaco', monospace; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
 
-.more-hint {
+.sql-apply-page .more-hint {
   padding: 10px 12px;
   color: var(--text-secondary);
   font-size: 12px;
@@ -120,24 +120,24 @@
 
 
 /* 危险警告 */
-.danger-alert {
+.sql-apply-page .danger-alert {
   padding: 16px;
   background: rgba(255, 77, 79, 0.1);
   border: 1px solid var(--danger-color);
   border-radius: 8px;
   color: var(--danger-color);
 }
-.danger-alert strong { display: block; margin-bottom: 4px; font-size: 14px; }
-.danger-alert p { margin: 0; font-size: 13px; }
+.sql-apply-page .danger-alert strong { display: block; margin-bottom: 4px; font-size: 14px; }
+.sql-apply-page .danger-alert p { margin: 0; font-size: 13px; }
 
 /* 危险卡片 */
-.info-card.danger-card {
+.sql-apply-page .info-card.danger-card {
   border-color: var(--danger-color);
   background: rgba(255, 77, 79, 0.05);
 }
 
 /* WHERE 条件展示 */
-.where-clause {
+.sql-apply-page .where-clause {
   padding: 12px;
   background: var(--bg-color);
   border-radius: 4px;
@@ -149,20 +149,20 @@
 }
 
 /* UPDATE 修改字段表格 */
-.set-clauses-table { border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; }
-.set-clauses-table table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.set-clauses-table th, .set-clauses-table td { padding: 10px 12px; border-bottom: 1px solid var(--border-color-light); text-align: left; }
-.set-clauses-table tr:last-child td { border-bottom: none; }
-.set-clauses-table th { background: var(--bg-secondary); font-weight: 600; font-size: 12px; color: var(--text-secondary); }
-.set-clauses-table tbody tr:hover { background: var(--bg-hover); }
-.set-clauses-table .field-name { font-family: 'Consolas', 'Monaco', monospace; color: var(--primary-color); width: 150px; }
-.set-clauses-table .field-value { font-family: 'Consolas', 'Monaco', monospace; }
-.set-clauses-table .type-tag { padding: 2px 8px; border-radius: 4px; font-size: 12px; }
-.set-clauses-table .type-tag.expr { background: rgba(250, 173, 20, 0.15); color: var(--warning-color); }
-.set-clauses-table .type-tag.const { background: var(--bg-secondary); color: var(--text-secondary); }
+.sql-apply-page .set-clauses-table { border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; }
+.sql-apply-page .set-clauses-table table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.sql-apply-page .set-clauses-table th, .sql-apply-page .set-clauses-table td { padding: 10px 12px; border-bottom: 1px solid var(--border-color-light); text-align: left; }
+.sql-apply-page .set-clauses-table tr:last-child td { border-bottom: none; }
+.sql-apply-page .set-clauses-table th { background: var(--bg-secondary); font-weight: 600; font-size: 12px; color: var(--text-secondary); }
+.sql-apply-page .set-clauses-table tbody tr:hover { background: var(--bg-hover); }
+.sql-apply-page .set-clauses-table .field-name { font-family: 'Consolas', 'Monaco', monospace; color: var(--primary-color); width: 150px; }
+.sql-apply-page .set-clauses-table .field-value { font-family: 'Consolas', 'Monaco', monospace; }
+.sql-apply-page .set-clauses-table .type-tag { padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+.sql-apply-page .set-clauses-table .type-tag.expr { background: rgba(250, 173, 20, 0.15); color: var(--warning-color); }
+.sql-apply-page .set-clauses-table .type-tag.const { background: var(--bg-secondary); color: var(--text-secondary); }
 
 /* 影响说明 */
-.impact-warning {
+.sql-apply-page .impact-warning {
   display: flex;
   gap: 16px;
   padding: 16px;
@@ -170,36 +170,36 @@
   border-radius: 6px;
   border: 1px solid rgba(255, 77, 79, 0.3);
 }
-.impact-warning .warning-icon { font-size: 24px; flex-shrink: 0; }
-.impact-warning .warning-content { flex: 1; }
-.impact-warning .warning-title { font-weight: 600; color: var(--danger-color); margin-bottom: 10px; font-size: 14px; }
-.impact-warning ul { margin: 0; padding-left: 20px; color: var(--text-secondary); font-size: 13px; line-height: 1.8; }
-.impact-warning ul li { margin-bottom: 4px; }
-.impact-warning ul strong { color: var(--danger-color); }
+.sql-apply-page .impact-warning .warning-icon { font-size: 24px; flex-shrink: 0; }
+.sql-apply-page .impact-warning .warning-content { flex: 1; }
+.sql-apply-page .impact-warning .warning-title { font-weight: 600; color: var(--danger-color); margin-bottom: 10px; font-size: 14px; }
+.sql-apply-page .impact-warning ul { margin: 0; padding-left: 20px; color: var(--text-secondary); font-size: 13px; line-height: 1.8; }
+.sql-apply-page .impact-warning ul li { margin-bottom: 4px; }
+.sql-apply-page .impact-warning ul strong { color: var(--danger-color); }
 
 
 /* ALTER 操作详情表格 */
-.alter-detail-table { border: 1px solid var(--border-color); border-radius: 6px; overflow-x: auto; display: table; width: 100%; border-collapse: collapse; }
-.alter-detail-table .table-row { display: table-row; }
-.alter-detail-table .table-row.header { background: var(--bg-secondary); font-weight: 600; font-size: 12px; }
-.alter-detail-table .table-row.header .col { color: var(--text-secondary); }
-.alter-detail-table .table-row:not(.header):hover { background: var(--bg-hover); }
-.alter-detail-table .table-row.danger-row { background: rgba(255, 77, 79, 0.08); }
-.alter-detail-table .table-row.warning-row { background: rgba(250, 173, 20, 0.08); }
-.alter-detail-table .col { display: table-cell; padding: 10px 12px; font-size: 13px; vertical-align: middle; border-bottom: 1px solid var(--border-color-light); white-space: nowrap; }
-.alter-detail-table .col-action { }
-.alter-detail-table .col-target { }
-.alter-detail-table .col-column { font-family: 'Consolas', 'Monaco', monospace; }
-.alter-detail-table .col-type { }
-.alter-detail-table .col-null { text-align: center; }
-.alter-detail-table .col-position { }
-.alter-detail-table .col-desc { color: var(--text-secondary); }
+.sql-apply-page .alter-detail-table { border: 1px solid var(--border-color); border-radius: 6px; overflow-x: auto; display: table; width: 100%; border-collapse: collapse; }
+.sql-apply-page .alter-detail-table .table-row { display: table-row; }
+.sql-apply-page .alter-detail-table .table-row.header { background: var(--bg-secondary); font-weight: 600; font-size: 12px; }
+.sql-apply-page .alter-detail-table .table-row.header .col { color: var(--text-secondary); }
+.sql-apply-page .alter-detail-table .table-row:not(.header):hover { background: var(--bg-hover); }
+.sql-apply-page .alter-detail-table .table-row.danger-row { background: rgba(255, 77, 79, 0.08); }
+.sql-apply-page .alter-detail-table .table-row.warning-row { background: rgba(250, 173, 20, 0.08); }
+.sql-apply-page .alter-detail-table .col { display: table-cell; padding: 10px 12px; font-size: 13px; vertical-align: middle; border-bottom: 1px solid var(--border-color-light); white-space: nowrap; }
+.sql-apply-page .alter-detail-table .col-action { }
+.sql-apply-page .alter-detail-table .col-target { }
+.sql-apply-page .alter-detail-table .col-column { font-family: 'Consolas', 'Monaco', monospace; }
+.sql-apply-page .alter-detail-table .col-type { }
+.sql-apply-page .alter-detail-table .col-null { text-align: center; }
+.sql-apply-page .alter-detail-table .col-position { }
+.sql-apply-page .alter-detail-table .col-desc { color: var(--text-secondary); }
 
 /* ALTER 操作类型标签 */
-.action-tag { padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
-.action-tag.success { background: rgba(82, 196, 26, 0.15); color: var(--success-color); }
-.action-tag.warning { background: rgba(250, 173, 20, 0.15); color: var(--warning-color); }
-.action-tag.danger { background: rgba(255, 77, 79, 0.15); color: var(--danger-color); }
-.action-tag.info { background: var(--bg-secondary); color: var(--text-secondary); }
+.sql-apply-page .action-tag { padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+.sql-apply-page .action-tag.success { background: rgba(82, 196, 26, 0.15); color: var(--success-color); }
+.sql-apply-page .action-tag.warning { background: rgba(250, 173, 20, 0.15); color: var(--warning-color); }
+.sql-apply-page .action-tag.danger { background: rgba(255, 77, 79, 0.15); color: var(--danger-color); }
+.sql-apply-page .action-tag.info { background: var(--bg-secondary); color: var(--text-secondary); }
 
-.position-tag { padding: 2px 8px; background: rgba(250, 173, 20, 0.15); color: var(--warning-color); border-radius: 4px; font-size: 12px; }
+.sql-apply-page .position-tag { padding: 2px 8px; background: rgba(250, 173, 20, 0.15); color: var(--warning-color); border-radius: 4px; font-size: 12px; }

@@ -1,12 +1,12 @@
-/* 日志上下文抽屉 */
-.ctx-overlay {
+/* 日志上下文抽屉（作用域：.elfk-search-page） */
+.elfk-search-page .ctx-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.4);
   z-index: 1000;
 }
 
-.ctx-drawer {
+.elfk-search-page .ctx-drawer {
   position: fixed;
   top: 0;
   right: 0;
@@ -20,7 +20,7 @@
   box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
 }
 
-.ctx-header {
+.elfk-search-page .ctx-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -28,13 +28,13 @@
   border-bottom: 1px solid var(--border-color, #e8e8e8);
 }
 
-.ctx-header h3 {
+.elfk-search-page .ctx-header h3 {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
 }
 
-.ctx-close {
+.elfk-search-page .ctx-close {
   background: none;
   border: none;
   cursor: pointer;
@@ -43,11 +43,11 @@
   border-radius: 4px;
 }
 
-.ctx-close:hover {
+.elfk-search-page .ctx-close:hover {
   background: var(--bg-hover, #f5f5f5);
 }
 
-.ctx-toolbar {
+.elfk-search-page .ctx-toolbar {
   display: flex;
   align-items: center;
   gap: 16px;
@@ -57,19 +57,19 @@
   flex-wrap: wrap;
 }
 
-.ctx-field {
+.elfk-search-page .ctx-field {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.ctx-field label {
+.elfk-search-page .ctx-field label {
   font-size: 13px;
   color: var(--text-secondary, #666);
   white-space: nowrap;
 }
 
-.ctx-field input {
+.elfk-search-page .ctx-field input {
   height: 32px;
   padding: 0 10px;
   border: 1px solid var(--border-color, #d9d9d9);
@@ -77,15 +77,15 @@
   font-size: 13px;
 }
 
-.ctx-field input[type="number"] {
+.elfk-search-page .ctx-field input[type="number"] {
   width: 80px;
 }
 
-.ctx-field input[type="text"] {
+.elfk-search-page .ctx-field input[type="text"] {
   width: 150px;
 }
 
-.ctx-btn {
+.elfk-search-page .ctx-btn {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -99,17 +99,17 @@
   font-size: 13px;
 }
 
-.ctx-btn:hover {
+.elfk-search-page .ctx-btn:hover {
   background: #d89614;
 }
 
-.ctx-content {
+.elfk-search-page .ctx-content {
   flex: 1;
   overflow: auto;
   padding: 16px 20px;
 }
 
-.ctx-loading, .ctx-empty {
+.elfk-search-page .ctx-loading, .elfk-search-page .ctx-empty {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -118,7 +118,7 @@
   color: var(--text-secondary, #999);
 }
 
-.ctx-log {
+.elfk-search-page .ctx-log {
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -128,22 +128,22 @@
   border-left: 3px solid;
 }
 
-.ctx-log.before {
+.elfk-search-page .ctx-log.before {
   background: rgba(82, 196, 26, 0.08);
   border-left-color: #52c41a;
 }
 
-.ctx-log.center {
+.elfk-search-page .ctx-log.center {
   background: rgba(255, 77, 79, 0.1);
   border-left-color: #ff4d4f;
 }
 
-.ctx-log.after {
+.elfk-search-page .ctx-log.after {
   background: rgba(24, 144, 255, 0.08);
   border-left-color: #1890ff;
 }
 
-.ctx-tag {
+.elfk-search-page .ctx-tag {
   flex-shrink: 0;
   min-width: 50px;
   padding: 2px 8px;
@@ -152,22 +152,22 @@
   text-align: center;
 }
 
-.tag-before {
+.elfk-search-page .tag-before {
   background: #52c41a;
   color: #fff;
 }
 
-.tag-center {
+.elfk-search-page .tag-center {
   background: #ff4d4f;
   color: #fff;
 }
 
-.tag-after {
+.elfk-search-page .tag-after {
   background: #1890ff;
   color: #fff;
 }
 
-.ctx-time {
+.elfk-search-page .ctx-time {
   flex-shrink: 0;
   width: 160px;
   font-family: monospace;
@@ -177,34 +177,34 @@
   border-right: 1px solid var(--border-color, #e8e8e8);
 }
 
-.ctx-body {
+.elfk-search-page .ctx-body {
   flex: 1;
   font-size: 13px;
   line-height: 1.6;
   word-break: break-word;
 }
 
-.ctx-pair {
+.elfk-search-page .ctx-pair {
   margin-right: 12px;
 }
 
-.ctx-key {
+.elfk-search-page .ctx-key {
   color: #3a8ee6;
   font-weight: 500;
   margin-right: 4px;
 }
 
-.ctx-val {
+.elfk-search-page .ctx-val {
   color: var(--text-color, #333);
 }
 
-.ctx-highlight, mark.ctx-highlight {
+.elfk-search-page .ctx-highlight, .elfk-search-page mark.ctx-highlight {
   background: #ffe58f;
   color: #333;
   padding: 0 2px;
   border-radius: 2px;
 }
 
-.spin {
-  animation: spin 1s linear infinite;
+.elfk-search-page .spin {
+  animation: elfk-spin 1s linear infinite;
 }

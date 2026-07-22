@@ -102,8 +102,8 @@ const ExecDetailDrawer = ({ visible, execId, onClose }: Props) => {
 
   return (
     <>
-      <div className="drawer-overlay" onClick={onClose} />
-      <div className="drawer-container exec-detail-drawer">
+      <div className="drawer-overlay exec-record-overlay" onClick={onClose} />
+      <div className="drawer-container exec-record-drawer">
         <div className="drawer-header">
           <h3>执行记录详情</h3>
           <button className="drawer-close" onClick={onClose}><X size={18} /></button>
@@ -175,30 +175,31 @@ const ExecDetailDrawer = ({ visible, execId, onClose }: Props) => {
         </div>
       </div>
       <style>{`
-        .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1100; }
-        .exec-detail-drawer { position: fixed; top: 0; right: 0; width: 60%; min-width: 600px; height: 100%; background: var(--bg-color); z-index: 1101; display: flex; flex-direction: column; }
-        .drawer-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
-        .drawer-header h3 { margin: 0; font-size: 16px; color: var(--text-color); }
-        .drawer-close { background: none; border: none; cursor: pointer; color: var(--text-secondary); }
-        .drawer-body { flex: 1; overflow: auto; padding: 20px; }
-        .loading-state, .empty-state { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 60px; color: var(--text-secondary); }
-        .info-section { margin-bottom: 24px; }
-        .info-section h4 { margin: 0 0 16px; font-size: 15px; color: var(--text-color); padding-bottom: 8px; border-bottom: 1px solid var(--border-color); }
-        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); }
-        .section-header h4 { margin: 0; padding: 0; border: none; }
-        .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-        .info-item { display: flex; flex-direction: column; gap: 4px; }
-        .info-item label { font-size: 12px; color: var(--text-secondary); }
-        .info-item span { font-size: 14px; color: var(--text-color); }
-        .status-tag { display: inline-block; padding: 2px 8px; font-size: 12px; border-radius: 4px; }
-        .status-tag.success { color: #52c41a; background: rgba(82, 196, 26, 0.1); }
-        .status-tag.warning { color: #faad14; background: rgba(250, 173, 20, 0.1); }
-        .status-tag.danger { color: #ff4d4f; background: rgba(255, 77, 79, 0.1); }
-        .btn-copy { display: flex; align-items: center; gap: 4px; padding: 4px 10px; background: var(--primary-color); color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
-        .result-content { padding: 16px; background: rgba(82, 196, 26, 0.1); border-left: 4px solid #52c41a; border-radius: 4px; white-space: pre-wrap; word-wrap: break-word; font-size: 14px; line-height: 1.5; color: var(--text-color); }
-        .error-content { padding: 16px; background: rgba(255, 77, 79, 0.1); border-left: 4px solid #ff4d4f; border-radius: 4px; white-space: pre-wrap; word-wrap: break-word; font-size: 14px; line-height: 1.5; color: var(--text-color); }
-        .log-content { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 4px; padding: 16px; max-height: 400px; overflow: auto; font-family: monospace; font-size: 13px; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; color: var(--text-color); margin: 0; }
-        .spin { animation: spin 1s linear infinite; }
+        .exec-record-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1100; }
+        .exec-record-drawer { position: fixed; top: 0; right: 0; width: 60%; min-width: 600px; height: 100%; background: var(--bg-color); z-index: 1101; display: flex; flex-direction: column; }
+        .exec-record-drawer .drawer-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
+        .exec-record-drawer .drawer-header h3 { margin: 0; font-size: 16px; color: var(--text-color); }
+        .exec-record-drawer .drawer-close { background: none; border: none; cursor: pointer; color: var(--text-secondary); }
+        .exec-record-drawer .drawer-body { flex: 1; overflow: auto; padding: 20px; }
+        .exec-record-drawer .loading-state, .exec-record-drawer .empty-state { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 60px; color: var(--text-secondary); }
+        .exec-record-drawer .info-section { margin-bottom: 24px; }
+        .exec-record-drawer .info-section h4 { margin: 0 0 16px; font-size: 15px; color: var(--text-color); padding-bottom: 8px; border-bottom: 1px solid var(--border-color); }
+        .exec-record-drawer .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); }
+        .exec-record-drawer .section-header h4 { margin: 0; padding: 0; border: none; }
+        .exec-record-drawer .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+        .exec-record-drawer .info-item { display: flex; flex-direction: column; gap: 4px; }
+        .exec-record-drawer .info-item label { font-size: 12px; color: var(--text-secondary); }
+        .exec-record-drawer .info-item span { font-size: 14px; color: var(--text-color); }
+        .exec-record-drawer .status-tag { display: inline-block; padding: 2px 8px; font-size: 12px; border-radius: 4px; }
+        .exec-record-drawer .status-tag.success { color: #52c41a; background: rgba(82, 196, 26, 0.1); }
+        .exec-record-drawer .status-tag.warning { color: #faad14; background: rgba(250, 173, 20, 0.1); }
+        .exec-record-drawer .status-tag.danger { color: #ff4d4f; background: rgba(255, 77, 79, 0.1); }
+        .exec-record-drawer .btn-copy { display: flex; align-items: center; gap: 4px; padding: 4px 10px; background: var(--primary-color); color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .exec-record-drawer .result-content { padding: 16px; background: rgba(82, 196, 26, 0.1); border-left: 4px solid #52c41a; border-radius: 4px; white-space: pre-wrap; word-wrap: break-word; font-size: 14px; line-height: 1.5; color: var(--text-color); }
+        .exec-record-drawer .error-content { padding: 16px; background: rgba(255, 77, 79, 0.1); border-left: 4px solid #ff4d4f; border-radius: 4px; white-space: pre-wrap; word-wrap: break-word; font-size: 14px; line-height: 1.5; color: var(--text-color); }
+        .exec-record-drawer .log-content { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 4px; padding: 16px; max-height: 400px; overflow: auto; font-family: monospace; font-size: 13px; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; color: var(--text-color); margin: 0; }
+        .exec-record-drawer .spin { animation: exec-record-spin 1s linear infinite; }
+        @keyframes exec-record-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </>
   );

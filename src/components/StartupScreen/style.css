@@ -27,10 +27,10 @@
     linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
   background-size: 50px 50px;
-  animation: gridMove 20s linear infinite;
+  animation: startup-grid-move 20s linear infinite;
 }
 
-@keyframes gridMove {
+@keyframes startup-grid-move {
   0% { transform: translate(0, 0); }
   100% { transform: translate(50px, 50px); }
 }
@@ -43,12 +43,12 @@
   height: 300px;
   background: radial-gradient(circle, rgba(0, 212, 255, 0.2) 0%, transparent 70%);
   border-radius: 50%;
-  animation: float 8s ease-in-out infinite;
+  animation: startup-float 8s ease-in-out infinite;
   top: 20%;
   left: 10%;
 }
 
-@keyframes float {
+@keyframes startup-float {
   0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
   50% { transform: translate(30px, -30px) scale(1.1); opacity: 0.8; }
 }
@@ -70,10 +70,10 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: textShine 3s linear infinite;
+  animation: startup-text-shine 3s linear infinite;
 }
 
-@keyframes textShine {
+@keyframes startup-text-shine {
   0% { background-position: 0% center; }
   100% { background-position: 200% center; }
 }
@@ -101,7 +101,7 @@
   border: 3px solid rgba(0, 212, 255, 0.2);
   border-top-color: #00d4ff;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: startup-spin 1s linear infinite;
   box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
 }
 
@@ -118,7 +118,7 @@
   box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
 }
 
-@keyframes spin {
+@keyframes startup-spin {
   to { transform: rotate(360deg); }
 }
 
@@ -136,7 +136,7 @@
   flex-wrap: wrap;
 }
 
-.progress-step {
+.startup-screen .progress-step {
   padding: 8px 18px;
   border-radius: 25px;
   font-size: 12px;
@@ -146,20 +146,20 @@
   transition: all 0.3s;
 }
 
-.progress-step.active {
+.startup-screen .progress-step.active {
   background: rgba(0, 212, 255, 0.15);
   border-color: rgba(0, 212, 255, 0.4);
   color: #00d4ff;
   box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
 }
 
-.progress-step.done {
+.startup-screen .progress-step.done {
   background: rgba(0, 212, 255, 0.1);
   border-color: rgba(0, 212, 255, 0.2);
   color: rgba(0, 212, 255, 0.7);
 }
 
-.progress-step.done::before {
+.startup-screen .progress-step.done::before {
   content: '✓ ';
 }
 

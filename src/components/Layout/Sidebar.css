@@ -1,5 +1,6 @@
 /**
  * 侧边栏样式 - 使用 Ant Design Menu
+ * 作用域：.app-sidebar（.ant-menu-submenu-popup 为 antd 挂载 body 的弹出层，保持全局）
  */
 
 .app-sidebar {
@@ -21,7 +22,7 @@
 }
 
 /* Logo 区域 */
-.sidebar-logo {
+.app-sidebar .sidebar-logo {
   height: 48px;
   padding: 0 16px;
   display: flex;
@@ -31,18 +32,18 @@
   transition: background-color 0.3s;
 }
 
-.sidebar-logo:hover {
+.app-sidebar .sidebar-logo:hover {
   background: #5a587a;
 }
 
-.logo-icon {
+.app-sidebar .logo-icon {
   font-size: 24px;
   min-width: 32px;
   text-align: center;
   color: #fff;
 }
 
-.logo-text {
+.app-sidebar .logo-text {
   color: #fff;
   font-size: 18px;
   font-weight: 600;
@@ -55,93 +56,93 @@
 }
 
 /* 导航区域 */
-.sidebar-nav {
+.app-sidebar .sidebar-nav {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
 }
 
-.sidebar-nav::-webkit-scrollbar {
+.app-sidebar .sidebar-nav::-webkit-scrollbar {
   width: 6px;
 }
 
-.sidebar-nav::-webkit-scrollbar-thumb {
+.app-sidebar .sidebar-nav::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.2);
   border-radius: 3px;
 }
 
-.sidebar-nav::-webkit-scrollbar-track {
+.app-sidebar .sidebar-nav::-webkit-scrollbar-track {
   background: transparent;
 }
 
 /* Ant Design Menu 自定义样式 */
-.sidebar-nav .ant-menu {
+.app-sidebar .sidebar-nav .ant-menu {
   background: transparent !important;
 }
 
-.sidebar-nav .ant-menu-item,
-.sidebar-nav .ant-menu-submenu-title {
+.app-sidebar .sidebar-nav .ant-menu-item,
+.app-sidebar .sidebar-nav .ant-menu-submenu-title {
   margin: 4px 8px !important;
   border-radius: 6px !important;
   transition: all 0.3s ease !important;
 }
 
-.sidebar-nav .ant-menu-item:hover,
-.sidebar-nav .ant-menu-submenu-title:hover {
+.app-sidebar .sidebar-nav .ant-menu-item:hover,
+.app-sidebar .sidebar-nav .ant-menu-submenu-title:hover {
   background: rgba(255, 255, 255, 0.1) !important;
 }
 
 /* 选中菜单样式 - 不用蓝色背景 */
-.sidebar-nav .ant-menu-item-selected {
+.app-sidebar .sidebar-nav .ant-menu-item-selected {
   background: rgba(255, 255, 255, 0.15) !important;
   color: #fff !important;
 }
 
-.sidebar-nav .ant-menu-item-selected::after {
+.app-sidebar .sidebar-nav .ant-menu-item-selected::after {
   display: none !important;
 }
 
 /* 子菜单样式 */
-.sidebar-nav .ant-menu-sub {
+.app-sidebar .sidebar-nav .ant-menu-sub {
   background: rgba(0, 0, 0, 0.2) !important;
 }
 
-.sidebar-nav .ant-menu-sub .ant-menu-item {
+.app-sidebar .sidebar-nav .ant-menu-sub .ant-menu-item {
   padding-left: 48px !important;
 }
 
 /* 箭头对齐修复 */
-.sidebar-nav .ant-menu-submenu-title {
+.app-sidebar .sidebar-nav .ant-menu-submenu-title {
   display: flex !important;
   align-items: center !important;
 }
 
-.sidebar-nav .ant-menu-submenu-arrow {
+.app-sidebar .sidebar-nav .ant-menu-submenu-arrow {
   right: 16px !important;
   position: absolute !important;
 }
 
 /* 箭头方向：默认向右 >，展开后向下 */
-.sidebar-nav .ant-menu-submenu .ant-menu-submenu-arrow::before,
-.sidebar-nav .ant-menu-submenu .ant-menu-submenu-arrow::after {
+.app-sidebar .sidebar-nav .ant-menu-submenu .ant-menu-submenu-arrow::before,
+.app-sidebar .sidebar-nav .ant-menu-submenu .ant-menu-submenu-arrow::after {
   transition: transform 0.3s ease !important;
 }
 
-.sidebar-nav .ant-menu-submenu:not(.ant-menu-submenu-open) .ant-menu-submenu-arrow::before {
+.app-sidebar .sidebar-nav .ant-menu-submenu:not(.ant-menu-submenu-open) .ant-menu-submenu-arrow::before {
   transform: rotate(-45deg) translateX(2.5px) !important;
 }
 
-.sidebar-nav .ant-menu-submenu:not(.ant-menu-submenu-open) .ant-menu-submenu-arrow::after {
+.app-sidebar .sidebar-nav .ant-menu-submenu:not(.ant-menu-submenu-open) .ant-menu-submenu-arrow::after {
   transform: rotate(45deg) translateX(-2.5px) !important;
 }
 
 /* 子菜单展开动画 */
-.sidebar-nav .ant-menu-inline-collapsed > .ant-menu-submenu > .ant-menu-submenu-title,
-.sidebar-nav .ant-menu-inline > .ant-menu-submenu > .ant-menu-submenu-title {
+.app-sidebar .sidebar-nav .ant-menu-inline-collapse > .ant-menu-submenu > .ant-menu-submenu-title,
+.app-sidebar .sidebar-nav .ant-menu-inline > .ant-menu-submenu > .ant-menu-submenu-title {
   transition: all 0.3s ease !important;
 }
 
-/* 收起状态下的弹出菜单样式 */
+/* 收起状态下的弹出菜单样式（antd portal 到 body，保持全局但类名唯一） */
 .ant-menu-submenu-popup {
   z-index: 1050 !important;
 }
@@ -175,23 +176,23 @@
 }
 
 /* 底部用户区域 */
-.sidebar-footer {
+.app-sidebar .sidebar-footer {
   padding: 12px 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.footer-collapsed {
+.app-sidebar .footer-collapsed {
   display: flex;
   justify-content: center;
 }
 
-.footer-expanded {
+.app-sidebar .footer-expanded {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.footer-icon-btn {
+.app-sidebar .footer-icon-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -205,11 +206,11 @@
   color: #fff;
 }
 
-.footer-icon-btn:hover {
+.app-sidebar .footer-icon-btn:hover {
   background: rgba(255, 255, 255, 0.25);
 }
 
-.footer-icon-btn .badge {
+.app-sidebar .footer-icon-btn .badge {
   position: absolute;
   top: -2px;
   right: -2px;
@@ -225,22 +226,22 @@
   justify-content: center;
 }
 
-.footer-icon-btn.bell-shake {
-  animation: bell-shake 2s ease-in-out infinite;
+.app-sidebar .footer-icon-btn.bell-shake {
+  animation: sidebar-bell-shake 2s ease-in-out infinite;
 }
 
-@keyframes bell-shake {
+@keyframes sidebar-bell-shake {
   0%, 100% { transform: rotate(0); }
   5%, 15% { transform: rotate(-12deg); }
   10%, 20% { transform: rotate(12deg); }
   25% { transform: rotate(0); }
 }
 
-.footer-user {
+.app-sidebar .footer-user {
   position: relative;
 }
 
-.footer-avatar {
+.app-sidebar .footer-avatar {
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -257,17 +258,17 @@
   position: relative;
 }
 
-.footer-avatar-img {
+.app-sidebar .footer-avatar-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.footer-avatar:hover {
+.app-sidebar .footer-avatar:hover {
   transform: scale(1.05);
 }
 
-.footer-dropdown {
+.app-sidebar .footer-dropdown {
   position: absolute;
   bottom: 100%;
   left: 0;
@@ -280,12 +281,12 @@
   overflow: hidden;
 }
 
-:root.dark .footer-dropdown {
+:root.dark .app-sidebar .footer-dropdown {
   background: #1f1f1f;
   border: 1px solid #333;
 }
 
-.footer-dropdown .dropdown-item {
+.app-sidebar .footer-dropdown .dropdown-item {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -296,38 +297,38 @@
   transition: background 0.2s;
 }
 
-:root.dark .footer-dropdown .dropdown-item {
+:root.dark .app-sidebar .footer-dropdown .dropdown-item {
   color: #e5e5e5;
 }
 
-.footer-dropdown .dropdown-item:hover {
+.app-sidebar .footer-dropdown .dropdown-item:hover {
   background: #f5f5f5;
 }
 
-:root.dark .footer-dropdown .dropdown-item:hover {
+:root.dark .app-sidebar .footer-dropdown .dropdown-item:hover {
   background: #333;
 }
 
-.footer-dropdown .dropdown-item.danger {
+.app-sidebar .footer-dropdown .dropdown-item.danger {
   color: #ff4d4f;
 }
 
-.footer-dropdown .dropdown-item.danger:hover {
+.app-sidebar .footer-dropdown .dropdown-item.danger:hover {
   background: rgba(255, 77, 79, 0.1);
 }
 
-.footer-dropdown .dropdown-divider {
+.app-sidebar .footer-dropdown .dropdown-divider {
   height: 1px;
   background: #e5e7eb;
   margin: 4px 0;
 }
 
-:root.dark .footer-dropdown .dropdown-divider {
+:root.dark .app-sidebar .footer-dropdown .dropdown-divider {
   background: #333;
 }
 
 /* NEW 徽章 */
-.new-badge {
+.app-sidebar .new-badge {
   font-size: 10px;
   padding: 1px 5px;
   background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
@@ -335,35 +336,35 @@
   border-radius: 4px;
   margin-left: auto;
   font-weight: 600;
-  animation: pulse-badge 2s infinite;
+  animation: sidebar-pulse-badge 2s infinite;
 }
 
-@keyframes pulse-badge {
+@keyframes sidebar-pulse-badge {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.7; }
 }
 
 /* 铃铛按钮特殊样式 */
-.footer-icon-btn.bell-btn {
+.app-sidebar .footer-icon-btn.bell-btn {
   background: transparent;
 }
 
-.footer-icon-btn.bell-btn:hover {
+.app-sidebar .footer-icon-btn.bell-btn:hover {
   background: rgba(255, 255, 255, 0.1);
 }
 
 /* 更新按钮 - 向上箭头 */
-.update-btn {
+.app-sidebar .update-btn {
   background: transparent !important;
-  animation: update-pulse 2s infinite;
+  animation: sidebar-update-pulse 2s infinite;
   font-size: 20px !important;
 }
 
-.update-btn:hover {
+.app-sidebar .update-btn:hover {
   background: rgba(255, 255, 255, 0.1) !important;
 }
 
-@keyframes update-pulse {
+@keyframes sidebar-update-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
 }

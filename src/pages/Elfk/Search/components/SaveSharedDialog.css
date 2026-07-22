@@ -1,13 +1,13 @@
 /* 保存共享记录弹框样式 */
 
-.save-shared-overlay {
+.elfk-search-page .save-shared-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
   z-index: 1300;
 }
 
-.save-shared-dialog {
+.elfk-search-page .save-shared-dialog {
   position: fixed;
   top: 50%;
   left: 50%;
@@ -20,7 +20,7 @@
   z-index: 1301;
 }
 
-.save-shared-dialog .dialog-header {
+.elfk-search-page .save-shared-dialog .dialog-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -28,13 +28,13 @@
   border-bottom: 1px solid var(--border-color);
 }
 
-.save-shared-dialog .dialog-header h3 {
+.elfk-search-page .save-shared-dialog .dialog-header h3 {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
 }
 
-.save-shared-dialog .close-btn {
+.elfk-search-page .save-shared-dialog .close-btn {
   background: none;
   border: none;
   cursor: pointer;
@@ -44,35 +44,35 @@
   display: flex;
 }
 
-.save-shared-dialog .close-btn:hover {
+.elfk-search-page .save-shared-dialog .close-btn:hover {
   background: var(--bg-secondary);
 }
 
-.save-shared-dialog .dialog-body {
+.elfk-search-page .save-shared-dialog .dialog-body {
   padding: 20px;
 }
 
-.save-shared-dialog .form-item {
+.elfk-search-page .save-shared-dialog .form-item {
   margin-bottom: 16px;
 }
 
-.save-shared-dialog .form-item:last-child {
+.elfk-search-page .save-shared-dialog .form-item:last-child {
   margin-bottom: 0;
 }
 
-.save-shared-dialog .form-item label {
+.elfk-search-page .save-shared-dialog .form-item label {
   display: block;
   margin-bottom: 6px;
   font-size: 13px;
   color: var(--text-secondary);
 }
 
-.save-shared-dialog .form-value {
+.elfk-search-page .save-shared-dialog .form-value {
   font-size: 14px;
   color: var(--text-color);
 }
 
-.save-shared-dialog .share-toggle {
+.elfk-search-page .save-shared-dialog .share-toggle {
   display: flex;
   gap: 8px;
   background: var(--bg-secondary);
@@ -80,7 +80,7 @@
   border-radius: 6px;
 }
 
-.save-shared-dialog .share-toggle .toggle-btn {
+.elfk-search-page .save-shared-dialog .share-toggle .toggle-btn {
   flex: 1;
   padding: 8px 12px;
   background: transparent;
@@ -92,13 +92,13 @@
   transition: all 0.2s;
 }
 
-.save-shared-dialog .share-toggle .toggle-btn.active {
+.elfk-search-page .save-shared-dialog .share-toggle .toggle-btn.active {
   background: var(--bg-color);
   color: var(--text-color);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
-.save-shared-dialog .keyword-preview {
+.elfk-search-page .save-shared-dialog .keyword-preview {
   padding: 10px 12px;
   background: var(--bg-secondary);
   border-radius: 6px;
@@ -110,7 +110,7 @@
   word-break: break-all;
 }
 
-.save-shared-dialog textarea {
+.elfk-search-page .save-shared-dialog textarea {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--border-color);
@@ -121,12 +121,12 @@
   resize: vertical;
 }
 
-.save-shared-dialog textarea:focus {
+.elfk-search-page .save-shared-dialog textarea:focus {
   border-color: var(--primary-color);
   outline: none;
 }
 
-.save-shared-dialog .error-tip {
+.elfk-search-page .save-shared-dialog .error-tip {
   margin-top: 12px;
   padding: 8px 12px;
   background: rgba(231, 76, 60, 0.1);
@@ -135,7 +135,7 @@
   color: #e74c3c;
 }
 
-.save-shared-dialog .dialog-footer {
+.elfk-search-page .save-shared-dialog .dialog-footer {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
@@ -143,7 +143,7 @@
   border-top: 1px solid var(--border-color);
 }
 
-.save-shared-dialog .btn-cancel {
+.elfk-search-page .save-shared-dialog .btn-cancel {
   padding: 8px 16px;
   background: var(--bg-color);
   border: 1px solid var(--border-color);
@@ -152,11 +152,11 @@
   cursor: pointer;
 }
 
-.save-shared-dialog .btn-cancel:hover {
+.elfk-search-page .save-shared-dialog .btn-cancel:hover {
   border-color: var(--text-secondary);
 }
 
-.save-shared-dialog .btn-save {
+.elfk-search-page .save-shared-dialog .btn-save {
   padding: 8px 20px;
   background: var(--primary-color);
   border: none;
@@ -166,11 +166,11 @@
   cursor: pointer;
 }
 
-.save-shared-dialog .btn-save:hover:not(:disabled) {
+.elfk-search-page .save-shared-dialog .btn-save:hover:not(:disabled) {
   opacity: 0.9;
 }
 
-.save-shared-dialog .btn-save:disabled {
+.elfk-search-page .save-shared-dialog .btn-save:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

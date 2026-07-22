@@ -10,7 +10,7 @@
 }
 
 /* 拖拽上传覆盖层 */
-.drop-overlay {
+.file-page .drop-overlay {
   position: absolute;
   inset: 0;
   background: rgba(24, 144, 255, 0.12);
@@ -22,7 +22,7 @@
   border-radius: 8px;
 }
 
-.drop-content {
+.file-page .drop-content {
   text-align: center;
   padding: 60px 80px;
   border: 3px dashed var(--primary-color, #1890ff);
@@ -31,24 +31,24 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
-.drop-content svg { color: var(--primary-color, #1890ff); margin-bottom: 16px; }
-.drop-content p { font-size: 18px; font-weight: 600; color: var(--primary-color, #1890ff); margin: 0 0 8px; }
-.drop-content span { font-size: 13px; color: var(--text-secondary, #888); }
+.file-page .drop-content svg { color: var(--primary-color, #1890ff); margin-bottom: 16px; }
+.file-page .drop-content p { font-size: 18px; font-weight: 600; color: var(--primary-color, #1890ff); margin: 0 0 8px; }
+.file-page .drop-content span { font-size: 13px; color: var(--text-secondary, #888); }
 
 /* 顶部栏 */
-.file-header {
+.file-page .file-header {
   display: flex;
   align-items: center;
   gap: 12px;
   flex-shrink: 0;
 }
 
-.file-tabs {
+.file-page .file-tabs {
   display: flex;
   flex-shrink: 0;
 }
 
-.tab {
+.file-page .tab {
   padding: 7px 18px;
   border: 1px solid var(--border-color, #3a3a3a);
   background: var(--bg-secondary, #2a2a2a);
@@ -58,22 +58,22 @@
   transition: all 0.15s;
 }
 
-.tab:first-child { border-radius: 6px 0 0 6px; }
-.tab:last-child { border-radius: 0 6px 6px 0; border-left: none; }
+.file-page .tab:first-child { border-radius: 6px 0 0 6px; }
+.file-page .tab:last-child { border-radius: 0 6px 6px 0; border-left: none; }
 
-.tab.active {
+.file-page .tab.active {
   background: var(--primary-color, #1890ff);
   border-color: var(--primary-color, #1890ff);
   color: #fff;
 }
 
-.tab:hover:not(.active) {
+.file-page .tab:hover:not(.active) {
   border-color: var(--primary-color, #1890ff);
   color: var(--primary-color, #1890ff);
 }
 
 /* 搜索框 */
-.file-search {
+.file-page .file-search {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -85,18 +85,18 @@
   flex-shrink: 0;
 }
 
-.file-search:focus-within {
+.file-page .file-search:focus-within {
   border-color: var(--primary-color, #1890ff);
 }
 
-.file-search svg {
+.file-page .file-search svg {
   color: var(--text-secondary, #888);
   flex-shrink: 0;
   width: 14px;
   height: 14px;
 }
 
-.file-search input {
+.file-page .file-search input {
   flex: 1;
   border: none;
   background: transparent;
@@ -107,9 +107,9 @@
   min-width: 80px;
 }
 
-.file-search input::placeholder { color: var(--text-secondary, #666); }
+.file-page .file-search input::placeholder { color: var(--text-secondary, #666); }
 
-.btn-search {
+.file-page .btn-search {
   padding: 4px 10px;
   border: 1px solid var(--border-color, #3a3a3a);
   border-radius: 4px;
@@ -121,13 +121,13 @@
   flex-shrink: 0;
 }
 
-.btn-search:hover {
+.file-page .btn-search:hover {
   border-color: var(--primary-color, #1890ff);
   color: var(--primary-color, #1890ff);
 }
 
 /* 大小统计 */
-.file-size-stats {
+.file-page .file-size-stats {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -137,17 +137,17 @@
   flex-shrink: 0;
 }
 
-.size-total {
+.file-page .size-total {
   font-weight: 600;
   color: var(--text-color, #e0e0e0);
 }
 
-.size-cat {
+.file-page .size-cat {
   color: var(--text-secondary, #888);
 }
 
 /* 上传按钮 */
-.btn-upload {
+.file-page .btn-upload {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -163,11 +163,11 @@
   white-space: nowrap;
 }
 
-.btn-upload:hover:not(:disabled) { background: var(--primary-hover, #40a9ff); }
-.btn-upload:disabled { opacity: 0.6; cursor: not-allowed; }
+.file-page .btn-upload:hover:not(:disabled) { background: var(--primary-hover, #40a9ff); }
+.file-page .btn-upload:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* 表格容器 */
-.file-table-wrap {
+.file-page .file-table-wrap {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -176,20 +176,20 @@
   border: 1px solid var(--border-color, #3a3a3a);
 }
 
-.file-table {
+.file-page .file-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
 }
 
-.file-table th,
-.file-table td {
+.file-page .file-table th,
+.file-page .file-table td {
   padding: 10px 12px;
   text-align: left;
   border-bottom: 1px solid var(--border-color, #2a2a2a);
 }
 
-.file-table th {
+.file-page .file-table th {
   background: var(--bg-secondary, #2a2a2a);
   font-weight: 600;
   color: var(--text-secondary, #888);
@@ -201,15 +201,15 @@
   z-index: 1;
 }
 
-.file-table tbody tr {
+.file-page .file-table tbody tr {
   transition: background 0.12s;
 }
 
-.file-table tbody tr:hover {
+.file-page .file-table tbody tr:hover {
   background: var(--bg-hover, #333);
 }
 
-.file-name {
+.file-page .file-name {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -217,7 +217,7 @@
   min-width: 0;
 }
 
-.file-name span {
+.file-page .file-name span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -225,24 +225,24 @@
   min-width: 0;
 }
 
-.file-time {
+.file-page .file-time {
   white-space: nowrap;
   font-size: 12px;
   color: var(--text-secondary, #999);
 }
 
-.file-actions-cell {
+.file-page .file-actions-cell {
   white-space: nowrap;
 }
 
-.empty {
+.file-page .empty {
   text-align: center;
   color: var(--text-secondary, #888);
   padding: 60px 0;
 }
 
 /* 操作按钮 */
-.link-btn {
+.file-page .link-btn {
   display: inline-flex;
   align-items: center;
   gap: 3px;
@@ -256,13 +256,13 @@
   transition: all 0.12s;
 }
 
-.link-btn:hover { background: rgba(24, 144, 255, 0.1); }
-.link-btn.danger { color: #ff4d4f; }
-.link-btn.danger:hover { background: rgba(255, 77, 79, 0.1); }
-.link-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.file-page .link-btn:hover { background: rgba(24, 144, 255, 0.1); }
+.file-page .link-btn.danger { color: #ff4d4f; }
+.file-page .link-btn.danger:hover { background: rgba(255, 77, 79, 0.1); }
+.file-page .link-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* 分页 */
-.file-pagination {
+.file-page .file-pagination {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -273,7 +273,7 @@
   color: var(--text-secondary, #888);
 }
 
-.file-pagination button {
+.file-page .file-pagination button {
   padding: 5px 12px;
   border: 1px solid var(--border-color, #3a3a3a);
   border-radius: 6px;
@@ -284,14 +284,14 @@
   transition: all 0.15s;
 }
 
-.file-pagination button:hover:not(:disabled) {
+.file-page .file-pagination button:hover:not(:disabled) {
   border-color: var(--primary-color, #1890ff);
   color: var(--primary-color, #1890ff);
 }
 
-.file-pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+.file-page .file-pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.loading {
+.file-page .loading {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -300,7 +300,7 @@
 }
 
 /* 下载链接弹框 */
-.dl-modal-overlay {
+.file-page .dl-modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
@@ -310,7 +310,7 @@
   z-index: 1000;
 }
 
-.dl-modal {
+.file-page .dl-modal {
   background: var(--bg-color, #1f1f1f);
   border: 1px solid var(--border-color, #3a3a3a);
   border-radius: 10px;
@@ -319,7 +319,7 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
-.dl-modal-header {
+.file-page .dl-modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -327,13 +327,13 @@
   border-bottom: 1px solid var(--border-color, #3a3a3a);
 }
 
-.dl-modal-header h4 {
+.file-page .dl-modal-header h4 {
   margin: 0;
   font-size: 14px;
   color: var(--text-color, #e0e0e0);
 }
 
-.dl-modal-close {
+.file-page .dl-modal-close {
   background: none;
   border: none;
   color: var(--text-secondary, #888);
@@ -343,22 +343,22 @@
   line-height: 1;
 }
 
-.dl-modal-close:hover { color: var(--text-color, #e0e0e0); }
+.file-page .dl-modal-close:hover { color: var(--text-color, #e0e0e0); }
 
-.dl-modal-body {
+.file-page .dl-modal-body {
   padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
 
-.dl-modal-file {
+.file-page .dl-modal-file {
   font-size: 13px;
   color: var(--text-color, #e0e0e0);
   word-break: break-all;
 }
 
-.dl-modal-url {
+.file-page .dl-modal-url {
   background: var(--bg-secondary, #2a2a2a);
   border: 1px solid var(--border-color, #3a3a3a);
   border-radius: 6px;
@@ -368,7 +368,7 @@
   align-items: center;
 }
 
-.dl-modal-url input {
+.file-page .dl-modal-url input {
   width: 100%;
   background: transparent;
   border: none;
@@ -378,7 +378,7 @@
   cursor: text;
 }
 
-.dl-loading {
+.file-page .dl-loading {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -386,17 +386,17 @@
   font-size: 13px;
 }
 
-.dl-loading .spin { animation: spin 1s linear infinite; }
+.file-page .dl-loading .spin { animation: file-spin 1s linear infinite; }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes file-spin { to { transform: rotate(360deg); } }
 
-.dl-modal-actions {
+.file-page .dl-modal-actions {
   display: flex;
   gap: 10px;
   justify-content: flex-end;
 }
 
-.dl-btn {
+.file-page .dl-btn {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -408,19 +408,19 @@
   transition: all 0.15s;
 }
 
-.dl-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.file-page .dl-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.dl-btn-copy {
+.file-page .dl-btn-copy {
   background: var(--bg-secondary, #2a2a2a);
   color: var(--text-color, #e0e0e0);
 }
 
-.dl-btn-copy:hover:not(:disabled) { border-color: var(--primary-color, #1890ff); color: var(--primary-color, #1890ff); }
+.file-page .dl-btn-copy:hover:not(:disabled) { border-color: var(--primary-color, #1890ff); color: var(--primary-color, #1890ff); }
 
-.dl-btn-download {
+.file-page .dl-btn-download {
   background: var(--primary-color, #1890ff);
   border-color: var(--primary-color, #1890ff);
   color: #fff;
 }
 
-.dl-btn-download:hover:not(:disabled) { background: var(--primary-hover, #40a9ff); }
+.file-page .dl-btn-download:hover:not(:disabled) { background: var(--primary-hover, #40a9ff); }

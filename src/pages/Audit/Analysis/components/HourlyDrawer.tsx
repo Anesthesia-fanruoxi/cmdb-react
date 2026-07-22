@@ -60,7 +60,7 @@ const HourlyDrawer = ({ visible, type, hour, startTime, endTime, onClose }: Prop
 
   return (
     <>
-      <div className="drawer-overlay" onClick={onClose} />
+      <div className="drawer-overlay hourly-drawer-overlay" onClick={onClose} />
       <div className="drawer-container hourly-drawer">
         <div className="drawer-header">
           <h3>{type.toUpperCase()} {hour}:00 - {hour}:59 用户执行统计</h3>
@@ -97,24 +97,25 @@ const HourlyDrawer = ({ visible, type, hour, startTime, endTime, onClose }: Prop
         </div>
       </div>
       <style>{`
-        .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1100; }
+        .hourly-drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1100; }
         .hourly-drawer { position: fixed; top: 0; right: 0; width: 600px; height: 100%; background: var(--bg-color); z-index: 1101; display: flex; flex-direction: column; }
-        .drawer-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
-        .drawer-header h3 { margin: 0; font-size: 16px; color: var(--text-color); }
-        .drawer-close { background: none; border: none; cursor: pointer; color: var(--text-secondary); }
-        .drawer-body { flex: 1; overflow: auto; padding: 20px; }
-        .loading-state { display: flex; align-items: center; justify-content: center; gap: 8px; height: 200px; color: var(--text-secondary); }
-        .stats-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .stats-table th, .stats-table td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color); }
-        .stats-table th { background: var(--bg-secondary); font-weight: 500; color: var(--text-color); }
-        .stats-table td { color: var(--text-secondary); }
-        .stats-table .empty { text-align: center; padding: 40px !important; }
-        .progress-bar { display: flex; align-items: center; gap: 8px; height: 16px; background: var(--bg-secondary); border-radius: 8px; overflow: hidden; position: relative; min-width: 100px; }
-        .progress-fill { height: 100%; background: var(--primary-color); border-radius: 8px; }
-        .progress-fill.warning { background: #faad14; }
-        .progress-fill.danger { background: #ff4d4f; }
-        .progress-bar span { position: absolute; right: 8px; font-size: 12px; color: var(--text-secondary); }
-        .spin { animation: spin 1s linear infinite; }
+        .hourly-drawer .drawer-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
+        .hourly-drawer .drawer-header h3 { margin: 0; font-size: 16px; color: var(--text-color); }
+        .hourly-drawer .drawer-close { background: none; border: none; cursor: pointer; color: var(--text-secondary); }
+        .hourly-drawer .drawer-body { flex: 1; overflow: auto; padding: 20px; }
+        .hourly-drawer .loading-state { display: flex; align-items: center; justify-content: center; gap: 8px; height: 200px; color: var(--text-secondary); }
+        .hourly-drawer .stats-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .hourly-drawer .stats-table th, .hourly-drawer .stats-table td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .hourly-drawer .stats-table th { background: var(--bg-secondary); font-weight: 500; color: var(--text-color); }
+        .hourly-drawer .stats-table td { color: var(--text-secondary); }
+        .hourly-drawer .stats-table .empty { text-align: center; padding: 40px !important; }
+        .hourly-drawer .progress-bar { display: flex; align-items: center; gap: 8px; height: 16px; background: var(--bg-secondary); border-radius: 8px; overflow: hidden; position: relative; min-width: 100px; }
+        .hourly-drawer .progress-fill { height: 100%; background: var(--primary-color); border-radius: 8px; }
+        .hourly-drawer .progress-fill.warning { background: #faad14; }
+        .hourly-drawer .progress-fill.danger { background: #ff4d4f; }
+        .hourly-drawer .progress-bar span { position: absolute; right: 8px; font-size: 12px; color: var(--text-secondary); }
+        .hourly-drawer .spin { animation: hourly-drawer-spin 1s linear infinite; }
+        @keyframes hourly-drawer-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </>
   );

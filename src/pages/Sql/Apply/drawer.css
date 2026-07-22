@@ -1,10 +1,10 @@
 /**
- * SQL变更申请 - 抽屉扩展样式
+ * SQL变更申请 - 抽屉扩展样式（作用域：.sql-apply-page）
  * 通用样式已移至 src/styles/common.css
  */
 
 /* SQL 只读编辑器 */
-.sql-editor-readonly {
+.sql-apply-page .sql-editor-readonly {
   height: 300px;
   border-radius: 6px;
   overflow: hidden;
@@ -12,7 +12,7 @@
 }
 
 /* 详情内容布局 - 扩展样式 */
-.apply-detail .detail-content .detail-card:last-of-type {
+.sql-apply-page .apply-detail .detail-content .detail-card:last-of-type {
   flex: 1;
   display: flex;
   flex-direction: column;

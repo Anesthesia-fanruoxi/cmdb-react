@@ -1,13 +1,13 @@
 /**
- * SQL分析规则样式 - 参照 Vue 版本优化
+ * SQL分析规则样式 - 参照 Vue 版本优化（作用域：.sql-apply-page）
  */
 
 /* 规则列表 */
-.rules-list { display: flex; flex-direction: column; gap: 10px; }
-.rules-list .empty { text-align: center; padding: 40px; color: var(--text-muted); }
+.sql-apply-page .rules-list { display: flex; flex-direction: column; gap: 10px; }
+.sql-apply-page .rules-list .empty { text-align: center; padding: 40px; color: var(--text-muted); }
 
 /* 规则详情卡片 - 参照 Vue 版本的 rule-check-item 样式 */
-.rule-detail-card {
+.sql-apply-page .rule-detail-card {
   background: var(--bg-color);
   border-radius: 6px;
   overflow: hidden;
@@ -15,19 +15,19 @@
   padding: 12px 16px;
 }
 
-.rule-detail-card.rule-passed { border-left-color: var(--success-color); background: var(--bg-secondary); }
-.rule-detail-card.rule-warning { border-left-color: var(--warning-color); background: rgba(250, 173, 20, 0.06); }
-.rule-detail-card.rule-blocker { border-left-color: var(--danger-color); background: rgba(255, 77, 79, 0.06); }
+.sql-apply-page .rule-detail-card.rule-passed { border-left-color: var(--success-color); background: var(--bg-secondary); }
+.sql-apply-page .rule-detail-card.rule-warning { border-left-color: var(--warning-color); background: rgba(250, 173, 20, 0.06); }
+.sql-apply-page .rule-detail-card.rule-blocker { border-left-color: var(--danger-color); background: rgba(255, 77, 79, 0.06); }
 
-.rule-detail-card .rule-header { margin-bottom: 8px; }
+.sql-apply-page .rule-detail-card .rule-header { margin-bottom: 8px; }
 
-.rule-title-row { display: flex; align-items: center; gap: 10px; }
-.rule-name-large { font-size: 14px; font-weight: 500; color: var(--text-color); }
-.rule-detail-card .rule-body { padding-left: 4px; }
+.sql-apply-page .rule-title-row { display: flex; align-items: center; gap: 10px; }
+.sql-apply-page .rule-name-large { font-size: 14px; font-weight: 500; color: var(--text-color); }
+.sql-apply-page .rule-detail-card .rule-body { padding-left: 4px; }
 
-.rule-info-row { display: flex; align-items: flex-start; margin-bottom: 8px; font-size: 13px; }
-.rule-info-row:last-child { margin-bottom: 0; }
-.rule-info-row.error-row { 
+.sql-apply-page .rule-info-row { display: flex; align-items: flex-start; margin-bottom: 8px; font-size: 13px; }
+.sql-apply-page .rule-info-row:last-child { margin-bottom: 0; }
+.sql-apply-page .rule-info-row.error-row { 
   background: rgba(255, 77, 79, 0.1); 
   padding: 10px 12px; 
   border-radius: 4px; 
@@ -35,12 +35,12 @@
   border-left: 3px solid var(--danger-color);
 }
 
-.rule-label { color: var(--text-secondary); min-width: 72px; flex-shrink: 0; }
-.rule-text { flex: 1; color: var(--text-color); line-height: 1.5; }
-.rule-error-text { flex: 1; color: var(--danger-color); font-weight: 500; line-height: 1.5; }
+.sql-apply-page .rule-label { color: var(--text-secondary); min-width: 72px; flex-shrink: 0; }
+.sql-apply-page .rule-text { flex: 1; color: var(--text-color); line-height: 1.5; }
+.sql-apply-page .rule-error-text { flex: 1; color: var(--danger-color); font-weight: 500; line-height: 1.5; }
 
 /* 规则描述 */
-.rule-desc {
+.sql-apply-page .rule-desc {
   font-size: 13px;
   color: var(--text-secondary);
   margin-top: 6px;
@@ -48,16 +48,16 @@
 }
 
 /* 违规详情 */
-.violation-details { margin-top: 12px; }
-.violation-title { font-size: 13px; color: var(--text-secondary); font-weight: 500; margin-bottom: 8px; }
+.sql-apply-page .violation-details { margin-top: 12px; }
+.sql-apply-page .violation-title { font-size: 13px; color: var(--text-secondary); font-weight: 500; margin-bottom: 8px; }
 
-.violation-table { border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; }
-.violation-table .table-row { display: flex; border-bottom: 1px solid var(--border-color-light); }
-.violation-table .table-row:last-child { border-bottom: none; }
-.violation-table .table-row.header { background: var(--bg-secondary); font-weight: 600; font-size: 12px; color: var(--text-secondary); }
-.violation-table .table-row:not(.header):hover { background: var(--bg-hover); }
-.violation-table .col { padding: 10px 12px; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.violation-table .col-target { flex: 0 0 140px; font-family: 'Consolas', 'Monaco', monospace; color: var(--danger-color); font-weight: 500; }
-.violation-table .col-type { flex: 0 0 90px; }
-.violation-table .col-issue { flex: 1; white-space: normal; color: var(--text-color); }
-.violation-table .col-value { flex: 0 0 180px; font-family: 'Consolas', 'Monaco', monospace; color: var(--warning-color); }
+.sql-apply-page .violation-table { border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; }
+.sql-apply-page .violation-table .table-row { display: flex; border-bottom: 1px solid var(--border-color-light); }
+.sql-apply-page .violation-table .table-row:last-child { border-bottom: none; }
+.sql-apply-page .violation-table .table-row.header { background: var(--bg-secondary); font-weight: 600; font-size: 12px; color: var(--text-secondary); }
+.sql-apply-page .violation-table .table-row:not(.header):hover { background: var(--bg-hover); }
+.sql-apply-page .violation-table .col { padding: 10px 12px; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sql-apply-page .violation-table .col-target { flex: 0 0 140px; font-family: 'Consolas', 'Monaco', monospace; color: var(--danger-color); font-weight: 500; }
+.sql-apply-page .violation-table .col-type { flex: 0 0 90px; }
+.sql-apply-page .violation-table .col-issue { flex: 1; white-space: normal; color: var(--text-color); }
+.sql-apply-page .violation-table .col-value { flex: 0 0 180px; font-family: 'Consolas', 'Monaco', monospace; color: var(--warning-color); }

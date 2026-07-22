@@ -23,7 +23,7 @@
 .splash-logo {
   font-size: 64px;
   margin-bottom: 16px;
-  animation: pulse 2s ease-in-out infinite;
+  animation: splash-pulse 2s ease-in-out infinite;
 }
 
 .splash-title {
@@ -52,7 +52,7 @@
   border: 3px solid rgba(255, 255, 255, 0.1);
   border-top-color: #6366f1;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: splash-spin 1s linear infinite;
 }
 
 .splash-message {
@@ -60,13 +60,13 @@
   color: rgba(255, 255, 255, 0.8);
 }
 
-@keyframes spin {
+@keyframes splash-spin {
   to {
     transform: rotate(360deg);
   }
 }
 
-@keyframes pulse {
+@keyframes splash-pulse {
   0%, 100% {
     transform: scale(1);
   }

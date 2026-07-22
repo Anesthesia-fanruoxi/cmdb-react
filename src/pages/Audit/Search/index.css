@@ -190,5 +190,5 @@
   cursor: not-allowed;
 }
 
-.spin { animation: spin 1s linear infinite; }
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.audit-search-page .spin { animation: audit-search-spin 1s linear infinite; }
+@keyframes audit-search-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

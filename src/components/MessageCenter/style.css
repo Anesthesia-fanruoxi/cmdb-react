@@ -28,10 +28,10 @@
 }
 
 .msg-trigger.has-unread {
-  animation: bell-shake 2s ease-in-out infinite;
+  animation: msg-bell-shake 2s ease-in-out infinite;
 }
 
-@keyframes bell-shake {
+@keyframes msg-bell-shake {
   0%, 100% { transform: rotate(0); }
   5%, 15% { transform: rotate(-12deg); }
   10%, 20% { transform: rotate(12deg); }
@@ -241,10 +241,10 @@
   bottom: 0;
   background: rgba(0, 0, 0, 0.45);
   z-index: 9999;
-  animation: fadeIn 0.2s ease-out;
+  animation: msg-fade-in 0.2s ease-out;
 }
 
-@keyframes fadeIn {
+@keyframes msg-fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
 }
@@ -261,7 +261,7 @@
   z-index: 10000;
   display: flex;
   flex-direction: column;
-  animation: slideIn 0.3s ease-out;
+  animation: msg-slide-in 0.3s ease-out;
 }
 
 :root.dark .msg-drawer {
@@ -269,7 +269,7 @@
   border-left: 1px solid #333;
 }
 
-@keyframes slideIn {
+@keyframes msg-slide-in {
   from { 
     transform: translateX(100%);
     opacity: 0;

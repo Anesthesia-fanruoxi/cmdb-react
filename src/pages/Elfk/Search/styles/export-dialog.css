@@ -1,6 +1,5 @@
-/* 导出字段选择对话框 */
 
-.export-dialog-overlay {
+.elfk-search-page .export-dialog-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -13,7 +12,7 @@
   z-index: 1000;
 }
 
-.export-dialog {
+.elfk-search-page .export-dialog {
   width: 600px;
   max-width: 90vw;
   max-height: 80vh;
@@ -24,7 +23,7 @@
   flex-direction: column;
 }
 
-.export-dialog-header {
+.elfk-search-page .export-dialog-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -32,13 +31,13 @@
   border-bottom: 1px solid var(--border-color, #e8e8e8);
 }
 
-.export-dialog-header .title {
+.elfk-search-page .export-dialog-header .title {
   font-size: 16px;
   font-weight: 600;
   color: var(--text-color, #333);
 }
 
-.export-dialog-header .btn-close {
+.elfk-search-page .export-dialog-header .btn-close {
   background: none;
   border: none;
   cursor: pointer;
@@ -50,12 +49,12 @@
   border-radius: 4px;
 }
 
-.export-dialog-header .btn-close:hover {
+.elfk-search-page .export-dialog-header .btn-close:hover {
   background: var(--bg-hover, #f5f5f5);
   color: var(--text-color, #666);
 }
 
-.export-dialog-body {
+.elfk-search-page .export-dialog-body {
   flex: 1;
   padding: 16px 20px;
   overflow: hidden;
@@ -63,14 +62,14 @@
   flex-direction: column;
 }
 
-.field-actions {
+.elfk-search-page .field-actions {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 12px;
 }
 
-.field-actions button {
+.elfk-search-page .field-actions button {
   padding: 4px 12px;
   border: 1px solid var(--border-color, #d9d9d9);
   border-radius: 4px;
@@ -80,12 +79,12 @@
   cursor: pointer;
 }
 
-.field-actions button:hover {
+.elfk-search-page .field-actions button:hover {
   border-color: var(--primary-color, #1890ff);
   color: var(--primary-color, #1890ff);
 }
 
-.field-actions .selected-count {
+.elfk-search-page .field-actions .selected-count {
   margin-left: auto;
   font-size: 12px;
   color: var(--text-secondary, #666);
@@ -94,13 +93,13 @@
   border-radius: 4px;
 }
 
-.export-dialog .empty-tip {
+.elfk-search-page .export-dialog .empty-tip {
   text-align: center;
   padding: 40px;
   color: var(--text-secondary, #999);
 }
 
-.fields-list {
+.elfk-search-page .fields-list {
   flex: 1;
   overflow-y: auto;
   border: 1px solid var(--border-color, #e8e8e8);
@@ -110,7 +109,7 @@
   max-height: 400px;
 }
 
-.field-item {
+.elfk-search-page .field-item {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -123,35 +122,35 @@
   transition: all 0.2s;
 }
 
-.field-item:last-child { margin-bottom: 0; }
+.elfk-search-page .field-item:last-child { margin-bottom: 0; }
 
-.field-item:hover {
+.elfk-search-page .field-item:hover {
   border-color: var(--primary-color, #1890ff);
   background: var(--bg-hover, #f0f9ff);
 }
 
-.field-item.selected {
+.elfk-search-page .field-item.selected {
   border-color: var(--primary-color, #1890ff);
   background: rgba(24, 144, 255, 0.1);
 }
 
-.field-item .check-icon {
+.elfk-search-page .field-item .check-icon {
   color: var(--border-color, #d9d9d9);
   flex-shrink: 0;
 }
 
-.field-item.selected .check-icon {
+.elfk-search-page .field-item.selected .check-icon {
   color: var(--primary-color, #1890ff);
 }
 
-.field-item .field-name {
+.elfk-search-page .field-item .field-name {
   flex: 1;
   font-size: 13px;
   color: var(--text-color, #333);
   font-weight: 500;
 }
 
-.field-item .field-type {
+.elfk-search-page .field-item .field-type {
   font-size: 11px;
   color: var(--text-secondary, #999);
   background: var(--bg-secondary, #f0f0f0);
@@ -159,7 +158,7 @@
   border-radius: 3px;
 }
 
-.export-dialog-footer {
+.elfk-search-page .export-dialog-footer {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
@@ -167,7 +166,7 @@
   border-top: 1px solid var(--border-color, #e8e8e8);
 }
 
-.export-dialog-footer .btn-cancel {
+.elfk-search-page .export-dialog-footer .btn-cancel {
   padding: 8px 16px;
   border: 1px solid var(--border-color, #d9d9d9);
   border-radius: 4px;
@@ -177,12 +176,12 @@
   cursor: pointer;
 }
 
-.export-dialog-footer .btn-cancel:hover {
+.elfk-search-page .export-dialog-footer .btn-cancel:hover {
   border-color: var(--primary-color, #1890ff);
   color: var(--primary-color, #1890ff);
 }
 
-.export-dialog-footer .btn-confirm {
+.elfk-search-page .export-dialog-footer .btn-confirm {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -195,11 +194,11 @@
   cursor: pointer;
 }
 
-.export-dialog-footer .btn-confirm:hover {
+.elfk-search-page .export-dialog-footer .btn-confirm:hover {
   background: var(--primary-hover, #40a9ff);
 }
 
-.export-dialog-footer .btn-confirm:disabled {
+.elfk-search-page .export-dialog-footer .btn-confirm:disabled {
   background: var(--border-color, #d9d9d9);
   cursor: not-allowed;
 }

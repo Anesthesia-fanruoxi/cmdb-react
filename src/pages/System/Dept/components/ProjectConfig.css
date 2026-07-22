@@ -11,7 +11,7 @@
   color: var(--text-color);
 }
 
-.config-header {
+.project-config-container .config-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -19,9 +19,9 @@
   border-bottom: 1px solid var(--border-color);
 }
 
-.config-header h4 { margin: 0; font-size: 16px; }
+.project-config-container .config-header h4 { margin: 0; font-size: 16px; }
 
-.config-body {
+.project-config-container .config-body {
   flex: 1;
   padding: 20px;
   overflow: auto;
@@ -30,7 +30,7 @@
   gap: 20px;
 }
 
-.config-loading {
+.project-config-container .config-loading {
   flex: 1;
   display: flex;
   align-items: center;
@@ -38,9 +38,9 @@
   color: var(--text-muted);
 }
 
-.section-title { font-size: 14px; font-weight: 500; margin-bottom: 12px; }
+.project-config-container .section-title { font-size: 14px; font-weight: 500; margin-bottom: 12px; }
 
-.project-list {
+.project-config-container .project-list {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -50,7 +50,7 @@
   border-radius: 6px;
 }
 
-.project-tag {
+.project-config-container .project-tag {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -61,23 +61,23 @@
   transition: all 0.2s;
 }
 
-.project-tag.bound {
+.project-config-container .project-tag.bound {
   background: var(--success-bg, #f0f9eb);
   border: 1px solid var(--success-border, #b3e19d);
   color: var(--success-color, #67c23a);
 }
 
-.project-tag.bound:hover { background: var(--success-bg-hover, #e1f3d8); }
+.project-config-container .project-tag.bound:hover { background: var(--success-bg-hover, #e1f3d8); }
 
-.project-tag.unbound {
+.project-config-container .project-tag.unbound {
   background: var(--bg-color);
   border: 1px dashed var(--border-color-dark);
   color: var(--text-secondary);
 }
 
-.project-tag.unbound:hover { border-color: var(--primary-color); color: var(--primary-color); }
+.project-config-container .project-tag.unbound:hover { border-color: var(--primary-color); color: var(--primary-color); }
 
-.tag-remove {
+.project-config-container .tag-remove {
   background: none;
   border: none;
   color: var(--success-color, #67c23a);
@@ -87,10 +87,10 @@
   line-height: 1;
 }
 
-.tag-remove:hover { color: var(--success-hover, #529b2e); }
-.tag-add { color: var(--text-muted); font-size: 14px; }
+.project-config-container .tag-remove:hover { color: var(--success-hover, #529b2e); }
+.project-config-container .tag-add { color: var(--text-muted); font-size: 14px; }
 
-.config-footer {
+.project-config-container .config-footer {
   display: flex;
   justify-content: flex-end;
   gap: 12px;

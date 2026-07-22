@@ -142,11 +142,11 @@
 }
 
 /* 旋转动画 */
-.spin {
-  animation: spin 1s linear infinite;
+.agent-page .spin {
+  animation: agent-page-spin 1s linear infinite;
 }
 
-@keyframes spin {
+@keyframes agent-page-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }

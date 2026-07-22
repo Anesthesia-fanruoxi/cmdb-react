@@ -163,5 +163,5 @@
   cursor: not-allowed;
 }
 
-.spin { animation: spin 1s linear infinite; }
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.audit-operation-page .spin { animation: audit-operation-spin 1s linear infinite; }
+@keyframes audit-operation-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

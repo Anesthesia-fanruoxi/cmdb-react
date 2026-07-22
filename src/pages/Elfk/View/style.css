@@ -10,21 +10,21 @@
 }
 
 /* 搜索卡片 */
-.search-card {
+.elfk-view-page .search-card {
   background: var(--bg-color);
   border-radius: 8px;
   padding: 16px;
   border: 1px solid var(--border-color);
 }
 
-.filter-row {
+.elfk-view-page .filter-row {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
 }
 
-.filter-select,
-.filter-input {
+.elfk-view-page .filter-select,
+.elfk-view-page .filter-input {
   height: 36px;
   padding: 0 12px;
   border: 1px solid var(--border-color);
@@ -35,14 +35,14 @@
   min-width: 160px;
 }
 
-.filter-select:focus,
-.filter-input:focus {
+.elfk-view-page .filter-select:focus,
+.elfk-view-page .filter-input:focus {
   outline: none;
   border-color: var(--primary-color);
 }
 
 /* 表格卡片 */
-.table-card {
+.elfk-view-page .table-card {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -52,7 +52,7 @@
   min-height: 0;
 }
 
-.table-header {
+.elfk-view-page .table-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -81,7 +81,7 @@
 }
 
 /* 表格 - 使用全局 .data-table */
-.table-wrapper {
+.elfk-view-page .table-wrapper {
   flex: 1;
   overflow: auto;
   padding: 0 16px;
@@ -93,7 +93,7 @@
   z-index: 1;
 }
 
-.name-cell {
+.elfk-view-page .name-cell {
   font-weight: 500;
   max-width: 150px;
   overflow: hidden;
@@ -101,13 +101,13 @@
   white-space: nowrap;
 }
 
-.pattern-cell {
+.elfk-view-page .pattern-cell {
   font-family: monospace;
   font-size: 13px;
   color: var(--text-secondary);
 }
 
-.desc-cell {
+.elfk-view-page .desc-cell {
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -115,11 +115,11 @@
   color: var(--text-secondary);
 }
 
-.action-cell {
+.elfk-view-page .action-cell {
   white-space: nowrap;
 }
 
-.btn-link {
+.elfk-view-page .btn-link {
   background: none;
   border: none;
   color: var(--primary-color);
@@ -128,20 +128,20 @@
   font-size: 14px;
 }
 
-.btn-link:hover {
+.elfk-view-page .btn-link:hover {
   opacity: 0.8;
 }
 
-.btn-link.danger {
+.elfk-view-page .btn-link.danger {
   color: #ff4d4f;
 }
 
-.btn-link.danger:hover {
+.elfk-view-page .btn-link.danger:hover {
   color: #ff7875;
 }
 
-.loading-cell,
-.empty-cell {
+.elfk-view-page .loading-cell,
+.elfk-view-page .empty-cell {
   text-align: center !important;
   color: var(--text-secondary);
   padding: 40px !important;
@@ -178,12 +178,12 @@
   cursor: not-allowed;
 }
 
-.page-info {
+.elfk-view-page .page-info {
   color: var(--text-secondary);
   font-size: 14px;
 }
 
-.page-num {
+.elfk-view-page .page-num {
   color: var(--text-color);
   font-size: 14px;
 }

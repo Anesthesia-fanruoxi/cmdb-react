@@ -1,5 +1,6 @@
 /**
  * 状态弹框样式
+ * 命名空间：子元素样式限定在根类名 `.status-modal-overlay` 下。
  */
 
 .status-modal-overlay {
@@ -15,7 +16,7 @@
   z-index: 10000;
 }
 
-.status-modal {
+.status-modal-overlay .status-modal {
   background: var(--bg-color, #fff);
   border-radius: 12px;
   padding: 24px 32px;
@@ -27,7 +28,7 @@
   min-width: 200px;
 }
 
-.status-spinner {
+.status-modal-overlay .status-spinner {
   width: 32px;
   height: 32px;
   border: 3px solid var(--border-color, #e5e7eb);
@@ -36,7 +37,7 @@
   animation: status-spin 0.8s linear infinite;
 }
 
-.status-message {
+.status-modal-overlay .status-message {
   margin: 0;
   font-size: 14px;
   color: var(--text-color, #374151);
@@ -48,15 +49,15 @@
 }
 
 /* 暗色模式 */
-:root.dark .status-modal {
+:root.dark .status-modal-overlay .status-modal {
   background: #1f2937;
 }
 
-:root.dark .status-message {
+:root.dark .status-modal-overlay .status-message {
   color: #e5e7eb;
 }
 
-:root.dark .status-spinner {
+:root.dark .status-modal-overlay .status-spinner {
   border-color: #374151;
   border-top-color: #60a5fa;
 }

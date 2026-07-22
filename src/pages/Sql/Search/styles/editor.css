@@ -2,7 +2,7 @@
  * SQL查询页面 - 编辑器样式
  */
 
-.sql-editor {
+.sql-search .sql-editor {
   background: var(--bg-color);
   border-bottom: 1px solid var(--border-color);
   display: flex;
@@ -10,20 +10,21 @@
   height: 100%;
 }
 
-.editor-toolbar {
+.sql-search .editor-toolbar {
   display: flex;
   gap: 8px;
   padding: 8px 12px;
   border-bottom: 1px solid var(--border-color);
 }
 
-.editor-wrapper {
+.sql-search .editor-wrapper {
   flex: 1;
   position: relative;
   overflow: hidden;
 }
 
-.editor-highlight, .editor-textarea {
+.sql-search .editor-highlight,
+.sql-search .editor-textarea {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
   padding: 12px;
@@ -35,13 +36,13 @@
   overflow: auto;
 }
 
-.editor-highlight {
+.sql-search .editor-highlight {
   color: var(--text-color);
   pointer-events: none;
   z-index: 1;
 }
 
-.editor-textarea {
+.sql-search .editor-textarea {
   background: transparent;
   color: transparent;
   caret-color: var(--text-color);
@@ -50,17 +51,17 @@
   z-index: 2;
 }
 
-.editor-textarea:focus { outline: none; }
+.sql-search .editor-textarea:focus { outline: none; }
 
 /* 语法高亮 - 暗色主题友好 */
-.hl-keyword { color: #a78bfa; font-weight: 500; }  /* 柔和紫色 */
-.hl-string { color: #6ee7b7; }                      /* 柔和绿色 */
-.hl-number { color: #fbbf24; }                      /* 柔和黄色 */
-.hl-comment { color: #6b7280; font-style: italic; } /* 灰色 */
-.hl-placeholder { color: var(--text-muted); }
+.sql-search .hl-keyword { color: #a78bfa; font-weight: 500; }  /* 柔和紫色 */
+.sql-search .hl-string { color: #6ee7b7; }                      /* 柔和绿色 */
+.sql-search .hl-number { color: #fbbf24; }                      /* 柔和黄色 */
+.sql-search .hl-comment { color: #6b7280; font-style: italic; } /* 灰色 */
+.sql-search .hl-placeholder { color: var(--text-muted); }
 
 /* 工作区工具栏 */
-.workspace-toolbar {
+.sql-search .workspace-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -70,9 +71,9 @@
   flex-shrink: 0;
 }
 
-.toolbar-left { display: flex; align-items: center; gap: 8px; }
+.sql-search .toolbar-left { display: flex; align-items: center; gap: 8px; }
 
-.btn-eye-protect {
+.sql-search .btn-eye-protect {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -87,21 +88,21 @@
   transition: all 0.2s;
 }
 
-.btn-eye-protect:hover {
+.sql-search .btn-eye-protect:hover {
   background-color: var(--bg-secondary);
   color: var(--primary-color);
   border-color: var(--primary-color);
 }
 
-.btn-eye-protect.active {
+.sql-search .btn-eye-protect.active {
   background-color: var(--primary-color);
   color: #fff;
   border-color: var(--primary-color);
 }
 
-.toolbar-shortcuts { display: flex; gap: 8px; flex-wrap: wrap; }
+.sql-search .toolbar-shortcuts { display: flex; gap: 8px; flex-wrap: wrap; }
 
-.shortcut-hint {
+.sql-search .shortcut-hint {
   font-size: 11px;
   color: var(--text-muted);
   padding: 3px 8px;
@@ -112,12 +113,12 @@
   white-space: nowrap;
 }
 
-.shortcut-hint:hover {
+.sql-search .shortcut-hint:hover {
   border-color: var(--primary-color);
   color: var(--text-secondary);
 }
 
-.auto-expand-toggle {
+.sql-search .auto-expand-toggle {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -130,29 +131,29 @@
   transition: background 0.15s;
 }
 
-.auto-expand-toggle:hover { background: var(--bg-hover); }
-.auto-expand-toggle input { cursor: pointer; accent-color: var(--primary-color); }
+.sql-search .auto-expand-toggle:hover { background: var(--bg-hover); }
+.sql-search .auto-expand-toggle input { cursor: pointer; accent-color: var(--primary-color); }
 
 /* 编辑器容器 */
-.editor-container {
+.sql-search .editor-container {
   position: relative;
   overflow: hidden;
   flex-shrink: 0;
 }
 
-.editor-container.focused { box-shadow: inset 0 0 0 2px var(--primary-color); }
+.sql-search .editor-container.focused { box-shadow: inset 0 0 0 2px var(--primary-color); }
 
-.editor-container .sql-editor {
+.sql-search .editor-container .sql-editor {
   height: 100%;
   min-height: unset;
   max-height: unset;
   border-bottom: none;
 }
 
-.editor-container .editor-wrapper { height: 100%; }
+.sql-search .editor-container .editor-wrapper { height: 100%; }
 
 /* 拖动条 */
-.editor-resize-handle {
+.sql-search .editor-resize-handle {
   height: 10px;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
@@ -165,24 +166,24 @@
   user-select: none;
 }
 
-.editor-resize-handle:hover,
-.editor-resize-handle.dragging { background: var(--bg-hover); }
+.sql-search .editor-resize-handle:hover,
+.sql-search .editor-resize-handle.dragging { background: var(--bg-hover); }
 
-.resize-handle-bar {
+.sql-search .resize-handle-bar {
   width: 50px; height: 4px;
   background: var(--border-color);
   border-radius: 2px;
   transition: all 0.15s;
 }
 
-.editor-resize-handle:hover .resize-handle-bar,
-.editor-resize-handle.dragging .resize-handle-bar {
+.sql-search .editor-resize-handle:hover .resize-handle-bar,
+.sql-search .editor-resize-handle.dragging .resize-handle-bar {
   background: var(--primary-color);
   width: 60px;
 }
 
 /* 消息面板 */
-.messages-panel {
+.sql-search .messages-panel {
   padding: 8px 12px;
   border-bottom: 1px solid var(--border-color);
   background: var(--bg-secondary);
@@ -191,7 +192,7 @@
   overflow-y: auto;
 }
 
-.message {
+.sql-search .message {
   padding: 8px 12px;
   border-radius: 4px;
   font-size: 13px;
@@ -201,9 +202,9 @@
   gap: 8px;
 }
 
-.message:last-child { margin-bottom: 0; }
+.sql-search .message:last-child { margin-bottom: 0; }
 
-.message-error {
+.sql-search .message-error {
   background: rgba(255, 77, 79, 0.1);
   color: #ff4d4f;
   border: 1px solid rgba(255, 77, 79, 0.2);
@@ -211,13 +212,13 @@
   white-space: pre-wrap;
 }
 
-.message-warning {
+.sql-search .message-warning {
   background: rgba(250, 173, 20, 0.1);
   color: #faad14;
   border: 1px solid rgba(250, 173, 20, 0.2);
 }
 
-.message-info {
+.sql-search .message-info {
   background: rgba(102, 126, 234, 0.1);
   color: var(--primary-color);
   border: 1px solid rgba(102, 126, 234, 0.2);

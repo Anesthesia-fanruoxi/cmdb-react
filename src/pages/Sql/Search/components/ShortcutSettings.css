@@ -1,4 +1,8 @@
-/* 快捷键设置弹窗样式 */
+/*
+ * 命名空间：所有子元素样式限定在 `.shortcut-dialog` 下，
+ * 避免 `.btn-sm` / `.btn-reset` / `.close-btn` 等通用类名与其他模块冲突。
+ * `.shortcut-overlay` 与 `.shortcut-dialog` 作为根节点保留独立类名。
+ */
 
 .shortcut-overlay {
   position: fixed;
@@ -20,7 +24,7 @@
   z-index: 1301;
 }
 
-.shortcut-header {
+.shortcut-dialog .shortcut-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -28,14 +32,14 @@
   border-bottom: 1px solid var(--border-color);
 }
 
-.shortcut-header h3 {
+.shortcut-dialog .shortcut-header h3 {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
   color: var(--text-color);
 }
 
-.shortcut-header .close-btn {
+.shortcut-dialog .shortcut-header .close-btn {
   background: none;
   border: none;
   cursor: pointer;
@@ -47,23 +51,23 @@
   justify-content: center;
 }
 
-.shortcut-header .close-btn:hover {
+.shortcut-dialog .shortcut-header .close-btn:hover {
   background: var(--bg-secondary);
 }
 
-.shortcut-body {
+.shortcut-dialog .shortcut-body {
   padding: 16px 20px;
   max-height: 600px;
   overflow-y: auto;
 }
 
-.shortcut-list {
+.shortcut-dialog .shortcut-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.shortcut-item {
+.shortcut-dialog .shortcut-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -72,28 +76,28 @@
   border-radius: 6px;
 }
 
-.shortcut-info {
+.shortcut-dialog .shortcut-info {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.shortcut-label {
+.shortcut-dialog .shortcut-label {
   font-size: 14px;
   font-weight: 500;
   color: var(--text-color);
 }
 
-.shortcut-desc {
+.shortcut-dialog .shortcut-desc {
   font-size: 12px;
   color: var(--text-secondary);
 }
 
-.shortcut-value {
+.shortcut-dialog .shortcut-value {
   flex-shrink: 0;
 }
 
-.shortcut-btn {
+.shortcut-dialog .shortcut-btn {
   padding: 6px 12px;
   background: var(--bg-color);
   border: 1px solid var(--border-color);
@@ -105,24 +109,24 @@
   transition: all 0.2s;
 }
 
-.shortcut-btn:hover {
+.shortcut-dialog .shortcut-btn:hover {
   border-color: var(--primary-color);
   color: var(--primary-color);
 }
 
-.shortcut-editing {
+.shortcut-dialog .shortcut-editing {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.shortcut-input-wrapper {
+.shortcut-dialog .shortcut-input-wrapper {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.shortcut-input {
+.shortcut-dialog .shortcut-input {
   width: 150px;
   padding: 6px 10px;
   border: 2px solid var(--primary-color);
@@ -134,22 +138,22 @@
   text-align: center;
 }
 
-.shortcut-input:focus {
+.shortcut-dialog .shortcut-input:focus {
   outline: none;
 }
 
-.shortcut-input.conflict {
+.shortcut-dialog .shortcut-input.conflict {
   border-color: #e74c3c;
   color: #e74c3c;
 }
 
-.conflict-tip {
+.shortcut-dialog .conflict-tip {
   font-size: 11px;
   color: #e74c3c;
   white-space: nowrap;
 }
 
-.btn-sm {
+.shortcut-dialog .btn-sm {
   padding: 4px 10px;
   font-size: 12px;
   border-radius: 4px;
@@ -159,18 +163,18 @@
   border: none;
 }
 
-.btn-sm:disabled {
+.shortcut-dialog .btn-sm:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.btn-sm.btn-cancel {
+.shortcut-dialog .btn-sm.btn-cancel {
   background: var(--bg-color);
   border: 1px solid var(--border-color);
   color: var(--text-color);
 }
 
-.shortcut-footer {
+.shortcut-dialog .shortcut-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -178,7 +182,7 @@
   border-top: 1px solid var(--border-color);
 }
 
-.btn-reset {
+.shortcut-dialog .btn-reset {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -191,7 +195,7 @@
   cursor: pointer;
 }
 
-.btn-reset:hover {
+.shortcut-dialog .btn-reset:hover {
   border-color: var(--text-secondary);
   color: var(--text-color);
 }

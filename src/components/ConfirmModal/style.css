@@ -1,5 +1,8 @@
 /**
  * 确认弹框样式
+ * 命名空间：组件通过 document.body.appendChild 挂载，
+ * 所有子元素样式限定在根类名 `.confirm-overlay` 下。
+ * @keyframes 改为 confirm- 前缀，避免与全局 fadeIn/slideIn 撞名。
  */
 
 .confirm-overlay {
@@ -13,37 +16,37 @@
   align-items: center;
   justify-content: center;
   z-index: 10000;
-  animation: fadeIn 0.15s ease;
+  animation: confirm-fade-in 0.15s ease;
 }
 
-@keyframes fadeIn {
+@keyframes confirm-fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
-.confirm-modal {
+.confirm-overlay .confirm-modal {
   background: var(--bg-color);
   border-radius: 12px;
   padding: 24px;
   min-width: 320px;
   max-width: 420px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  animation: slideIn 0.2s ease;
+  animation: confirm-slide-in 0.2s ease;
 }
 
-@keyframes slideIn {
+@keyframes confirm-slide-in {
   from { transform: scale(0.9); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
 
-.confirm-title {
+.confirm-overlay .confirm-title {
   font-size: 16px;
   font-weight: 600;
   color: var(--text-color);
   margin-bottom: 12px;
 }
 
-.confirm-content {
+.confirm-overlay .confirm-content {
   font-size: 14px;
   color: var(--text-secondary);
   line-height: 1.6;
@@ -51,13 +54,13 @@
   white-space: pre-line;
 }
 
-.confirm-actions {
+.confirm-overlay .confirm-actions {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
 }
 
-.confirm-btn {
+.confirm-overlay .confirm-btn {
   padding: 8px 20px;
   border-radius: 6px;
   font-size: 14px;
@@ -66,68 +69,68 @@
   border: none;
 }
 
-.confirm-btn.cancel {
+.confirm-overlay .confirm-btn.cancel {
   background: var(--bg-secondary);
   color: var(--text-color);
   border: 1px solid var(--border-color);
 }
 
-.confirm-btn.cancel:hover {
+.confirm-overlay .confirm-btn.cancel:hover {
   border-color: var(--primary-color);
   color: var(--primary-color);
 }
 
-.confirm-btn.ok {
+.confirm-overlay .confirm-btn.ok {
   background: var(--primary-color);
   color: #fff;
 }
 
-.confirm-btn.ok:hover {
+.confirm-overlay .confirm-btn.ok:hover {
   background: var(--primary-hover);
 }
 
 /* 危险类型 */
-.confirm-modal.danger .confirm-btn.ok {
+.confirm-overlay .confirm-modal.danger .confirm-btn.ok {
   background: var(--danger-color);
 }
 
-.confirm-modal.danger .confirm-btn.ok:hover {
+.confirm-overlay .confirm-modal.danger .confirm-btn.ok:hover {
   background: #ff7875;
 }
 
 /* 警告类型 */
-.confirm-modal.warning .confirm-btn.ok {
+.confirm-overlay .confirm-modal.warning .confirm-btn.ok {
   background: #faad14;
 }
 
-.confirm-modal.warning .confirm-btn.ok:hover {
+.confirm-overlay .confirm-modal.warning .confirm-btn.ok:hover {
   background: #ffc53d;
 }
 
 /* 多按钮自定义类型 */
-.confirm-btn.primary {
+.confirm-overlay .confirm-btn.primary {
   background: var(--primary-color);
   color: #fff;
 }
 
-.confirm-btn.primary:hover {
+.confirm-overlay .confirm-btn.primary:hover {
   background: var(--primary-hover);
 }
 
-.confirm-btn.danger {
+.confirm-overlay .confirm-btn.danger {
   background: var(--danger-color, #ff4d4f);
   color: #fff;
 }
 
-.confirm-btn.danger:hover {
+.confirm-overlay .confirm-btn.danger:hover {
   background: #ff7875;
 }
 
-.confirm-btn.warning {
+.confirm-overlay .confirm-btn.warning {
   background: #faad14;
   color: #fff;
 }
 
-.confirm-btn.warning:hover {
+.confirm-overlay .confirm-btn.warning:hover {
   background: #ffc53d;
 }

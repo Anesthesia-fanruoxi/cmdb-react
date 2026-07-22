@@ -1,4 +1,7 @@
-/* 查找/替换对话框样式 */
+/* 查找/替换对话框样式
+ * 命名空间：所有子元素样式限定在 `.search-dialog` 下，
+ * 避免 `.search-header` / `.nav-btn` / `.search-input` 等通用类名与其他模块冲突。
+ */
 
 .search-dialog {
   position: absolute;
@@ -21,7 +24,7 @@
   width: 420px;
 }
 
-.search-header {
+.search-dialog .search-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -31,17 +34,17 @@
   user-select: none;
 }
 
-.search-header:active {
+.search-dialog .search-header:active {
   cursor: grabbing;
 }
 
-.search-title {
+.search-dialog .search-title {
   font-size: 13px;
   font-weight: 500;
   color: var(--text-color);
 }
 
-.search-header .close-btn {
+.search-dialog .search-header .close-btn {
   background: none;
   border: none;
   cursor: pointer;
@@ -51,27 +54,27 @@
   display: flex;
 }
 
-.search-header .close-btn:hover {
+.search-dialog .search-header .close-btn:hover {
   background: var(--bg-secondary);
   color: var(--text-color);
 }
 
-.search-body {
+.search-dialog .search-body {
   padding: 12px 14px;
 }
 
-.search-input-row {
+.search-dialog .search-input-row {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 10px;
 }
 
-.search-input-row:last-of-type {
+.search-dialog .search-input-row:last-of-type {
   margin-bottom: 10px;
 }
 
-.search-input {
+.search-dialog .search-input {
   flex: 1;
   padding: 8px 12px;
   border: 1px solid var(--border-color);
@@ -83,22 +86,22 @@
   transition: border-color 0.2s;
 }
 
-.search-input:focus {
+.search-dialog .search-input:focus {
   border-color: var(--primary-color);
 }
 
-.search-input::placeholder {
+.search-dialog .search-input::placeholder {
   color: var(--text-muted);
 }
 
-.search-count {
+.search-dialog .search-count {
   font-size: 12px;
   color: var(--text-muted);
   min-width: 60px;
   text-align: center;
 }
 
-.nav-btn {
+.search-dialog .nav-btn {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: 4px;
@@ -111,12 +114,12 @@
   transition: all 0.2s;
 }
 
-.nav-btn:hover {
+.search-dialog .nav-btn:hover {
   border-color: var(--primary-color);
   color: var(--primary-color);
 }
 
-.replace-btn {
+.search-dialog .replace-btn {
   padding: 7px 14px;
   border: 1px solid var(--border-color);
   border-radius: 6px;
@@ -128,28 +131,28 @@
   white-space: nowrap;
 }
 
-.replace-btn:hover {
+.search-dialog .replace-btn:hover {
   border-color: var(--primary-color);
   color: var(--primary-color);
 }
 
-.replace-btn.replace-all {
+.search-dialog .replace-btn.replace-all {
   background: var(--primary-color);
   border-color: var(--primary-color);
   color: #fff;
 }
 
-.replace-btn.replace-all:hover {
+.search-dialog .replace-btn.replace-all:hover {
   opacity: 0.9;
 }
 
-.search-options {
+.search-dialog .search-options {
   display: flex;
   gap: 16px;
   padding-top: 8px;
 }
 
-.search-options label {
+.search-dialog .search-options label {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -158,7 +161,7 @@
   cursor: pointer;
 }
 
-.search-options input[type="checkbox"] {
+.search-dialog .search-options input[type="checkbox"] {
   cursor: pointer;
 }
 

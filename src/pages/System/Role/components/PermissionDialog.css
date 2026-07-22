@@ -1,4 +1,4 @@
-/* 权限设置对话框 */
+/* 权限设置对话框（弹窗版根：.permission-dialog；独立窗口版根：.role-permission-config） */
 .permission-dialog {
   width: 700px;
   max-height: 80vh;
@@ -23,7 +23,7 @@
   color: var(--text-color);
 }
 
-.cascade-switch {
+.permission-dialog .cascade-switch {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -32,7 +32,7 @@
   cursor: pointer;
 }
 
-.cascade-switch input {
+.permission-dialog .cascade-switch input {
   width: 16px;
   height: 16px;
   cursor: pointer;
@@ -46,7 +46,7 @@
   background: var(--bg-color);
 }
 
-.config-header {
+.role-permission-config .config-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -55,20 +55,20 @@
   background: var(--bg-secondary);
 }
 
-.header-title {
+.role-permission-config .header-title {
   display: flex;
   align-items: center;
   gap: 10px;
   color: var(--primary-color);
 }
 
-.header-title h4 {
+.role-permission-config .header-title h4 {
   margin: 0;
   font-size: 16px;
   color: var(--text-color);
 }
 
-.cascade-checkbox {
+.role-permission-config .cascade-checkbox {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -77,18 +77,19 @@
   cursor: pointer;
 }
 
-.cascade-checkbox input {
+.role-permission-config .cascade-checkbox input {
   width: 16px;
   height: 16px;
 }
 
-.dialog-body {
+.permission-dialog .dialog-body,
+.role-permission-config .dialog-body {
   flex: 1;
   overflow: auto;
   padding: 0;
 }
 
-.dialog-loading {
+.role-permission-config .dialog-loading {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -99,7 +100,7 @@
 }
 
 /* 权限表头 */
-.perm-header {
+.role-permission-config .perm-header {
   display: flex;
   align-items: center;
   padding: 12px 16px;
@@ -113,23 +114,23 @@
   z-index: 1;
 }
 
-.perm-header .perm-menu {
+.role-permission-config .perm-header .perm-menu {
   flex: 1;
 }
 
-.perm-header .perm-actions {
+.role-permission-config .perm-header .perm-actions {
   width: 240px;
   display: flex;
   justify-content: space-around;
 }
 
-.perm-label {
+.role-permission-config .perm-label {
   width: 60px;
   text-align: center;
 }
 
 /* 权限行 */
-.perm-row {
+.role-permission-config .perm-row {
   display: flex;
   align-items: center;
   padding: 10px 16px;
@@ -137,32 +138,32 @@
   transition: background 0.15s;
 }
 
-.perm-row:hover {
+.role-permission-config .perm-row:hover {
   background: var(--bg-hover);
 }
 
-.perm-row.required-row {
+.role-permission-config .perm-row.required-row {
   background: rgba(var(--primary-rgb), 0.05);
 }
 
-.perm-row.required-row:hover {
+.role-permission-config .perm-row.required-row:hover {
   background: rgba(var(--primary-rgb), 0.1);
 }
 
-.perm-row .perm-menu {
+.role-permission-config .perm-row .perm-menu {
   flex: 1;
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
-.perm-row .perm-actions {
+.role-permission-config .perm-row .perm-actions {
   width: 240px;
   display: flex;
   justify-content: space-around;
 }
 
-.expand-icon {
+.role-permission-config .expand-icon {
   width: 20px;
   height: 20px;
   display: flex;
@@ -173,22 +174,23 @@
   border-radius: 4px;
 }
 
-.expand-icon:hover {
+.role-permission-config .expand-icon:hover {
   background: var(--bg-hover);
   color: var(--primary-color);
 }
 
-.expand-placeholder {
+.role-permission-config .expand-placeholder {
   width: 20px;
 }
 
-.menu-name-text {
+.role-permission-config .menu-name-text {
   display: inline-flex;
   align-items: center;
   gap: 8px;
 }
 
-.required-tag {
+.permission-dialog .required-tag,
+.role-permission-config .required-tag {
   font-size: 11px;
   padding: 1px 6px;
   background: var(--primary-color);
@@ -197,7 +199,7 @@
 }
 
 /* 自定义勾选框 */
-.checkbox-item {
+.role-permission-config .checkbox-item {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -205,11 +207,11 @@
   cursor: pointer;
 }
 
-.checkbox-item input {
+.role-permission-config .checkbox-item input {
   display: none;
 }
 
-.checkbox-box {
+.role-permission-config .checkbox-box {
   width: 22px;
   height: 22px;
   border: 2px solid var(--border-color);
@@ -224,30 +226,31 @@
   background: transparent;
 }
 
-.checkbox-box.checked {
+.role-permission-config .checkbox-box.checked {
   background: var(--primary-color);
   border-color: var(--primary-color);
 }
 
-.checkbox-item:hover .checkbox-box:not(.checked) {
+.role-permission-config .checkbox-item:hover .checkbox-box:not(.checked) {
   border-color: var(--primary-color);
 }
 
-.checkbox-item.disabled {
+.role-permission-config .checkbox-item.disabled {
   cursor: not-allowed;
 }
 
-.checkbox-item.disabled .checkbox-box {
+.role-permission-config .checkbox-item.disabled .checkbox-box {
   opacity: 0.7;
 }
 
-.checkbox-item.disabled .checkbox-box.checked {
+.role-permission-config .checkbox-item.disabled .checkbox-box.checked {
   background: var(--primary-color);
   border-color: var(--primary-color);
 }
 
 /* 底部按钮 */
-.dialog-footer {
+.permission-dialog .dialog-footer,
+.role-permission-config .dialog-footer {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
@@ -257,19 +260,19 @@
 }
 
 /* 旧版表格样式兼容 */
-.perm-table {
+.permission-dialog .perm-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.perm-table th,
-.perm-table td {
+.permission-dialog .perm-table th,
+.permission-dialog .perm-table td {
   padding: 12px 16px;
   text-align: left;
   border-bottom: 1px solid var(--border-color);
 }
 
-.perm-table th {
+.permission-dialog .perm-table th {
   background: var(--bg-secondary);
   font-weight: 500;
   color: var(--text-secondary);
@@ -279,36 +282,36 @@
   z-index: 1;
 }
 
-.perm-table th.perm-header {
+.permission-dialog .perm-table th.perm-header {
   width: 80px;
   text-align: center;
 }
 
-.perm-table tbody tr:hover {
+.permission-dialog .perm-table tbody tr:hover {
   background: var(--bg-hover);
 }
 
-.perm-table tbody tr.required-row {
+.permission-dialog .perm-table tbody tr.required-row {
   background: rgba(var(--primary-rgb), 0.05);
 }
 
-.perm-table .perm-cell {
+.permission-dialog .perm-table .perm-cell {
   text-align: center !important;
   width: 80px;
 }
 
-.perm-table .checkbox-wrapper {
+.permission-dialog .perm-table .checkbox-wrapper {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
 }
 
-.perm-table .checkbox-wrapper input {
+.permission-dialog .perm-table .checkbox-wrapper input {
   display: none;
 }
 
-.perm-table .checkbox-custom {
+.permission-dialog .perm-table .checkbox-custom {
   width: 20px;
   height: 20px;
   border: 2px solid var(--border-color);
@@ -322,28 +325,28 @@
   background: transparent;
 }
 
-.perm-table .checkbox-custom.checked {
+.permission-dialog .perm-table .checkbox-custom.checked {
   background: var(--primary-color);
   border-color: var(--primary-color);
 }
 
-.tree-toggle {
+.permission-dialog .tree-toggle {
   display: inline-block;
   width: 16px;
   cursor: pointer;
   color: var(--text-secondary);
 }
 
-.tree-toggle:hover {
+.permission-dialog .tree-toggle:hover {
   color: var(--primary-color);
 }
 
-.tree-toggle-placeholder {
+.permission-dialog .tree-toggle-placeholder {
   display: inline-block;
   width: 16px;
 }
 
-.menu-name {
+.permission-dialog .menu-name {
   display: inline-flex;
   align-items: center;
   gap: 8px;

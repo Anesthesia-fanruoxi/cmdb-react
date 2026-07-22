@@ -1,5 +1,6 @@
 /**
  * 顶部导航栏样式
+ * 作用域：.app-header
  */
 
 .app-header {
@@ -15,13 +16,13 @@
   z-index: 100;
 }
 
-.header-left {
+.app-header .header-left {
   display: flex;
   align-items: center;
   gap: 16px;
 }
 
-.collapse-btn {
+.app-header .collapse-btn {
   width: 32px;
   height: 32px;
   border: none;
@@ -36,23 +37,23 @@
   padding: 0;
 }
 
-.collapse-btn:hover {
+.app-header .collapse-btn:hover {
   background: var(--bg-hover);
   color: var(--primary-color);
 }
 
-.collapse-btn svg {
+.app-header .collapse-btn svg {
   width: 20px;
   height: 20px;
 }
 
-.header-right {
+.app-header .header-right {
   display: flex;
   align-items: center;
   gap: 16px;
 }
 
-.theme-btn {
+.app-header .theme-btn {
   width: 36px;
   height: 36px;
   border: none;
@@ -69,34 +70,34 @@
   box-shadow: none;
 }
 
-.theme-btn:hover {
+.app-header .theme-btn:hover {
   color: var(--primary-color);
   background: transparent;
 }
 
-.theme-btn:focus {
+.app-header .theme-btn:focus {
   outline: none;
   box-shadow: none;
 }
 
-.theme-btn svg {
+.app-header .theme-btn svg {
   width: 22px;
   height: 22px;
 }
 
-:root.dark .theme-btn {
+:root.dark .app-header .theme-btn {
   color: var(--text-secondary);
 }
 
-:root.dark .theme-btn:hover {
+:root.dark .app-header .theme-btn:hover {
   color: #fda085;
 }
 
-.user-dropdown {
+.app-header .user-dropdown {
   position: relative;
 }
 
-.user-info {
+.app-header .user-info {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -106,11 +107,11 @@
   transition: background 0.3s;
 }
 
-.user-info:hover {
+.app-header .user-info:hover {
   background: var(--bg-hover);
 }
 
-.user-avatar {
+.app-header .user-avatar {
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -123,19 +124,19 @@
   font-weight: 600;
 }
 
-.user-avatar-img {
+.app-header .user-avatar-img {
   width: 32px;
   height: 32px;
   border-radius: 50%;
   object-fit: cover;
 }
 
-.user-name {
+.app-header .user-name {
   font-size: 14px;
   color: var(--text-color);
 }
 
-.dropdown-menu {
+.app-header .dropdown-menu {
   position: absolute;
   top: 100%;
   right: 0;
@@ -149,7 +150,7 @@
   overflow: hidden;
 }
 
-.dropdown-item {
+.app-header .dropdown-item {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -159,19 +160,19 @@
   transition: background 0.2s;
 }
 
-.dropdown-item:hover {
+.app-header .dropdown-item:hover {
   background: var(--bg-hover);
 }
 
-.dropdown-item.danger {
+.app-header .dropdown-item.danger {
   color: var(--danger-color);
 }
 
-.dropdown-item.danger:hover {
+.app-header .dropdown-item.danger:hover {
   background: rgba(255, 77, 79, 0.1);
 }
 
-.dropdown-divider {
+.app-header .dropdown-divider {
   height: 1px;
   background: var(--border-color);
   margin: 4px 0;

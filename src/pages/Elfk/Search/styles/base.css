@@ -1,4 +1,4 @@
-/* ELFK 日志搜索 - 基础布局 */
+/* ELFK 日志搜索 - 基础布局（作用域：.elfk-search-page） */
 
 .elfk-search-page {
   height: 100%;
@@ -8,7 +8,7 @@
 }
 
 /* 标签页内容区 */
-.tab-content {
+.elfk-search-page .tab-content {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -17,7 +17,7 @@
 }
 
 /* 搜索布局 - 三方布局 */
-.search-layout {
+.elfk-search-page .search-layout {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -27,14 +27,14 @@
 }
 
 /* 内容区：左侧字段 + 右侧结果 */
-.main-layout {
+.elfk-search-page .main-layout {
   flex: 1;
   display: flex;
   gap: 12px;
   min-height: 0;
 }
 
-.sidebar {
+.elfk-search-page .sidebar {
   width: 200px;
   flex-shrink: 0;
   background: var(--bg-color, #fff);
@@ -44,7 +44,7 @@
   flex-direction: column;
 }
 
-.content-area {
+.elfk-search-page .content-area {
   flex: 1;
   min-width: 0;
   display: flex;

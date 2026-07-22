@@ -83,17 +83,17 @@ const CategorySelectDialog = ({ visible, type, onSelect, onClose }: Props) => {
       <style>{`
         .category-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; }
         .category-dialog { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--bg-color, #1a1a1a); border-radius: 8px; z-index: 2001; min-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-        .category-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color, #3a3a3a); }
-        .category-header h3 { margin: 0; font-size: 16px; color: var(--text-color, #e0e0e0); }
-        .category-close { background: none; border: none; cursor: pointer; color: var(--text-secondary, #999); }
-        .category-body { padding: 24px 20px; }
-        .category-hint { margin: 0 0 20px; text-align: center; color: var(--text-secondary, #999); font-size: 14px; }
-        .category-buttons { display: flex; flex-direction: column; gap: 12px; }
-        .category-row { display: flex; gap: 12px; justify-content: center; }
-        .category-btn { flex: 1; min-width: 140px; padding: 12px 20px; border: 1px solid var(--border-color, #3a3a3a); background: var(--bg-secondary, #2a2a2a); color: var(--text-color, #e0e0e0); border-radius: 6px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
-        .category-btn:hover { border-color: var(--primary-color, #1890ff); color: var(--primary-color, #1890ff); }
-        .category-btn.primary { background: var(--primary-color, #1890ff); color: #fff; border-color: var(--primary-color, #1890ff); }
-        .category-btn.primary:hover { background: #40a9ff; border-color: #40a9ff; }
+        .category-dialog .category-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color, #3a3a3a); }
+        .category-dialog .category-header h3 { margin: 0; font-size: 16px; color: var(--text-color, #e0e0e0); }
+        .category-dialog .category-close { background: none; border: none; cursor: pointer; color: var(--text-secondary, #999); }
+        .category-dialog .category-body { padding: 24px 20px; }
+        .category-dialog .category-hint { margin: 0 0 20px; text-align: center; color: var(--text-secondary, #999); font-size: 14px; }
+        .category-dialog .category-buttons { display: flex; flex-direction: column; gap: 12px; }
+        .category-dialog .category-row { display: flex; gap: 12px; justify-content: center; }
+        .category-dialog .category-btn { flex: 1; min-width: 140px; padding: 12px 20px; border: 1px solid var(--border-color, #3a3a3a); background: var(--bg-secondary, #2a2a2a); color: var(--text-color, #e0e0e0); border-radius: 6px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+        .category-dialog .category-btn:hover { border-color: var(--primary-color, #1890ff); color: var(--primary-color, #1890ff); }
+        .category-dialog .category-btn.primary { background: var(--primary-color, #1890ff); color: #fff; border-color: var(--primary-color, #1890ff); }
+        .category-dialog .category-btn.primary:hover { background: #40a9ff; border-color: #40a9ff; }
       `}</style>
     </>
   );

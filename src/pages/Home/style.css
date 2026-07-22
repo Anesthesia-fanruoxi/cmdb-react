@@ -12,7 +12,7 @@
 }
 
 /* 主内容区容器 */
-.main-container {
+.home-layout .main-container {
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -21,6 +21,6 @@
   transition: margin-left 0.3s ease;
 }
 
-.main-container.collapsed {
+.home-layout .main-container.collapsed {
   margin-left: 64px;
 }

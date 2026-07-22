@@ -1,5 +1,6 @@
 /**
  * Content 组件样式
+ * 作用域：.app-content
  */
 
 .app-content {
@@ -10,37 +11,37 @@
   background: var(--bg-page);
 }
 
-.content-header {
+.app-content .content-header {
   display: none;
 }
 
-.content-title {
+.app-content .content-title {
   margin: 0;
   font-size: 1.5em;
   font-weight: 600;
   color: var(--text-color);
 }
 
-.content-body {
+.app-content .content-body {
   flex: 1;
   padding: 0;
   overflow: auto;
 }
 
 /* 自定义滚动条 */
-.content-body::-webkit-scrollbar {
+.app-content .content-body::-webkit-scrollbar {
   width: 8px;
 }
 
-.content-body::-webkit-scrollbar-track {
+.app-content .content-body::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.content-body::-webkit-scrollbar-thumb {
+.app-content .content-body::-webkit-scrollbar-thumb {
   background: var(--border-color-dark);
   border-radius: 4px;
 }
 
-.content-body::-webkit-scrollbar-thumb:hover {
+.app-content .content-body::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
 }

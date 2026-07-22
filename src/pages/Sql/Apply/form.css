@@ -1,26 +1,26 @@
 /**
- * SQL变更申请 - 表单样式
+ * SQL变更申请 - 表单样式（作用域：.sql-apply-page）
  * 通用样式已移至 src/styles/common.css
  */
 
 /* 创建表单布局 */
-.create-form {
+.sql-apply-page .create-form {
   height: 100%;
   display: flex;
   flex-direction: column;
 }
 
-.create-form .form-layout {
+.sql-apply-page .create-form .form-layout {
   display: flex;
   gap: 24px;
   flex: 1;
   min-height: 0;
 }
 
-.create-form .form-left { width: 360px; flex-shrink: 0; }
-.create-form .form-right { flex: 1; display: flex; flex-direction: column; }
+.sql-apply-page .create-form .form-left { width: 360px; flex-shrink: 0; }
+.sql-apply-page .create-form .form-right { flex: 1; display: flex; flex-direction: column; }
 
-.create-form .sql-header {
+.sql-apply-page .create-form .sql-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -29,12 +29,12 @@
   color: var(--text-color);
 }
 
-.create-form .sql-header .hint { font-size: 12px; color: var(--text-muted); }
+.sql-apply-page .create-form .sql-header .hint { font-size: 12px; color: var(--text-muted); }
 
 /* 表单项 - 行内布局 */
-.form-item-inline { display: flex; align-items: flex-start; }
+.sql-apply-page .form-item-inline { display: flex; align-items: flex-start; }
 
-.form-item-inline > label {
+.sql-apply-page .form-item-inline > label {
   width: 80px;
   flex-shrink: 0;
   font-size: 14px;
@@ -44,11 +44,11 @@
   padding-right: 12px;
 }
 
-.form-item-inline > label .required { color: var(--danger-color); margin-right: 4px; }
+.sql-apply-page .form-item-inline > label .required { color: var(--danger-color); margin-right: 4px; }
 
-.form-item-inline > select,
-.form-item-inline > input[type="text"],
-.form-item-inline > input[type="datetime-local"] {
+.sql-apply-page .form-item-inline > select,
+.sql-apply-page .form-item-inline > input[type="text"],
+.sql-apply-page .form-item-inline > input[type="datetime-local"] {
   flex: 1;
   height: 40px;
   padding: 0 12px;
@@ -60,7 +60,7 @@
   box-sizing: border-box;
 }
 
-.form-item-inline > textarea {
+.sql-apply-page .form-item-inline > textarea {
   flex: 1;
   padding: 10px 12px;
   border: 1px solid var(--border-color);
@@ -74,30 +74,30 @@
   min-height: 100px;
 }
 
-.form-item-inline > select:focus,
-.form-item-inline > textarea:focus,
-.form-item-inline > input:focus {
+.sql-apply-page .form-item-inline > select:focus,
+.sql-apply-page .form-item-inline > textarea:focus,
+.sql-apply-page .form-item-inline > input:focus {
   outline: none;
   border-color: var(--primary-color);
 }
 
-.form-item-inline > select:disabled,
-.form-item-inline > input:disabled {
+.sql-apply-page .form-item-inline > select:disabled,
+.sql-apply-page .form-item-inline > input:disabled {
   background: var(--bg-secondary);
   cursor: not-allowed;
 }
 
-.form-item-inline .switch-row { flex: 1; height: 40px; }
+.sql-apply-page .form-item-inline .switch-row { flex: 1; height: 40px; }
 
 /* Switch 开关样式 */
-.switch-row { display: flex; align-items: center; gap: 12px; }
-.switch-text { font-size: 14px; color: var(--text-muted); transition: color 0.2s; }
-.switch-text.active { color: var(--primary-color); font-weight: 500; }
+.sql-apply-page .switch-row { display: flex; align-items: center; gap: 12px; }
+.sql-apply-page .switch-text { font-size: 14px; color: var(--text-muted); transition: color 0.2s; }
+.sql-apply-page .switch-text.active { color: var(--primary-color); font-weight: 500; }
 
-.switch { position: relative; display: inline-block; width: 44px; height: 22px; }
-.switch input { opacity: 0; width: 0; height: 0; }
+.sql-apply-page .switch { position: relative; display: inline-block; width: 44px; height: 22px; }
+.sql-apply-page .switch input { opacity: 0; width: 0; height: 0; }
 
-.switch .slider {
+.sql-apply-page .switch .slider {
   position: absolute;
   cursor: pointer;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -106,7 +106,7 @@
   border-radius: 22px;
 }
 
-.switch .slider:before {
+.sql-apply-page .switch .slider:before {
   position: absolute;
   content: "";
   height: 18px;
@@ -118,11 +118,11 @@
   border-radius: 50%;
 }
 
-.switch input:checked + .slider { background-color: var(--primary-color); }
-.switch input:checked + .slider:before { transform: translateX(22px); }
+.sql-apply-page .switch input:checked + .slider { background-color: var(--primary-color); }
+.sql-apply-page .switch input:checked + .slider:before { transform: translateX(22px); }
 
 /* Ace 编辑器容器 */
-.sql-editor-wrapper {
+.sql-apply-page .sql-editor-wrapper {
   flex: 1;
   position: relative;
   border: 1px solid var(--border-color);
@@ -132,10 +132,10 @@
   min-height: 300px;
 }
 
-.sql-editor-wrapper.drag-over { border-color: var(--primary-color); border-style: dashed; }
-.sql-editor-wrapper .ace-editor-container { width: 100%; height: 100%; min-height: 300px; }
+.sql-apply-page .sql-editor-wrapper.drag-over { border-color: var(--primary-color); border-style: dashed; }
+.sql-apply-page .sql-editor-wrapper .ace-editor-container { width: 100%; height: 100%; min-height: 300px; }
 
-.sql-editor-wrapper .drag-overlay {
+.sql-apply-page .sql-editor-wrapper .drag-overlay {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(102, 126, 234, 0.1);

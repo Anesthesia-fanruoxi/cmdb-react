@@ -3,7 +3,7 @@
  * 通用样式已移至 src/styles/common.css
  */
 
-.modal-close {
+.user-management .modal-close {
   background: none;
   border: none;
   font-size: 20px;
@@ -13,27 +13,27 @@
   line-height: 1;
 }
 
-.modal-close:hover { color: var(--text-color); }
+.user-management .modal-close:hover { color: var(--text-color); }
 
 /* 单列布局 */
-.form-row {
+.user-management .form-row {
   display: flex;
   flex-direction: column;
   gap: 0;
   margin-bottom: 0;
 }
 
-.form-row .form-group { margin-bottom: 12px; }
+.user-management .form-row .form-group { margin-bottom: 12px; }
 
 /* 表单项 - 水平布局 */
-.form-group {
+.user-management .form-group {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-bottom: 12px;
 }
 
-.form-group label {
+.user-management .form-group label {
   flex-shrink: 0;
   width: 70px;
   font-size: 14px;
@@ -42,8 +42,8 @@
   white-space: nowrap;
 }
 
-.form-group input,
-.form-group select {
+.user-management .form-group input,
+.user-management .form-group select {
   flex: 1;
   padding: 7px 12px;
   border: 1px solid var(--border-color-dark);
@@ -55,13 +55,13 @@
   min-width: 0;
 }
 
-.form-group input:focus,
-.form-group select:focus {
+.user-management .form-group input:focus,
+.user-management .form-group select:focus {
   outline: none;
   border-color: var(--primary-color);
 }
 
-.static-field {
+.user-management .static-field {
   flex: 1;
   padding: 7px 12px;
   background: var(--bg-secondary);
@@ -70,7 +70,7 @@
   color: var(--text-secondary);
 }
 
-.user-form .form-tip {
+.user-management .user-form .form-tip {
   margin-left: 66px;
   margin-top: -4px;
   margin-bottom: 8px;
@@ -78,7 +78,7 @@
   color: var(--text-muted);
 }
 
-.password-input-wrap {
+.user-management .password-input-wrap {
   flex: 1;
   display: flex;
   align-items: center;
@@ -86,12 +86,12 @@
   min-width: 0;
 }
 
-.password-input-wrap input {
+.user-management .password-input-wrap input {
   flex: 1;
   min-width: 0;
 }
 
-.btn-gen-password {
+.user-management .btn-gen-password {
   flex-shrink: 0;
   height: 32px;
   padding: 0 10px;
@@ -108,7 +108,7 @@
   white-space: nowrap;
 }
 
-.btn-gen-password:hover {
+.user-management .btn-gen-password:hover {
   border-color: var(--primary-color);
   color: var(--primary-color);
   background: rgba(64, 158, 255, 0.08);

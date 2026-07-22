@@ -108,5 +108,5 @@
 
 .audit-sql-page .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.spin { animation: spin 1s linear infinite; }
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.audit-sql-page .spin { animation: audit-sql-spin 1s linear infinite; }
+@keyframes audit-sql-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

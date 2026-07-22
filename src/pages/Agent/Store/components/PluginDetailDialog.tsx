@@ -96,7 +96,7 @@ const PluginDetailDialog = ({ visible, plugin, onClose }: Props) => {
 
   return (
     <>
-      <div className="dialog-overlay" onClick={onClose} />
+      <div className="dialog-overlay plugin-detail-overlay" onClick={onClose} />
       <div className="dialog-container detail-dialog">
         <div className="dialog-header"><h3>插件详情</h3></div>
         <div className="dialog-body">
@@ -179,21 +179,21 @@ const PluginDetailDialog = ({ visible, plugin, onClose }: Props) => {
         </>
       )}
       <style>{`
-        .dialog-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1100; cursor: pointer; }
+        .plugin-detail-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1100; cursor: pointer; }
         .detail-dialog { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 600px; max-width: 90%; background: var(--bg-color); border-radius: 8px; z-index: 1101; border: 1px solid var(--border-color); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15); }
-        .dialog-header { padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
-        .dialog-header h3 { margin: 0; font-size: 16px; color: var(--text-color); }
-        .dialog-body { padding: 20px; max-height: 60vh; overflow: auto; }
-        .loading-state { display: flex; align-items: center; justify-content: center; gap: 8px; height: 150px; color: var(--text-secondary); }
-        .detail-table { border: 1px solid var(--border-color); border-radius: 4px; overflow: hidden; }
-        .detail-row { display: flex; border-bottom: 1px solid var(--border-color); }
-        .detail-row:last-child { border-bottom: none; }
-        .detail-label { width: 100px; padding: 12px; background: var(--bg-secondary); color: var(--text-secondary); font-size: 13px; flex-shrink: 0; }
-        .detail-value { flex: 1; padding: 12px; color: var(--text-color); font-size: 13px; }
-        .status-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
-        .status-tag.latest { background: rgba(82, 196, 26, 0.1); color: #52c41a; }
-        .config-section { margin-top: 16px; text-align: right; }
-        .btn-config { display: inline-flex; align-items: center; gap: 4px; padding: 8px 16px; background: var(--primary-color); border: none; border-radius: 4px; color: #fff; cursor: pointer; font-size: 13px; }
+        .detail-dialog .dialog-header { padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
+        .detail-dialog .dialog-header h3 { margin: 0; font-size: 16px; color: var(--text-color); }
+        .detail-dialog .dialog-body { padding: 20px; max-height: 60vh; overflow: auto; }
+        .detail-dialog .loading-state { display: flex; align-items: center; justify-content: center; gap: 8px; height: 150px; color: var(--text-secondary); }
+        .detail-dialog .detail-table { border: 1px solid var(--border-color); border-radius: 4px; overflow: hidden; }
+        .detail-dialog .detail-row { display: flex; border-bottom: 1px solid var(--border-color); }
+        .detail-dialog .detail-row:last-child { border-bottom: none; }
+        .detail-dialog .detail-label { width: 100px; padding: 12px; background: var(--bg-secondary); color: var(--text-secondary); font-size: 13px; flex-shrink: 0; }
+        .detail-dialog .detail-value { flex: 1; padding: 12px; color: var(--text-color); font-size: 13px; }
+        .detail-dialog .status-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+        .detail-dialog .status-tag.latest { background: rgba(82, 196, 26, 0.1); color: #52c41a; }
+        .detail-dialog .config-section { margin-top: 16px; text-align: right; }
+        .detail-dialog .btn-config { display: inline-flex; align-items: center; gap: 4px; padding: 8px 16px; background: var(--primary-color); border: none; border-radius: 4px; color: #fff; cursor: pointer; font-size: 13px; }
         .config-dialog-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 1200; cursor: pointer; }
         .config-dialog { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 800px; max-width: 90%; background: var(--bg-color); border-radius: 8px; z-index: 1201; border: 1px solid var(--border-color); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15); }
         .config-dialog-header { padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
@@ -202,11 +202,12 @@ const PluginDetailDialog = ({ visible, plugin, onClose }: Props) => {
         .config-dialog-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--border-color); }
         .config-tip { padding: 12px; background: rgba(64, 158, 255, 0.1); border: 1px solid rgba(64, 158, 255, 0.3); border-radius: 4px; color: var(--text-color); font-size: 13px; margin-bottom: 16px; }
         .config-textarea { width: 100%; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 4px; font-size: 13px; font-family: 'Courier New', monospace; color: var(--text-color); resize: vertical; }
-        .btn-default, .btn-primary { display: inline-flex; align-items: center; gap: 4px; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; }
-        .btn-default { background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-color); }
-        .btn-primary { background: var(--primary-color); border: none; color: #fff; }
-        .btn-primary:disabled { opacity: 0.6; }
-        .spin { animation: spin 1s linear infinite; }
+        .detail-dialog .btn-default, .detail-dialog .btn-primary, .config-dialog-footer .btn-default, .config-dialog-footer .btn-primary { display: inline-flex; align-items: center; gap: 4px; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+        .detail-dialog .btn-default, .config-dialog-footer .btn-default { background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-color); }
+        .detail-dialog .btn-primary, .config-dialog-footer .btn-primary { background: var(--primary-color); border: none; color: #fff; }
+        .detail-dialog .btn-primary:disabled, .config-dialog-footer .btn-primary:disabled { opacity: 0.6; }
+        .detail-dialog .spin, .config-dialog-footer .spin { animation: plugin-detail-spin 1s linear infinite; }
+        @keyframes plugin-detail-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </>
   );

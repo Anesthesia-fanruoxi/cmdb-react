@@ -8,7 +8,7 @@
   gap: 8px;
 }
 
-.project-select {
+.project-selector .project-select {
   min-width: 180px;
   height: 32px;
   padding: 0 28px 0 10px;
@@ -24,22 +24,22 @@
   background-position: right 8px center;
 }
 
-.project-select:hover:not(:disabled) {
+.project-selector .project-select:hover:not(:disabled) {
   border-color: var(--primary-color);
 }
 
-.project-select:focus {
+.project-selector .project-select:focus {
   outline: none;
   border-color: var(--primary-color);
 }
 
-.project-select:disabled {
+.project-selector .project-select:disabled {
   background-color: var(--bg-secondary);
   cursor: not-allowed;
   opacity: 0.6;
 }
 
-.default-btn {
+.project-selector .default-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -53,29 +53,29 @@
   color: var(--text-muted);
 }
 
-.default-btn:hover:not(:disabled) {
+.project-selector .default-btn:hover:not(:disabled) {
   border-color: var(--warning-color);
   background-color: rgba(250, 173, 20, 0.1);
   color: var(--warning-color);
   transform: scale(1.1);
 }
 
-.default-btn:active:not(:disabled) {
+.project-selector .default-btn:active:not(:disabled) {
   transform: scale(0.95);
 }
 
-.default-btn.active {
+.project-selector .default-btn.active {
   background-color: rgba(250, 173, 20, 0.2);
   border-color: var(--warning-color);
   color: var(--warning-color);
 }
 
-.default-btn:disabled {
+.project-selector .default-btn:disabled {
   opacity: 0.3;
   cursor: not-allowed;
 }
 
 /* 确保内部 SVG 图标颜色跟随 button */
-.default-btn svg {
+.project-selector .default-btn svg {
   transition: all 0.2s;
 }

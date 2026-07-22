@@ -229,5 +229,5 @@
 }
 
 /* 动画 */
-.dept-management .spin { animation: spin 1s linear infinite; }
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.dept-management .spin { animation: dept-spin 1s linear infinite; }
+@keyframes dept-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

@@ -1,17 +1,17 @@
 /* ELFK 日志条目 - 行展示模式 */
 
-.log-entry-line {
+.elfk-search-page .log-entry-line {
   border-bottom: 1px solid var(--border-color, #f0f0f0);
   font-family: 'Consolas', 'Monaco', 'Menlo', monospace;
   font-size: 12px;
 }
 
-.log-entry-line:hover {
+.elfk-search-page .log-entry-line:hover {
   background: var(--bg-hover, #fafafa);
 }
 
 /* 横向滚动行容器：内容不换行，自然撑宽父容器触发 .logs-content 的横向滚动条 */
-.log-entry-line .line-row {
+.elfk-search-page .log-entry-line .line-row {
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
@@ -22,14 +22,14 @@
 }
 
 /* 时间 */
-.log-entry-line .line-time {
+.elfk-search-page .log-entry-line .line-time {
   flex-shrink: 0;
   color: var(--text-secondary, #666);
   white-space: nowrap;
 }
 
 /* 索引/路径标识 */
-.log-entry-line .line-index {
+.elfk-search-page .log-entry-line .line-index {
   flex-shrink: 0;
   color: var(--text-secondary, #909399);
   font-style: italic;
@@ -40,7 +40,7 @@
 }
 
 /* 行内字段内容：不换行，不截断，撑开容器触发横向滚动 */
-.log-entry-line .line-content {
+.elfk-search-page .log-entry-line .line-content {
   flex-shrink: 0;
   color: var(--text-color, #333);
   white-space: nowrap;

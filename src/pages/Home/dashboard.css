@@ -36,7 +36,7 @@
   pointer-events: none;
 }
 
-.dashboard-clock-area {
+.dashboard .dashboard-clock-area {
   flex: 1;
   display: flex;
   align-items: center;
@@ -44,38 +44,38 @@
 }
 
 /* 下半区：工具栏，固定高度，铺满整行 */
-.dashboard-tools-area {
+.dashboard .dashboard-tools-area {
   width: 100%;
   padding: 0 24px 24px;
   box-sizing: border-box;
-  animation: fadeIn 1s ease-out 0.3s both;
+  animation: dashboard-fadeIn 1s ease-out 0.3s both;
 }
 
-.tools-header {
+.dashboard .tools-header {
   display: flex;
   align-items: baseline;
   gap: 10px;
   margin-bottom: 12px;
 }
 
-.tools-title {
+.dashboard .tools-title {
   font-size: 15px;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.95);
 }
 
-.tools-subtitle {
+.dashboard .tools-subtitle {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.5);
 }
 
-.tools-grid {
+.dashboard .tools-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 12px;
 }
 
-.clock-container {
+.dashboard .clock-container {
   text-align: center;
   padding: clamp(20px, 4vh, 60px);
   width: min(556px, 90vw);
@@ -89,14 +89,14 @@
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  animation: fadeIn 1s ease-out;
+  animation: dashboard-fadeIn 1s ease-out;
   color: white;
   position: relative;
   z-index: 1;
   cursor: pointer;
 }
 
-.clock-hint {
+.dashboard .clock-hint {
   font-size: 12px;
   opacity: 0;
   transition: opacity 0.3s;
@@ -104,11 +104,11 @@
   margin-bottom: 16px;
 }
 
-.clock-container:hover .clock-hint {
+.dashboard .clock-container:hover .clock-hint {
   opacity: 1;
 }
 
-.clock-area {
+.dashboard .clock-area {
   width: 100%;
   display: flex;
   align-items: center;
@@ -116,7 +116,7 @@
   margin-bottom: 16px;
 }
 
-.clock-info {
+.dashboard .clock-info {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -124,14 +124,14 @@
 }
 
 /* 数字时钟 */
-.tech-frame {
+.dashboard .tech-frame {
   position: relative;
   padding: 4px;
   background: linear-gradient(45deg, rgba(0,255,255,0.2), rgba(0,255,255,0.1), rgba(0,255,255,0.2));
   border-radius: 16px;
 }
 
-.tech-border {
+.dashboard .tech-border {
   position: relative;
   padding: 20px;
   background: rgba(0, 0, 0, 0.3);
@@ -140,7 +140,7 @@
   overflow: hidden;
 }
 
-.tech-border::before {
+.dashboard .tech-border::before {
   content: '';
   position: absolute;
   top: -50%;
@@ -148,14 +148,14 @@
   width: 200%;
   height: 200%;
   background: linear-gradient(45deg, transparent, rgba(0, 255, 255, 0.1), transparent);
-  animation: shine 4s linear infinite;
+  animation: dashboard-shine 4s linear infinite;
 }
 
-.time-wrapper {
+.dashboard .time-wrapper {
   position: relative;
 }
 
-.time {
+.dashboard .time {
   font-size: clamp(48px, 8vw, 96px);
   font-weight: 200;
   font-family: 'Courier New', monospace;
@@ -165,7 +165,7 @@
   z-index: 2;
 }
 
-.time-shadow {
+.dashboard .time-shadow {
   position: absolute;
   top: 2px;
   left: 2px;
@@ -178,12 +178,12 @@
 }
 
 /* 圆形指针时钟 */
-.round-clock {
+.dashboard .round-clock {
   width: min(320px, 50vmin);
   height: min(320px, 50vmin);
 }
 
-.clock-face {
+.dashboard .clock-face {
   width: 100%;
   height: 100%;
   border-radius: 50%;
@@ -193,7 +193,7 @@
   box-shadow: 0 0 15px rgba(0, 255, 255, 0.2), inset 0 0 20px rgba(0, 255, 255, 0.1);
 }
 
-.minute-tick {
+.dashboard .minute-tick {
   position: absolute;
   width: 100%;
   height: 100%;
@@ -201,7 +201,7 @@
   left: 0;
 }
 
-.tick-line {
+.dashboard .tick-line {
   position: absolute;
   top: 8px;
   left: 50%;
@@ -211,14 +211,14 @@
   background: rgba(0, 255, 255, 0.3);
 }
 
-.tick-line.hour-tick {
+.dashboard .tick-line.hour-tick {
   width: 2px;
   height: 20px;
   margin-left: -1px;
   background: rgba(0, 255, 255, 0.6);
 }
 
-.hour-mark {
+.dashboard .hour-mark {
   position: absolute;
   width: 100%;
   height: 100%;
@@ -226,7 +226,7 @@
   left: 0;
 }
 
-.mark-number {
+.dashboard .mark-number {
   position: absolute;
   top: 28px;
   left: 50%;
@@ -238,7 +238,7 @@
   text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
 }
 
-.hand {
+.dashboard .hand {
   position: absolute;
   bottom: 50%;
   left: 50%;
@@ -246,7 +246,7 @@
   border-radius: 4px;
 }
 
-.hour-hand {
+.dashboard .hour-hand {
   width: 6px;
   height: 26%;
   margin-left: -3px;
@@ -254,7 +254,7 @@
   box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
 }
 
-.minute-hand {
+.dashboard .minute-hand {
   width: 4px;
   height: 35%;
   margin-left: -2px;
@@ -262,7 +262,7 @@
   box-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
 }
 
-.second-hand {
+.dashboard .second-hand {
   width: 2px;
   height: 40%;
   margin-left: -1px;
@@ -270,7 +270,7 @@
   box-shadow: 0 0 6px rgba(255, 0, 102, 0.8);
 }
 
-.center-dot {
+.dashboard .center-dot {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -283,13 +283,13 @@
 }
 
 /* 日期信息 */
-.date {
+.dashboard .date {
   font-size: clamp(16px, 2.5vw, 24px);
   font-weight: 300;
   opacity: 0.9;
 }
 
-.lunar-info {
+.dashboard .lunar-info {
   font-size: clamp(14px, 2vw, 18px);
   font-weight: 300;
   opacity: 0.8;
@@ -299,15 +299,15 @@
   gap: 12px;
 }
 
-.lunar-info .divider {
+.dashboard .lunar-info .divider {
   opacity: 0.5;
 }
 
-.lunar-info .zodiac {
+.dashboard .lunar-info .zodiac {
   color: #ffd700;
 }
 
-.greeting {
+.dashboard .greeting {
   font-size: clamp(24px, 4vw, 36px);
   font-weight: 500;
   display: flex;
@@ -316,13 +316,13 @@
   gap: 12px;
 }
 
-.greeting-icon {
+.dashboard .greeting-icon {
   font-size: clamp(32px, 5vw, 48px);
-  animation: bounce 2s infinite;
+  animation: dashboard-bounce 2s infinite;
 }
 
 /* ===== 小工具卡片 ===== */
-.tool-card {
+.dashboard .tool-card {
   background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -336,11 +336,11 @@
   user-select: none;
 }
 
-.tool-card:active {
+.dashboard .tool-card:active {
   cursor: grabbing;
 }
 
-.tool-card:hover {
+.dashboard .tool-card:hover {
   background: rgba(255, 255, 255, 0.15);
   border-color: rgba(255, 255, 255, 0.3);
   transform: translateY(-3px);
@@ -348,56 +348,56 @@
 }
 
 /* 拖拽目标位置高亮 */
-.tool-card--drag-over {
+.dashboard .tool-card--drag-over {
   border-color: rgba(255, 255, 255, 0.7) !important;
   background: rgba(255, 255, 255, 0.2) !important;
   transform: scale(1.04) !important;
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4) !important;
 }
 
-.tool-icon {
+.dashboard .tool-icon {
   font-size: 30px;
   margin-bottom: 8px;
   line-height: 1;
 }
 
-.tool-name {
+.dashboard .tool-name {
   font-size: 14px;
   font-weight: 600;
   margin-bottom: 4px;
 }
 
-.tool-desc {
+.dashboard .tool-desc {
   font-size: 11px;
   color: rgba(255, 255, 255, 0.6);
   line-height: 1.3;
 }
 
 /* 动画 */
-@keyframes fadeIn {
+@keyframes dashboard-fadeIn {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes bounce {
+@keyframes dashboard-bounce {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }
 }
 
-@keyframes shine {
+@keyframes dashboard-shine {
   0% { transform: translate(-50%, -50%) rotate(0deg); }
   100% { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
 /* 小屏幕 */
 @media (max-width: 640px) {
-  .tools-grid {
+  .dashboard .tools-grid {
     grid-template-columns: repeat(4, 1fr);
   }
 }
 
 @media (max-height: 600px) {
-  .clock-container {
+  .dashboard .clock-container {
     padding: 12px;
   }
 }

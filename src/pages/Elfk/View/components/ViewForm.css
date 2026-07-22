@@ -3,9 +3,9 @@
  * 通用样式已移至 src/styles/common.css
  */
 
-.view-form-modal { width: 560px; }
+.elfk-view-page .view-form-modal { width: 560px; }
 
-.view-form-modal .modal-close {
+.elfk-view-page .view-form-modal .modal-close {
   width: 32px;
   height: 32px;
   border: none;
@@ -16,34 +16,34 @@
   border-radius: 4px;
 }
 
-.view-form-modal .modal-close:hover {
+.elfk-view-page .view-form-modal .modal-close:hover {
   background: var(--bg-secondary, #f5f5f5);
   color: var(--text-primary, #333);
 }
 
-.view-form-modal .form-item label.required::before {
+.elfk-view-page .view-form-modal .form-item label.required::before {
   content: '*';
   color: var(--danger-color, #ff4d4f);
   margin-right: 4px;
 }
 
-.view-form-modal .form-item input:focus,
-.view-form-modal .form-item select:focus,
-.view-form-modal .form-item textarea:focus {
+.elfk-view-page .view-form-modal .form-item input:focus,
+.elfk-view-page .view-form-modal .form-item select:focus,
+.elfk-view-page .view-form-modal .form-item textarea:focus {
   box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
 }
 
 /* 索引匹配输入框 + 按钮 */
-.input-with-btn {
+.elfk-view-page .input-with-btn {
   display: flex;
   gap: 8px;
 }
 
-.input-with-btn input {
+.elfk-view-page .input-with-btn input {
   flex: 1;
 }
 
-.btn-match {
+.elfk-view-page .btn-match {
   height: 36px;
   padding: 0 14px;
   border: 1px solid var(--primary-color);
@@ -57,31 +57,31 @@
   flex-shrink: 0;
 }
 
-.btn-match:hover:not(:disabled) {
+.elfk-view-page .btn-match:hover:not(:disabled) {
   background: var(--primary-color);
   color: #fff;
 }
 
-.btn-match:disabled {
+.elfk-view-page .btn-match:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.match-hint {
+.elfk-view-page .match-hint {
   font-size: 12px;
   color: var(--success-color, #52c41a);
   margin-top: 4px;
   display: block;
 }
 
-input.readonly {
+.elfk-view-page input.readonly {
   background: var(--bg-secondary);
   color: var(--text-muted);
   cursor: default;
 }
 
-.btn-cancel,
-.btn-submit {
+.elfk-view-page .btn-cancel,
+.elfk-view-page .btn-submit {
   height: 36px;
   padding: 0 20px;
   border-radius: 6px;
@@ -90,22 +90,22 @@ input.readonly {
   transition: all 0.2s;
 }
 
-.btn-cancel {
+.elfk-view-page .btn-cancel {
   background: var(--bg-primary, #fff);
   border: 1px solid var(--border-color, #d9d9d9);
   color: var(--text-primary, #333);
 }
 
-.btn-cancel:hover {
+.elfk-view-page .btn-cancel:hover {
   border-color: var(--primary-color);
   color: var(--primary-color);
 }
 
-.btn-submit {
+.elfk-view-page .btn-submit {
   background: var(--primary-color);
   border: none;
   color: #fff;
 }
 
-.btn-submit:hover:not(:disabled) { background: var(--primary-hover); }
-.btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+.elfk-view-page .btn-submit:hover:not(:disabled) { background: var(--primary-hover); }
+.elfk-view-page .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }

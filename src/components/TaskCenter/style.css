@@ -1,4 +1,4 @@
-/* 任务中心样式 */
+/* 任务中心样式（作用域：.task-drawer 抽屉 / .task-preview-modal 预览弹窗 portal） */
 
 .task-drawer-overlay {
   position: fixed;
@@ -21,7 +21,7 @@
   flex-direction: column;
 }
 
-.drawer-header {
+.task-drawer .drawer-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -29,13 +29,13 @@
   border-bottom: 1px solid var(--border-color);
 }
 
-.drawer-header h3 {
+.task-drawer .drawer-header h3 {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
 }
 
-.close-btn {
+.task-drawer .close-btn {
   background: none;
   border: none;
   cursor: pointer;
@@ -47,20 +47,20 @@
   border-radius: 4px;
 }
 
-.close-btn:hover {
+.task-drawer .close-btn:hover {
   background: var(--bg-hover);
   color: var(--text-color);
 }
 
 /* 任务类型标签 */
-.task-tabs {
+.task-drawer .task-tabs {
   display: flex;
   gap: 12px;
   padding: 16px 20px;
   border-bottom: 1px solid var(--border-color);
 }
 
-.task-tab-card {
+.task-drawer .task-tab-card {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -73,27 +73,27 @@
   transition: all 0.3s;
 }
 
-.task-tab-card:hover {
+.task-drawer .task-tab-card:hover {
   background: var(--bg-hover);
 }
 
-.task-tab-card.active {
+.task-drawer .task-tab-card.active {
   background: var(--primary-color);
   color: white;
 }
 
-.tab-name {
+.task-drawer .tab-name {
   font-size: 12px;
   font-weight: 500;
 }
 
 /* 搜索框 */
-.task-search {
+.task-drawer .task-search {
   padding: 12px 20px;
   border-bottom: 1px solid var(--border-color);
 }
 
-.search-input {
+.task-drawer .search-input {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -104,16 +104,16 @@
   width: 300px;
 }
 
-.search-input:focus-within {
+.task-drawer .search-input:focus-within {
   border-color: var(--primary-color);
 }
 
-.search-input svg {
+.task-drawer .search-input svg {
   color: var(--text-secondary);
   flex-shrink: 0;
 }
 
-.search-input input {
+.task-drawer .search-input input {
   flex: 1;
   border: none;
   outline: none;
@@ -122,11 +122,11 @@
   color: var(--text-color);
 }
 
-.search-input input::placeholder {
+.task-drawer .search-input input::placeholder {
   color: var(--text-secondary);
 }
 
-.clear-btn {
+.task-drawer .clear-btn {
   background: none;
   border: none;
   cursor: pointer;
@@ -137,20 +137,20 @@
   border-radius: 2px;
 }
 
-.clear-btn:hover {
+.task-drawer .clear-btn:hover {
   color: var(--text-color);
   background: var(--bg-hover);
 }
 
 /* 内容区域 */
-.drawer-content {
+.task-drawer .drawer-content {
   flex: 1;
   overflow-y: auto;
   padding: 16px 20px;
 }
 
 /* 空状态 */
-.task-empty {
+.task-drawer .task-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -159,25 +159,25 @@
   color: var(--text-secondary);
 }
 
-.task-empty svg {
+.task-drawer .task-empty svg {
   margin-bottom: 12px;
   color: var(--text-secondary);
 }
 
-.task-empty p {
+.task-drawer .task-empty p {
   margin: 0;
   font-size: 14px;
 }
 
 /* 任务列表 */
-.task-list {
+.task-drawer .task-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
 /* 任务项 */
-.task-item {
+.task-drawer .task-item {
   background: var(--bg-color);
   border-radius: 8px;
   border: 1px solid var(--border-color);
@@ -185,16 +185,16 @@
   transition: box-shadow 0.2s;
 }
 
-.task-item:hover {
+.task-drawer .task-item:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.task-item.task-expired {
+.task-drawer .task-item.task-expired {
   background: var(--bg-secondary);
   opacity: 0.7;
 }
 
-.task-header {
+.task-drawer .task-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -203,7 +203,7 @@
   cursor: pointer;
 }
 
-.task-header::before {
+.task-drawer .task-header::before {
   content: '';
   position: absolute;
   left: 0;
@@ -212,78 +212,78 @@
   width: 4px;
 }
 
-.task-status-success::before {
+.task-drawer .task-status-success::before {
   background-color: var(--color-success);
 }
 
-.task-status-running::before {
+.task-drawer .task-status-running::before {
   background-color: var(--primary-color);
 }
 
-.task-status-canceled::before {
+.task-drawer .task-status-canceled::before {
   background-color: var(--color-warning);
 }
 
-.task-status-failed::before {
+.task-drawer .task-status-failed::before {
   background-color: var(--color-danger);
 }
 
-.task-basic-info {
+.task-drawer .task-basic-info {
   display: flex;
   gap: 16px;
   align-items: center;
   flex: 1;
 }
 
-.task-type-name {
+.task-drawer .task-type-name {
   font-weight: 600;
   color: var(--text-color);
 }
 
-.task-nick-name {
+.task-drawer .task-nick-name {
   color: var(--text-secondary);
   font-size: 13px;
 }
 
-.task-time {
+.task-drawer .task-time {
   color: var(--text-secondary);
   font-size: 13px;
 }
 
-.task-status-tag {
+.task-drawer .task-status-tag {
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 12px;
   font-weight: 500;
 }
 
-.tag-success {
+.task-drawer .tag-success {
   background: rgba(103, 194, 58, 0.1);
   color: var(--color-success);
 }
 
-.tag-warning {
+.task-drawer .tag-warning {
   background: rgba(230, 162, 60, 0.1);
   color: var(--color-warning);
 }
 
-.tag-danger {
+.task-drawer .tag-danger {
   background: rgba(245, 108, 108, 0.1);
   color: var(--color-danger);
 }
 
-.tag-info {
+.task-drawer .tag-info {
   background: var(--bg-secondary);
   color: var(--text-secondary);
 }
 
-.task-actions-group {
+.task-drawer .task-actions-group {
   display: flex;
   gap: 12px;
   align-items: center;
 }
 
-.link-btn {
+.task-drawer .link-btn {
   background: none;
   border: none;
   color: var(--primary-color);
@@ -296,28 +296,28 @@
   gap: 4px;
 }
 
-.link-btn:hover:not(:disabled) {
+.task-drawer .link-btn:hover:not(:disabled) {
   background: rgba(64, 158, 255, 0.1);
 }
 
-.link-btn:disabled {
+.task-drawer .link-btn:disabled {
   color: var(--text-secondary);
   cursor: not-allowed;
   opacity: 0.5;
 }
 
 /* 任务详情 */
-.task-detail {
+.task-drawer .task-detail {
   padding: 0 16px 16px;
   background: var(--bg-secondary);
   border-top: 1px solid var(--border-color);
 }
 
-.task-detail-content {
+.task-drawer .task-detail-content {
   padding-top: 16px;
 }
 
-.detail-loading {
+.task-drawer .detail-loading {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -326,19 +326,19 @@
   color: var(--text-secondary);
 }
 
-.detail-item {
+.task-drawer .detail-item {
   margin-bottom: 12px;
   display: flex;
   align-items: flex-start;
 }
 
-.detail-label {
+.task-drawer .detail-label {
   color: var(--text-secondary);
   min-width: 70px;
   flex-shrink: 0;
 }
 
-.error-message {
+.task-drawer .error-message {
   color: var(--color-danger);
   background: rgba(245, 108, 108, 0.1);
   padding: 8px;
@@ -348,14 +348,14 @@
 }
 
 /* 进度信息 */
-.progress-info {
+.task-drawer .progress-info {
   flex: 1;
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.progress-bar {
+.task-drawer .progress-bar {
   flex: 1;
   height: 8px;
   background: var(--bg-hover);
@@ -363,24 +363,24 @@
   overflow: hidden;
 }
 
-.progress-fill {
+.task-drawer .progress-fill {
   height: 100%;
   background: var(--primary-color);
   transition: width 0.3s;
 }
 
-.progress-text {
+.task-drawer .progress-text {
   color: var(--primary-color);
   font-size: 13px;
   white-space: nowrap;
 }
 
 /* 步骤信息 */
-.setup-steps {
+.task-drawer .setup-steps {
   flex: 1;
 }
 
-.setup-step {
+.task-drawer .setup-step {
   margin-bottom: 6px;
   display: flex;
   align-items: center;
@@ -389,55 +389,55 @@
   flex-wrap: wrap;
 }
 
-.step-icon {
+.task-drawer .step-icon {
   font-size: 14px;
   width: 16px;
   text-align: center;
 }
 
-.step-desc {
+.task-drawer .step-desc {
   color: var(--text-primary);
   font-weight: 500;
 }
 
-.step-status-text {
+.task-drawer .step-status-text {
   font-size: 12px;
 }
 
-.step-duration {
+.task-drawer .step-duration {
   color: var(--text-secondary);
   font-size: 12px;
 }
 
-.step-waiting {
+.task-drawer .step-waiting {
   color: var(--text-secondary);
 }
 
-.step-running {
+.task-drawer .step-running {
   color: #1890ff;
 }
 
-.step-success {
+.task-drawer .step-success {
   color: var(--color-success);
 }
 
-.step-failed {
+.task-drawer .step-failed {
   color: var(--color-danger);
 }
 
-.step-not-started {
+.task-drawer .step-not-started {
   color: var(--text-secondary);
   opacity: 0.6;
 }
 
 /* 操作按钮 */
-.detail-actions {
+.task-drawer .detail-actions {
   margin-top: 12px;
   display: flex;
   gap: 8px;
 }
 
-.cancel-btn {
+.task-drawer .cancel-btn {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -450,16 +450,16 @@
   font-size: 13px;
 }
 
-.cancel-btn:hover {
+.task-drawer .cancel-btn:hover {
   opacity: 0.9;
 }
 
 /* 动画 */
-.spin {
-  animation: spin 1s linear infinite;
+.task-drawer .spin {
+  animation: task-spin 1s linear infinite;
 }
 
-@keyframes spin {
+@keyframes task-spin {
   from {
     transform: rotate(0deg);
   }
@@ -468,16 +468,16 @@
   }
 }
 
-/* 预览弹窗 */
+/* 预览弹窗（createPortal 到 body，用自身根类名作用域） */
 /* preview-table 样式 */
 
-.preview-table {
+.task-preview-modal .preview-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.preview-table th,
-.preview-table td {
+.task-preview-modal .preview-table th,
+.task-preview-modal .preview-table td {
   padding: 6px 10px;
   text-align: left;
   border: 1px solid var(--border-color);
@@ -488,7 +488,7 @@
   max-width: 300px;
 }
 
-.preview-table th {
+.task-preview-modal .preview-table th {
   background: var(--bg-secondary);
   font-weight: 600;
   position: sticky;
@@ -496,11 +496,11 @@
   z-index: 1;
 }
 
-.preview-table tbody tr:hover {
+.task-preview-modal .preview-table tbody tr:hover {
   background: var(--bg-hover);
 }
 
-.preview-table .row-index {
+.task-preview-modal .preview-table .row-index {
   width: 50px;
   min-width: 50px;
   max-width: 50px;
@@ -509,7 +509,7 @@
   background: var(--bg-secondary);
 }
 
-.pagination-btn {
+.task-preview-modal .pagination-btn {
   padding: 6px 12px;
   border: 1px solid var(--border-color);
   background: var(--bg-color);
@@ -520,18 +520,22 @@
   transition: all 0.2s;
 }
 
-.pagination-btn:hover:not(:disabled) {
+.task-preview-modal .pagination-btn:hover:not(:disabled) {
   background: var(--bg-hover);
   border-color: var(--primary-color);
   color: var(--primary-color);
 }
 
-.pagination-btn:disabled {
+.task-preview-modal .pagination-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-/* 下载对话框 */
+.task-preview-modal .spin {
+  animation: task-spin 1s linear infinite;
+}
+
+/* 下载对话框（共享组件：TaskCenter 与 Sql/Export 均使用，用组件自身根类名作用域） */
 .download-dialog-overlay {
   position: fixed;
   top: 0;
@@ -553,7 +557,7 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.download-dialog-header {
+.download-dialog .download-dialog-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -561,14 +565,31 @@
   border-bottom: 1px solid var(--border-color);
 }
 
-.download-dialog-header h3 {
+.download-dialog .download-dialog-header h3 {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
   color: var(--text-color);
 }
 
-.download-dialog-content {
+.download-dialog .close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.download-dialog .close-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-color);
+}
+
+.download-dialog .download-dialog-content {
   padding: 24px 20px;
   display: flex;
   flex-direction: column;
@@ -576,7 +597,7 @@
   gap: 16px;
 }
 
-.download-info {
+.download-dialog .download-info {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -587,38 +608,38 @@
   font-size: 14px;
 }
 
-.download-info strong {
+.download-dialog .download-info strong {
   font-size: 18px;
   font-weight: 600;
 }
 
-.download-tip {
+.download-dialog .download-tip {
   margin: 0;
   font-size: 13px;
   color: var(--text-secondary);
   text-align: center;
 }
 
-.download-url-section {
+.download-dialog .download-url-section {
   width: 100%;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.download-url-label {
+.download-dialog .download-url-label {
   font-size: 13px;
   color: var(--text-secondary);
   font-weight: 500;
 }
 
-.download-url-box {
+.download-dialog .download-url-box {
   display: flex;
   gap: 8px;
   align-items: center;
 }
 
-.download-url-input {
+.download-dialog .download-url-input {
   flex: 1;
   padding: 8px 12px;
   border: 1px solid var(--border-color);
@@ -631,11 +652,11 @@
   cursor: text;
 }
 
-.download-url-input:focus {
+.download-dialog .download-url-input:focus {
   border-color: var(--primary-color);
 }
 
-.btn-copy {
+.download-dialog .btn-copy {
   padding: 8px 12px;
   background: var(--bg-color);
   border: 1px solid var(--border-color);
@@ -648,13 +669,13 @@
   justify-content: center;
 }
 
-.btn-copy:hover {
+.download-dialog .btn-copy:hover {
   background: var(--bg-secondary, #f5f5f5);
   border-color: var(--primary-color);
   color: var(--primary-color);
 }
 
-.btn-download {
+.download-dialog .btn-download {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -669,25 +690,25 @@
   transition: all 0.2s;
 }
 
-.btn-download:hover {
+.download-dialog .btn-download:hover {
   opacity: 0.9;
   transform: translateY(-1px);
 }
 
-.pagination-btns span {
+.download-dialog .pagination-btns span {
   color: var(--text-secondary);
   font-size: 13px;
 }
 
 /* 下载进度容器 */
-.download-progress-container {
+.download-dialog .download-progress-container {
   width: 100%;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.progress-header {
+.download-dialog .progress-header {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -696,27 +717,18 @@
   font-weight: 500;
 }
 
-.progress-header .spin {
-  animation: spin 1s linear infinite;
+.download-dialog .spin {
+  animation: task-spin 1s linear infinite;
 }
 
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.progress-bar-wrapper {
+.download-dialog .progress-bar-wrapper {
   display: flex;
   align-items: center;
   gap: 12px;
   width: 100%;
 }
 
-.progress-bar {
+.download-dialog .progress-bar {
   flex: 1;
   height: 8px;
   background: var(--border-color);
@@ -724,14 +736,14 @@
   overflow: hidden;
 }
 
-.progress-bar-fill {
+.download-dialog .progress-bar-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--primary-color), #66b3ff);
   border-radius: 4px;
   transition: width 0.3s ease;
 }
 
-.progress-percentage {
+.download-dialog .progress-percentage {
   font-size: 14px;
   font-weight: 600;
   color: var(--text-color);
@@ -739,7 +751,7 @@
   text-align: right;
 }
 
-.progress-info {
+.download-dialog .progress-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -748,17 +760,17 @@
   color: var(--text-secondary);
 }
 
-.progress-size {
+.download-dialog .progress-size {
   font-weight: 500;
 }
 
-.progress-speed {
+.download-dialog .progress-speed {
   color: var(--primary-color);
   font-weight: 500;
 }
 
 /* 下载成功容器 */
-.download-success-container {
+.download-dialog .download-success-container {
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -767,7 +779,7 @@
   padding: 8px 0;
 }
 
-.success-icon {
+.download-dialog .success-icon {
   width: 60px;
   height: 60px;
   border-radius: 50%;
@@ -781,27 +793,27 @@
   box-shadow: 0 4px 12px rgba(103, 194, 58, 0.3);
 }
 
-.download-success-container h4 {
+.download-dialog .download-success-container h4 {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
   color: var(--text-color);
 }
 
-.file-info-section {
+.download-dialog .file-info-section {
   width: 100%;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.file-info-label {
+.download-dialog .file-info-label {
   font-size: 12px;
   color: var(--text-secondary);
   font-weight: 500;
 }
 
-.file-info-value {
+.download-dialog .file-info-value {
   padding: 8px 12px;
   background: var(--bg-secondary, #f5f5f5);
   border-radius: 4px;
@@ -810,12 +822,12 @@
   word-break: break-all;
 }
 
-.file-info-value.file-path {
+.download-dialog .file-info-value.file-path {
   font-family: monospace;
   font-size: 12px;
 }
 
-.success-actions {
+.download-dialog .success-actions {
   width: 100%;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -823,7 +835,7 @@
   margin-top: 8px;
 }
 
-.btn-action {
+.download-dialog .btn-action {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -840,7 +852,7 @@
   transition: all 0.2s;
 }
 
-.btn-action:hover {
+.download-dialog .btn-action:hover {
   background: var(--bg-secondary, #f5f5f5);
   border-color: var(--primary-color);
   color: var(--primary-color);
@@ -848,12 +860,12 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.btn-action.btn-close {
+.download-dialog .btn-action.btn-close {
   background: var(--bg-secondary, #f5f5f5);
   grid-column: span 1;
 }
 
-.btn-action.btn-close:hover {
+.download-dialog .btn-action.btn-close:hover {
   background: var(--border-color);
   transform: translateY(-2px);
 }

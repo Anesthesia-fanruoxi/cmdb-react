@@ -56,7 +56,7 @@ const PluginFormDialog = ({ visible, plugin, onClose, onSubmit }: Props) => {
 
   return (
     <>
-      <div className="dialog-overlay" onClick={onClose} />
+      <div className="dialog-overlay plugin-form-overlay" onClick={onClose} />
       <div className="dialog-container plugin-form-dialog">
         <div className="dialog-header">
           <h3>{isEdit ? '编辑插件' : '新增插件'}</h3>
@@ -112,37 +112,39 @@ const PluginFormDialog = ({ visible, plugin, onClose, onSubmit }: Props) => {
         </div>
       </div>
       <style>{`
+        .plugin-form-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1100; }
         .plugin-form-dialog { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 600px; max-width: 90%; background: var(--bg-color); border-radius: 8px; z-index: 1101; border: 1px solid var(--border-color); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15); }
-        .dialog-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
-        .dialog-header h3 { margin: 0; font-size: 16px; color: var(--text-color); }
-        .dialog-close { background: none; border: none; cursor: pointer; color: var(--text-secondary); }
-        .dialog-body { padding: 20px; max-height: 60vh; overflow: auto; }
-        .dialog-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--border-color); }
-        .form-item { margin-bottom: 16px; }
-        .form-item label { display: block; margin-bottom: 8px; font-size: 14px; color: var(--text-color); }
-        .form-item .required { color: #ff4d4f; }
-        .form-item input[type="text"], .form-item input[type="number"], .form-item textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-color); font-size: 13px; }
-        .form-item input:disabled { opacity: 0.6; cursor: not-allowed; }
-        .form-item textarea { resize: vertical; }
-        .form-tip { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
-        .port-input-group { display: flex; align-items: center; gap: 0; }
-        .port-input-group input { width: 80px; text-align: center; border-radius: 0; border-left: none; border-right: none; height: 32px; }
-        .port-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary); border: 1px solid var(--border-color); cursor: pointer; font-size: 16px; color: var(--text-color); flex-shrink: 0; }
-        .port-btn:first-child { border-radius: 4px 0 0 4px; border-right: none; }
-        .port-btn:nth-child(3) { border-radius: 0 4px 4px 0; border-left: none; }
-        .port-btn:hover { background: var(--bg-hover); }
-        .port-tip { font-size: 12px; color: var(--text-secondary); margin-left: 12px; }
-        .radio-group { display: flex; gap: 20px; }
-        .radio-item { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text-color); cursor: pointer; }
-        .radio-item input[type="radio"] { appearance: none; -webkit-appearance: none; width: 16px; height: 16px; border: 2px solid var(--border-color); border-radius: 50%; margin: 0; cursor: pointer; position: relative; background: var(--bg-secondary); }
-        .radio-item input[type="radio"]:checked { border-color: var(--primary-color); }
-        .radio-item input[type="radio"]:checked::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 8px; height: 8px; background: var(--primary-color); border-radius: 50%; }
-        .radio-item input[type="radio"]:disabled { opacity: 0.6; cursor: not-allowed; }
-        .btn-default, .btn-primary { display: flex; align-items: center; gap: 4px; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; }
-        .btn-default { background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-color); }
-        .btn-primary { background: var(--primary-color); border: none; color: #fff; }
-        .btn-primary:disabled { opacity: 0.6; }
-        .spin { animation: spin 1s linear infinite; }
+        .plugin-form-dialog .dialog-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
+        .plugin-form-dialog .dialog-header h3 { margin: 0; font-size: 16px; color: var(--text-color); }
+        .plugin-form-dialog .dialog-close { background: none; border: none; cursor: pointer; color: var(--text-secondary); }
+        .plugin-form-dialog .dialog-body { padding: 20px; max-height: 60vh; overflow: auto; }
+        .plugin-form-dialog .dialog-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--border-color); }
+        .plugin-form-dialog .form-item { margin-bottom: 16px; }
+        .plugin-form-dialog .form-item label { display: block; margin-bottom: 8px; font-size: 14px; color: var(--text-color); }
+        .plugin-form-dialog .form-item .required { color: #ff4d4f; }
+        .plugin-form-dialog .form-item input[type="text"], .plugin-form-dialog .form-item input[type="number"], .plugin-form-dialog .form-item textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-color); font-size: 13px; }
+        .plugin-form-dialog .form-item input:disabled { opacity: 0.6; cursor: not-allowed; }
+        .plugin-form-dialog .form-item textarea { resize: vertical; }
+        .plugin-form-dialog .form-tip { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+        .plugin-form-dialog .port-input-group { display: flex; align-items: center; gap: 0; }
+        .plugin-form-dialog .port-input-group input { width: 80px; text-align: center; border-radius: 0; border-left: none; border-right: none; height: 32px; }
+        .plugin-form-dialog .port-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary); border: 1px solid var(--border-color); cursor: pointer; font-size: 16px; color: var(--text-color); flex-shrink: 0; }
+        .plugin-form-dialog .port-btn:first-child { border-radius: 4px 0 0 4px; border-right: none; }
+        .plugin-form-dialog .port-btn:nth-child(3) { border-radius: 0 4px 4px 0; border-left: none; }
+        .plugin-form-dialog .port-btn:hover { background: var(--bg-hover); }
+        .plugin-form-dialog .port-tip { font-size: 12px; color: var(--text-secondary); margin-left: 12px; }
+        .plugin-form-dialog .radio-group { display: flex; gap: 20px; }
+        .plugin-form-dialog .radio-item { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text-color); cursor: pointer; }
+        .plugin-form-dialog .radio-item input[type="radio"] { appearance: none; -webkit-appearance: none; width: 16px; height: 16px; border: 2px solid var(--border-color); border-radius: 50%; margin: 0; cursor: pointer; position: relative; background: var(--bg-secondary); }
+        .plugin-form-dialog .radio-item input[type="radio"]:checked { border-color: var(--primary-color); }
+        .plugin-form-dialog .radio-item input[type="radio"]:checked::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 8px; height: 8px; background: var(--primary-color); border-radius: 50%; }
+        .plugin-form-dialog .radio-item input[type="radio"]:disabled { opacity: 0.6; cursor: not-allowed; }
+        .plugin-form-dialog .btn-default, .plugin-form-dialog .btn-primary { display: flex; align-items: center; gap: 4px; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+        .plugin-form-dialog .btn-default { background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-color); }
+        .plugin-form-dialog .btn-primary { background: var(--primary-color); border: none; color: #fff; }
+        .plugin-form-dialog .btn-primary:disabled { opacity: 0.6; }
+        .plugin-form-dialog .spin { animation: plugin-form-spin 1s linear infinite; }
+        @keyframes plugin-form-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </>
   );

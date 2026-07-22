@@ -1,6 +1,7 @@
 /**
  * 审计模块公共时间选择器样式
  * 基于 Ant Design 美化
+ * 全部选择器 scope 到组件根 .audit-date-picker-wrapper，避免通用类名污染
  */
 
 .audit-date-picker-wrapper {
@@ -9,7 +10,7 @@
 }
 
 /* 主按钮样式 */
-.audit-date-btn {
+.audit-date-picker-wrapper .audit-date-btn {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -25,17 +26,17 @@
   min-width: 200px;
 }
 
-.audit-date-btn:hover {
+.audit-date-picker-wrapper .audit-date-btn:hover {
   background: var(--bg-hover, #e9edf2);
   border-color: #98a2b3;
 }
 
-.audit-date-btn .icon {
+.audit-date-picker-wrapper .audit-date-btn .icon {
   color: var(--text-secondary, #69707d);
   font-size: 14px;
 }
 
-.audit-date-btn .time-text {
+.audit-date-picker-wrapper .audit-date-btn .time-text {
   flex: 1;
   text-align: left;
   font-weight: 500;
@@ -44,14 +45,14 @@
   text-overflow: ellipsis;
 }
 
-.audit-date-btn .arrow {
+.audit-date-picker-wrapper .audit-date-btn .arrow {
   font-size: 10px;
   color: var(--text-secondary, #69707d);
   transition: transform 0.2s;
 }
 
 /* 下拉面板 */
-.audit-date-dropdown {
+.audit-date-picker-wrapper .audit-date-dropdown {
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
@@ -65,7 +66,7 @@
 }
 
 /* 标签页切换 */
-.dropdown-tabs {
+.audit-date-picker-wrapper .dropdown-tabs {
   display: flex;
   gap: 8px;
   margin-bottom: 16px;
@@ -73,7 +74,7 @@
   padding-bottom: 12px;
 }
 
-.tab-btn {
+.audit-date-picker-wrapper .tab-btn {
   padding: 6px 16px;
   background: transparent;
   border: 1px solid var(--border-color, #d3dae6);
@@ -84,44 +85,44 @@
   transition: all 0.2s;
 }
 
-.tab-btn:hover {
+.audit-date-picker-wrapper .tab-btn:hover {
   color: var(--primary-color, #1890ff);
   border-color: var(--primary-color, #1890ff);
 }
 
-.tab-btn.active {
+.audit-date-picker-wrapper .tab-btn.active {
   background: var(--primary-color, #1890ff);
   border-color: var(--primary-color, #1890ff);
   color: #fff;
 }
 
 /* 快捷选择面板 */
-.quick-panel {
+.audit-date-picker-wrapper .quick-panel {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.quick-category {
+.audit-date-picker-wrapper .quick-category {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.category-label {
+.audit-date-picker-wrapper .category-label {
   font-size: 12px;
   font-weight: 500;
   color: var(--text-secondary, #69707d);
   padding-left: 4px;
 }
 
-.quick-grid {
+.audit-date-picker-wrapper .quick-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
 }
 
-.quick-btn {
+.audit-date-picker-wrapper .quick-btn {
   padding: 10px 12px;
   background: var(--bg-secondary, #f7f8fa);
   border: 1px solid var(--border-color, #d3dae6);
@@ -133,73 +134,73 @@
   transition: all 0.2s;
 }
 
-.quick-btn:hover {
+.audit-date-picker-wrapper .quick-btn:hover {
   background: var(--primary-color, #1890ff);
   border-color: var(--primary-color, #1890ff);
   color: #fff;
 }
 
-.quick-btn:active {
+.audit-date-picker-wrapper .quick-btn:active {
   opacity: 0.8;
 }
 
 /* 自定义面板 */
-.custom-panel {
+.audit-date-picker-wrapper .custom-panel {
   padding: 8px 0;
 }
 
-.custom-panel .ant-picker-range {
+.audit-date-picker-wrapper .custom-panel .ant-picker-range {
   width: 300px;
 }
 
-.custom-panel .ant-picker-suffix {
+.audit-date-picker-wrapper .custom-panel .ant-picker-suffix {
   color: var(--text-secondary, #69707d);
 }
 
 /* 深色模式适配 */
-.dark .audit-date-btn {
+.dark .audit-date-picker-wrapper .audit-date-btn {
   background: #25262e;
   border-color: #343741;
   color: #dfe5ef;
 }
 
-.dark .audit-date-btn:hover {
+.dark .audit-date-picker-wrapper .audit-date-btn:hover {
   background: #2e2f3a;
   border-color: #535966;
 }
 
-.dark .audit-date-btn .icon,
-.dark .audit-date-btn .arrow {
+.dark .audit-date-picker-wrapper .audit-date-btn .icon,
+.dark .audit-date-picker-wrapper .audit-date-btn .arrow {
   color: #98a2b3;
 }
 
-.dark .audit-date-dropdown {
+.dark .audit-date-picker-wrapper .audit-date-dropdown {
   background: #1f1f1f;
   border-color: #434343;
   box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.4), 0 3px 6px -4px rgba(0, 0, 0, 0.3);
 }
 
-.dark .dropdown-tabs {
+.dark .audit-date-picker-wrapper .dropdown-tabs {
   border-bottom-color: #434343;
 }
 
-.dark .tab-btn {
+.dark .audit-date-picker-wrapper .tab-btn {
   color: #98a2b3;
   border-color: #434343;
 }
 
-.dark .tab-btn:hover {
+.dark .audit-date-picker-wrapper .tab-btn:hover {
   color: #40a9ff;
   border-color: #40a9ff;
 }
 
-.dark .quick-btn {
+.dark .audit-date-picker-wrapper .quick-btn {
   background: #25262e;
   border-color: #343741;
   color: #dfe5ef;
 }
 
-.dark .quick-btn:hover {
+.dark .audit-date-picker-wrapper .quick-btn:hover {
   background: #177ddc;
   border-color: #177ddc;
   color: #fff;
@@ -207,17 +208,17 @@
 
 /* 响应式 */
 @media (max-width: 768px) {
-  .audit-date-btn {
+  .audit-date-picker-wrapper .audit-date-btn {
     min-width: 160px;
     font-size: 12px;
     padding: 6px 12px;
   }
-  
-  .quick-grid {
+
+  .audit-date-picker-wrapper .quick-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
-  .custom-panel .ant-picker-range {
+
+  .audit-date-picker-wrapper .custom-panel .ant-picker-range {
     width: 260px;
   }
 }

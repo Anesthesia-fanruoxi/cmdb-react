@@ -337,7 +337,7 @@ const InstallDrawer = ({ visible, plugin, projects, onClose, onSuccess }: Props)
 
   return (
     <>
-      <div className="drawer-overlay" onClick={onClose} />
+      <div className="drawer-overlay install-drawer-overlay" onClick={onClose} />
       <div className="drawer-container install-drawer">
         <div className="drawer-header">
           <h3>安装插件 - {plugin?.display_name}</h3>
@@ -524,53 +524,54 @@ const InstallDrawer = ({ visible, plugin, projects, onClose, onSuccess }: Props)
         </>
       )}
       <style>{`
-        .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1100; }
+        .install-drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1100; }
         .install-drawer { position: fixed; top: 0; right: 0; width: 800px; height: 100%; background: var(--bg-color); z-index: 1101; display: flex; flex-direction: column; }
-        .drawer-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
-        .drawer-header h3 { margin: 0; font-size: 16px; color: var(--text-color); }
-        .drawer-close { background: none; border: none; cursor: pointer; color: var(--text-secondary); }
-        .drawer-body { flex: 1; overflow: auto; padding: 20px; }
-        .drawer-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--border-color); }
-        .plugin-info-card { background: var(--bg-secondary); border-radius: 8px; padding: 16px; margin-bottom: 20px; }
-        .info-row { display: flex; gap: 8px; margin-bottom: 8px; font-size: 14px; }
-        .info-row:last-child { margin-bottom: 0; }
-        .info-row .label { color: var(--text-secondary); }
-        .info-row span:last-child { color: var(--text-color); }
-        .form-item { margin-bottom: 16px; }
-        .form-item label { display: block; margin-bottom: 8px; font-size: 14px; color: var(--text-color); }
-        .form-item .required { color: #ff4d4f; }
-        .form-item select, .form-item input[type="text"], .form-item input[type="number"] { width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-color); font-size: 13px; }
-        .form-tip { display: block; margin-top: 4px; font-size: 12px; color: var(--text-secondary); }
-        .project-cards { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
-        .project-card { position: relative; border: 2px solid var(--border-color); border-radius: 6px; padding: 10px 8px; cursor: pointer; transition: all 0.3s; text-align: center; min-height: 70px; width: 110px; flex-shrink: 0; display: flex; flex-direction: column; justify-content: center; }
-        .project-card:hover { border-color: var(--primary-color); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .project-card.active { border-color: var(--primary-color); background: rgba(64, 158, 255, 0.1); }
-        .project-card .check-icon { position: absolute; top: 4px; right: 4px; color: var(--primary-color); font-size: 14px; font-weight: bold; }
-        .project-name { font-size: 13px; font-weight: 500; color: var(--text-color); margin-bottom: 4px; word-break: break-all; line-height: 1.4; }
-        .project-code { font-size: 11px; color: var(--text-secondary); word-break: break-all; line-height: 1.3; }
-        .no-data { color: var(--text-secondary); text-align: center; padding: 20px; font-size: 14px; width: 100%; }
-        .switch-row { display: flex; align-items: center; gap: 12px; }
-        .switch-toggle { width: 44px; height: 22px; background: var(--border-color); border-radius: 11px; cursor: pointer; position: relative; transition: background 0.3s; }
-        .switch-toggle.active { background: var(--primary-color); }
-        .switch-handle { width: 18px; height: 18px; background: #fff; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: left 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-        .switch-toggle.active .switch-handle { left: 24px; }
-        .switch-row .form-tip { margin-top: 0; }
-        .config-list { display: flex; flex-direction: column; gap: 12px; }
-        .config-item { display: flex; flex-direction: column; gap: 4px; }
-        .config-row { display: flex; align-items: center; gap: 8px; }
-        .config-row input { flex: 1; }
-        .config-row .sep { color: var(--text-secondary); font-weight: bold; }
-        .config-desc { padding-left: 4px; font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
-        .config-file-tip { padding: 8px 12px; margin-bottom: 8px; background: rgba(64, 158, 255, 0.08); border: 1px solid rgba(64, 158, 255, 0.2); border-radius: 4px; color: var(--text-secondary); font-size: 12px; }
-        .id-config-textarea { width: 100%; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; color: var(--text-color); resize: vertical; line-height: 1.6; tab-size: 2; box-sizing: border-box; }
-        .id-config-textarea:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.15); }
-        .btn-icon { background: none; border: none; cursor: pointer; color: #ff4d4f; padding: 4px; }
-        .btn-add { display: flex; align-items: center; gap: 4px; padding: 8px 12px; background: var(--bg-secondary); border: 1px dashed var(--border-color); border-radius: 4px; cursor: pointer; font-size: 13px; color: var(--primary-color); }
-        .btn-default, .btn-primary { display: flex; align-items: center; gap: 4px; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; }
-        .btn-default { background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-color); }
-        .btn-primary { background: var(--primary-color); border: none; color: #fff; }
-        .btn-primary:disabled { opacity: 0.6; }
-        .spin { animation: spin 1s linear infinite; }
+        .install-drawer .drawer-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
+        .install-drawer .drawer-header h3 { margin: 0; font-size: 16px; color: var(--text-color); }
+        .install-drawer .drawer-close { background: none; border: none; cursor: pointer; color: var(--text-secondary); }
+        .install-drawer .drawer-body { flex: 1; overflow: auto; padding: 20px; }
+        .install-drawer .drawer-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--border-color); }
+        .install-drawer .plugin-info-card { background: var(--bg-secondary); border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+        .install-drawer .info-row { display: flex; gap: 8px; margin-bottom: 8px; font-size: 14px; }
+        .install-drawer .info-row:last-child { margin-bottom: 0; }
+        .install-drawer .info-row .label { color: var(--text-secondary); }
+        .install-drawer .info-row span:last-child { color: var(--text-color); }
+        .install-drawer .form-item { margin-bottom: 16px; }
+        .install-drawer .form-item label { display: block; margin-bottom: 8px; font-size: 14px; color: var(--text-color); }
+        .install-drawer .form-item .required { color: #ff4d4f; }
+        .install-drawer .form-item select, .install-drawer .form-item input[type="text"], .install-drawer .form-item input[type="number"] { width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-color); font-size: 13px; }
+        .install-drawer .form-tip { display: block; margin-top: 4px; font-size: 12px; color: var(--text-secondary); }
+        .install-drawer .project-cards { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+        .install-drawer .project-card { position: relative; border: 2px solid var(--border-color); border-radius: 6px; padding: 10px 8px; cursor: pointer; transition: all 0.3s; text-align: center; min-height: 70px; width: 110px; flex-shrink: 0; display: flex; flex-direction: column; justify-content: center; }
+        .install-drawer .project-card:hover { border-color: var(--primary-color); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .install-drawer .project-card.active { border-color: var(--primary-color); background: rgba(64, 158, 255, 0.1); }
+        .install-drawer .project-card .check-icon { position: absolute; top: 4px; right: 4px; color: var(--primary-color); font-size: 14px; font-weight: bold; }
+        .install-drawer .project-name { font-size: 13px; font-weight: 500; color: var(--text-color); margin-bottom: 4px; word-break: break-all; line-height: 1.4; }
+        .install-drawer .project-code { font-size: 11px; color: var(--text-secondary); word-break: break-all; line-height: 1.3; }
+        .install-drawer .no-data { color: var(--text-secondary); text-align: center; padding: 20px; font-size: 14px; width: 100%; }
+        .install-drawer .switch-row { display: flex; align-items: center; gap: 12px; }
+        .install-drawer .switch-toggle { width: 44px; height: 22px; background: var(--border-color); border-radius: 11px; cursor: pointer; position: relative; transition: background 0.3s; }
+        .install-drawer .switch-toggle.active { background: var(--primary-color); }
+        .install-drawer .switch-handle { width: 18px; height: 18px; background: #fff; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: left 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .install-drawer .switch-toggle.active .switch-handle { left: 24px; }
+        .install-drawer .switch-row .form-tip { margin-top: 0; }
+        .install-drawer .config-list { display: flex; flex-direction: column; gap: 12px; }
+        .install-drawer .config-item { display: flex; flex-direction: column; gap: 4px; }
+        .install-drawer .config-row { display: flex; align-items: center; gap: 8px; }
+        .install-drawer .config-row input { flex: 1; }
+        .install-drawer .config-row .sep { color: var(--text-secondary); font-weight: bold; }
+        .install-drawer .config-desc { padding-left: 4px; font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
+        .install-drawer .config-file-tip { padding: 8px 12px; margin-bottom: 8px; background: rgba(64, 158, 255, 0.08); border: 1px solid rgba(64, 158, 255, 0.2); border-radius: 4px; color: var(--text-secondary); font-size: 12px; }
+        .install-drawer .id-config-textarea { width: 100%; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; color: var(--text-color); resize: vertical; line-height: 1.6; tab-size: 2; box-sizing: border-box; }
+        .install-drawer .id-config-textarea:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.15); }
+        .install-drawer .btn-icon { background: none; border: none; cursor: pointer; color: #ff4d4f; padding: 4px; }
+        .install-drawer .btn-add { display: flex; align-items: center; gap: 4px; padding: 8px 12px; background: var(--bg-secondary); border: 1px dashed var(--border-color); border-radius: 4px; cursor: pointer; font-size: 13px; color: var(--primary-color); }
+        .install-drawer .btn-default, .install-drawer .btn-primary { display: flex; align-items: center; gap: 4px; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+        .install-drawer .btn-default { background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-color); }
+        .install-drawer .btn-primary { background: var(--primary-color); border: none; color: #fff; }
+        .install-drawer .btn-primary:disabled { opacity: 0.6; }
+        .install-drawer .spin { animation: install-drawer-spin 1s linear infinite; }
+        @keyframes install-drawer-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
         .pv-layout { display: flex; gap: 20px; min-height: 400px; }
         .pv-left { flex: 0 0 45%; display: flex; flex-direction: column; }

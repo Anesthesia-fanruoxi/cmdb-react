@@ -1,6 +1,6 @@
-/* ELFK 日志搜索 - 项目选择面板 */
+/* ELFK 日志搜索 - 项目选择面板（作用域：.elfk-search-page） */
 
-.project-select-panel {
+.elfk-search-page .project-select-panel {
   flex: 1;
   display: flex;
   align-items: center;
@@ -12,45 +12,45 @@
   border: 1px solid var(--border-color);
 }
 
-.loading-state {
+.elfk-search-page .loading-state {
   color: var(--text-secondary);
   font-size: 14px;
 }
 
-.select-container {
+.elfk-search-page .select-container {
   width: 100%;
   max-width: 900px;
   padding: 32px;
 }
 
-.select-header {
+.elfk-search-page .select-header {
   text-align: center;
   margin-bottom: 32px;
 }
 
-.select-header h3 {
+.elfk-search-page .select-header h3 {
   margin: 0 0 8px;
   font-size: 20px;
   color: var(--text-color);
 }
 
-.select-header p {
+.elfk-search-page .select-header p {
   margin: 0;
   font-size: 14px;
   color: var(--text-secondary);
 }
 
 /* 项目分组 */
-.project-group {
+.elfk-search-page .project-group {
   margin-bottom: 24px;
 }
 
-.project-group.disabled {
+.elfk-search-page .project-group.disabled {
   opacity: 0.5;
   pointer-events: none;
 }
 
-.group-title {
+.elfk-search-page .group-title {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -59,21 +59,21 @@
   margin-bottom: 12px;
 }
 
-.group-icon { font-size: 16px; }
+.elfk-search-page .group-icon { font-size: 16px; }
 
-.group-tip {
+.elfk-search-page .group-tip {
   font-size: 12px;
   color: var(--text-secondary);
   margin-left: 8px;
 }
 
-.card-grid {
+.elfk-search-page .card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 12px;
 }
 
-.card-grid .empty-tip {
+.elfk-search-page .card-grid .empty-tip {
   grid-column: 1 / -1;
   text-align: center;
   padding: 20px;
@@ -81,7 +81,7 @@
   font-size: 13px;
 }
 
-.select-card {
+.elfk-search-page .select-card {
   padding: 16px 12px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
@@ -91,22 +91,22 @@
   transition: all 0.2s;
 }
 
-.select-card:hover {
+.elfk-search-page .select-card:hover {
   border-color: var(--primary-color);
   background: var(--bg-hover);
 }
 
-.select-card.active {
+.elfk-search-page .select-card.active {
   border-color: var(--primary-color);
   background: rgba(24, 144, 255, 0.15);
   box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
 }
 
-.select-card.disabled {
+.elfk-search-page .select-card.disabled {
   cursor: not-allowed;
   opacity: 0.6;
 }
 
-.select-card .card-icon { font-size: 24px; margin-bottom: 8px; }
-.select-card .card-name { font-size: 13px; color: var(--text-color); margin-bottom: 2px; }
-.select-card .card-key { font-size: 11px; color: var(--text-secondary); }
+.elfk-search-page .select-card .card-icon { font-size: 24px; margin-bottom: 8px; }
+.elfk-search-page .select-card .card-name { font-size: 13px; color: var(--text-color); margin-bottom: 2px; }
+.elfk-search-page .select-card .card-key { font-size: 11px; color: var(--text-secondary); }

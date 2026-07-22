@@ -171,7 +171,7 @@ const PersonalKnowledge = () => {
   });
 
   return (
-    <div className="knowledge-page">
+    <div className="knowledge-page personal-kb-page">
       {/* 左侧边栏 */}
       <div className="sidebar">
         <div className="sidebar-header">

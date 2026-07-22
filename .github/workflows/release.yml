@@ -167,7 +167,8 @@ jobs:
           2、sql查询中，优化了表头和内容复制逻辑，改成右键功能键进行复制。
           3、sql查询中，优化了列宽的计算。
           4、sql查询中，优化了报错提示，使其更加明显清楚。
-          5、在sql和bi查询中，添加了编辑框的护眼模式，可以自行打开关闭。"
+          5、在sql和bi查询中，添加了编辑框的护眼模式，可以自行打开关闭。
+          6、完全拆分所有css让所有css作用域化，避免编译完成之后发生冲突，导致混乱。"
 
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \

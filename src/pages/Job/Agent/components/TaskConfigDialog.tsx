@@ -102,7 +102,7 @@ const TaskConfigDialog = ({ visible, task, project, onClose, onSuccess }: Props)
 
   return (
     <>
-      <div className="dialog-overlay" onClick={onClose} />
+      <div className="dialog-overlay config-dialog-overlay" onClick={onClose} />
       <div className="dialog-container config-dialog">
         <div className="dialog-header">
           <h3>配置任务变量</h3>
@@ -179,43 +179,45 @@ const TaskConfigDialog = ({ visible, task, project, onClose, onSuccess }: Props)
         </div>
       </div>
       <style>{`
+        .config-dialog-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1100; }
         .config-dialog { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 900px; max-width: 90%; max-height: 85vh; background: var(--bg-color); border-radius: 8px; z-index: 1101; display: flex; flex-direction: column; }
-        .dialog-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
-        .dialog-header h3 { margin: 0; font-size: 16px; color: var(--text-color); }
-        .dialog-close { background: none; border: none; cursor: pointer; color: var(--text-secondary); }
-        .dialog-body { flex: 1; overflow: auto; padding: 20px; }
-        .dialog-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--border-color); }
-        .loading-state { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 60px; color: var(--text-secondary); }
-        .task-info-bar { display: flex; flex-wrap: wrap; gap: 20px; padding: 12px 16px; background: rgba(24, 144, 255, 0.1); border: 1px solid rgba(24, 144, 255, 0.3); border-radius: 6px; margin-bottom: 20px; font-size: 13px; color: var(--text-secondary); }
-        .task-info-bar strong { color: var(--text-color); }
-        .steps { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 24px; }
-        .step { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-secondary); }
-        .step.active { color: var(--primary-color); }
-        .step-num { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--bg-secondary); font-size: 12px; }
-        .step.active .step-num { background: var(--primary-color); color: #fff; }
-        .step-line { width: 60px; height: 2px; background: var(--border-color); }
-        .step-content { min-height: 200px; }
-        .variables-form .form-item { margin-bottom: 16px; }
-        .variables-form label { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
-        .variables-form label code { font-size: 13px; color: var(--text-color); }
-        .variables-form label .desc { font-size: 12px; color: var(--text-secondary); }
-        .variables-form input { width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-color); color: var(--text-color); font-size: 13px; }
-        .variables-preview { margin-bottom: 20px; }
-        .variables-preview h5, .script-preview-section h5 { margin: 0 0 12px; font-size: 14px; color: var(--text-color); }
-        .preview-table { width: 100%; border-collapse: collapse; font-size: 13px; border: 1px solid var(--border-color); border-radius: 4px; }
-        .preview-table th, .preview-table td { padding: 8px 12px; border-bottom: 1px solid var(--border-color); text-align: left; }
-        .preview-table th { background: var(--bg-secondary); }
-        .preview-table code { font-size: 12px; }
-        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .btn-copy { display: flex; align-items: center; gap: 4px; padding: 4px 10px; background: var(--primary-color); color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
-        .script-preview { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 4px; padding: 16px; max-height: 300px; overflow: auto; font-family: monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap; color: var(--text-color); margin: 0; }
-        .confirm-tip { margin-top: 16px; padding: 12px; background: rgba(82, 196, 26, 0.1); border: 1px solid rgba(82, 196, 26, 0.3); border-radius: 4px; color: #52c41a; font-size: 13px; }
-        .empty-state { display: flex; align-items: center; justify-content: center; padding: 40px; color: var(--text-secondary); }
-        .btn-default, .btn-primary { display: flex; align-items: center; gap: 4px; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; }
-        .btn-default { background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-color); }
-        .btn-primary { background: var(--primary-color); border: none; color: #fff; }
-        .btn-primary:disabled { opacity: 0.6; }
-        .spin { animation: spin 1s linear infinite; }
+        .config-dialog .dialog-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
+        .config-dialog .dialog-header h3 { margin: 0; font-size: 16px; color: var(--text-color); }
+        .config-dialog .dialog-close { background: none; border: none; cursor: pointer; color: var(--text-secondary); }
+        .config-dialog .dialog-body { flex: 1; overflow: auto; padding: 20px; }
+        .config-dialog .dialog-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--border-color); }
+        .config-dialog .loading-state { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 60px; color: var(--text-secondary); }
+        .config-dialog .task-info-bar { display: flex; flex-wrap: wrap; gap: 20px; padding: 12px 16px; background: rgba(24, 144, 255, 0.1); border: 1px solid rgba(24, 144, 255, 0.3); border-radius: 6px; margin-bottom: 20px; font-size: 13px; color: var(--text-secondary); }
+        .config-dialog .task-info-bar strong { color: var(--text-color); }
+        .config-dialog .steps { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 24px; }
+        .config-dialog .step { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-secondary); }
+        .config-dialog .step.active { color: var(--primary-color); }
+        .config-dialog .step-num { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--bg-secondary); font-size: 12px; }
+        .config-dialog .step.active .step-num { background: var(--primary-color); color: #fff; }
+        .config-dialog .step-line { width: 60px; height: 2px; background: var(--border-color); }
+        .config-dialog .step-content { min-height: 200px; }
+        .config-dialog .variables-form .form-item { margin-bottom: 16px; }
+        .config-dialog .variables-form label { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
+        .config-dialog .variables-form label code { font-size: 13px; color: var(--text-color); }
+        .config-dialog .variables-form label .desc { font-size: 12px; color: var(--text-secondary); }
+        .config-dialog .variables-form input { width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-color); color: var(--text-color); font-size: 13px; }
+        .config-dialog .variables-preview { margin-bottom: 20px; }
+        .config-dialog .variables-preview h5, .config-dialog .script-preview-section h5 { margin: 0 0 12px; font-size: 14px; color: var(--text-color); }
+        .config-dialog .preview-table { width: 100%; border-collapse: collapse; font-size: 13px; border: 1px solid var(--border-color); border-radius: 4px; }
+        .config-dialog .preview-table th, .config-dialog .preview-table td { padding: 8px 12px; border-bottom: 1px solid var(--border-color); text-align: left; }
+        .config-dialog .preview-table th { background: var(--bg-secondary); }
+        .config-dialog .preview-table code { font-size: 12px; }
+        .config-dialog .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .config-dialog .btn-copy { display: flex; align-items: center; gap: 4px; padding: 4px 10px; background: var(--primary-color); color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .config-dialog .script-preview { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 4px; padding: 16px; max-height: 300px; overflow: auto; font-family: monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap; color: var(--text-color); margin: 0; }
+        .config-dialog .confirm-tip { margin-top: 16px; padding: 12px; background: rgba(82, 196, 26, 0.1); border: 1px solid rgba(82, 196, 26, 0.3); border-radius: 4px; color: #52c41a; font-size: 13px; }
+        .config-dialog .empty-state { display: flex; align-items: center; justify-content: center; padding: 40px; color: var(--text-secondary); }
+        .config-dialog .btn-default, .config-dialog .btn-primary { display: flex; align-items: center; gap: 4px; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+        .config-dialog .btn-default { background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-color); }
+        .config-dialog .btn-primary { background: var(--primary-color); border: none; color: #fff; }
+        .config-dialog .btn-primary:disabled { opacity: 0.6; }
+        .config-dialog .spin { animation: config-dialog-spin 1s linear infinite; }
+        @keyframes config-dialog-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </>
   );

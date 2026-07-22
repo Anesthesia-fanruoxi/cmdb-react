@@ -1,9 +1,9 @@
 /**
- * SQL分析对话框样式
+ * SQL分析对话框样式（作用域：.sql-apply-page）
  */
 
 /* SQL分析布局 - 参照 Vue 版本优化 */
-.analysis-layout {
+.sql-apply-page .analysis-layout {
   display: flex;
   flex: 1;
   overflow: hidden;
@@ -12,7 +12,7 @@
   padding: 20px;
 }
 
-.analysis-left {
+.sql-apply-page .analysis-left {
   flex: 0 0 500px;
   display: flex;
   flex-direction: column;
@@ -21,9 +21,9 @@
   padding: 16px;
 }
 
-.analysis-right { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.sql-apply-page .analysis-right { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
-.panel-title {
+.sql-apply-page .panel-title {
   font-size: 14px;
   font-weight: 600;
   margin-bottom: 12px;
@@ -33,7 +33,7 @@
 }
 
 /* SQL 标签页 */
-.sql-tabs { 
+.sql-apply-page .sql-tabs { 
   display: flex; 
   flex-wrap: wrap; 
   gap: 8px; 
@@ -43,7 +43,7 @@
   padding-right: 4px; /* 为滚动条留出空间 */
 }
 
-.sql-tab {
+.sql-apply-page .sql-tab {
   padding: 8px 14px;
   border: 1px solid var(--border-color);
   border-radius: 6px;
@@ -55,13 +55,13 @@
   transition: all 0.2s;
 }
 
-.sql-tab:hover { border-color: var(--primary-color); color: var(--primary-color); }
-.sql-tab.active { border-color: var(--primary-color); color: var(--primary-color); background: rgba(102, 126, 234, 0.1); }
-.sql-tab.has-error { border-color: var(--danger-color); color: var(--danger-color); background: rgba(255, 77, 79, 0.08); }
-.sql-tab .error-icon { margin-left: 4px; }
+.sql-apply-page .sql-tab:hover { border-color: var(--primary-color); color: var(--primary-color); }
+.sql-apply-page .sql-tab.active { border-color: var(--primary-color); color: var(--primary-color); background: rgba(102, 126, 234, 0.1); }
+.sql-apply-page .sql-tab.has-error { border-color: var(--danger-color); color: var(--danger-color); background: rgba(255, 77, 79, 0.08); }
+.sql-apply-page .sql-tab .error-icon { margin-left: 4px; }
 
 /* SQL 编辑器盒子 */
-.sql-editor-box {
+.sql-apply-page .sql-editor-box {
   flex: 1;
   min-height: 200px;
   max-height: 100%;
@@ -71,12 +71,12 @@
   border: 1px solid var(--border-color-light);
 }
 
-.sql-editor-box.has-error { border-color: var(--danger-color); background: rgba(255, 77, 79, 0.05); }
+.sql-apply-page .sql-editor-box.has-error { border-color: var(--danger-color); background: rgba(255, 77, 79, 0.05); }
 
 /* 结果标签页 */
-.result-tabs { display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 16px; }
+.sql-apply-page .result-tabs { display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 16px; }
 
-.tab-btn {
+.sql-apply-page .tab-btn {
   padding: 12px 20px;
   border: none;
   background: none;
@@ -89,14 +89,14 @@
   transition: all 0.2s;
 }
 
-.tab-btn:hover { color: var(--primary-color); }
-.tab-btn.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
-.result-content { flex: 1; overflow: auto; padding-right: 4px; }
+.sql-apply-page .tab-btn:hover { color: var(--primary-color); }
+.sql-apply-page .tab-btn.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
+.sql-apply-page .result-content { flex: 1; overflow: auto; padding-right: 4px; }
 
 /* 语法错误面板 */
-.syntax-error-panel { height: 100%; display: flex; flex-direction: column; }
+.sql-apply-page .syntax-error-panel { height: 100%; display: flex; flex-direction: column; }
 
-.error-header {
+.sql-apply-page .error-header {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -106,20 +106,20 @@
   margin-bottom: 20px;
 }
 
-.error-icon-large { font-size: 32px; color: var(--danger-color); }
-.error-title { font-size: 18px; font-weight: 600; color: var(--danger-color); }
-.error-content { flex: 1; display: flex; flex-direction: column; gap: 12px; }
-.error-info-row { display: flex; align-items: center; gap: 8px; }
-.error-label { font-size: 14px; color: var(--text-secondary); min-width: 80px; font-weight: 500; }
+.sql-apply-page .error-icon-large { font-size: 32px; color: var(--danger-color); }
+.sql-apply-page .error-title { font-size: 18px; font-weight: 600; color: var(--danger-color); }
+.sql-apply-page .error-content { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+.sql-apply-page .error-info-row { display: flex; align-items: center; gap: 8px; }
+.sql-apply-page .error-label { font-size: 14px; color: var(--text-secondary); min-width: 80px; font-weight: 500; }
 
-.error-message-box {
+.sql-apply-page .error-message-box {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: 6px;
   padding: 16px;
 }
 
-.error-message-box pre {
+.sql-apply-page .error-message-box pre {
   margin: 0;
   font-family: 'Consolas', 'Monaco', monospace;
   font-size: 13px;
@@ -128,12 +128,12 @@
   word-break: break-all;
 }
 
-.error-message-box.simple { border-left: 4px solid var(--danger-color); background: rgba(255, 77, 79, 0.05); }
-.error-message-box.simple .error-simple-text { font-size: 14px; font-weight: 500; color: var(--danger-color); }
-.error-message-box.detail { border-left: 4px solid var(--warning-color); background: rgba(250, 173, 20, 0.05); }
-.error-message-box.detail pre { color: #d48806; }
+.sql-apply-page .error-message-box.simple { border-left: 4px solid var(--danger-color); background: rgba(255, 77, 79, 0.05); }
+.sql-apply-page .error-message-box.simple .error-simple-text { font-size: 14px; font-weight: 500; color: var(--danger-color); }
+.sql-apply-page .error-message-box.detail { border-left: 4px solid var(--warning-color); background: rgba(250, 173, 20, 0.05); }
+.sql-apply-page .error-message-box.detail pre { color: #d48806; }
 
-.error-tip {
+.sql-apply-page .error-tip {
   display: flex;
   align-items: center;
   gap: 8px;

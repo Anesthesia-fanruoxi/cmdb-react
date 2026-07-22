@@ -3,33 +3,33 @@
  */
 
 @media (max-width: 768px) {
-  .workspace-toolbar {
+  .sql-search .workspace-toolbar {
     flex-direction: column;
     gap: 8px;
     align-items: flex-start;
   }
-  
-  .toolbar-shortcuts { display: none; }
-  
-  .result-selector {
+
+  .sql-search .toolbar-shortcuts { display: none; }
+
+  .sql-search .result-selector {
     flex-direction: column;
     align-items: flex-start;
   }
-  
-  .selector-tabs { width: 100%; }
-  
-  .table-detail-modal {
+
+  .sql-search .selector-tabs { width: 100%; }
+
+  .sql-search .table-detail-modal {
     width: 95%;
     max-height: 90vh;
   }
-  
-  .modal-tabs { flex-wrap: wrap; }
+
+  .sql-search .modal-tabs { flex-wrap: wrap; }
 }
 
 /* 独立窗口工作区 */
 .sql-search.detached-workspace { height: 100vh; }
 
-.detached-header {
+.sql-search .detached-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -39,13 +39,13 @@
   height: 40px;
 }
 
-.detached-title {
+.sql-search .detached-title {
   font-size: 14px;
   font-weight: 500;
   color: var(--text-color);
 }
 
-.reattach-btn {
+.sql-search .reattach-btn {
   padding: 4px 12px;
   font-size: 12px;
   border: 1px solid var(--border-color);
@@ -56,7 +56,7 @@
   transition: all 0.15s;
 }
 
-.reattach-btn:hover {
+.sql-search .reattach-btn:hover {
   border-color: var(--primary-color);
   color: var(--primary-color);
   background: var(--bg-hover);

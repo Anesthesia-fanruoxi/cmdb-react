@@ -1,4 +1,8 @@
-/* 应用内通知样式 - 卡片风格（类似消息中心） */
+/*
+ * 应用内通知样式 - 卡片风格（类似消息中心）
+ * 命名空间：组件通过 document.body.appendChild 挂载，
+ * 所有子元素样式限定在根类名 `.app-notification-container` 下。
+ */
 
 .app-notification-container {
   position: fixed;
@@ -11,7 +15,7 @@
   pointer-events: none;
 }
 
-.app-notification {
+.app-notification-container .app-notification {
   display: flex;
   gap: 12px;
   min-width: 360px;
@@ -28,12 +32,12 @@
   position: relative;
 }
 
-.app-notification.hide {
+.app-notification-container .app-notification.hide {
   transform: translateX(120%);
   opacity: 0;
 }
 
-.app-notification-icon {
+.app-notification-container .app-notification-icon {
   flex-shrink: 0;
   width: 40px;
   height: 40px;
@@ -44,19 +48,19 @@
   margin-top: 2px;
 }
 
-.app-notification-content {
+.app-notification-container .app-notification-content {
   flex: 1;
   min-width: 0;
 }
 
-.app-notification-title {
+.app-notification-container .app-notification-title {
   font-size: 15px;
   font-weight: 600;
   color: #333;
   margin-bottom: 6px;
 }
 
-.app-notification-body {
+.app-notification-container .app-notification-body {
   font-size: 13px;
   color: #666;
   word-break: break-word;
@@ -64,7 +68,7 @@
   margin-bottom: 4px;
 }
 
-.app-notification-buttons {
+.app-notification-container .app-notification-buttons {
   display: flex;
   gap: 8px;
   margin-top: 12px;
@@ -72,7 +76,7 @@
   border-top: 1px solid #f0f0f0;
 }
 
-.app-notification-btn {
+.app-notification-container .app-notification-btn {
   flex: 1;
   padding: 8px 16px;
   border-radius: 4px;
@@ -83,34 +87,34 @@
   transition: all 0.2s;
 }
 
-.app-notification-btn.primary {
+.app-notification-container .app-notification-btn.primary {
   background: #1890ff;
   color: #fff;
 }
 
-.app-notification-btn.primary:hover {
+.app-notification-container .app-notification-btn.primary:hover {
   background: #40a9ff;
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
 }
 
-.app-notification-btn.primary:active {
+.app-notification-container .app-notification-btn.primary:active {
   transform: translateY(0);
 }
 
-.app-notification-btn.secondary {
+.app-notification-container .app-notification-btn.secondary {
   background: transparent;
   color: #666;
   border: 1px solid #d9d9d9;
 }
 
-.app-notification-btn.secondary:hover {
+.app-notification-container .app-notification-btn.secondary:hover {
   color: #1890ff;
   border-color: #1890ff;
   background: #f5f5f5;
 }
 
-.app-notification-close {
+.app-notification-container .app-notification-close {
   position: absolute;
   top: 12px;
   right: 12px;
@@ -129,81 +133,81 @@
   justify-content: center;
 }
 
-.app-notification-close:hover {
+.app-notification-container .app-notification-close:hover {
   background: rgba(255, 77, 79, 0.1);
   color: #ff4d4f;
   transform: scale(1.1);
 }
 
 /* 类型样式 */
-.app-notification-success { border-left-color: #52c41a; }
-.app-notification-success .app-notification-icon { 
-  background: #f6ffed; 
-  color: #52c41a; 
+.app-notification-container .app-notification-success { border-left-color: #52c41a; }
+.app-notification-container .app-notification-success .app-notification-icon {
+  background: #f6ffed;
+  color: #52c41a;
 }
 
-.app-notification-error { border-left-color: #ff4d4f; }
-.app-notification-error .app-notification-icon { 
-  background: #fff2f0; 
-  color: #ff4d4f; 
+.app-notification-container .app-notification-error { border-left-color: #ff4d4f; }
+.app-notification-container .app-notification-error .app-notification-icon {
+  background: #fff2f0;
+  color: #ff4d4f;
 }
 
-.app-notification-warning { border-left-color: #faad14; }
-.app-notification-warning .app-notification-icon { 
-  background: #fffbe6; 
-  color: #faad14; 
+.app-notification-container .app-notification-warning { border-left-color: #faad14; }
+.app-notification-container .app-notification-warning .app-notification-icon {
+  background: #fffbe6;
+  color: #faad14;
 }
 
-.app-notification-info { border-left-color: #1890ff; }
-.app-notification-info .app-notification-icon { 
-  background: #e6f7ff; 
-  color: #1890ff; 
+.app-notification-container .app-notification-info { border-left-color: #1890ff; }
+.app-notification-container .app-notification-info .app-notification-icon {
+  background: #e6f7ff;
+  color: #1890ff;
 }
 
 /* 暗色主题 */
-[data-theme="dark"] .app-notification {
+[data-theme="dark"] .app-notification-container .app-notification {
   background: #1f1f1f;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
 }
 
-[data-theme="dark"] .app-notification-title {
+[data-theme="dark"] .app-notification-container .app-notification-title {
   color: #e5e5e5;
 }
 
-[data-theme="dark"] .app-notification-body {
+[data-theme="dark"] .app-notification-container .app-notification-body {
   color: #999;
 }
 
-[data-theme="dark"] .app-notification-buttons {
+[data-theme="dark"] .app-notification-container .app-notification-buttons {
   border-top-color: #333;
 }
 
-[data-theme="dark"] .app-notification-btn.primary {
+[data-theme="dark"] .app-notification-container .app-notification-btn.primary {
   background: #177ddc;
 }
 
-[data-theme="dark"] .app-notification-btn.primary:hover {
+[data-theme="dark"] .app-notification-container .app-notification-btn.primary:hover {
   background: #1890ff;
 }
 
-[data-theme="dark"] .app-notification-btn.secondary {
+[data-theme="dark"] .app-notification-container .app-notification-btn.secondary {
   background: transparent;
   color: #aaa;
   border-color: #434343;
 }
 
-[data-theme="dark"] .app-notification-btn.secondary:hover {
+[data-theme="dark"] .app-notification-container .app-notification-btn.secondary:hover {
   color: #40a9ff;
   border-color: #177ddc;
   background: #2a2a2a;
 }
 
-[data-theme="dark"] .app-notification-close {
+[data-theme="dark"] .app-notification-container .app-notification-close {
   background: rgba(255, 255, 255, 0.06);
   color: #888;
 }
 
-[data-theme="dark"] .app-notification-close:hover {
+[data-theme="dark"] .app-notification-container .app-notification-close:hover {
   background: rgba(255, 77, 79, 0.2);
   color: #ff4d4f;
 }

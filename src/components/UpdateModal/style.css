@@ -16,7 +16,7 @@
   background: #1f1f1f !important;
 }
 
-.update-modal-content {
+.update-modal .update-modal-content {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -25,7 +25,7 @@
   border-radius: 16px;
 }
 
-.update-icon {
+.update-modal .update-icon {
   width: 72px;
   height: 72px;
   border-radius: 50%;
@@ -37,19 +37,19 @@
   box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
 }
 
-.update-icon .anticon {
+.update-modal .update-icon .anticon {
   font-size: 36px;
   color: white;
 }
 
-.update-title {
+.update-modal .update-title {
   font-size: 20px;
   font-weight: 600;
   margin-bottom: 20px;
   display: block;
 }
 
-.update-changelog {
+.update-modal .update-changelog {
   width: 100%;
   text-align: left;
   margin-bottom: 28px;
@@ -58,12 +58,12 @@
   border: 1px solid;
 }
 
-.changelog-label {
+.update-modal .changelog-label {
   font-size: 13px;
   margin-bottom: 8px;
 }
 
-.changelog-text {
+.update-modal .changelog-text {
   margin: 0;
   white-space: pre-wrap;
   font-size: 14px;
@@ -72,13 +72,13 @@
   overflow-y: auto;
 }
 
-.update-actions {
+.update-modal .update-actions {
   display: flex;
   gap: 16px;
   width: 100%;
 }
 
-.update-actions .ant-btn {
+.update-modal .update-actions .ant-btn {
   flex: 1;
   height: 44px;
   border-radius: 10px;
@@ -86,12 +86,12 @@
   font-weight: 500;
 }
 
-.install-btn {
+.update-modal .install-btn {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
   border: none !important;
   box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
 }
 
-.install-btn:hover:not(:disabled) {
+.update-modal .install-btn:hover:not(:disabled) {
   background: linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%) !important;
 }

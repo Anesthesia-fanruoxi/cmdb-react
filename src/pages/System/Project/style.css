@@ -11,20 +11,20 @@
 }
 
 /* 表格容器 */
-.table-container {
+.project-management .table-container {
   flex: 1;
   overflow: auto;
   background: var(--bg-color);
 }
 
 /* 页面特有样式 */
-.url-cell {
+.project-management .url-cell {
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.feishu-cell {
+.project-management .feishu-cell {
   max-width: 280px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -35,14 +35,14 @@
   cursor: default;
 }
 
-.project-logo {
+.project-management .project-logo {
   width: 32px;
   height: 32px;
   border-radius: 4px;
   object-fit: cover;
 }
 
-.logo-placeholder {
+.project-management .logo-placeholder {
   display: inline-flex;
   width: 32px;
   height: 32px;
@@ -56,7 +56,7 @@
 }
 
 /* 行内选择框 */
-.inline-select {
+.project-management .inline-select {
   padding: 4px 8px;
   border: 1px solid var(--border-color);
   border-radius: 4px;
@@ -66,7 +66,7 @@
   cursor: pointer;
 }
 
-.inline-select:focus {
+.project-management .inline-select:focus {
   outline: none;
   border-color: var(--primary-color);
 }
@@ -117,7 +117,7 @@
   transform: translateX(20px);
 }
 
-.modal-close {
+.project-management .modal-close {
   background: none;
   border: none;
   font-size: 24px;
@@ -127,6 +127,6 @@
   line-height: 1;
 }
 
-.modal-close:hover {
+.project-management .modal-close:hover {
   color: var(--text-color);
 }

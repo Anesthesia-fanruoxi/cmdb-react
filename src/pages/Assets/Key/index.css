@@ -11,18 +11,18 @@
   gap: 20px;
 }
 
-.project-card {
+.key-page .project-card {
   background: var(--bg-color, #fff);
   border-radius: 8px;
   padding: 16px 20px;
   border: 1px solid var(--border-color, #e8e8e8);
 }
 
-.project-tabs { display: flex; align-items: center; gap: 16px; }
-.tabs-label { font-weight: 500; color: var(--text-secondary, #666); white-space: nowrap; }
-.tabs-content { display: flex; flex-wrap: wrap; gap: 8px; }
+.key-page .project-tabs { display: flex; align-items: center; gap: 16px; }
+.key-page .tabs-label { font-weight: 500; color: var(--text-secondary, #666); white-space: nowrap; }
+.key-page .tabs-content { display: flex; flex-wrap: wrap; gap: 8px; }
 
-.tab-item {
+.key-page .tab-item {
   padding: 8px 16px;
   border: 1px solid var(--border-color, #d9d9d9);
   border-radius: 4px;
@@ -33,16 +33,16 @@
   transition: all 0.2s;
 }
 
-.tab-item:hover { border-color: var(--primary-color); color: var(--primary-color); }
-.tab-item.active { background: var(--primary-color); border-color: var(--primary-color); color: #fff; }
+.key-page .tab-item:hover { border-color: var(--primary-color); color: var(--primary-color); }
+.key-page .tab-item.active { background: var(--primary-color); border-color: var(--primary-color); color: #fff; }
 
-.tab-loading { display: flex; align-items: center; gap: 6px; color: var(--text-secondary, #999); }
+.key-page .tab-loading { display: flex; align-items: center; gap: 6px; color: var(--text-secondary, #999); }
 
-.main-content { flex: 1; display: flex; gap: 20px; min-height: 0; }
-.left-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; }
-.right-panel { flex: 1; }
+.key-page .main-content { flex: 1; display: flex; gap: 20px; min-height: 0; }
+.key-page .left-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; }
+.key-page .right-panel { flex: 1; }
 
-.card {
+.key-page .card {
   background: var(--bg-color, #fff);
   border-radius: 8px;
   border: 1px solid var(--border-color, #e8e8e8);
@@ -50,8 +50,8 @@
   flex-direction: column;
 }
 
-.encrypt-card, .decrypt-card { flex: 1; }
-.batch-card { height: 100%; }
+.key-page .encrypt-card, .key-page .decrypt-card { flex: 1; }
+.key-page .batch-card { height: 100%; }
 
 .key-page .card-header {
   padding: 12px 16px;
@@ -68,30 +68,30 @@
   gap: 12px;
 }
 
-.result-textarea { cursor: pointer; transition: background 0.2s; }
-.result-textarea:hover { background: var(--bg-hover, #f5f5f5); }
+.key-page .result-textarea { cursor: pointer; transition: background 0.2s; }
+.key-page .result-textarea:hover { background: var(--bg-hover, #f5f5f5); }
 
-.btn-group { display: flex; gap: 8px; }
+.key-page .btn-group { display: flex; gap: 8px; }
 
-.data-count { font-size: 12px; color: #52c41a; font-weight: normal; }
-.data-count.warning { color: #ff4d4f; }
+.key-page .data-count { font-size: 12px; color: #52c41a; font-weight: normal; }
+.key-page .data-count.warning { color: #ff4d4f; }
 
-.batch-table-wrapper {
+.key-page .batch-table-wrapper {
   max-height: 300px;
   overflow: auto;
   border: 1px solid var(--border-color, #e8e8e8);
   border-radius: 4px;
 }
 
-.batch-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.key-page .batch-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 
-.batch-table th, .batch-table td {
+.key-page .batch-table th, .key-page .batch-table td {
   padding: 8px 10px;
   border-bottom: 1px solid var(--border-color, #e8e8e8);
   text-align: left;
 }
 
-.batch-table th {
+.key-page .batch-table th {
   background: var(--bg-secondary, #fafafa);
   font-weight: 600;
   position: sticky;
@@ -99,9 +99,9 @@
   z-index: 1;
 }
 
-.row-num { width: 50px; text-align: center; color: var(--text-secondary, #999); }
+.key-page .row-num { width: 50px; text-align: center; color: var(--text-secondary, #999); }
 
-.encrypted-cell {
+.key-page .encrypted-cell {
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -109,8 +109,8 @@
   color: var(--text-secondary, #666);
 }
 
-.decrypted-cell { cursor: pointer; transition: background 0.2s; word-break: break-all; }
-.decrypted-cell:hover { background: var(--bg-hover); color: var(--primary-color); }
+.key-page .decrypted-cell { cursor: pointer; transition: background 0.2s; word-break: break-all; }
+.key-page .decrypted-cell:hover { background: var(--bg-hover); color: var(--primary-color); }
 
-.spin { animation: spin 1s linear infinite; }
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.key-page .spin { animation: key-spin 1s linear infinite; }
+@keyframes key-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

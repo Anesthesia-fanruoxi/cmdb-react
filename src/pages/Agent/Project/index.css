@@ -107,5 +107,5 @@
   display: inline-block;
 }
 
-.spin { animation: spin 1s linear infinite; }
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.agent-project-page .spin { animation: agent-project-spin 1s linear infinite; }
+@keyframes agent-project-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

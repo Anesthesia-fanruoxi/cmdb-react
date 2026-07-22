@@ -1,5 +1,6 @@
 /**
  * 项目权限配置对话框样式
+ * 弹窗版根：.project-dialog-large；独立窗口版根：.user-project-config
  */
 
 .project-dialog-large {
@@ -35,13 +36,15 @@
   color: var(--text-muted);
 }
 
-.dialog-loading {
+.project-dialog-large .dialog-loading,
+.user-project-config .dialog-loading {
   padding: 60px;
   text-align: center;
   color: var(--text-muted);
 }
 
-.project-content {
+.project-dialog-large .project-content,
+.user-project-config .project-content {
   flex: 1;
   overflow: hidden;
   padding: 16px 20px;
@@ -50,7 +53,8 @@
   gap: 12px;
 }
 
-.user-info-bar {
+.project-dialog-large .user-info-bar,
+.user-project-config .user-info-bar {
   display: flex;
   gap: 24px;
   padding: 10px 14px;
@@ -60,32 +64,37 @@
   color: var(--text-secondary);
 }
 
-.user-info-bar b {
+.project-dialog-large .user-info-bar b,
+.user-project-config .user-info-bar b {
   color: var(--text-color);
   font-weight: 500;
 }
 
-.dept-projects {
+.project-dialog-large .dept-projects,
+.user-project-config .dept-projects {
   padding: 10px 14px;
   background: var(--bg-secondary);
   border-radius: 6px;
   border: 1px solid var(--border-color);
 }
 
-.section-label {
+.project-dialog-large .section-label,
+.user-project-config .section-label {
   font-size: 13px;
   color: var(--text-secondary);
   margin-bottom: 8px;
   display: block;
 }
 
-.dept-tags {
+.project-dialog-large .dept-tags,
+.user-project-config .dept-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
 
-.dept-tags .tag {
+.project-dialog-large .dept-tags .tag,
+.user-project-config .dept-tags .tag {
   padding: 2px 8px;
   background: var(--bg-color);
   border: 1px solid var(--border-color);
@@ -94,14 +103,18 @@
   color: var(--text-secondary);
 }
 
-.config-container {
+.project-dialog-large .config-container,
+.user-project-config .config-container {
   display: flex;
   gap: 16px;
   flex: 1;
   min-height: 300px;
 }
 
-.project-panel, .menu-panel {
+.project-dialog-large .project-panel,
+.project-dialog-large .menu-panel,
+.user-project-config .project-panel,
+.user-project-config .menu-panel {
   display: flex;
   flex-direction: column;
   border: 1px solid var(--border-color);
@@ -109,10 +122,13 @@
   overflow: hidden;
 }
 
-.project-panel { width: 280px; flex-shrink: 0; }
-.menu-panel { flex: 1; }
+.project-dialog-large .project-panel,
+.user-project-config .project-panel { width: 280px; flex-shrink: 0; }
+.project-dialog-large .menu-panel,
+.user-project-config .menu-panel { flex: 1; }
 
-.panel-header {
+.project-dialog-large .panel-header,
+.user-project-config .panel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -124,7 +140,8 @@
   color: var(--text-color);
 }
 
-.panel-footer {
+.project-dialog-large .panel-footer,
+.user-project-config .panel-footer {
   padding: 8px 14px;
   background: var(--bg-secondary);
   border-top: 1px solid var(--border-color);
@@ -132,9 +149,11 @@
   color: var(--text-muted);
 }
 
-.add-project-wrapper { position: relative; }
+.project-dialog-large .add-project-wrapper,
+.user-project-config .add-project-wrapper { position: relative; }
 
-.add-popover {
+.project-dialog-large .add-popover,
+.user-project-config .add-popover {
   position: absolute;
   top: 100%;
   right: 0;
@@ -147,7 +166,8 @@
   padding: 10px;
 }
 
-.add-popover input {
+.project-dialog-large .add-popover input,
+.user-project-config .add-popover input {
   width: 100%;
   padding: 6px 10px;
   border: 1px solid var(--border-color);
@@ -158,12 +178,14 @@
   color: var(--text-color);
 }
 
-.add-list {
+.project-dialog-large .add-list,
+.user-project-config .add-list {
   max-height: 200px;
   overflow-y: auto;
 }
 
-.add-item {
+.project-dialog-large .add-item,
+.user-project-config .add-item {
   display: flex;
   justify-content: space-between;
   padding: 8px 10px;
@@ -171,17 +193,22 @@
   border-radius: 4px;
 }
 
-.add-item:hover { background: var(--bg-hover); }
-.add-item .name { font-size: 13px; color: var(--text-color); }
-.add-item .code { font-size: 12px; color: var(--text-muted); }
+.project-dialog-large .add-item:hover,
+.user-project-config .add-item:hover { background: var(--bg-hover); }
+.project-dialog-large .add-item .name,
+.user-project-config .add-item .name { font-size: 13px; color: var(--text-color); }
+.project-dialog-large .add-item .code,
+.user-project-config .add-item .code { font-size: 12px; color: var(--text-muted); }
 
-.project-list {
+.project-dialog-large .project-list,
+.user-project-config .project-list {
   flex: 1;
   overflow-y: auto;
   padding: 8px;
 }
 
-.project-item {
+.project-dialog-large .project-item,
+.user-project-config .project-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -192,34 +219,46 @@
   transition: all 0.15s;
 }
 
-.project-item:hover { background: var(--bg-hover); }
-.project-item.active {
+.project-dialog-large .project-item:hover,
+.user-project-config .project-item:hover { background: var(--bg-hover); }
+.project-dialog-large .project-item.active,
+.user-project-config .project-item.active {
   background: rgba(64, 158, 255, 0.1);
   border: 1px solid rgba(64, 158, 255, 0.3);
 }
 
-.project-info { display: flex; flex-direction: column; gap: 2px; }
-.project-name { font-size: 13px; font-weight: 500; color: var(--text-color); }
-.project-code { font-size: 11px; color: var(--text-muted); }
+.project-dialog-large .project-info,
+.user-project-config .project-info { display: flex; flex-direction: column; gap: 2px; }
+.project-dialog-large .project-name,
+.user-project-config .project-name { font-size: 13px; font-weight: 500; color: var(--text-color); }
+.project-dialog-large .project-code,
+.user-project-config .project-code { font-size: 11px; color: var(--text-muted); }
 
-.project-actions { display: flex; align-items: center; gap: 8px; }
-.check-icon { color: var(--success-color); font-size: 14px; }
-.delete-icon {
+.project-dialog-large .project-actions,
+.user-project-config .project-actions { display: flex; align-items: center; gap: 8px; }
+.project-dialog-large .check-icon,
+.user-project-config .check-icon { color: var(--success-color); font-size: 14px; }
+.project-dialog-large .delete-icon,
+.user-project-config .delete-icon {
   color: var(--text-muted);
   font-size: 16px;
   opacity: 0;
   cursor: pointer;
   transition: all 0.15s;
 }
-.project-item:hover .delete-icon { opacity: 1; }
-.delete-icon:hover { color: var(--danger-color); }
+.project-dialog-large .project-item:hover .delete-icon,
+.user-project-config .project-item:hover .delete-icon { opacity: 1; }
+.project-dialog-large .delete-icon:hover,
+.user-project-config .delete-icon:hover { color: var(--danger-color); }
 
-.menu-search {
+.project-dialog-large .menu-search,
+.user-project-config .menu-search {
   padding: 8px 12px;
   border-bottom: 1px solid var(--border-color);
 }
 
-.menu-search input {
+.project-dialog-large .menu-search input,
+.user-project-config .menu-search input {
   width: 100%;
   padding: 6px 10px;
   border: 1px solid var(--border-color);
@@ -229,13 +268,15 @@
   color: var(--text-color);
 }
 
-.menu-tree {
+.project-dialog-large .menu-tree,
+.user-project-config .menu-tree {
   flex: 1;
   overflow-y: auto;
   padding: 8px 12px;
 }
 
-.perm-menu-item {
+.project-dialog-large .perm-menu-item,
+.user-project-config .perm-menu-item {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -246,18 +287,21 @@
   border-radius: 4px;
 }
 
-.perm-menu-item:hover {
+.project-dialog-large .perm-menu-item:hover,
+.user-project-config .perm-menu-item:hover {
   background: var(--bg-hover);
 }
 
-.perm-menu-item {
+.project-dialog-large .perm-menu-item,
+.user-project-config .perm-menu-item {
   position: relative;
   padding-left: 24px;
   cursor: pointer;
   user-select: none;
 }
 
-.perm-menu-item input[type="checkbox"] {
+.project-dialog-large .perm-menu-item input[type="checkbox"],
+.user-project-config .perm-menu-item input[type="checkbox"] {
   position: absolute;
   opacity: 0;
   width: 0;
@@ -265,7 +309,8 @@
   pointer-events: none;
 }
 
-.perm-menu-item .checkmark {
+.project-dialog-large .perm-menu-item .checkmark,
+.user-project-config .perm-menu-item .checkmark {
   position: absolute;
   left: 2px;
   top: 50%;
@@ -281,12 +326,14 @@
   justify-content: center;
 }
 
-.perm-menu-item input:checked + .checkmark {
+.project-dialog-large .perm-menu-item input:checked + .checkmark,
+.user-project-config .perm-menu-item input:checked + .checkmark {
   background: var(--primary-color, #1890ff);
   border-color: var(--primary-color, #1890ff);
 }
 
-.perm-menu-item input:checked + .checkmark::after {
+.project-dialog-large .perm-menu-item input:checked + .checkmark::after,
+.user-project-config .perm-menu-item input:checked + .checkmark::after {
   content: '✓';
   color: #fff;
   font-size: 11px;
@@ -294,11 +341,13 @@
   line-height: 1;
 }
 
-.perm-menu-item span.menu-label {
+.project-dialog-large .perm-menu-item span.menu-label,
+.user-project-config .perm-menu-item span.menu-label {
   color: var(--text-color);
 }
 
-.menu-placeholder {
+.project-dialog-large .menu-placeholder,
+.user-project-config .menu-placeholder {
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -308,16 +357,19 @@
   font-size: 14px;
 }
 
-.menu-actions { display: flex; gap: 6px; }
+.project-dialog-large .menu-actions,
+.user-project-config .menu-actions { display: flex; gap: 6px; }
 
-.project-dialog-large .empty-tip {
+.project-dialog-large .empty-tip,
+.user-project-config .empty-tip {
   padding: 20px;
   text-align: center;
   color: var(--text-muted);
   font-size: 13px;
 }
 
-.dialog-footer {
+.project-dialog-large .dialog-footer,
+.user-project-config .dialog-footer {
   padding: 16px 20px;
   border-top: 1px solid var(--border-color);
   display: flex;
@@ -326,7 +378,8 @@
 }
 
 /* 按钮尺寸扩展 */
-.btn-sm { padding: 4px 10px; font-size: 12px; }
+.project-dialog-large .btn-sm,
+.user-project-config .btn-sm { padding: 4px 10px; font-size: 12px; }
 
 /* 独立窗口版本样式 */
 .user-project-config {

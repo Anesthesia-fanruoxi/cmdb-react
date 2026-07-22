@@ -98,5 +98,5 @@
 
 .audit-key-page .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.spin { animation: spin 1s linear infinite; }
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.audit-key-page .spin { animation: audit-key-spin 1s linear infinite; }
+@keyframes audit-key-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

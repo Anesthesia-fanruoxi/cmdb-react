@@ -6,32 +6,32 @@
   gap: 20px;
 }
 
-.al-balance-toolbar {
+.al-balance-page .al-balance-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.al-balance-title {
+.al-balance-page .al-balance-title {
   font-size: 16px;
   font-weight: 600;
   color: var(--text-color, #333);
 }
 
-.al-balance-actions {
+.al-balance-page .al-balance-actions {
   display: flex;
   gap: 8px;
   align-items: center;
 }
 
 /* 卡片网格 */
-.balance-card-grid {
+.al-balance-page .balance-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 16px;
 }
 
-.balance-card {
+.al-balance-page .balance-card {
   background: var(--bg-color, #fff);
   border: 1px solid var(--border-color, #e8e8e8);
   border-radius: 8px;
@@ -39,18 +39,18 @@
   transition: box-shadow 0.2s;
 }
 
-.balance-card:hover {
+.al-balance-page .balance-card:hover {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
-.balance-card-header {
+.al-balance-page .balance-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 14px;
 }
 
-.balance-card-title {
+.al-balance-page .balance-card-title {
   font-size: 14px;
   font-weight: 600;
   color: var(--text-color, #333);
@@ -60,30 +60,30 @@
   max-width: 160px;
 }
 
-.balance-status-tag {
+.al-balance-page .balance-status-tag {
   font-size: 12px;
   padding: 2px 8px;
   border-radius: 10px;
   font-weight: 500;
 }
 
-.balance-status-tag.success {
+.al-balance-page .balance-status-tag.success {
   background: #f0faf0;
   color: #52c41a;
 }
 
-.balance-status-tag.error {
+.al-balance-page .balance-status-tag.error {
   background: #fff2f0;
   color: #ff4d4f;
 }
 
-.balance-card-body {
+.al-balance-page .balance-card-body {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.balance-main-row {
+.al-balance-page .balance-main-row {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -92,44 +92,44 @@
   margin-bottom: 2px;
 }
 
-.balance-card.clickable {
+.al-balance-page .balance-card.clickable {
   cursor: pointer;
 }
 
-.balance-card.clickable:hover {
+.al-balance-page .balance-card.clickable:hover {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   border-color: var(--primary-color, #1890ff);
 }
 
-.balance-main-row {
+.al-balance-page .balance-main-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.balance-amount-value {
+.al-balance-page .balance-amount-value {
   font-size: 18px;
   font-weight: 700;
 }
 
-.amount-dark-green  { color: #a855f7; }
-.amount-light-green { color: #22c55e; }
-.amount-blue        { color: #3b82f6; }
-.amount-red         { color: #ef4444; }
+.al-balance-page .amount-dark-green  { color: #a855f7; }
+.al-balance-page .amount-light-green { color: #22c55e; }
+.al-balance-page .amount-blue        { color: #3b82f6; }
+.al-balance-page .amount-red         { color: #ef4444; }
 
-.balance-row {
+.al-balance-page .balance-row {
   display: flex;
   justify-content: space-between;
   font-size: 13px;
   color: var(--text-color, #333);
 }
 
-.balance-label {
+.al-balance-page .balance-label {
   color: var(--text-secondary, #999);
   font-size: 12px;
 }
 
-.balance-card-error {
+.al-balance-page .balance-card-error {
   display: flex;
   align-items: flex-start;
   gap: 6px;
@@ -139,7 +139,7 @@
 }
 
 /* 空状态 */
-.al-balance-empty {
+.al-balance-page .al-balance-empty {
   flex: 1;
   display: flex;
   align-items: center;
@@ -150,7 +150,7 @@
 }
 
 /* 设置弹窗 */
-.setting-modal-overlay {
+.al-balance-page .setting-modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
@@ -160,7 +160,7 @@
   z-index: 1000;
 }
 
-.setting-modal {
+.al-balance-page .setting-modal {
   background: var(--bg-color, #fff);
   border-radius: 8px;
   width: 480px;
@@ -170,7 +170,7 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
 }
 
-.setting-modal-header {
+.al-balance-page .setting-modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -180,7 +180,7 @@
   font-weight: 600;
 }
 
-.setting-modal-close {
+.al-balance-page .setting-modal-close {
   background: none;
   border: none;
   cursor: pointer;
@@ -191,30 +191,30 @@
   border-radius: 4px;
 }
 
-.setting-modal-close:hover {
+.al-balance-page .setting-modal-close:hover {
   color: var(--text-color, #333);
   background: var(--hover-bg, #f5f5f5);
 }
 
-.setting-modal-body {
+.al-balance-page .setting-modal-body {
   padding: 16px 20px;
   overflow-y: auto;
   flex: 1;
 }
 
-.setting-tip {
+.al-balance-page .setting-tip {
   font-size: 13px;
   color: var(--text-secondary, #999);
   margin-bottom: 10px;
 }
 
-.setting-project-list {
+.al-balance-page .setting-project-list {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.setting-checkbox-item {
+.al-balance-page .setting-checkbox-item {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -228,18 +228,18 @@
   user-select: none;
 }
 
-.setting-checkbox-item:hover {
+.al-balance-page .setting-checkbox-item:hover {
   border-color: var(--primary-color);
   background: var(--primary-color-light, rgba(99, 102, 241, 0.08));
 }
 
-.setting-checkbox-item.checked {
+.al-balance-page .setting-checkbox-item.checked {
   border-color: var(--primary-color);
   background: var(--primary-color-light, rgba(99, 102, 241, 0.12));
   color: var(--primary-color);
 }
 
-.setting-checkbox-item input[type="checkbox"] {
+.al-balance-page .setting-checkbox-item input[type="checkbox"] {
   width: 15px;
   height: 15px;
   cursor: pointer;
@@ -247,7 +247,7 @@
   flex-shrink: 0;
 }
 
-.setting-modal-footer {
+.al-balance-page .setting-modal-footer {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
@@ -255,7 +255,7 @@
   border-top: 1px solid var(--border-color, #f0f0f0);
 }
 
-.btn {
+.al-balance-page .btn {
   padding: 6px 16px;
   border-radius: 4px;
   font-size: 14px;
@@ -266,25 +266,25 @@
   transition: all 0.2s;
 }
 
-.btn:hover {
+.al-balance-page .btn:hover {
   border-color: var(--primary-color);
   color: var(--primary-color);
 }
 
-.btn-primary {
+.al-balance-page .btn-primary {
   background: var(--primary-color);
   border-color: var(--primary-color);
   color: #fff;
 }
 
-.btn-primary:hover {
+.al-balance-page .btn-primary:hover {
   opacity: 0.85;
 }
 
-.btn-primary:disabled {
+.al-balance-page .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.spin { animation: spin 1s linear infinite; }
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.al-balance-page .spin { animation: al-balance-spin 1s linear infinite; }
+@keyframes al-balance-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

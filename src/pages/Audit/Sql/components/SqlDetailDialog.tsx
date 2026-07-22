@@ -19,7 +19,7 @@ const SqlDetailDialog = ({ visible, data, operations, onClose }: Props) => {
 
   return (
     <>
-      <div className="dialog-overlay" onClick={onClose} />
+      <div className="dialog-overlay sql-detail-overlay" onClick={onClose} />
       <div className="dialog-container sql-detail-dialog">
         <div className="dialog-header">
           <h3>SQL详情</h3>
@@ -71,33 +71,33 @@ const SqlDetailDialog = ({ visible, data, operations, onClose }: Props) => {
         </div>
       </div>
       <style>{`
-        .dialog-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.6); z-index: 1100; backdrop-filter: blur(2px); }
+        .sql-detail-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.6); z-index: 1100; backdrop-filter: blur(2px); }
         .sql-detail-dialog { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 800px; max-width: 90%; max-height: 80vh; background: var(--bg-color); border-radius: 8px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); border: 1px solid var(--border-color); z-index: 1101; display: flex; flex-direction: column; }
-        .dialog-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); background: var(--bg-secondary); }
-        .dialog-header h3 { margin: 0; font-size: 16px; font-weight: 600; color: var(--text-color); }
-        .dialog-close { background: none; border: none; cursor: pointer; color: var(--text-secondary); padding: 4px; border-radius: 4px; transition: all 0.2s; }
-        .dialog-close:hover { background: var(--bg-hover); color: var(--text-color); }
-        .dialog-body { padding: 20px; overflow: auto; flex: 1; }
-        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--border-color); border-radius: 4px; }
-        .detail-item { display: flex; border-bottom: 1px solid var(--border-color); border-right: 1px solid var(--border-color); }
-        .detail-item:nth-child(2n) { border-right: none; }
-        .detail-item.full { grid-column: 1 / -1; border-right: none; }
-        .detail-item:nth-last-child(1) { border-bottom: none; }
-        .detail-item .label { width: 90px; padding: 10px 12px; background: var(--bg-secondary); color: var(--text-secondary); font-size: 13px; flex-shrink: 0; }
-        .detail-item .value { flex: 1; padding: 10px 12px; color: var(--text-color); font-size: 13px; word-break: break-all; }
-        .detail-item .value.sql { font-family: monospace; background: var(--bg-secondary); white-space: pre-wrap; }
-        .detail-item .value.error { color: #ff4d4f; }
-        .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
-        .tag.success { background: rgba(82, 196, 26, 0.1); color: #52c41a; }
-        .tag.warning { background: rgba(250, 173, 20, 0.1); color: #faad14; }
-        .tag.danger { background: rgba(255, 77, 79, 0.1); color: #ff4d4f; }
-        .tag.info { background: var(--bg-secondary); color: var(--text-secondary); }
-        .operations-section { margin-top: 20px; }
-        .operations-section h4 { font-size: 14px; font-weight: 500; color: var(--text-color); margin-bottom: 12px; padding-top: 12px; border-top: 1px solid var(--border-color); }
-        .ops-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .ops-table th, .ops-table td { padding: 10px 12px; text-align: left; border: 1px solid var(--border-color); }
-        .ops-table th { background: var(--bg-secondary); font-weight: 500; color: var(--text-color); }
-        .ops-table td { color: var(--text-secondary); }
+        .sql-detail-dialog .dialog-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); background: var(--bg-secondary); }
+        .sql-detail-dialog .dialog-header h3 { margin: 0; font-size: 16px; font-weight: 600; color: var(--text-color); }
+        .sql-detail-dialog .dialog-close { background: none; border: none; cursor: pointer; color: var(--text-secondary); padding: 4px; border-radius: 4px; transition: all 0.2s; }
+        .sql-detail-dialog .dialog-close:hover { background: var(--bg-hover); color: var(--text-color); }
+        .sql-detail-dialog .dialog-body { padding: 20px; overflow: auto; flex: 1; }
+        .sql-detail-dialog .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--border-color); border-radius: 4px; }
+        .sql-detail-dialog .detail-item { display: flex; border-bottom: 1px solid var(--border-color); border-right: 1px solid var(--border-color); }
+        .sql-detail-dialog .detail-item:nth-child(2n) { border-right: none; }
+        .sql-detail-dialog .detail-item.full { grid-column: 1 / -1; border-right: none; }
+        .sql-detail-dialog .detail-item:nth-last-child(1) { border-bottom: none; }
+        .sql-detail-dialog .detail-item .label { width: 90px; padding: 10px 12px; background: var(--bg-secondary); color: var(--text-secondary); font-size: 13px; flex-shrink: 0; }
+        .sql-detail-dialog .detail-item .value { flex: 1; padding: 10px 12px; color: var(--text-color); font-size: 13px; word-break: break-all; }
+        .sql-detail-dialog .detail-item .value.sql { font-family: monospace; background: var(--bg-secondary); white-space: pre-wrap; }
+        .sql-detail-dialog .detail-item .value.error { color: #ff4d4f; }
+        .sql-detail-dialog .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+        .sql-detail-dialog .tag.success { background: rgba(82, 196, 26, 0.1); color: #52c41a; }
+        .sql-detail-dialog .tag.warning { background: rgba(250, 173, 20, 0.1); color: #faad14; }
+        .sql-detail-dialog .tag.danger { background: rgba(255, 77, 79, 0.1); color: #ff4d4f; }
+        .sql-detail-dialog .tag.info { background: var(--bg-secondary); color: var(--text-secondary); }
+        .sql-detail-dialog .operations-section { margin-top: 20px; }
+        .sql-detail-dialog .operations-section h4 { font-size: 14px; font-weight: 500; color: var(--text-color); margin-bottom: 12px; padding-top: 12px; border-top: 1px solid var(--border-color); }
+        .sql-detail-dialog .ops-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .sql-detail-dialog .ops-table th, .sql-detail-dialog .ops-table td { padding: 10px 12px; text-align: left; border: 1px solid var(--border-color); }
+        .sql-detail-dialog .ops-table th { background: var(--bg-secondary); font-weight: 500; color: var(--text-color); }
+        .sql-detail-dialog .ops-table td { color: var(--text-secondary); }
       `}</style>
     </>
   );

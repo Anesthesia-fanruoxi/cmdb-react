@@ -166,18 +166,18 @@ const LogViewerDialog = ({ visible, logStep, taskInfo, projectDetail, onClose }:
       <style>{`
         .log-dialog-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1200; }
         .log-dialog-container { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; max-width: 1000px; height: 600px; background: var(--bg-color, #fff); border-radius: 8px; z-index: 1201; display: flex; flex-direction: column; box-shadow: 0 8px 40px rgba(0,0,0,0.25); }
-        .log-dialog-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-bottom: 1px solid var(--border-color, #e8e8e8); }
-        .log-dialog-header h3 { margin: 0; font-size: 16px; }
-        .header-right { display: flex; align-items: center; gap: 12px; }
-        .ws-status { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: #f0f0f0; color: #999; }
-        .ws-status.connected { background: #f6ffed; color: #52c41a; }
-        .dialog-close { background: none; border: none; cursor: pointer; color: var(--text-secondary, #666); }
-        .log-dialog-body { flex: 1; padding: 16px; overflow: hidden; }
-        .log-content { height: 100%; background: #2F4F4F; color: #008B45; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 12px; padding: 15px; border-radius: 4px; overflow-y: auto; border: 1px solid #4a6741; }
-        .log-line { margin: 2px 0; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; }
-        .no-logs { color: #B0C4DE; text-align: center; padding: 50px 0; font-size: 14px; }
-        .log-dialog-footer { display: flex; justify-content: flex-end; padding: 12px 20px; border-top: 1px solid var(--border-color, #e8e8e8); }
-        .btn-default { padding: 6px 16px; border: 1px solid var(--border-color, #d9d9d9); background: var(--bg-secondary, #2a2a2a); color: var(--text-color, #e0e0e0); border-radius: 4px; cursor: pointer; }
+        .log-dialog-container .log-dialog-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-bottom: 1px solid var(--border-color, #e8e8e8); }
+        .log-dialog-container .log-dialog-header h3 { margin: 0; font-size: 16px; }
+        .log-dialog-container .header-right { display: flex; align-items: center; gap: 12px; }
+        .log-dialog-container .ws-status { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: #f0f0f0; color: #999; }
+        .log-dialog-container .ws-status.connected { background: #f6ffed; color: #52c41a; }
+        .log-dialog-container .dialog-close { background: none; border: none; cursor: pointer; color: var(--text-secondary, #666); }
+        .log-dialog-container .log-dialog-body { flex: 1; padding: 16px; overflow: hidden; }
+        .log-dialog-container .log-content { height: 100%; background: #2F4F4F; color: #008B45; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 12px; padding: 15px; border-radius: 4px; overflow-y: auto; border: 1px solid #4a6741; }
+        .log-dialog-container .log-line { margin: 2px 0; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; }
+        .log-dialog-container .no-logs { color: #B0C4DE; text-align: center; padding: 50px 0; font-size: 14px; }
+        .log-dialog-container .log-dialog-footer { display: flex; justify-content: flex-end; padding: 12px 20px; border-top: 1px solid var(--border-color, #e8e8e8); }
+        .log-dialog-container .btn-default { padding: 6px 16px; border: 1px solid var(--border-color, #d9d9d9); background: var(--bg-secondary, #2a2a2a); color: var(--text-color, #e0e0e0); border-radius: 4px; cursor: pointer; }
       `}</style>
     </>
   );

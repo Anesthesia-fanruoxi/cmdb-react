@@ -1,5 +1,6 @@
 /**
  * 图标选择器样式
+ * 作用域：.icon-select（弹窗渲染在组件根内，统一收敛）
  */
 
 .icon-select {
@@ -7,7 +8,7 @@
   width: 100%;
 }
 
-.icon-select-trigger {
+.icon-select .icon-select-trigger {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -19,28 +20,28 @@
   min-height: 38px;
 }
 
-.icon-select-trigger:hover {
+.icon-select .icon-select-trigger:hover {
   border-color: var(--primary-color);
 }
 
-.icon-select-trigger .icon-name {
+.icon-select .icon-select-trigger .icon-name {
   flex: 1;
   font-size: 13px;
   color: var(--text-secondary);
 }
 
-.icon-select-trigger .placeholder {
+.icon-select .icon-select-trigger .placeholder {
   flex: 1;
   color: var(--text-muted);
 }
 
-.icon-select-trigger .arrow {
+.icon-select .icon-select-trigger .arrow {
   font-size: 10px;
   color: var(--text-muted);
 }
 
 /* 弹窗遮罩 */
-.icon-modal-overlay {
+.icon-select .icon-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -54,7 +55,7 @@
 }
 
 /* 弹窗主体 */
-.icon-modal {
+.icon-select .icon-modal {
   background: var(--bg-color);
   border-radius: 12px;
   width: 720px;
@@ -65,7 +66,7 @@
   box-shadow: var(--shadow-md);
 }
 
-.icon-modal-header {
+.icon-select .icon-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -73,13 +74,13 @@
   border-bottom: 1px solid var(--border-color);
 }
 
-.icon-modal-header h4 {
+.icon-select .icon-modal-header h4 {
   margin: 0;
   font-size: 16px;
   color: var(--text-color);
 }
 
-.icon-modal-header .close-btn {
+.icon-select .icon-modal-header .close-btn {
   background: none;
   border: none;
   font-size: 24px;
@@ -89,18 +90,18 @@
   padding: 0;
 }
 
-.icon-modal-header .close-btn:hover {
+.icon-select .icon-modal-header .close-btn:hover {
   color: var(--text-color);
 }
 
 /* 搜索框 */
-.icon-modal-search {
+.icon-select .icon-modal-search {
   position: relative;
   padding: 12px 20px;
   border-bottom: 1px solid var(--border-color);
 }
 
-.icon-modal-search .search-icon {
+.icon-select .icon-modal-search .search-icon {
   position: absolute;
   left: 32px;
   top: 50%;
@@ -108,7 +109,7 @@
   color: var(--text-muted);
 }
 
-.icon-modal-search input {
+.icon-select .icon-modal-search input {
   width: 100%;
   padding: 10px 36px;
   border: 1px solid var(--border-color-dark);
@@ -119,13 +120,13 @@
   box-sizing: border-box;
 }
 
-.icon-modal-search input:focus {
+.icon-select .icon-modal-search input:focus {
   outline: none;
   border-color: var(--primary-color);
   background: var(--bg-color);
 }
 
-.icon-modal-search .clear-btn {
+.icon-select .icon-modal-search .clear-btn {
   position: absolute;
   right: 32px;
   top: 50%;
@@ -139,12 +140,12 @@
   align-items: center;
 }
 
-.icon-modal-search .clear-btn:hover {
+.icon-select .icon-modal-search .clear-btn:hover {
   color: var(--text-color);
 }
 
 /* 弹窗内容 */
-.icon-modal-body {
+.icon-select .icon-modal-body {
   flex: 1;
   overflow: hidden;
   display: flex;
@@ -152,7 +153,7 @@
 }
 
 /* 分类标签 */
-.category-tabs {
+.icon-select .category-tabs {
   display: flex;
   gap: 8px;
   padding: 12px 20px;
@@ -161,7 +162,7 @@
   flex-shrink: 0;
 }
 
-.category-tab {
+.icon-select .category-tab {
   padding: 6px 12px;
   border: none;
   background: var(--bg-secondary);
@@ -173,32 +174,32 @@
   transition: all 0.2s;
 }
 
-.category-tab:hover {
+.icon-select .category-tab:hover {
   background: var(--bg-hover);
   color: var(--text-color);
 }
 
-.category-tab.active {
+.icon-select .category-tab.active {
   background: var(--primary-color);
   color: #fff;
 }
 
 /* 图标列表 */
-.icon-list {
+.icon-select .icon-list {
   flex: 1;
   overflow-y: auto;
   padding: 16px 20px;
 }
 
-.icon-category {
+.icon-select .icon-category {
   margin-bottom: 20px;
 }
 
-.icon-category:last-child {
+.icon-select .icon-category:last-child {
   margin-bottom: 0;
 }
 
-.category-title {
+.icon-select .category-title {
   font-size: 13px;
   font-weight: 500;
   color: var(--text-secondary);
@@ -207,13 +208,13 @@
   border-bottom: 1px solid var(--border-color);
 }
 
-.icon-grid {
+.icon-select .icon-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
   gap: 8px;
 }
 
-.icon-item {
+.icon-select .icon-item {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -225,17 +226,17 @@
   transition: all 0.2s;
 }
 
-.icon-item:hover {
+.icon-select .icon-item:hover {
   background: var(--bg-hover);
   color: var(--primary-color);
 }
 
-.icon-item.selected {
+.icon-select .icon-item.selected {
   background: var(--primary-color);
   color: #fff;
 }
 
-.icon-item .icon-label {
+.icon-select .icon-item .icon-label {
   font-size: 11px;
   color: inherit;
   opacity: 0.7;
@@ -244,7 +245,7 @@
   line-height: 1.2;
 }
 
-.no-result {
+.icon-select .no-result {
   text-align: center;
   padding: 40px;
   color: var(--text-muted);

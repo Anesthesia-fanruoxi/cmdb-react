@@ -1,12 +1,12 @@
-/* ELFK 日志搜索 - 字段列表 */
+/* ELFK 日志搜索 - 字段列表（作用域：.elfk-search-page） */
 
-.field-list {
+.elfk-search-page .field-list {
   height: 100%;
   display: flex;
   flex-direction: column;
 }
 
-.field-header {
+.elfk-search-page .field-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -15,13 +15,13 @@
   flex-shrink: 0;
 }
 
-.field-title {
+.elfk-search-page .field-title {
   font-size: 13px;
   font-weight: 500;
   color: var(--text-color, #333);
 }
 
-.field-count {
+.elfk-search-page .field-count {
   font-size: 11px;
   color: var(--text-secondary, #999);
   background: var(--bg-secondary, #f5f5f5);
@@ -29,13 +29,13 @@
   border-radius: 10px;
 }
 
-.field-search {
+.elfk-search-page .field-search {
   padding: 8px;
   border-bottom: 1px solid var(--border-color, #e8e8e8);
   flex-shrink: 0;
 }
 
-.field-search input {
+.elfk-search-page .field-search input {
   width: 100%;
   height: 28px;
   padding: 0 8px;
@@ -46,25 +46,25 @@
   color: var(--text-color, #333);
 }
 
-.field-search input:focus {
+.elfk-search-page .field-search input:focus {
   outline: none;
   border-color: var(--primary-color, #1890ff);
   background: var(--bg-color, #fff);
 }
 
-.field-content {
+.elfk-search-page .field-content {
   flex: 1;
   overflow-y: auto;
 }
 
-.field-placeholder {
+.elfk-search-page .field-placeholder {
   padding: 20px 12px;
   text-align: center;
   color: var(--text-secondary, #999);
   font-size: 12px;
 }
 
-.field-item {
+.elfk-search-page .field-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -74,20 +74,20 @@
   transition: background 0.15s;
 }
 
-.field-item:hover {
+.elfk-search-page .field-item:hover {
   background: var(--bg-hover, #f5f5f5);
 }
 
-.field-item.selected {
+.elfk-search-page .field-item.selected {
   background: rgba(24, 144, 255, 0.1);
 }
 
-.field-item.selected .field-name {
+.elfk-search-page .field-item.selected .field-name {
   color: var(--primary-color, #1890ff);
   font-weight: 500;
 }
 
-.field-name {
+.elfk-search-page .field-name {
   font-size: 12px;
   color: var(--text-color, #333);
   overflow: hidden;
@@ -96,7 +96,7 @@
   flex: 1;
 }
 
-.field-type {
+.elfk-search-page .field-type {
   font-size: 10px;
   padding: 1px 4px;
   border-radius: 3px;

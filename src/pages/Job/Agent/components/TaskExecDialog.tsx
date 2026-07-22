@@ -38,7 +38,7 @@ const TaskExecDialog = ({ visible, task, project, execList, loading, onClose, on
 
   return (
     <>
-      <div className="dialog-overlay" onClick={onClose} />
+      <div className="dialog-overlay exec-dialog-overlay" onClick={onClose} />
       <div className="dialog-container exec-dialog">
         <div className="dialog-header">
           <h3>{task.name} - 执行记录</h3>
@@ -85,29 +85,30 @@ const TaskExecDialog = ({ visible, task, project, execList, loading, onClose, on
         </div>
       </div>
       <style>{`
-        .dialog-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1100; }
+        .exec-dialog-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1100; }
         .exec-dialog { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 700px; max-width: 90%; max-height: 80vh; background: var(--bg-color); border-radius: 8px; z-index: 1101; display: flex; flex-direction: column; box-shadow: 0 6px 30px rgba(0,0,0,0.2); }
-        .dialog-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
-        .dialog-header h3 { margin: 0; font-size: 16px; color: var(--text-color); }
-        .dialog-close { background: none; border: none; cursor: pointer; color: var(--text-secondary); }
-        .dialog-body { flex: 1; overflow: auto; padding: 20px; }
-        .task-info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 16px; background: var(--bg-secondary); border-radius: 6px; margin-bottom: 20px; }
-        .info-item { display: flex; flex-direction: column; gap: 4px; }
-        .info-item .label { font-size: 12px; color: var(--text-secondary); }
-        .exec-section h4 { margin: 0 0 12px; font-size: 15px; color: var(--text-color); }
-        .loading-state, .empty-state { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 30px; color: var(--text-secondary); }
-        .exec-table-wrapper { overflow: auto; border: 1px solid var(--border-color); border-radius: 6px; max-height: 300px; }
-        .exec-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .exec-table th, .exec-table td { padding: 10px 12px; border-bottom: 1px solid var(--border-color); text-align: center; }
-        .exec-table th { background: var(--bg-secondary); font-weight: 600; color: var(--text-color); position: sticky; top: 0; z-index: 1; }
-        .status-tag { display: inline-block; padding: 2px 8px; font-size: 12px; }
-        .status-tag.success { color: #52c41a; }
-        .status-tag.danger { color: #ff4d4f; }
-        .status-tag.warning { color: #faad14; }
-        .status-tag.default { color: var(--text-secondary); }
-        .btn-link { background: none; border: none; color: var(--primary-color); cursor: pointer; font-size: 12px; }
-        .btn-link:hover { text-decoration: underline; }
-        .spin { animation: spin 1s linear infinite; }
+        .exec-dialog .dialog-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
+        .exec-dialog .dialog-header h3 { margin: 0; font-size: 16px; color: var(--text-color); }
+        .exec-dialog .dialog-close { background: none; border: none; cursor: pointer; color: var(--text-secondary); }
+        .exec-dialog .dialog-body { flex: 1; overflow: auto; padding: 20px; }
+        .exec-dialog .task-info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 16px; background: var(--bg-secondary); border-radius: 6px; margin-bottom: 20px; }
+        .exec-dialog .info-item { display: flex; flex-direction: column; gap: 4px; }
+        .exec-dialog .info-item .label { font-size: 12px; color: var(--text-secondary); }
+        .exec-dialog .exec-section h4 { margin: 0 0 12px; font-size: 15px; color: var(--text-color); }
+        .exec-dialog .loading-state, .exec-dialog .empty-state { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 30px; color: var(--text-secondary); }
+        .exec-dialog .exec-table-wrapper { overflow: auto; border: 1px solid var(--border-color); border-radius: 6px; max-height: 300px; }
+        .exec-dialog .exec-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .exec-dialog .exec-table th, .exec-dialog .exec-table td { padding: 10px 12px; border-bottom: 1px solid var(--border-color); text-align: center; }
+        .exec-dialog .exec-table th { background: var(--bg-secondary); font-weight: 600; color: var(--text-color); position: sticky; top: 0; z-index: 1; }
+        .exec-dialog .status-tag { display: inline-block; padding: 2px 8px; font-size: 12px; }
+        .exec-dialog .status-tag.success { color: #52c41a; }
+        .exec-dialog .status-tag.danger { color: #ff4d4f; }
+        .exec-dialog .status-tag.warning { color: #faad14; }
+        .exec-dialog .status-tag.default { color: var(--text-secondary); }
+        .exec-dialog .btn-link { background: none; border: none; color: var(--primary-color); cursor: pointer; font-size: 12px; }
+        .exec-dialog .btn-link:hover { text-decoration: underline; }
+        .exec-dialog .spin { animation: exec-dialog-spin 1s linear infinite; }
+        @keyframes exec-dialog-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </>
   );

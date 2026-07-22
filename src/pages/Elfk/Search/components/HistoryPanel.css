@@ -1,13 +1,13 @@
 /* ELFK 历史记录面板样式 */
 
-.history-panel-overlay {
+.elfk-search-page .history-panel-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
   z-index: 1200;
 }
 
-.history-panel {
+.elfk-search-page .history-panel {
   position: fixed;
   top: 50%;
   left: 50%;
@@ -23,7 +23,7 @@
   flex-direction: column;
 }
 
-.history-panel-header {
+.elfk-search-page .history-panel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -31,13 +31,13 @@
   border-bottom: 1px solid var(--border-color);
 }
 
-.history-panel-header h3 {
+.elfk-search-page .history-panel-header h3 {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
 }
 
-.history-panel-header .close-btn {
+.elfk-search-page .history-panel-header .close-btn {
   background: none;
   border: none;
   cursor: pointer;
@@ -47,18 +47,18 @@
   display: flex;
 }
 
-.history-panel-header .close-btn:hover {
+.elfk-search-page .history-panel-header .close-btn:hover {
   background: var(--bg-secondary);
 }
 
 /* 标签页 */
-.history-tabs {
+.elfk-search-page .history-tabs {
   display: flex;
   border-bottom: 1px solid var(--border-color);
   padding: 0 20px;
 }
 
-.history-tabs .tab-btn {
+.elfk-search-page .history-tabs .tab-btn {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -72,24 +72,24 @@
   margin-bottom: -1px;
 }
 
-.history-tabs .tab-btn:hover {
+.elfk-search-page .history-tabs .tab-btn:hover {
   color: var(--primary-color);
 }
 
-.history-tabs .tab-btn.active {
+.elfk-search-page .history-tabs .tab-btn.active {
   color: var(--primary-color);
   border-bottom-color: var(--primary-color);
 }
 
 /* 搜索框 */
-.history-search {
+.elfk-search-page .history-search {
   display: flex;
   gap: 8px;
   padding: 12px 20px;
   border-bottom: 1px solid var(--border-color);
 }
 
-.history-search input {
+.elfk-search-page .history-search input {
   flex: 1;
   height: 32px;
   padding: 0 12px;
@@ -99,12 +99,12 @@
   background: var(--bg-color);
 }
 
-.history-search input:focus {
+.elfk-search-page .history-search input:focus {
   border-color: var(--primary-color);
   outline: none;
 }
 
-.history-search button {
+.elfk-search-page .history-search button {
   width: 32px;
   height: 32px;
   display: flex;
@@ -118,13 +118,13 @@
 }
 
 /* 内容区 */
-.history-content {
+.elfk-search-page .history-content {
   flex: 1;
   overflow-y: auto;
   padding: 12px 20px;
 }
 
-.list-header {
+.elfk-search-page .list-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -133,7 +133,7 @@
   color: var(--text-secondary);
 }
 
-.list-header button {
+.elfk-search-page .list-header button {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -144,7 +144,7 @@
   font-size: 12px;
 }
 
-.empty-tip, .loading-tip {
+.elfk-search-page .empty-tip, .elfk-search-page .loading-tip {
   text-align: center;
   padding: 40px 20px;
   color: var(--text-secondary);
@@ -152,7 +152,7 @@
 }
 
 /* 历史列表 */
-.history-list {
+.elfk-search-page .history-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -161,7 +161,7 @@
   gap: 8px;
 }
 
-.history-item {
+.elfk-search-page .history-item {
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -170,7 +170,7 @@
   border-radius: 6px;
 }
 
-.history-item .item-content {
+.elfk-search-page .history-item .item-content {
   flex: 1;
   cursor: pointer;
   min-width: 0;
@@ -179,7 +179,7 @@
   gap: 6px;
 }
 
-.history-item .item-keyword {
+.elfk-search-page .history-item .item-keyword {
   display: block;
   font-size: 13px;
   color: var(--text-color);
@@ -189,7 +189,7 @@
   font-family: 'Consolas', 'Monaco', monospace;
 }
 
-.history-item .item-remark {
+.elfk-search-page .history-item .item-remark {
   display: block;
   font-size: 14px;
   line-height: 1.5;
@@ -199,11 +199,11 @@
   white-space: normal;
 }
 
-.history-item.shared {
+.elfk-search-page .history-item.shared {
   border-left: 3px solid var(--primary-color);
 }
 
-.history-item.shared .item-keyword {
+.elfk-search-page .history-item.shared .item-keyword {
   font-size: 12px;
   color: var(--text-secondary);
   background: var(--bg-color);
@@ -212,12 +212,12 @@
   border: 1px solid var(--border-color);
 }
 
-.history-item .item-time {
+.elfk-search-page .history-item .item-time {
   font-size: 12px;
   color: var(--text-secondary);
 }
 
-.history-item .item-meta {
+.elfk-search-page .history-item .item-meta {
   display: flex;
   gap: 12px;
   margin-top: 4px;
@@ -225,16 +225,16 @@
   color: var(--text-secondary);
 }
 
-.history-item .item-creator {
+.elfk-search-page .history-item .item-creator {
   color: #27ae60;
 }
 
-.history-item .item-actions {
+.elfk-search-page .history-item .item-actions {
   display: flex;
   gap: 8px;
 }
 
-.history-item .btn-append {
+.elfk-search-page .history-item .btn-append {
   padding: 4px 10px;
   background: var(--bg-color);
   border: 1px solid var(--border-color);
@@ -243,12 +243,12 @@
   cursor: pointer;
 }
 
-.history-item .btn-append:hover {
+.elfk-search-page .history-item .btn-append:hover {
   border-color: var(--primary-color);
   color: var(--primary-color);
 }
 
-.history-item .btn-delete {
+.elfk-search-page .history-item .btn-delete {
   padding: 4px 8px;
   background: none;
   border: none;
@@ -256,11 +256,11 @@
   cursor: pointer;
 }
 
-.history-item .btn-delete:hover {
+.elfk-search-page .history-item .btn-delete:hover {
   color: #e74c3c;
 }
 
-.history-item .btn-edit {
+.elfk-search-page .history-item .btn-edit {
   padding: 4px 8px;
   background: none;
   border: none;
@@ -268,12 +268,12 @@
   font-size: 12px;
 }
 
-.history-item .btn-edit:hover {
+.elfk-search-page .history-item .btn-edit:hover {
   opacity: 0.7;
 }
 
 /* 分页 */
-.history-panel .pagination {
+.elfk-search-page .history-panel .pagination {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -283,7 +283,7 @@
   border-top: 1px solid var(--border-color);
 }
 
-.history-panel .pagination button {
+.elfk-search-page .history-panel .pagination button {
   padding: 6px 12px;
   background: var(--bg-color);
   border: 1px solid var(--border-color);
@@ -292,17 +292,17 @@
   cursor: pointer;
 }
 
-.history-panel .pagination button:disabled {
+.elfk-search-page .history-panel .pagination button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.history-panel .pagination button:not(:disabled):hover {
+.elfk-search-page .history-panel .pagination button:not(:disabled):hover {
   border-color: var(--primary-color);
   color: var(--primary-color);
 }
 
-.history-panel .pagination span {
+.elfk-search-page .history-panel .pagination span {
   font-size: 13px;
   color: var(--text-secondary);
 }

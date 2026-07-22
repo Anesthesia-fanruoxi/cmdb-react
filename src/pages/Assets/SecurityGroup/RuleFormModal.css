@@ -1,4 +1,4 @@
-.rule-modal-body {
+.sg-page .rule-modal-body {
   padding: 20px;
   overflow-y: auto;
   flex: 1;
@@ -7,13 +7,13 @@
   gap: 16px;
 }
 
-.rule-form-item {
+.sg-page .rule-form-item {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.rule-form-label {
+.sg-page .rule-form-label {
   font-size: 13px;
   font-weight: 500;
   color: var(--text-color, #333);
@@ -22,17 +22,17 @@
   gap: 6px;
 }
 
-.rule-form-hint {
+.sg-page .rule-form-hint {
   font-size: 12px;
   color: var(--text-secondary, #999);
   font-weight: 400;
 }
 
-.required {
+.sg-page .required {
   color: #ff4d4f;
 }
 
-.rule-form-input {
+.sg-page .rule-form-input {
   height: 34px;
   padding: 0 10px;
   border: 1px solid var(--border-color, #d9d9d9);
@@ -46,21 +46,21 @@
   box-sizing: border-box;
 }
 
-.rule-form-input:focus {
+.sg-page .rule-form-input:focus {
   border-color: var(--primary-color, #1890ff);
 }
 
-.rule-form-input:disabled {
+.sg-page .rule-form-input:disabled {
   background: var(--bg-secondary, #f5f5f5);
   color: var(--text-secondary, #999);
   cursor: not-allowed;
 }
 
-.rule-form-input-sm {
+.sg-page .rule-form-input-sm {
   width: 120px;
 }
 
-.rule-form-textarea {
+.sg-page .rule-form-textarea {
   height: auto;
   padding: 7px 10px;
   resize: vertical;
@@ -68,14 +68,14 @@
 }
 
 /* 标签页 */
-.rule-tabs {
+.sg-page .rule-tabs {
   display: flex;
   border-bottom: 1px solid var(--border-color, #f0f0f0);
   padding: 0 20px;
   gap: 4px;
 }
 
-.rule-tab {
+.sg-page .rule-tab {
   padding: 10px 16px;
   font-size: 13px;
   color: var(--text-secondary, #999);
@@ -87,18 +87,18 @@
   margin-bottom: -1px;
 }
 
-.rule-tab:hover {
+.sg-page .rule-tab:hover {
   color: var(--text-color, #333);
 }
 
-.rule-tab.active {
+.sg-page .rule-tab.active {
   color: var(--primary-color, #1890ff);
   border-bottom-color: var(--primary-color, #1890ff);
   font-weight: 500;
 }
 
 /* 备注拼接预览 */
-.rule-desc-preview {
+.sg-page .rule-desc-preview {
   font-size: 12px;
   color: var(--text-secondary, #999);
   padding: 6px 10px;
@@ -107,18 +107,18 @@
   border-left: 3px solid var(--primary-color, #1890ff);
 }
 
-.rule-desc-preview span {
+.sg-page .rule-desc-preview span {
   color: var(--primary-color, #1890ff);
   font-weight: 500;
 }
 /* 单选按钮组 */
-.rule-radio-group {
+.sg-page .rule-radio-group {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
 
-.rule-radio-item {
+.sg-page .rule-radio-item {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -132,23 +132,23 @@
   user-select: none;
 }
 
-.rule-radio-item input[type="radio"] {
+.sg-page .rule-radio-item input[type="radio"] {
   display: none;
 }
 
-.rule-radio-item:hover {
+.sg-page .rule-radio-item:hover {
   border-color: var(--primary-color, #1890ff);
   color: var(--primary-color, #1890ff);
 }
 
-.rule-radio-item.active {
+.sg-page .rule-radio-item.active {
   border-color: var(--primary-color, #1890ff);
   background: rgba(24, 144, 255, 0.08);
   color: var(--primary-color, #1890ff);
   font-weight: 500;
 }
 
-.rule-modal-footer {
+.sg-page .rule-modal-footer {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
@@ -156,5 +156,3 @@
   border-top: 1px solid var(--border-color, #f0f0f0);
   flex-shrink: 0;
 }
-
-

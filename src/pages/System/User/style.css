@@ -353,5 +353,5 @@
 }
 
 /* 动画 */
-.user-management .spin { animation: spin 1s linear infinite; }
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.user-management .spin { animation: user-spin 1s linear infinite; }
+@keyframes user-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

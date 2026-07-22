@@ -1,5 +1,6 @@
 /**
  * 标签页样式（整合顶部导航栏）
+ * 作用域：.tags-view
  */
 
 .tags-view {
@@ -17,13 +18,13 @@
 }
 
 /* 左侧区域 */
-.tags-left {
+.tags-view .tags-left {
   display: flex;
   align-items: center;
   flex-shrink: 0;
 }
 
-.collapse-btn {
+.tags-view .collapse-btn {
   width: 32px;
   height: 32px;
   border: none;
@@ -38,13 +39,13 @@
   padding: 0;
 }
 
-.collapse-btn:hover {
+.tags-view .collapse-btn:hover {
   background: var(--bg-hover);
   color: var(--primary-color);
 }
 
 /* 标签滚动区域 */
-.tags-scroll {
+.tags-view .tags-scroll {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -56,12 +57,12 @@
   min-width: 0;
 }
 
-.tags-scroll::-webkit-scrollbar {
+.tags-view .tags-scroll::-webkit-scrollbar {
   display: none;
 }
 
 /* 标签项 - Minimalist Outline 风格 */
-.tag-item {
+.tags-view .tag-item {
   display: inline-flex;
   align-items: center;
   height: 32px;
@@ -78,13 +79,13 @@
   overflow: hidden;
 }
 
-.tag-item:hover {
+.tags-view .tag-item:hover {
   color: var(--primary-color);
   border-color: var(--primary-color);
   transform: translateY(-1px);
 }
 
-.tag-item.active {
+.tags-view .tag-item.active {
   color: #fff;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-color: transparent;
@@ -92,36 +93,36 @@
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
-:root.dark .tag-item {
+:root.dark .tags-view .tag-item {
   border-color: rgba(255, 255, 255, 0.2);
 }
 
-:root.dark .tag-item:hover {
+:root.dark .tags-view .tag-item:hover {
   border-color: var(--primary-color);
 }
 
-:root.dark .tag-item.active {
+:root.dark .tags-view .tag-item.active {
   background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
   border-color: transparent;
   box-shadow: 0 4px 12px rgba(129, 140, 248, 0.5);
 }
 
 /* 激活指示点 */
-.tag-dot {
+.tags-view .tag-dot {
   width: 6px;
   height: 6px;
   background: var(--primary-color);
   border-radius: 50%;
   margin-right: 6px;
-  animation: pulse 2s infinite;
+  animation: tags-pulse 2s infinite;
 }
 
-@keyframes pulse {
+@keyframes tags-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
 }
 
-.tag-text {
+.tags-view .tag-text {
   max-width: 100px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -129,7 +130,7 @@
 }
 
 /* 关闭按钮 */
-.tag-close {
+.tags-view .tag-close {
   width: 18px;
   height: 18px;
   margin-left: 6px;
@@ -147,34 +148,34 @@
   position: relative;
 }
 
-.tag-item:hover .tag-close {
+.tags-view .tag-item:hover .tag-close {
   opacity: 0.8;
 }
 
-.tag-close:hover {
+.tags-view .tag-close:hover {
   opacity: 1 !important;
   background: rgba(0, 0, 0, 0.1);
   transform: scale(1.1);
 }
 
-.tag-item.active .tag-close {
+.tags-view .tag-item.active .tag-close {
   opacity: 0.7;
 }
 
-.tag-item.active .tag-close:hover {
+.tags-view .tag-item.active .tag-close:hover {
   background: rgba(255, 255, 255, 0.2);
   opacity: 1 !important;
 }
 
 /* 右侧区域 */
-.tags-right {
+.tags-view .tags-right {
   display: flex;
   align-items: center;
   gap: 12px;
   flex-shrink: 0;
 }
 
-.theme-btn {
+.tags-view .theme-btn {
   width: 32px;
   height: 32px;
   border: none;
@@ -189,21 +190,21 @@
   padding: 0;
 }
 
-.theme-btn:hover {
+.tags-view .theme-btn:hover {
   color: var(--primary-color);
   background: var(--bg-hover);
 }
 
-:root.dark .theme-btn:hover {
+:root.dark .tags-view .theme-btn:hover {
   color: #fda085;
 }
 
 /* 用户下拉菜单 */
-.user-dropdown {
+.tags-view .user-dropdown {
   position: relative;
 }
 
-.user-info {
+.tags-view .user-info {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -213,11 +214,11 @@
   transition: background 0.2s;
 }
 
-.user-info:hover {
+.tags-view .user-info:hover {
   background: var(--bg-hover);
 }
 
-.user-avatar {
+.tags-view .user-avatar {
   width: 28px;
   height: 28px;
   border-radius: 50%;
@@ -230,12 +231,12 @@
   font-weight: 600;
 }
 
-.user-name {
+.tags-view .user-name {
   font-size: 13px;
   color: var(--text-color);
 }
 
-.dropdown-menu {
+.tags-view .dropdown-menu {
   position: absolute;
   top: 100%;
   right: 0;
@@ -249,7 +250,7 @@
   overflow: hidden;
 }
 
-.dropdown-item {
+.tags-view .dropdown-item {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -260,40 +261,40 @@
   transition: background 0.15s;
 }
 
-.dropdown-item:hover {
+.tags-view .dropdown-item:hover {
   background: var(--bg-hover);
 }
 
-.dropdown-item.danger {
+.tags-view .dropdown-item.danger {
   color: var(--danger-color);
 }
 
-.dropdown-item.danger:hover {
+.tags-view .dropdown-item.danger:hover {
   background: rgba(255, 77, 79, 0.1);
 }
 
-.dropdown-item.loading {
+.tags-view .dropdown-item.loading {
   pointer-events: none;
   opacity: 0.7;
 }
 
-.dropdown-item svg.spin {
-  animation: spin 1s linear infinite;
+.tags-view .dropdown-item svg.spin {
+  animation: tags-spin 1s linear infinite;
 }
 
-@keyframes spin {
+@keyframes tags-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
 
-.dropdown-divider {
+.tags-view .dropdown-divider {
   height: 1px;
   background: var(--border-color);
   margin: 4px 0;
 }
 
 /* 右键菜单 */
-.tags-context-menu {
+.tags-view .tags-context-menu {
   position: fixed;
   z-index: 1000;
   background: var(--bg-color);
@@ -306,7 +307,7 @@
   border: 1px solid var(--border-color);
 }
 
-.tags-context-menu li {
+.tags-view .tags-context-menu li {
   padding: 8px 16px;
   font-size: 13px;
   color: var(--text-color);
@@ -314,25 +315,25 @@
   transition: background 0.15s;
 }
 
-.tags-context-menu li:hover {
+.tags-view .tags-context-menu li:hover {
   background: var(--bg-hover);
 }
 
 /* 拖拽样式 */
-.tag-item.dragging {
+.tags-view .tag-item.dragging {
   opacity: 0.5;
   cursor: grabbing;
 }
 
-.tag-item.drag-over {
+.tags-view .tag-item.drag-over {
   border-color: var(--primary-color) !important;
   background: rgba(102, 126, 234, 0.1);
 }
 
-.tag-item {
+.tags-view .tag-item {
   cursor: grab;
 }
 
-.tag-item:active {
+.tags-view .tag-item:active {
   cursor: grabbing;
 }

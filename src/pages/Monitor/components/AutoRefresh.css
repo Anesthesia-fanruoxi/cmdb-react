@@ -41,10 +41,10 @@
 }
 
 .refresh-toggle .spinning {
-  animation: spin 1s linear infinite;
+  animation: auto-refresh-spin 1s linear infinite;
 }
 
-@keyframes spin {
+@keyframes auto-refresh-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }

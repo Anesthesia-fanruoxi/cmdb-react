@@ -2,33 +2,33 @@
   width: 700px;
 }
 
-.detail-logo {
+.project-detail-modal .detail-logo {
   text-align: center;
   margin-bottom: 16px;
 }
 
-.detail-logo img {
+.project-detail-modal .detail-logo img {
   width: 64px;
   height: 64px;
   object-fit: contain;
   border-radius: 8px;
 }
 
-.detail-table {
+.project-detail-modal .detail-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
 }
 
-.detail-table th,
-.detail-table td {
+.project-detail-modal .detail-table th,
+.project-detail-modal .detail-table td {
   padding: 8px 12px;
   border: 1px solid var(--border-color);
   text-align: left;
   vertical-align: middle;
 }
 
-.detail-table th {
+.project-detail-modal .detail-table th {
   width: 130px;
   background: var(--bg-secondary, var(--bg-color));
   color: var(--text-muted);
@@ -36,7 +36,7 @@
   white-space: nowrap;
 }
 
-.detail-table td {
+.project-detail-modal .detail-table td {
   color: var(--text-color);
   word-break: break-all;
 }

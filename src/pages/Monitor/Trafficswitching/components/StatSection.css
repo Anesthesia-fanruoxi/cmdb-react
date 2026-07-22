@@ -2,11 +2,11 @@
  * 统计区域样式
  */
 
-.stat-section {
+.traffic-monitor .stat-section {
   margin-bottom: 24px;
 }
 
-.stat-section .section-title {
+.traffic-monitor .stat-section .section-title {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -16,7 +16,7 @@
   color: var(--text-color);
 }
 
-.stat-grid {
+.traffic-monitor .stat-grid {
   display: grid;
   gap: 16px;
 }

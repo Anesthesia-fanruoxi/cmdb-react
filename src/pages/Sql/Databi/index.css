@@ -30,7 +30,7 @@
   flex-direction: column;
 }
 
-.project-selector {
+.sql-databi-container .project-selector {
   padding: 12px;
   border-bottom: 1px solid var(--border-color-light);
   display: flex;
@@ -38,7 +38,7 @@
   align-items: center;
 }
 
-.project-name {
+.sql-databi-container .project-name {
   flex: 1;
   padding: 8px 12px;
   border: 1px solid var(--border-color);
@@ -53,7 +53,7 @@
 }
 
 /* 表名搜索框（在顶部工具栏） */
-.table-search-wrapper {
+.sql-databi-container .table-search-wrapper {
   flex: 1;
   display: flex;
   align-items: center;
@@ -65,12 +65,12 @@
   min-width: 0;
 }
 
-.table-search-icon {
+.sql-databi-container .table-search-icon {
   color: var(--text-secondary);
   flex-shrink: 0;
 }
 
-.table-search-input {
+.sql-databi-container .table-search-input {
   flex: 1;
   border: none;
   background: transparent;
@@ -80,11 +80,11 @@
   min-width: 0;
 }
 
-.table-search-input::placeholder {
+.sql-databi-container .table-search-input::placeholder {
   color: var(--text-secondary);
 }
 
-.table-search-clear {
+.sql-databi-container .table-search-clear {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -97,12 +97,12 @@
   flex-shrink: 0;
 }
 
-.table-search-clear:hover {
+.sql-databi-container .table-search-clear:hover {
   color: var(--text-color);
   background-color: var(--border-color-light);
 }
 
-.btn-refresh {
+.sql-databi-container .btn-refresh {
   width: 36px;
   height: 36px;
   padding: 0;
@@ -119,21 +119,21 @@
   flex-shrink: 0;
 }
 
-.btn-refresh:hover:not(:disabled) {
+.sql-databi-container .btn-refresh:hover:not(:disabled) {
   border-color: var(--primary-color);
   color: var(--primary-color);
 }
 
-.btn-refresh:disabled {
+.sql-databi-container .btn-refresh:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.btn-refresh:disabled:first-child {
-  animation: spin 1s linear infinite;
+.sql-databi-container .btn-refresh:disabled:first-child {
+  animation: databi-spin 1s linear infinite;
 }
 
-@keyframes spin {
+@keyframes databi-spin {
   from {
     transform: rotate(0deg);
   }
@@ -248,7 +248,7 @@
   padding-left: 4px;
 }
 
-.empty-state {
+.sql-databi-container .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -272,7 +272,7 @@
 }
 
 /* 工具栏 */
-.workspace-toolbar {
+.sql-databi-container .workspace-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -283,13 +283,13 @@
   border-radius: 8px 8px 0 0;
 }
 
-.toolbar-left {
+.sql-databi-container .toolbar-left {
   display: flex;
   gap: 8px;
 }
 
 /* 编辑器容器 */
-.editor-container {
+.sql-databi-container .editor-container {
   position: relative;
   overflow: hidden;
   background-color: var(--bg-color);
@@ -299,14 +299,14 @@
 }
 
 /* 确保 SqlEditor 组件填满容器 */
-.editor-container > div {
+.sql-databi-container .editor-container > div {
   flex: 1;
   min-height: 0;
   pointer-events: auto;
 }
 
 /* 拖拽分隔条 */
-.editor-resize-handle {
+.sql-databi-container .editor-resize-handle {
   height: 8px;
   cursor: ns-resize;
   display: flex;
@@ -319,13 +319,13 @@
   z-index: 1;
 }
 
-.editor-resize-handle:hover .resize-handle-bar,
-.editor-resize-handle.dragging .resize-handle-bar {
+.sql-databi-container .editor-resize-handle:hover .resize-handle-bar,
+.sql-databi-container .editor-resize-handle.dragging .resize-handle-bar {
   background-color: var(--primary-color);
   height: 3px;
 }
 
-.resize-handle-bar {
+.sql-databi-container .resize-handle-bar {
   width: 60px;
   height: 2px;
   background-color: var(--border-color);
@@ -334,7 +334,7 @@
 }
 
 /* 结果面板外层容器 */
-.result-panel-wrapper {
+.sql-databi-container .result-panel-wrapper {
   flex: 1;
   min-height: 10%;
   display: flex;
@@ -343,7 +343,7 @@
 }
 
 /* 结果区域 */
-.result-section {
+.sql-databi-container .result-section {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -483,7 +483,7 @@
 }
 
 /* 加载状态 */
-.loading {
+.sql-databi-container .loading {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -493,7 +493,7 @@
 }
 
 /* 按钮样式 */
-.btn {
+.sql-databi-container .btn {
   padding: 6px 12px;
   border: 1px solid var(--border-color);
   border-radius: 4px;
@@ -507,46 +507,46 @@
   gap: 4px;
 }
 
-.btn:hover {
+.sql-databi-container .btn:hover {
   border-color: var(--primary-color);
   color: var(--primary-color);
 }
 
-.btn:disabled {
+.sql-databi-container .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.btn.btn-primary {
+.sql-databi-container .btn.btn-primary {
   background-color: var(--primary-color);
   border-color: var(--primary-color);
   color: white;
 }
 
-.btn.btn-primary:hover:not(:disabled) {
+.sql-databi-container .btn.btn-primary:hover:not(:disabled) {
   background-color: var(--primary-color-dark);
   border-color: var(--primary-color-dark);
 }
 
-.btn.btn-primary:disabled {
+.sql-databi-container .btn.btn-primary:disabled {
   background-color: var(--primary-color);
   border-color: var(--primary-color);
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .main-content {
+  .sql-databi-container .main-content {
     flex-direction: column;
   }
   
-  .sidebar {
+  .sql-databi-container .sidebar {
     width: 100%;
     height: 200px;
   }
 }
 
 /* 右键菜单 */
-.context-menu {
+.sql-databi-container .context-menu {
   background: var(--bg-color);
   border: 1px solid var(--border-color);
   border-radius: 6px;
@@ -555,7 +555,7 @@
   min-width: 120px;
 }
 
-.context-menu-item {
+.sql-databi-container .context-menu-item {
   padding: 8px 16px;
   font-size: 14px;
   color: var(--text-color);
@@ -563,12 +563,12 @@
   transition: background-color 0.2s;
 }
 
-.context-menu-item:hover {
+.sql-databi-container .context-menu-item:hover {
   background-color: var(--bg-secondary);
 }
 
 /* CSV 上传按钮 */
-.btn-csv-upload {
+.sql-databi-container .btn-csv-upload {
   width: 36px;
   height: 36px;
   padding: 0;
@@ -584,18 +584,18 @@
   flex-shrink: 0;
 }
 
-.btn-csv-upload:hover:not(:disabled) {
+.sql-databi-container .btn-csv-upload:hover:not(:disabled) {
   border-color: var(--primary-color);
   color: var(--primary-color);
 }
 
-.btn-csv-upload:disabled {
+.sql-databi-container .btn-csv-upload:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
 /* 护眼模式按钮 */
-.btn-eye-protect {
+.sql-databi-container .btn-eye-protect {
   width: 36px;
   height: 36px;
   padding: 0;
@@ -611,12 +611,12 @@
   transition: all 0.2s;
 }
 
-.btn-eye-protect:hover {
+.sql-databi-container .btn-eye-protect:hover {
   border-color: var(--primary-color);
   color: var(--primary-color);
 }
 
-.btn-eye-protect.active {
+.sql-databi-container .btn-eye-protect.active {
   background: var(--primary-color);
   border-color: var(--primary-color);
   color: #fff;
@@ -626,7 +626,7 @@
    Dialog 弹框样式
    ============================================ */
 
-.dialog-overlay {
+.sql-databi-container .dialog-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -636,7 +636,7 @@
   z-index: 1000;
 }
 
-.dialog-container {
+.sql-databi-container .dialog-container {
   position: fixed;
   top: 0;
   left: 0;
@@ -654,17 +654,17 @@
   transition: opacity 0.3s ease, box-shadow 0.3s ease;
 }
 
-.dialog-container.unfocused {
+.sql-databi-container .dialog-container.unfocused {
   opacity: 0.4;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.dialog-container.dragging {
+.sql-databi-container .dialog-container.dragging {
   cursor: move;
   user-select: none;
 }
 
-.dialog-header {
+.sql-databi-container .dialog-header {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -675,14 +675,14 @@
   cursor: move;
 }
 
-.dialog-title {
+.sql-databi-container .dialog-title {
   margin: 0;
   font-size: 16px;
   font-weight: 500;
   color: var(--text-color, #333);
 }
 
-.dialog-body {
+.sql-databi-container .dialog-body {
   flex: 1;
   overflow: hidden;
   padding: 20px;
@@ -694,13 +694,13 @@
 }
 
 /* 搜索框 */
-.search-box {
+.sql-databi-container .search-box {
   position: relative;
   display: flex;
   align-items: center;
 }
 
-.search-input {
+.sql-databi-container .search-input {
   flex: 1;
   padding: 8px 32px 8px 12px;
   border: 1px solid var(--border-color, #d9d9d9);
@@ -712,15 +712,15 @@
   transition: border-color 0.2s;
 }
 
-.search-input:focus {
+.sql-databi-container .search-input:focus {
   border-color: var(--primary-color, #1890ff);
 }
 
-.search-input::placeholder {
+.sql-databi-container .search-input::placeholder {
   color: var(--text-secondary, #999);
 }
 
-.btn-clear-search {
+.sql-databi-container .btn-clear-search {
   position: absolute;
   right: 8px;
   width: 20px;
@@ -738,11 +738,11 @@
   justify-content: center;
 }
 
-.btn-clear-search:hover {
+.sql-databi-container .btn-clear-search:hover {
   color: var(--text-color, #333);
 }
 
-.dialog-footer {
+.sql-databi-container .dialog-footer {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
@@ -753,7 +753,7 @@
 }
 
 /* 表格包装容器 */
-.table-wrapper {
+.sql-databi-container .table-wrapper {
   flex: 1;
   overflow: auto;
   border: 1px solid var(--border-color-light, #eee);
@@ -761,59 +761,59 @@
 }
 
 /* 字段详情表格样式 */
-.column-table {
+.sql-databi-container .column-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
 }
 
-.column-table thead {
+.sql-databi-container .column-table thead {
   position: sticky;
   top: 0;
   z-index: 10;
   background: var(--bg-secondary, #f5f5f5);
 }
 
-.column-table th,
-.column-table td {
+.sql-databi-container .column-table th,
+.sql-databi-container .column-table td {
   padding: 12px;
   text-align: left;
   border-bottom: 1px solid var(--border-color-light, #eee);
 }
 
-.column-table th {
+.sql-databi-container .column-table th {
   background: var(--bg-secondary, #f5f5f5);
   font-weight: 500;
   color: var(--text-color, #333);
 }
 
-.column-table .col-name {
+.sql-databi-container .column-table .col-name {
   width: 200px;
   font-family: monospace;
   color: var(--primary-color, #1890ff);
 }
 
-.column-table .col-name.clickable {
+.sql-databi-container .column-table .col-name.clickable {
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
-.column-table .col-name.clickable:hover {
+.sql-databi-container .column-table .col-name.clickable:hover {
   background-color: rgba(24, 144, 255, 0.1);
 }
 
-.column-table .col-type {
+.sql-databi-container .column-table .col-type {
   width: 150px;
   font-family: monospace;
   color: var(--text-secondary, #666);
 }
 
-.column-table .col-comment {
+.sql-databi-container .column-table .col-comment {
   min-width: 200px;
 }
 
 /* CSV 导入预览表格 */
-.preview-table-wrapper {
+.sql-databi-container .preview-table-wrapper {
   max-height: 400px;
   overflow: auto;
   border: 1px solid var(--border-color-light, #eee);
@@ -821,20 +821,20 @@
   margin-bottom: 16px;
 }
 
-.preview-table {
+.sql-databi-container .preview-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
 }
 
-.preview-table th,
-.preview-table td {
+.sql-databi-container .preview-table th,
+.sql-databi-container .preview-table td {
   padding: 10px 12px;
   text-align: left;
   border-bottom: 1px solid var(--border-color-light, #eee);
 }
 
-.preview-table th {
+.sql-databi-container .preview-table th {
   background: var(--bg-secondary, #f5f5f5);
   font-weight: 500;
   color: var(--text-color, #333);
@@ -843,27 +843,27 @@
   z-index: 1;
 }
 
-.preview-table .col-name {
+.sql-databi-container .preview-table .col-name {
   font-family: monospace;
   color: var(--primary-color, #1890ff);
 }
 
-.preview-table .col-old {
+.sql-databi-container .preview-table .col-old {
   color: var(--text-secondary, #666);
 }
 
-.preview-table .col-new {
+.sql-databi-container .preview-table .col-new {
   color: var(--success-color, #52c41a);
   font-weight: 500;
 }
 
-.import-summary {
+.sql-databi-container .import-summary {
   text-align: center;
   font-size: 14px;
   color: var(--text-secondary, #666);
 }
 
-.unmatched-warning {
+.sql-databi-container .unmatched-warning {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -876,19 +876,19 @@
   font-size: 14px;
 }
 
-.warning-icon {
+.sql-databi-container .warning-icon {
   font-size: 16px;
 }
 
 /* 字段注释编辑样式 */
-.edit-mode {
+.sql-databi-container .edit-mode {
   display: flex;
   align-items: center;
   gap: 8px;
   width: 100%;
 }
 
-.comment-input {
+.sql-databi-container .comment-input {
   flex: 1;
   padding: 6px 10px;
   border: 1px solid var(--primary-color, #1890ff);
@@ -899,13 +899,13 @@
   color: var(--text-color, #333);
 }
 
-.edit-actions {
+.sql-databi-container .edit-actions {
   display: flex;
   gap: 6px;
 }
 
-.btn-save,
-.btn-cancel {
+.sql-databi-container .btn-save,
+.sql-databi-container .btn-cancel {
   padding: 4px 12px;
   border: 1px solid var(--border-color, #d9d9d9);
   border-radius: 4px;
@@ -915,33 +915,33 @@
   white-space: nowrap;
 }
 
-.btn-save {
+.sql-databi-container .btn-save {
   background: var(--primary-color, #1890ff);
   border-color: var(--primary-color, #1890ff);
   color: white;
 }
 
-.btn-save:hover:not(:disabled) {
+.sql-databi-container .btn-save:hover:not(:disabled) {
   background: var(--primary-color-dark, #096dd9);
   border-color: var(--primary-color-dark, #096dd9);
 }
 
-.btn-save:disabled {
+.sql-databi-container .btn-save:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.btn-cancel {
+.sql-databi-container .btn-cancel {
   background: var(--bg-color, #fff);
   color: var(--text-color, #333);
 }
 
-.btn-cancel:hover:not(:disabled) {
+.sql-databi-container .btn-cancel:hover:not(:disabled) {
   border-color: var(--primary-color, #1890ff);
   color: var(--primary-color, #1890ff);
 }
 
-.display-mode {
+.sql-databi-container .display-mode {
   display: flex;
   align-items: center;
   width: 100%;
@@ -952,16 +952,16 @@
   min-height: 32px;
 }
 
-.display-mode:hover {
+.sql-databi-container .display-mode:hover {
   background-color: rgba(24, 144, 255, 0.08);
 }
 
-.display-mode span {
+.sql-databi-container .display-mode span {
   flex: 1;
   color: var(--text-color, #333);
 }
 
-.loading-state {
+.sql-databi-container .loading-state {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -974,7 +974,7 @@
    标签页样式
    ============================================ */
 
-.databi-tabs-container {
+.sql-databi-container .databi-tabs-container {
   flex-shrink: 0;
   background-color: var(--bg-color);
   border-bottom: 1px solid var(--border-color);
@@ -984,7 +984,7 @@
   align-items: center;
 }
 
-.databi-tabs {
+.sql-databi-container .databi-tabs {
   display: flex;
   align-items: center;
   gap: 2px;
@@ -994,11 +994,11 @@
   flex: 1;
 }
 
-.databi-tabs::-webkit-scrollbar {
+.sql-databi-container .databi-tabs::-webkit-scrollbar {
   display: none;
 }
 
-.databi-tab {
+.sql-databi-container .databi-tab {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1016,12 +1016,12 @@
   max-width: 180px;
 }
 
-.databi-tab:hover {
+.sql-databi-container .databi-tab:hover {
   background-color: var(--bg-hover);
   color: var(--text-color);
 }
 
-.databi-tab.active {
+.sql-databi-container .databi-tab.active {
   color: var(--primary-color);
   border-color: var(--border-color);
   border-bottom: 1px solid var(--bg-color);
@@ -1030,18 +1030,18 @@
   margin-bottom: -1px;
 }
 
-.databi-tab.drag-over {
+.sql-databi-container .databi-tab.drag-over {
   border-left: 2px solid var(--primary-color);
 }
 
-.tab-name {
+.sql-databi-container .tab-name {
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   pointer-events: none;
 }
 
-.tab-close {
+.sql-databi-container .tab-close {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1058,12 +1058,12 @@
   transition: all 0.2s;
 }
 
-.tab-close:hover {
+.sql-databi-container .tab-close:hover {
   background-color: rgba(255, 77, 79, 0.1);
   color: var(--danger-color);
 }
 
-.add-tab-btn {
+.sql-databi-container .add-tab-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1081,7 +1081,7 @@
   margin-left: 8px;
 }
 
-.add-tab-btn:hover {
+.sql-databi-container .add-tab-btn:hover {
   background-color: var(--primary-color);
   color: #fff;
 }
@@ -1090,7 +1090,7 @@
    工作区样式
    ============================================ */
 
-.databi-workspace {
+.sql-databi-container .databi-workspace {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -1101,7 +1101,7 @@
    全屏结果面板样式
    ============================================ */
 
-.fullscreen-result-panel {
+.sql-databi-container .fullscreen-result-panel {
   position: fixed;
   top: 0;
   left: 0;
@@ -1113,7 +1113,7 @@
   flex-direction: column;
 }
 
-.fullscreen-header {
+.sql-databi-container .fullscreen-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1123,32 +1123,32 @@
   flex-shrink: 0;
 }
 
-.header-left {
+.sql-databi-container .header-left {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.header-title {
+.sql-databi-container .header-title {
   font-size: 14px;
   font-weight: 500;
   color: var(--text-color);
 }
 
-.header-right {
+.sql-databi-container .header-right {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.row-highlight-picker {
+.sql-databi-container .row-highlight-picker {
   display: flex;
   align-items: center;
   gap: 6px;
   cursor: pointer;
 }
 
-.highlight-color-dot {
+.sql-databi-container .highlight-color-dot {
   width: 20px;
   height: 20px;
   border-radius: 50%;
@@ -1157,11 +1157,11 @@
   transition: transform 0.2s;
 }
 
-.highlight-color-dot:hover {
+.sql-databi-container .highlight-color-dot:hover {
   transform: scale(1.1);
 }
 
-.highlight-color-input {
+.sql-databi-container .highlight-color-input {
   position: absolute;
   opacity: 0;
   width: 0;
@@ -1169,7 +1169,7 @@
   pointer-events: none;
 }
 
-.btn-link {
+.sql-databi-container .btn-link {
   background: none;
   border: none;
   color: var(--text-secondary);
@@ -1180,25 +1180,25 @@
   transition: all 0.2s;
 }
 
-.btn-link:hover {
+.sql-databi-container .btn-link:hover {
   background-color: var(--bg-color);
   color: var(--text-color);
 }
 
-.fullscreen-table-wrapper {
+.sql-databi-container .fullscreen-table-wrapper {
   flex: 1;
   overflow: auto;
 }
 
-.fullscreen-table {
+.sql-databi-container .fullscreen-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
   font-size: 13px;
 }
 
-.fullscreen-table th,
-.fullscreen-table td {
+.sql-databi-container .fullscreen-table th,
+.sql-databi-container .fullscreen-table td {
   padding: 10px 14px;
   text-align: left;
   min-width: 120px;
@@ -1210,13 +1210,13 @@
   border-right: 1px solid rgba(255, 255, 255, 0.04);
 }
 
-.fullscreen-table th:last-child,
-.fullscreen-table td:last-child {
+.sql-databi-container .fullscreen-table th:last-child,
+.sql-databi-container .fullscreen-table td:last-child {
   border-right: none;
 }
 
-.fullscreen-table th.row-num,
-.fullscreen-table td.row-num {
+.sql-databi-container .fullscreen-table th.row-num,
+.sql-databi-container .fullscreen-table td.row-num {
   width: 60px;
   min-width: 60px;
   max-width: 60px;
@@ -1230,7 +1230,7 @@
   border-right: 1px solid var(--border-color);
 }
 
-.fullscreen-table thead th {
+.sql-databi-container .fullscreen-table thead th {
   background: #334155;
   font-weight: 500;
   color: #e2e8f0;
@@ -1242,29 +1242,29 @@
   border-right: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.fullscreen-table thead th:last-child {
+.sql-databi-container .fullscreen-table thead th:last-child {
   border-right: none;
 }
 
-.fullscreen-table thead th.row-num {
+.sql-databi-container .fullscreen-table thead th.row-num {
   z-index: 110;
 }
 
-.fullscreen-table tbody tr {
+.sql-databi-container .fullscreen-table tbody tr {
   transition: background-color 0.15s;
 }
 
-.fullscreen-table tbody tr:hover td {
+.sql-databi-container .fullscreen-table tbody tr:hover td {
   background: rgba(71, 85, 105, 0.5);
 }
 
-.fullscreen-table tbody tr.row-selected td,
-.fullscreen-table tbody tr.row-selected:hover td,
-.fullscreen-table tbody tr.row-selected:nth-child(even) td {
+.sql-databi-container .fullscreen-table tbody tr.row-selected td,
+.sql-databi-container .fullscreen-table tbody tr.row-selected:hover td,
+.sql-databi-container .fullscreen-table tbody tr.row-selected:nth-child(even) td {
   background-color: var(--row-highlight, rgba(139, 92, 246, 0.35)) !important;
 }
 
-.fullscreen-footer {
+.sql-databi-container .fullscreen-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1274,35 +1274,35 @@
   flex-shrink: 0;
 }
 
-.result-stats {
+.sql-databi-container .result-stats {
   display: flex;
   gap: 20px;
   font-size: 13px;
   color: var(--text-secondary);
 }
 
-.result-stats span {
+.sql-databi-container .result-stats span {
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
 /* 结果头部右侧容器 */
-.result-header-right {
+.sql-databi-container .result-header-right {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
 /* 行高亮颜色选择器 */
-.row-highlight-picker {
+.sql-databi-container .row-highlight-picker {
   display: flex;
   align-items: center;
   gap: 6px;
   cursor: pointer;
 }
 
-.highlight-color-dot {
+.sql-databi-container .highlight-color-dot {
   width: 20px;
   height: 20px;
   border-radius: 50%;
@@ -1311,11 +1311,11 @@
   transition: transform 0.2s;
 }
 
-.highlight-color-dot:hover {
+.sql-databi-container .highlight-color-dot:hover {
   transform: scale(1.1);
 }
 
-.highlight-color-input {
+.sql-databi-container .highlight-color-input {
   position: absolute;
   opacity: 0;
   width: 0;
@@ -1324,7 +1324,7 @@
 }
 
 /* 全屏按钮 */
-.btn-fullscreen {
+.sql-databi-container .btn-fullscreen {
   background: none;
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
@@ -1335,7 +1335,7 @@
   transition: all 0.2s;
 }
 
-.btn-fullscreen:hover {
+.sql-databi-container .btn-fullscreen:hover {
   border-color: var(--primary-color);
   color: var(--primary-color);
 }
@@ -1346,7 +1346,7 @@
 }
 
 /* 右键菜单 */
-.databi-context-menu {
+.sql-databi-container .databi-context-menu {
   position: fixed;
   z-index: 9999;
   min-width: 140px;
@@ -1355,10 +1355,10 @@
   border-radius: 6px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   padding: 4px 0;
-  animation: context-menu-in 0.12s ease-out;
+  animation: databi-context-menu-in 0.12s ease-out;
 }
 
-@keyframes context-menu-in {
+@keyframes databi-context-menu-in {
   from {
     opacity: 0;
     transform: scale(0.95);
@@ -1369,7 +1369,7 @@
   }
 }
 
-.databi-context-menu .context-menu-item {
+.sql-databi-container .databi-context-menu .context-menu-item {
   padding: 8px 14px;
   font-size: 13px;
   color: var(--text-color, #333);
@@ -1378,6 +1378,6 @@
   transition: background 0.15s;
 }
 
-.databi-context-menu .context-menu-item:hover {
+.sql-databi-container .databi-context-menu .context-menu-item:hover {
   background: var(--bg-hover, #f0f0f0);
 }

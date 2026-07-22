@@ -18,25 +18,25 @@
   border-bottom: 1px solid var(--border-color, #e8e8e8);
 }
 
-.title-section {
+.domain-page .title-section {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-bottom: 16px;
 }
 
-.title-section svg { color: var(--primary-color, #1890ff); }
-.title-section h2 { margin: 0; font-size: 18px; color: var(--text-color, #333); }
+.domain-page .title-section svg { color: var(--primary-color, #1890ff); }
+.domain-page .title-section h2 { margin: 0; font-size: 18px; color: var(--text-color, #333); }
 
-.search-section {
+.domain-page .search-section {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
 }
 
-.search-section input,
-.search-section select {
+.domain-page .search-section input,
+.domain-page .search-section select {
   height: 32px;
   padding: 0 12px;
   border: 1px solid var(--border-color, #d9d9d9);
@@ -47,12 +47,12 @@
   color: var(--text-color, #333);
 }
 
-.toolbar { display: flex; gap: 8px; margin-bottom: 16px; }
+.domain-page .toolbar { display: flex; gap: 8px; margin-bottom: 16px; }
 
 /* 状态标签 */
-.status-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
-.status-tag.success { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
-.status-tag.info { background: #f0f0f0; color: #666; border: 1px solid #d9d9d9; }
+.domain-page .status-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+.domain-page .status-tag.success { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+.domain-page .status-tag.info { background: #f0f0f0; color: #666; border: 1px solid #d9d9d9; }
 
 /* 分页 */
 .domain-page .pagination {
@@ -66,9 +66,9 @@
 
 .domain-page .pagination span { font-size: 13px; color: var(--text-secondary, #666); }
 
-.page-btns { display: flex; align-items: center; gap: 8px; }
+.domain-page .page-btns { display: flex; align-items: center; gap: 8px; }
 
-.page-btns button {
+.domain-page .page-btns button {
   height: 28px;
   padding: 0 12px;
   border: 1px solid var(--border-color, #d9d9d9);
@@ -78,12 +78,12 @@
   font-size: 13px;
 }
 
-.page-btns button:hover:not(:disabled) { border-color: var(--primary-color); color: var(--primary-color); }
-.page-btns button:disabled { opacity: 0.5; cursor: not-allowed; }
+.domain-page .page-btns button:hover:not(:disabled) { border-color: var(--primary-color); color: var(--primary-color); }
+.domain-page .page-btns button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.page-info { font-size: 13px; color: var(--text-color, #333); }
+.domain-page .page-info { font-size: 13px; color: var(--text-color, #333); }
 
-.modal-close {
+.domain-page .modal-close {
   background: none;
   border: none;
   font-size: 20px;
@@ -91,7 +91,7 @@
   color: var(--text-secondary, #999);
 }
 
-.form-tip {
+.domain-page .form-tip {
   display: block;
   margin-top: 4px;
   font-size: 12px;

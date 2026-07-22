@@ -140,7 +140,7 @@ const TaskBindDialog = ({ visible, task, onClose, onSuccess }: Props) => {
 
   return (
     <>
-      <div className="dialog-overlay" onClick={onClose} />
+      <div className="dialog-overlay bind-dialog-overlay" onClick={onClose} />
       <div className="dialog-container bind-dialog">
         <div className="dialog-header">
           <h3>绑定项目</h3>
@@ -245,60 +245,62 @@ const TaskBindDialog = ({ visible, task, onClose, onSuccess }: Props) => {
         </div>
       </div>
       <style>{`
+        .bind-dialog-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1100; }
         .bind-dialog { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 800px; max-width: 90%; max-height: 85vh; background: var(--bg-color); border-radius: 8px; z-index: 1101; display: flex; flex-direction: column; }
-        .dialog-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
-        .dialog-header h3 { margin: 0; font-size: 16px; color: var(--text-color); }
-        .dialog-close { background: none; border: none; cursor: pointer; color: var(--text-secondary); }
-        .dialog-body { flex: 1; overflow: auto; padding: 20px; }
-        .dialog-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--border-color); }
-        .loading-state { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 60px; color: var(--text-secondary); }
-        .task-header { margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color); }
-        .task-header h4 { margin: 0 0 8px; font-size: 18px; color: var(--text-color); }
-        .task-header p { margin: 0; color: var(--text-secondary); font-size: 14px; }
-        .bound-section { margin-bottom: 16px; }
-        .bound-section h5, .bind-title { margin: 0 0 12px; font-size: 15px; color: var(--text-color); }
-        .bound-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .bound-table th, .bound-table td { padding: 8px 12px; border: 1px solid var(--border-color); text-align: left; }
-        .bound-table th { background: var(--bg-secondary); }
-        .divider { height: 1px; background: var(--border-color); margin: 16px 0; }
-        .steps { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 24px; }
-        .step { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-secondary); }
-        .step.active { color: var(--primary-color); }
-        .step-num { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--bg-secondary); font-size: 12px; }
-        .step.active .step-num { background: var(--primary-color); color: #fff; }
-        .step-line { width: 40px; height: 2px; background: var(--border-color); }
-        .step-content { min-height: 200px; }
-        .step-content h5, .step-content h6 { margin: 0 0 12px; font-size: 14px; color: var(--text-color); }
-        .project-list { display: flex; flex-direction: column; gap: 8px; }
-        .project-item { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; }
-        .project-item.selected { border-color: var(--primary-color); background: rgba(24, 144, 255, 0.1); }
-        .project-item input { margin: 0; }
-        .selected-project { margin-bottom: 16px; font-size: 14px; }
-        .selected-project .tag { display: inline-block; padding: 2px 8px; background: var(--primary-color); color: #fff; border-radius: 4px; font-size: 12px; }
-        .variables-form .form-item { margin-bottom: 16px; }
-        .variables-form label { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
-        .variables-form label code { font-size: 13px; color: var(--text-color); }
-        .variables-form label .desc { font-size: 12px; color: var(--text-secondary); }
-        .variables-form input { width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-color); color: var(--text-color); font-size: 13px; }
-        .summary-info { margin-bottom: 16px; padding: 12px; background: rgba(24, 144, 255, 0.1); border: 1px solid rgba(24, 144, 255, 0.3); border-radius: 4px; }
-        .summary-info p { margin: 4px 0; font-size: 14px; }
-        .variables-preview { margin-bottom: 16px; }
-        .preview-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .preview-table th, .preview-table td { padding: 8px 12px; border: 1px solid var(--border-color); text-align: left; }
-        .preview-table th { background: var(--bg-secondary); }
-        .preview-table code { font-size: 12px; }
-        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .btn-copy { display: flex; align-items: center; gap: 4px; padding: 4px 10px; background: var(--primary-color); color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
-        .script-preview { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 4px; padding: 16px; max-height: 200px; overflow: auto; font-family: monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap; color: var(--text-color); margin: 0; }
-        .confirm-tip { margin-top: 16px; padding: 12px; background: rgba(82, 196, 26, 0.1); border: 1px solid rgba(82, 196, 26, 0.3); border-radius: 4px; color: #52c41a; font-size: 13px; }
-        .empty-state { display: flex; align-items: center; justify-content: center; padding: 40px; color: var(--text-secondary); }
-        .btn-default, .btn-primary { display: flex; align-items: center; gap: 4px; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; }
-        .btn-default { background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-color); }
-        .btn-primary { background: var(--primary-color); border: none; color: #fff; }
-        .btn-primary:disabled { opacity: 0.6; }
-        .btn-link { background: none; border: none; cursor: pointer; font-size: 12px; }
-        .btn-link.danger { color: #ff4d4f; }
-        .spin { animation: spin 1s linear infinite; }
+        .bind-dialog .dialog-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
+        .bind-dialog .dialog-header h3 { margin: 0; font-size: 16px; color: var(--text-color); }
+        .bind-dialog .dialog-close { background: none; border: none; cursor: pointer; color: var(--text-secondary); }
+        .bind-dialog .dialog-body { flex: 1; overflow: auto; padding: 20px; }
+        .bind-dialog .dialog-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--border-color); }
+        .bind-dialog .loading-state { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 60px; color: var(--text-secondary); }
+        .bind-dialog .task-header { margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color); }
+        .bind-dialog .task-header h4 { margin: 0 0 8px; font-size: 18px; color: var(--text-color); }
+        .bind-dialog .task-header p { margin: 0; color: var(--text-secondary); font-size: 14px; }
+        .bind-dialog .bound-section { margin-bottom: 16px; }
+        .bind-dialog .bound-section h5, .bind-dialog .bind-title { margin: 0 0 12px; font-size: 15px; color: var(--text-color); }
+        .bind-dialog .bound-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .bind-dialog .bound-table th, .bind-dialog .bound-table td { padding: 8px 12px; border: 1px solid var(--border-color); text-align: left; }
+        .bind-dialog .bound-table th { background: var(--bg-secondary); }
+        .bind-dialog .divider { height: 1px; background: var(--border-color); margin: 16px 0; }
+        .bind-dialog .steps { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 24px; }
+        .bind-dialog .step { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-secondary); }
+        .bind-dialog .step.active { color: var(--primary-color); }
+        .bind-dialog .step-num { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--bg-secondary); font-size: 12px; }
+        .bind-dialog .step.active .step-num { background: var(--primary-color); color: #fff; }
+        .bind-dialog .step-line { width: 40px; height: 2px; background: var(--border-color); }
+        .bind-dialog .step-content { min-height: 200px; }
+        .bind-dialog .step-content h5, .bind-dialog .step-content h6 { margin: 0 0 12px; font-size: 14px; color: var(--text-color); }
+        .bind-dialog .project-list { display: flex; flex-direction: column; gap: 8px; }
+        .bind-dialog .project-item { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; }
+        .bind-dialog .project-item.selected { border-color: var(--primary-color); background: rgba(24, 144, 255, 0.1); }
+        .bind-dialog .project-item input { margin: 0; }
+        .bind-dialog .selected-project { margin-bottom: 16px; font-size: 14px; }
+        .bind-dialog .selected-project .tag { display: inline-block; padding: 2px 8px; background: var(--primary-color); color: #fff; border-radius: 4px; font-size: 12px; }
+        .bind-dialog .variables-form .form-item { margin-bottom: 16px; }
+        .bind-dialog .variables-form label { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
+        .bind-dialog .variables-form label code { font-size: 13px; color: var(--text-color); }
+        .bind-dialog .variables-form label .desc { font-size: 12px; color: var(--text-secondary); }
+        .bind-dialog .variables-form input { width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-color); color: var(--text-color); font-size: 13px; }
+        .bind-dialog .summary-info { margin-bottom: 16px; padding: 12px; background: rgba(24, 144, 255, 0.1); border: 1px solid rgba(24, 144, 255, 0.3); border-radius: 4px; }
+        .bind-dialog .summary-info p { margin: 4px 0; font-size: 14px; }
+        .bind-dialog .variables-preview { margin-bottom: 16px; }
+        .bind-dialog .preview-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .bind-dialog .preview-table th, .bind-dialog .preview-table td { padding: 8px 12px; border: 1px solid var(--border-color); text-align: left; }
+        .bind-dialog .preview-table th { background: var(--bg-secondary); }
+        .bind-dialog .preview-table code { font-size: 12px; }
+        .bind-dialog .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .bind-dialog .btn-copy { display: flex; align-items: center; gap: 4px; padding: 4px 10px; background: var(--primary-color); color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .bind-dialog .script-preview { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 4px; padding: 16px; max-height: 200px; overflow: auto; font-family: monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap; color: var(--text-color); margin: 0; }
+        .bind-dialog .confirm-tip { margin-top: 16px; padding: 12px; background: rgba(82, 196, 26, 0.1); border: 1px solid rgba(82, 196, 26, 0.3); border-radius: 4px; color: #52c41a; font-size: 13px; }
+        .bind-dialog .empty-state { display: flex; align-items: center; justify-content: center; padding: 40px; color: var(--text-secondary); }
+        .bind-dialog .btn-default, .bind-dialog .btn-primary { display: flex; align-items: center; gap: 4px; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+        .bind-dialog .btn-default { background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-color); }
+        .bind-dialog .btn-primary { background: var(--primary-color); border: none; color: #fff; }
+        .bind-dialog .btn-primary:disabled { opacity: 0.6; }
+        .bind-dialog .btn-link { background: none; border: none; cursor: pointer; font-size: 12px; }
+        .bind-dialog .btn-link.danger { color: #ff4d4f; }
+        .bind-dialog .spin { animation: bind-dialog-spin 1s linear infinite; }
+        @keyframes bind-dialog-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </>
   );

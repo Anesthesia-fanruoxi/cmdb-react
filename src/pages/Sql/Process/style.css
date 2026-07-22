@@ -11,7 +11,7 @@
 }
 
 /* 表格容器 */
-.table-container {
+.sql-process .table-container {
   flex: 1;
   overflow: auto;
   padding: 16px;

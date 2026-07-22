@@ -24,8 +24,8 @@ const ProjectDetailDrawer = ({ visible, project, tasks, taskLoading, onClose, on
 
   return (
     <>
-      <div className="drawer-overlay" onClick={onClose} />
-      <div className="drawer-container">
+      <div className="drawer-overlay project-detail-overlay" onClick={onClose} />
+      <div className="drawer-container project-detail-drawer">
         <div className="drawer-header">
           <h3>{project?.project_name || ''} - 节点管理</h3>
           <button className="drawer-close" onClick={onClose}><X size={18} /></button>
@@ -83,34 +83,34 @@ const ProjectDetailDrawer = ({ visible, project, tasks, taskLoading, onClose, on
         </div>
       </div>
       <style>{`
-        .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000; }
-        .drawer-container { position: fixed; top: 0; right: 0; width: 55%; min-width: 600px; height: 100vh; background: var(--bg-color); z-index: 1001; display: flex; flex-direction: column; box-shadow: -4px 0 20px rgba(0,0,0,0.15); }
-        .drawer-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
-        .drawer-header h3 { margin: 0; font-size: 16px; color: var(--text-color); }
-        .drawer-close { background: none; border: none; cursor: pointer; color: var(--text-secondary); }
-        .drawer-body { flex: 1; overflow: auto; padding: 20px; }
-        .project-info-alert { padding: 12px 16px; background: rgba(24, 144, 255, 0.1); border: 1px solid rgba(24, 144, 255, 0.3); border-radius: 6px; margin-bottom: 20px; }
-        .alert-title { font-size: 15px; font-weight: 500; color: var(--text-color); margin-bottom: 4px; }
-        .alert-desc { font-size: 13px; color: var(--text-secondary); }
-        .section-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg-secondary); border-radius: 6px; margin-bottom: 16px; }
-        .section-title { font-size: 15px; font-weight: 500; color: var(--text-color); }
-        .btn-sm { display: flex; align-items: center; gap: 4px; padding: 6px 12px; background: var(--primary-color); color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
-        .btn-sm:disabled { opacity: 0.6; }
-        .loading-state, .empty-state { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 40px; color: var(--text-secondary); }
-        .task-table-wrapper { overflow: auto; border: 1px solid var(--border-color); border-radius: 6px; }
-        .task-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .task-table th, .task-table td { padding: 10px 12px; border-bottom: 1px solid var(--border-color); text-align: left; white-space: nowrap; }
-        .task-table th { background: var(--bg-secondary); font-weight: 600; color: var(--text-color); position: sticky; top: 0; z-index: 1; }
-        .task-table td { color: var(--text-secondary); max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
-        .task-table tr:hover td { background: var(--bg-hover); }
-        .tag { display: inline-block; padding: 2px 8px; background: var(--bg-secondary); border-radius: 4px; font-size: 12px; }
-        .status-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
-        .status-tag.success { color: #52c41a; }
-        .status-tag.default { color: var(--text-secondary); }
-        .btn-link { background: none; border: none; color: var(--primary-color); cursor: pointer; font-size: 12px; padding: 2px 6px; }
-        .btn-link:hover { text-decoration: underline; }
-        .spin { animation: spin 1s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .project-detail-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000; }
+        .project-detail-drawer { position: fixed; top: 0; right: 0; width: 55%; min-width: 600px; height: 100vh; background: var(--bg-color); z-index: 1001; display: flex; flex-direction: column; box-shadow: -4px 0 20px rgba(0,0,0,0.15); }
+        .project-detail-drawer .drawer-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
+        .project-detail-drawer .drawer-header h3 { margin: 0; font-size: 16px; color: var(--text-color); }
+        .project-detail-drawer .drawer-close { background: none; border: none; cursor: pointer; color: var(--text-secondary); }
+        .project-detail-drawer .drawer-body { flex: 1; overflow: auto; padding: 20px; }
+        .project-detail-drawer .project-info-alert { padding: 12px 16px; background: rgba(24, 144, 255, 0.1); border: 1px solid rgba(24, 144, 255, 0.3); border-radius: 6px; margin-bottom: 20px; }
+        .project-detail-drawer .alert-title { font-size: 15px; font-weight: 500; color: var(--text-color); margin-bottom: 4px; }
+        .project-detail-drawer .alert-desc { font-size: 13px; color: var(--text-secondary); }
+        .project-detail-drawer .section-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg-secondary); border-radius: 6px; margin-bottom: 16px; }
+        .project-detail-drawer .section-title { font-size: 15px; font-weight: 500; color: var(--text-color); }
+        .project-detail-drawer .btn-sm { display: flex; align-items: center; gap: 4px; padding: 6px 12px; background: var(--primary-color); color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .project-detail-drawer .btn-sm:disabled { opacity: 0.6; }
+        .project-detail-drawer .loading-state, .project-detail-drawer .empty-state { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 40px; color: var(--text-secondary); }
+        .project-detail-drawer .task-table-wrapper { overflow: auto; border: 1px solid var(--border-color); border-radius: 6px; }
+        .project-detail-drawer .task-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .project-detail-drawer .task-table th, .project-detail-drawer .task-table td { padding: 10px 12px; border-bottom: 1px solid var(--border-color); text-align: left; white-space: nowrap; }
+        .project-detail-drawer .task-table th { background: var(--bg-secondary); font-weight: 600; color: var(--text-color); position: sticky; top: 0; z-index: 1; }
+        .project-detail-drawer .task-table td { color: var(--text-secondary); max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
+        .project-detail-drawer .task-table tr:hover td { background: var(--bg-hover); }
+        .project-detail-drawer .tag { display: inline-block; padding: 2px 8px; background: var(--bg-secondary); border-radius: 4px; font-size: 12px; }
+        .project-detail-drawer .status-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+        .project-detail-drawer .status-tag.success { color: #52c41a; }
+        .project-detail-drawer .status-tag.default { color: var(--text-secondary); }
+        .project-detail-drawer .btn-link { background: none; border: none; color: var(--primary-color); cursor: pointer; font-size: 12px; padding: 2px 6px; }
+        .project-detail-drawer .btn-link:hover { text-decoration: underline; }
+        .project-detail-drawer .spin { animation: project-detail-spin 1s linear infinite; }
+        @keyframes project-detail-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </>
   );

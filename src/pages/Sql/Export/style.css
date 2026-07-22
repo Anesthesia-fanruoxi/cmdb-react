@@ -11,7 +11,7 @@
 }
 
 /* 表格容器 */
-.table-container { 
+.sql-export .table-container { 
   flex: 1; 
   overflow: auto; 
   padding: 0;
@@ -19,7 +19,7 @@
 }
 
 /* 页面特有的单元格样式 */
-.reason-cell, .email-cell {
+.sql-export .reason-cell, .sql-export .email-cell {
   max-width: 150px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -27,31 +27,31 @@
 }
 
 /* 导出表单样式 */
-.export-form .form-item-switch {
+.sql-export .export-form .form-item-switch {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.export-form .form-item-switch label:first-child {
+.sql-export .export-form .form-item-switch label:first-child {
   min-width: 80px;
 }
 
 /* 开关样式 */
-.export-form .switch {
+.sql-export .export-form .switch {
   position: relative;
   display: inline-block;
   width: 44px;
   height: 22px;
 }
 
-.export-form .switch input {
+.sql-export .export-form .switch input {
   opacity: 0;
   width: 0;
   height: 0;
 }
 
-.export-form .switch .slider {
+.sql-export .export-form .switch .slider {
   position: absolute;
   cursor: pointer;
   top: 0;
@@ -63,7 +63,7 @@
   border-radius: 22px;
 }
 
-.export-form .switch .slider:before {
+.sql-export .export-form .switch .slider:before {
   position: absolute;
   content: "";
   height: 18px;
@@ -75,22 +75,22 @@
   border-radius: 50%;
 }
 
-.export-form .switch input:checked + .slider {
+.sql-export .export-form .switch input:checked + .slider {
   background-color: var(--primary-color);
 }
 
-.export-form .switch input:checked + .slider:before {
+.sql-export .export-form .switch input:checked + .slider:before {
   transform: translateX(22px);
 }
 
 /* 详情区块 */
-.detail-body { padding: 20px; overflow-y: auto; }
+.sql-export .detail-body { padding: 20px; overflow-y: auto; }
 
-.detail-section { margin-bottom: 16px; }
-.detail-section h5 { margin: 0 0 8px 0; font-size: 14px; font-weight: 500; color: var(--text-color); }
-.detail-section p { margin: 0; font-size: 14px; color: var(--text-color); }
+.sql-export .detail-section { margin-bottom: 16px; }
+.sql-export .detail-section h5 { margin: 0 0 8px 0; font-size: 14px; font-weight: 500; color: var(--text-color); }
+.sql-export .detail-section p { margin: 0; font-size: 14px; color: var(--text-color); }
 
-.detail-section pre {
+.sql-export .detail-section pre {
   margin: 0;
   padding: 12px;
   background: var(--bg-secondary);
@@ -103,7 +103,7 @@
 }
 
 /* 操作单元格 */
-.action-cell {
+.sql-export .action-cell {
   display: flex;
   gap: 8px;
   align-items: center;
@@ -111,7 +111,7 @@
   overflow: visible !important;
 }
 
-.action-cell .btn {
+.sql-export .action-cell .btn {
   white-space: nowrap;
 }
 

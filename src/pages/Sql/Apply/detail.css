@@ -1,15 +1,15 @@
 /**
- * 详情页样式 - 使用全局 .detail-card 和 .info-grid
+ * 详情页样式 - 使用全局 .detail-card 和 .info-grid（作用域：.sql-apply-page）
  */
 
 /* 详情内容 */
-.apply-detail .detail-content {
+.sql-apply-page .apply-detail .detail-content {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.apply-detail .sql-content {
+.sql-apply-page .apply-detail .sql-content {
   margin: 0;
   padding: 16px;
   font-family: 'Consolas', 'Monaco', monospace;

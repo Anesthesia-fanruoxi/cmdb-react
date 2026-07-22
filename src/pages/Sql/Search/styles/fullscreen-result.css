@@ -1,8 +1,9 @@
 /**
  * 全屏结果面板样式
+ * 命名空间：作用域限定在 `.sql-search` 下，避免通用类名与其他模块冲突。
  */
 
-.fullscreen-result-panel {
+.sql-search .fullscreen-result-panel {
   position: fixed;
   top: 0;
   left: 0;
@@ -14,7 +15,7 @@
   flex-direction: column;
 }
 
-.fullscreen-header {
+.sql-search .fullscreen-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -24,36 +25,36 @@
   flex-shrink: 0;
 }
 
-.fullscreen-header .header-left {
+.sql-search .fullscreen-header .header-left {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.fullscreen-header .header-title {
+.sql-search .fullscreen-header .header-title {
   font-size: 14px;
   font-weight: 500;
   color: var(--text-color);
 }
 
-.fullscreen-header .header-right {
+.sql-search .fullscreen-header .header-right {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.fullscreen-table-wrapper {
+.sql-search .fullscreen-table-wrapper {
   flex: 1;
   overflow: auto;
   min-height: 0;
 }
 
-.fullscreen-thead-wrapper {
+.sql-search .fullscreen-thead-wrapper {
   overflow: hidden;
   flex-shrink: 0;
 }
 
-.fullscreen-table {
+.sql-search .fullscreen-table {
   width: 100%;
   min-width: max-content;
   border-collapse: separate;
@@ -61,8 +62,8 @@
   font-size: 13px;
 }
 
-.fullscreen-table th,
-.fullscreen-table td {
+.sql-search .fullscreen-table th,
+.sql-search .fullscreen-table td {
   padding: 7px 12px;
   text-align: left;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
@@ -73,12 +74,12 @@
   text-overflow: ellipsis;
 }
 
-.fullscreen-table th:last-child,
-.fullscreen-table td:last-child {
+.sql-search .fullscreen-table th:last-child,
+.sql-search .fullscreen-table td:last-child {
   border-right: none;
 }
 
-.fullscreen-table th {
+.sql-search .fullscreen-table th {
   background: #334155;
   font-weight: 500;
   color: #e2e8f0;
@@ -90,13 +91,13 @@
   border-right: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.fullscreen-table th:last-child {
+.sql-search .fullscreen-table th:last-child {
   border-right: none;
 }
 
 /* 行号列左侧固定 */
-.fullscreen-table th.row-num,
-.fullscreen-table td.row-num {
+.sql-search .fullscreen-table th.row-num,
+.sql-search .fullscreen-table td.row-num {
   position: sticky;
   left: 0;
   z-index: 2;
@@ -104,26 +105,26 @@
 }
 
 /* 左上角交叉单元格层级最高 */
-.fullscreen-table th.row-num {
+.sql-search .fullscreen-table th.row-num {
   z-index: 4;
   background: #334155;
 }
 
-.fullscreen-table td {
+.sql-search .fullscreen-table td {
   color: var(--text-color);
   background: #1e293b;
   line-height: 1.5;
 }
 
-.fullscreen-table tbody tr:nth-child(even) td {
+.sql-search .fullscreen-table tbody tr:nth-child(even) td {
   background: rgba(30, 41, 59, 0.7);
 }
 
-.fullscreen-table tbody tr:hover td {
+.sql-search .fullscreen-table tbody tr:hover td {
   background: rgba(71, 85, 105, 0.5);
 }
 
-.fullscreen-footer {
+.sql-search .fullscreen-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -133,7 +134,7 @@
   flex-shrink: 0;
 }
 
-.loading-more {
+.sql-search .loading-more {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -142,7 +143,7 @@
   font-size: 14px;
 }
 
-.no-more-data {
+.sql-search .no-more-data {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -153,7 +154,7 @@
   margin: 0 20px;
 }
 
-.no-more-data span {
+.sql-search .no-more-data span {
   background: var(--bg-secondary);
   padding: 8px 16px;
   border-radius: 4px;
@@ -161,32 +162,32 @@
 
 
 /* 全屏表格滚动条 */
-.fullscreen-table-wrapper::-webkit-scrollbar {
+.sql-search .fullscreen-table-wrapper::-webkit-scrollbar {
   width: 12px;
   height: 15px;
 }
 
-.fullscreen-table-wrapper::-webkit-scrollbar-track {
+.sql-search .fullscreen-table-wrapper::-webkit-scrollbar-track {
   background: var(--bg-secondary);
 }
 
-.fullscreen-table-wrapper::-webkit-scrollbar-thumb {
+.sql-search .fullscreen-table-wrapper::-webkit-scrollbar-thumb {
   background: var(--border-color-dark, #4a5568);
   border-radius: 4px;
   cursor: grab;
 }
 
-.fullscreen-table-wrapper::-webkit-scrollbar-thumb:hover {
+.sql-search .fullscreen-table-wrapper::-webkit-scrollbar-thumb:hover {
   background: var(--primary-color);
   cursor: grab;
 }
 
-.fullscreen-table-wrapper::-webkit-scrollbar-thumb:active {
+.sql-search .fullscreen-table-wrapper::-webkit-scrollbar-thumb:active {
   cursor: grabbing;
 }
 
 /* 列宽调整手柄 */
-.fullscreen-table th .col-resize-handle {
+.sql-search .fullscreen-table th .col-resize-handle {
   position: absolute;
   right: -6px;
   top: 0;
@@ -198,13 +199,13 @@
   transition: border-color 0.15s, background 0.15s;
 }
 
-.fullscreen-table th .col-resize-handle:hover {
+.sql-search .fullscreen-table th .col-resize-handle:hover {
   border-right-color: var(--primary-color);
   background: rgba(99, 102, 241, 0.1);
   cursor: grab;
 }
 
-.fullscreen-table th .col-resize-handle:active {
+.sql-search .fullscreen-table th .col-resize-handle:active {
   border-right-color: var(--primary-color);
   background: rgba(99, 102, 241, 0.15);
   cursor: grabbing;

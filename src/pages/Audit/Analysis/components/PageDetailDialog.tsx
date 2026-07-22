@@ -164,7 +164,8 @@ const PageDetailDialog = ({ visible, type, queryId, onClose }: Props) => {
         .page-ops-table th { background: var(--bg-secondary); font-weight: 500; color: var(--text-color); }
         .page-ops-table td { color: var(--text-secondary); }
         .pd-loading { display: flex; align-items: center; justify-content: center; gap: 8px; height: 200px; color: var(--text-secondary); }
-        .pd-spin { animation: spin 1s linear infinite; }
+        .pd-spin { animation: pd-spin-anim 1s linear infinite; }
+        @keyframes pd-spin-anim { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </>
   );

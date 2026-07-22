@@ -1,4 +1,3 @@
-/* 字典管理页面 */
 
 .dict-page {
   display: flex;
@@ -7,7 +6,7 @@
   height: 100%;
 }
 
-.dict-panel {
+.dict-page .dict-panel {
   flex: 1;
   background: var(--bg-color, #1f1f1f);
   border-radius: 12px;
@@ -18,7 +17,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
-.panel-header {
+.dict-page .panel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -27,33 +26,33 @@
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%);
 }
 
-.panel-header h3 {
+.dict-page .panel-header h3 {
   margin: 0;
   font-size: 15px;
   font-weight: 600;
   color: var(--text-color, #e0e0e0);
 }
 
-.panel-body {
+.dict-page .panel-body {
   flex: 1;
   overflow-y: auto;
   padding: 8px;
 }
 
-.dict-table {
+.dict-page .dict-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
 }
 
-.dict-table th,
-.dict-table td {
+.dict-page .dict-table th,
+.dict-page .dict-table td {
   padding: 12px 14px;
   text-align: left;
   border-bottom: 1px solid var(--border-color, #2a2a2a);
 }
 
-.dict-table th {
+.dict-page .dict-table th {
   background: var(--bg-secondary, #2a2a2a);
   font-weight: 600;
   color: var(--text-secondary, #888);
@@ -65,25 +64,25 @@
   z-index: 1;
 }
 
-.dict-table tbody tr {
+.dict-page .dict-table tbody tr {
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
-.dict-table tbody tr:hover {
+.dict-page .dict-table tbody tr:hover {
   background: var(--bg-hover, #333);
 }
 
-.dict-table tbody tr.active {
+.dict-page .dict-table tbody tr.active {
   background: rgba(24, 144, 255, 0.12);
   border-left: 3px solid var(--primary-color, #1890ff);
 }
 
-.dict-table tbody tr.active td:first-child {
+.dict-page .dict-table tbody tr.active td:first-child {
   padding-left: 11px;
 }
 
-.color-tag {
+.dict-page .color-tag {
   display: inline-block;
   padding: 3px 10px;
   border-radius: 4px;
@@ -92,7 +91,7 @@
   font-weight: 500;
 }
 
-.link-btn {
+.dict-page .link-btn {
   padding: 4px 10px;
   background: none;
   border: none;
@@ -103,19 +102,19 @@
   transition: all 0.15s;
 }
 
-.link-btn:hover {
+.dict-page .link-btn:hover {
   background: rgba(24, 144, 255, 0.1);
 }
 
-.link-btn.danger {
+.dict-page .link-btn.danger {
   color: #ff4d4f;
 }
 
-.link-btn.danger:hover {
+.dict-page .link-btn.danger:hover {
   background: rgba(255, 77, 79, 0.1);
 }
 
-.loading {
+.dict-page .loading {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -125,7 +124,7 @@
 }
 
 /* 对话框样式 */
-.modal-overlay {
+.dict-page .modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
@@ -133,30 +132,30 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  animation: fadeIn 0.15s ease;
+  animation: dict-fade-in 0.15s ease;
 }
 
-@keyframes fadeIn {
+@keyframes dict-fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
-.modal-content {
+.dict-page .modal-content {
   background: var(--bg-color, #1f1f1f);
   border-radius: 12px;
   width: 420px;
   max-width: 90%;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-  animation: slideUp 0.2s ease;
+  animation: dict-slide-up 0.2s ease;
   overflow: hidden;
 }
 
-@keyframes slideUp {
+@keyframes dict-slide-up {
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-.modal-header {
+.dict-page .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -164,14 +163,14 @@
   border-bottom: 1px solid var(--border-color, #3a3a3a);
 }
 
-.modal-header h3 {
+.dict-page .modal-header h3 {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
   color: var(--text-color, #e0e0e0);
 }
 
-.btn-close {
+.dict-page .btn-close {
   width: 28px;
   height: 28px;
   display: flex;
@@ -186,24 +185,24 @@
   transition: all 0.15s;
 }
 
-.btn-close:hover {
+.dict-page .btn-close:hover {
   background: var(--bg-hover, #333);
   color: var(--text-color, #e0e0e0);
 }
 
-.modal-body {
+.dict-page .modal-body {
   padding: 20px;
 }
 
-.form-group {
+.dict-page .form-group {
   margin-bottom: 16px;
 }
 
-.form-group:last-child {
+.dict-page .form-group:last-child {
   margin-bottom: 0;
 }
 
-.form-group label {
+.dict-page .form-group label {
   display: block;
   margin-bottom: 6px;
   font-size: 13px;
@@ -211,7 +210,7 @@
   color: var(--text-secondary, #888);
 }
 
-.form-group input:not([type="color"]) {
+.dict-page .form-group input:not([type="color"]) {
   width: 100%;
   height: 40px;
   padding: 0 12px;
@@ -224,19 +223,19 @@
   box-sizing: border-box;
 }
 
-.form-group input:focus {
+.dict-page .form-group input:focus {
   outline: none;
   border-color: var(--primary-color, #1890ff);
   box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.15);
 }
 
-.form-group input[type="color"] {
+.dict-page .form-group input[type="color"] {
   padding: 4px;
   height: 44px;
   cursor: pointer;
 }
 
-.modal-footer {
+.dict-page .modal-footer {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
@@ -244,7 +243,7 @@
   border-top: 1px solid var(--border-color, #3a3a3a);
 }
 
-.btn-default {
+.dict-page .btn-default {
   padding: 8px 20px;
   border: 1px solid var(--border-color, #3a3a3a);
   border-radius: 8px;
@@ -255,12 +254,12 @@
   transition: all 0.15s;
 }
 
-.btn-default:hover {
+.dict-page .btn-default:hover {
   border-color: var(--text-secondary, #888);
   color: var(--text-color, #e0e0e0);
 }
 
-.btn-primary {
+.dict-page .btn-primary {
   padding: 8px 20px;
   border: none;
   border-radius: 8px;
@@ -272,27 +271,27 @@
   transition: all 0.15s;
 }
 
-.btn-primary:hover {
+.dict-page .btn-primary:hover {
   background: var(--primary-hover, #40a9ff);
 }
 
-.panel-actions {
+.dict-page .panel-actions {
   display: flex;
   gap: 8px;
   align-items: center;
 }
 
-.btn-sm {
+.dict-page .btn-sm {
   padding: 5px 12px;
   font-size: 12px;
 }
 
-.btn-default.danger {
+.dict-page .btn-default.danger {
   color: #ff4d4f;
   border-color: rgba(255, 77, 79, 0.4);
 }
 
-.btn-default.danger:hover {
+.dict-page .btn-default.danger:hover {
   background: rgba(255, 77, 79, 0.1);
   border-color: #ff4d4f;
 }

@@ -153,7 +153,7 @@
 }
 
 /* 主题切换按钮 */
-.theme-switch {
+.login-container .theme-switch {
   position: fixed;
   top: 24px;
   right: 24px;
@@ -172,21 +172,21 @@
   backdrop-filter: blur(10px);
 }
 
-.theme-switch:hover {
+.login-container .theme-switch:hover {
   background: rgba(255, 255, 255, 0.1);
   transform: scale(1.1);
   box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
 }
 
 /* 内容区 */
-.login-content {
+.login-container .login-content {
   width: 100%;
   height: 100%;
   display: flex;
 }
 
 /* 左侧品牌区 */
-.login-left {
+.login-container .login-left {
   flex: 1;
   background: 
     radial-gradient(ellipse at 20% 80%, rgba(0, 212, 255, 0.15) 0%, transparent 50%),
@@ -202,7 +202,7 @@
 }
 
 /* 动态网格背景 */
-.login-left::before {
+.login-container .login-left::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -210,40 +210,40 @@
     linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
   background-size: 50px 50px;
-  animation: gridMove 20s linear infinite;
+  animation: login-grid-move 20s linear infinite;
 }
 
-@keyframes gridMove {
+@keyframes login-grid-move {
   0% { transform: translate(0, 0); }
   100% { transform: translate(50px, 50px); }
 }
 
 /* 浮动光点 */
-.login-left::after {
+.login-container .login-left::after {
   content: '';
   position: absolute;
   width: 300px;
   height: 300px;
   background: radial-gradient(circle, rgba(0, 212, 255, 0.2) 0%, transparent 70%);
   border-radius: 50%;
-  animation: float 8s ease-in-out infinite;
+  animation: login-float 8s ease-in-out infinite;
   top: 20%;
   left: 10%;
 }
 
-@keyframes float {
+@keyframes login-float {
   0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
   50% { transform: translate(30px, -30px) scale(1.1); opacity: 0.8; }
 }
 
-.brand-content {
+.login-container .brand-content {
   position: relative;
   z-index: 1;
   text-align: center;
   color: #fff;
 }
 
-.brand-icon {
+.login-container .brand-icon {
   width: 100px;
   height: 100px;
   background: linear-gradient(135deg, rgba(0, 212, 255, 0.2) 0%, rgba(138, 43, 226, 0.2) 100%);
@@ -258,15 +258,15 @@
   box-shadow: 
     0 0 30px rgba(0, 212, 255, 0.2),
     inset 0 0 30px rgba(0, 212, 255, 0.1);
-  animation: iconGlow 3s ease-in-out infinite;
+  animation: login-icon-glow 3s ease-in-out infinite;
 }
 
-@keyframes iconGlow {
+@keyframes login-icon-glow {
   0%, 100% { box-shadow: 0 0 30px rgba(0, 212, 255, 0.2), inset 0 0 30px rgba(0, 212, 255, 0.1); }
   50% { box-shadow: 0 0 50px rgba(0, 212, 255, 0.4), inset 0 0 40px rgba(0, 212, 255, 0.2); }
 }
 
-.brand-title {
+.login-container .brand-title {
   font-size: 48px;
   font-weight: 700;
   margin: 0 0 12px;
@@ -276,22 +276,22 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: textShine 3s linear infinite;
+  animation: login-text-shine 3s linear infinite;
 }
 
-@keyframes textShine {
+@keyframes login-text-shine {
   0% { background-position: 0% center; }
   100% { background-position: 200% center; }
 }
 
-.brand-desc {
+.login-container .brand-desc {
   font-size: 16px;
   color: rgba(255, 255, 255, 0.6);
   margin: 0 0 48px;
   letter-spacing: 4px;
 }
 
-.brand-features {
+.login-container .brand-features {
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -303,7 +303,7 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.feature-item {
+.login-container .feature-item {
   display: flex;
   align-items: center;
   gap: 14px;
@@ -312,12 +312,12 @@
   transition: all 0.3s;
 }
 
-.feature-item:hover {
+.login-container .feature-item:hover {
   color: #00d4ff;
   transform: translateX(5px);
 }
 
-.feature-check {
+.login-container .feature-check {
   width: 24px;
   height: 24px;
   background: linear-gradient(135deg, rgba(0, 212, 255, 0.3) 0%, rgba(138, 43, 226, 0.3) 100%);
@@ -331,7 +331,7 @@
 }
 
 /* 右侧登录区 */
-.login-right {
+.login-container .login-right {
   width: 480px;
   min-width: 480px;
   padding: 60px;
@@ -342,29 +342,29 @@
   border-left: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.login-form {
+.login-container .login-form {
   width: 100%;
 }
 
-.login-title {
+.login-container .login-title {
   font-size: 28px;
   color: #fff;
   margin: 0 0 8px;
   font-weight: 600;
 }
 
-.login-subtitle {
+.login-container .login-subtitle {
   color: rgba(255, 255, 255, 0.5);
   margin: 0 0 36px;
   font-size: 14px;
 }
 
 /* 表单项 */
-.login-form .form-item {
+.login-container .login-form .form-item {
   margin-bottom: 20px;
 }
 
-.input-wrapper {
+.login-container .input-wrapper {
   display: flex;
   align-items: center;
   background: rgba(255, 255, 255, 0.03);
@@ -375,19 +375,19 @@
   transition: all 0.3s;
 }
 
-.input-wrapper:focus-within {
+.login-container .input-wrapper:focus-within {
   border-color: rgba(0, 212, 255, 0.5);
   box-shadow: 0 0 20px rgba(0, 212, 255, 0.15);
   background: rgba(0, 212, 255, 0.03);
 }
 
-.input-icon {
+.login-container .input-icon {
   margin-right: 14px;
   font-size: 18px;
   opacity: 0.6;
 }
 
-.input-wrapper input {
+.login-container .input-wrapper input {
   flex: 1;
   border: none;
   background: transparent;
@@ -396,23 +396,23 @@
   outline: none;
 }
 
-.input-wrapper input::placeholder {
+.login-container .input-wrapper input::placeholder {
   color: rgba(255, 255, 255, 0.3);
 }
 
 /* 验证码输入 */
-.form-content {
+.login-container .form-content {
   min-height: 100px;
 }
 
-.verification-code-container {
+.login-container .verification-code-container {
   display: flex;
   justify-content: center;
   gap: 12px;
   margin: 10px 0;
 }
 
-.verification-code-input {
+.login-container .verification-code-input {
   width: 48px;
   height: 60px;
   font-size: 24px;
@@ -427,13 +427,13 @@
   flex-shrink: 0;
 }
 
-.verification-code-input:focus {
+.login-container .verification-code-input:focus {
   border-color: rgba(0, 212, 255, 0.5);
   box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
   background: rgba(0, 212, 255, 0.05);
 }
 
-.totp-hint {
+.login-container .totp-hint {
   display: flex;
   align-items: center;
   color: rgba(255, 255, 255, 0.4);
@@ -443,7 +443,7 @@
 }
 
 /* 错误信息 */
-.error-message {
+.login-container .error-message {
   color: #ff6b6b;
   font-size: 14px;
   margin-bottom: 16px;
@@ -454,7 +454,7 @@
 }
 
 /* 登录按钮 */
-.login-button {
+.login-container .login-button {
   width: 100%;
   height: 52px;
   margin-top: 24px;
@@ -470,7 +470,7 @@
   overflow: hidden;
 }
 
-.login-button::before {
+.login-container .login-button::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -479,27 +479,27 @@
   transition: transform 0.5s;
 }
 
-.login-button:hover:not(:disabled)::before {
+.login-container .login-button:hover:not(:disabled)::before {
   transform: translateX(100%);
 }
 
-.login-button:hover:not(:disabled) {
+.login-container .login-button:hover:not(:disabled) {
   box-shadow: 0 0 30px rgba(0, 212, 255, 0.4);
   transform: translateY(-2px);
 }
 
-.login-button:disabled {
+.login-container .login-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
 /* 切换登录方式 */
-.login-type-switch {
+.login-container .login-type-switch {
   text-align: center;
   margin-top: 24px;
 }
 
-.switch-button {
+.login-container .switch-button {
   padding: 10px 20px;
   border-radius: 25px;
   font-size: 13px;
@@ -510,18 +510,18 @@
   transition: all 0.3s;
 }
 
-.switch-button:hover {
+.login-container .switch-button:hover {
   background: rgba(0, 212, 255, 0.1);
   border-color: rgba(0, 212, 255, 0.3);
   color: #00d4ff;
 }
 
 /* 自动登录提示区域 */
-.auto-login-section {
+.login-container .auto-login-section {
   margin: 24px 0;
 }
 
-.auto-login-hint {
+.login-container .auto-login-hint {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -534,16 +534,16 @@
   font-size: 14px;
 }
 
-.auto-login-hint span:first-child {
+.login-container .auto-login-hint span:first-child {
   font-size: 20px;
 }
 
 /* 用户名下拉历史 */
-.input-wrapper.has-dropdown {
+.login-container .input-wrapper.has-dropdown {
   position: relative;
 }
 
-.dropdown-toggle {
+.login-container .dropdown-toggle {
   background: none;
   border: none;
   padding: 4px 8px;
@@ -553,11 +553,11 @@
   transition: all 0.2s;
 }
 
-.dropdown-toggle:hover {
+.login-container .dropdown-toggle:hover {
   color: #00d4ff;
 }
 
-.history-dropdown {
+.login-container .history-dropdown {
   position: absolute;
   top: 100%;
   left: 0;
@@ -573,7 +573,7 @@
   backdrop-filter: blur(20px);
 }
 
-.history-item {
+.login-container .history-item {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -583,26 +583,26 @@
   color: rgba(255, 255, 255, 0.7);
 }
 
-.history-item:hover {
+.login-container .history-item:hover {
   background: rgba(0, 212, 255, 0.1);
   color: #00d4ff;
 }
 
-.history-item.active {
+.login-container .history-item.active {
   background: rgba(0, 212, 255, 0.15);
   color: #00d4ff;
 }
 
-.history-icon {
+.login-container .history-icon {
   font-size: 14px;
 }
 
-.history-name {
+.login-container .history-name {
   font-size: 14px;
 }
 
 /* 保存登录状态 */
-.remember-login {
+.login-container .remember-login {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -610,7 +610,7 @@
   padding: 0 4px;
 }
 
-.remember-checkbox {
+.login-container .remember-checkbox {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -618,11 +618,11 @@
   user-select: none;
 }
 
-.remember-checkbox input {
+.login-container .remember-checkbox input {
   display: none;
 }
 
-.remember-checkbox .checkmark {
+.login-container .remember-checkbox .checkmark {
   width: 18px;
   height: 18px;
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -632,12 +632,12 @@
   transition: all 0.2s;
 }
 
-.remember-checkbox input:checked + .checkmark {
+.login-container .remember-checkbox input:checked + .checkmark {
   background: linear-gradient(135deg, #00d4ff 0%, #8a2be2 100%);
   border-color: transparent;
 }
 
-.remember-checkbox .checkmark::after {
+.login-container .remember-checkbox .checkmark::after {
   content: '✓';
   position: absolute;
   top: 50%;
@@ -648,16 +648,16 @@
   transition: transform 0.2s;
 }
 
-.remember-checkbox input:checked + .checkmark::after {
+.login-container .remember-checkbox input:checked + .checkmark::after {
   transform: translate(-50%, -50%) scale(1);
 }
 
-.remember-text {
+.login-container .remember-text {
   font-size: 13px;
   color: rgba(255, 255, 255, 0.6);
 }
 
-.remember-hint {
+.login-container .remember-hint {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.35);
 }
@@ -681,11 +681,11 @@
 }
 
 /* 重新绑定提示 */
-.rebind-section {
+.login-container .rebind-section {
   margin: 24px 0;
 }
 
-.rebind-hint {
+.login-container .rebind-hint {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -701,11 +701,11 @@
 
 /* 响应式 */
 @media (max-width: 900px) {
-  .login-left {
+  .login-container .login-left {
     display: none;
   }
 
-  .login-right {
+  .login-container .login-right {
     width: 100%;
     min-width: auto;
     padding: 40px 24px;
