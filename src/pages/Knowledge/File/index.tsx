@@ -105,13 +105,20 @@ const FileManagement = () => {
   };
 
   const handleDelete = async (item: FileItem) => {
-    if (!item.id) return;
+    if (!item.id) {
+      toast.error('无法删除：该文件缺少ID信息');
+      return;
+    }
     const ok = await confirm({ title: '确认删除', content: `删除文件“${item.filename}”？`, type: 'danger' });
     if (!ok) return;
     try {
       const res = await deleteFile(item.id);
       if (res.code === 200) { toast.success('删除成功'); fetchFiles(); }
-    } catch { toast.error('删除失败'); }
+      else { toast.error(res.message || '删除失败'); }
+    } catch (error: any) {
+      console.error('[文件删除] 失败:', error);
+      toast.error(error?.message || '删除失败');
+    }
   };
 
   const doUploadFile = async (file: File) => {
