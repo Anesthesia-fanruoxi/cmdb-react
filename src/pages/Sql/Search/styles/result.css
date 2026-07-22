@@ -189,16 +189,31 @@
   padding: 6px 12px !important;
   font-size: 12px;
   font-weight: 500;
+  position: sticky;
+  left: 0;
+  z-index: 1;
 }
 
 /* 左上角 th.row-num */
 .sql-search .result-panel .result-table th.row-num {
   background: #334155 !important;
   border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
+  z-index: 3;
 }
 
 .sql-search .result-panel .result-table td.row-num {
   background: #1e293b !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* 序号列可点击选中样式 */
+.sql-search .result-panel .result-table td.row-num-selectable {
+  cursor: pointer;
+}
+
+.sql-search .result-panel .result-table td.row-num-selectable:hover {
+  color: var(--primary-color);
+  background: rgba(99, 102, 241, 0.12) !important;
 }
 
 /* 亮色模式覆盖 - 使用变量 */
@@ -216,6 +231,9 @@
 }
 :root:not(.dark) .sql-search .result-panel .row-num {
   background: var(--bg-secondary) !important;
+}
+:root:not(.dark) .sql-search .result-panel .result-table td.row-num-selectable:hover {
+  background: rgba(99, 102, 241, 0.08) !important;
 }
 
 .sql-search .result-footer {

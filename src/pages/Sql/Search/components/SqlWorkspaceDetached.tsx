@@ -1,18 +1,16 @@
 /**
  * 独立窗口 SQL 工作区
- * 用于从主窗口分离出来的标签页
+ * 用于从主窗口分离出来的标签页（仅编辑器 + 结果面板）
  */
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { 
-  getProjectList, getDatabases, getTables, executeQuery, 
-  executePageQuery, exportQueryResult,
-  type Project
+  executeQuery, 
+  executePageQuery, exportQueryResult
 } from '../../../../services/sql/search';
 import { usePageStateStore } from '../../../../stores/pageStateStore';
-import { openComponentWindow, emitReattachTab, closeCurrentWindow } from '../../../../utils/window';
-import TableTree from './TableTree';
+import { emitReattachTab, closeCurrentWindow } from '../../../../utils/window';
 import SqlWorkspace from './SqlWorkspace';
 import { handleQueryData } from '../utils/handleQueryData';
 import type { Tab } from '../index';
@@ -56,8 +54,6 @@ const SqlWorkspaceDetached = ({ detachKey, project, dbName, initialTab }: Props)
   
   const initData = getInitialTab();
   const tabId = useRef(initData.id || `detached-${Date.now()}`);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [projectLoading, setProjectLoading] = useState(false);
   // 合并默认值和传入的初始数据
   const [tab, setTab] = useState<Tab>(() => ({
     ...createDefaultTab(tabId.current),
@@ -101,54 +97,6 @@ const SqlWorkspaceDetached = ({ detachKey, project, dbName, initialTab }: Props)
       unlisten.then(fn => fn());
     };
   }, [saveDetachedState]);
-
-  // 获取项目列表
-  useEffect(() => {
-    const fetchProjects = async () => {
-      setProjectLoading(true);
-      try {
-        const res = await getProjectList();
-        if (res.code === 200 && res.data) {
-          let items: Project[] = [];
-          if (Array.isArray(res.data)) items = res.data;
-          else if (res.data.items) items = res.data.items;
-          else if (res.data.list) items = res.data.list;
-          
-          const projectList = items.map(item => ({
-            label: item.project_name || item.label || item.value || '',
-            value: item.project || item.key || item.value || ''
-          }));
-          setProjects(projectList);
-        }
-      } catch (error) {
-        console.error('获取项目列表失败:', error);
-      } finally {
-        setProjectLoading(false);
-      }
-    };
-    fetchProjects();
-  }, []);
-
-  // 项目变更
-  const handleProjectChange = async (project: string) => {
-    updateTab({ project, dbName: '', dbList: [], tableList: [] });
-    if (!project) return;
-    try {
-      const res = await getDatabases({ agent: project });
-      if (res.code === 200) updateTab({ dbList: res.data?.databases || [] });
-    } catch (e) { console.error('获取数据库列表失败:', e); }
-  };
-
-  // 数据库变更
-  const handleDbChange = async (dbName: string) => {
-    updateTab({ dbName, tableList: [], treeLoading: true });
-    if (!dbName || !tab.project) return;
-    try {
-      const res = await getTables({ agent: tab.project, dbName });
-      if (res.code === 200) updateTab({ tableList: res.data?.tables || [] });
-    } catch (e) { console.error('获取表列表失败:', e); }
-    finally { updateTab({ treeLoading: false }); }
-  };
 
   // 执行查询
   const handleExecute = async (sql: string) => {
@@ -211,15 +159,6 @@ const SqlWorkspaceDetached = ({ detachKey, project, dbName, initialTab }: Props)
     finally { updateTab({ exportLoading: false }); }
   };
 
-  const handleTableDetail = (tableName: string, cmd: string) => {
-    openComponentWindow({
-      type: 'table-detail', label: `table-detail-${tab.dbName}-${tableName}`,
-      title: `表详情 - ${tableName}`,
-      props: { agent: tab.project, dbName: tab.dbName, tableName, initialTab: cmd || 'fields' },
-      width: 900, height: 700
-    });
-  };
-
   // 放回主窗口
   const handleReattach = async () => {
     const tabData = {
@@ -239,13 +178,6 @@ const SqlWorkspaceDetached = ({ detachKey, project, dbName, initialTab }: Props)
         </button>
       </div>
       <div className="main-content">
-        <div className="sidebar">
-          <TableTree projects={projects} projectLoading={projectLoading} currentProject={tab.project}
-            currentDb={tab.dbName} dbList={tab.dbList} tableList={tab.tableList} treeLoading={tab.treeLoading}
-            onProjectChange={handleProjectChange} onDbChange={handleDbChange}
-            onInsertSql={(sql) => updateTab({ sqlQuery: tab.sqlQuery + (tab.sqlQuery ? '\n' : '') + sql })}
-            onTableDetail={handleTableDetail} />
-        </div>
         <div className="content">
           <SqlWorkspace tabId={detachKey} sql={tab.sqlQuery} onSqlChange={(sql: string) => updateTab({ sqlQuery: sql })}
             onExecute={handleExecute} loading={tab.queryLoading} exportLoading={tab.exportLoading}
@@ -253,7 +185,7 @@ const SqlWorkspaceDetached = ({ detachKey, project, dbName, initialTab }: Props)
             dbName={tab.dbName} queryId={tab.queryId} allResults={tab.allResults}
             currentResultIndex={tab.currentResultIndex} onResultChange={handleResultChange}
             currentPage={tab.currentPage} onPageChange={handlePageChange} onExport={handleExport}
-            messages={tab.messages} tableList={tab.tableList} project={tab.project} />
+            messages={tab.messages} tableList={tab.tableList} project={tab.project} lastExecutedSql={tab.lastExecutedSql} />
         </div>
       </div>
     </div>

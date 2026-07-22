@@ -62,6 +62,9 @@ const FullscreenResultPanel = ({
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
   const lastClickedRow = useRef<number | null>(null);
 
+  // 划选（拖拽选择）状态
+  const dragSelectRef = useRef<{ anchor: number; active: boolean }>({ anchor: -1, active: false });
+
   const { uiPrefs, setUiPref } = useUserPrefsStore();
   const highlightColor = uiPrefs.sqlRowHighlightColor || '#8b5cf6';
   const colorInputRef = useRef<HTMLInputElement>(null);
@@ -246,7 +249,8 @@ const FullscreenResultPanel = ({
   }, [results]);
 
   // ─── 行选中 ────────────────────────────────────────────────────────────────
-  const handleRowClick = useCallback((idx: number, e: React.MouseEvent) => {
+  const handleRowNumClick = useCallback((idx: number, e: React.MouseEvent) => {
+    e.stopPropagation();
     if (e.shiftKey && lastClickedRow.current !== null) {
       const start = Math.min(lastClickedRow.current, idx);
       const end = Math.max(lastClickedRow.current, idx);
@@ -269,6 +273,36 @@ const FullscreenResultPanel = ({
       );
       lastClickedRow.current = idx;
     }
+  }, []);
+
+  // 序号列按下开始划选
+  const handleRowNumMouseDown = useCallback((idx: number, e: React.MouseEvent) => {
+    if (e.button !== 0 || e.shiftKey || e.ctrlKey || e.metaKey) return;
+    dragSelectRef.current = { anchor: idx, active: true };
+    document.body.style.userSelect = 'none';
+
+    const onMouseUp = () => {
+      if (dragSelectRef.current.active) {
+        dragSelectRef.current.active = false;
+        lastClickedRow.current = dragSelectRef.current.anchor;
+      }
+      document.body.style.userSelect = '';
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+    document.addEventListener('mouseup', onMouseUp);
+  }, []);
+
+  // 划选过程中经过行
+  const handleRowDragEnter = useCallback((idx: number) => {
+    if (!dragSelectRef.current.active) return;
+    const anchor = dragSelectRef.current.anchor;
+    const start = Math.min(anchor, idx);
+    const end = Math.max(anchor, idx);
+    setSelectedRows(() => {
+      const next = new Set<number>();
+      for (let i = start; i <= end; i++) next.add(i);
+      return next;
+    });
   }, []);
 
   // ─── 滚动处理 ──────────────────────────────────────────────────────────────
@@ -388,6 +422,12 @@ const FullscreenResultPanel = ({
                   return (
                     <th
                       key={col}
+                      onDoubleClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(col);
+                          toast.success(`已复制字段名: ${col}`);
+                        } catch { toast.error('复制失败'); }
+                      }}
                       style={{
                         width: w,
                         minWidth: w,
@@ -434,11 +474,13 @@ const FullscreenResultPanel = ({
                       key={idx}
                       className={isSelected ? 'row-selected' : ''}
                       style={{ userSelect: 'none' }}
-                      onClick={(e) => handleRowClick(idx, e)}
+                      onMouseEnter={() => handleRowDragEnter(idx)}
                     >
                       <td
-                        className="row-num"
+                        className="row-num row-num-selectable"
                         style={{ ...selectedStyle, width: 48, minWidth: 48 }}
+                        onClick={(e) => handleRowNumClick(idx, e)}
+                        onMouseDown={(e) => handleRowNumMouseDown(idx, e)}
                       >
                         {idx + 1}
                       </td>
@@ -447,7 +489,6 @@ const FullscreenResultPanel = ({
                         return (
                           <td
                             key={colIdx}
-                            title="双击复制"
                             onDoubleClick={(e) => {
                               e.stopPropagation();
                               copyCellValue(val);

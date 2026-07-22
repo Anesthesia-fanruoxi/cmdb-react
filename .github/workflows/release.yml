@@ -163,12 +163,10 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"
-          DESCRIPTION="1、sql查询中，优化了表格显示，比之前更美观。
-          2、sql查询中，优化了表头和内容复制逻辑，改成右键功能键进行复制。
-          3、sql查询中，优化了列宽的计算。
-          4、sql查询中，优化了报错提示，使其更加明显清楚。
-          5、在sql和bi查询中，添加了编辑框的护眼模式，可以自行打开关闭。
-          6、完全拆分所有css让所有css作用域化，避免编译完成之后发生冲突，导致混乱。"
+          DESCRIPTION="1、sql查询中，查询结果字段匹配优化。
+          2、sql查询中，优化了表头和内容复制逻辑，双击进行复制。
+          3、sql查询中，选中改成序号列选中，单点序号列为选中，再次点击取消，多行选中支持左键长按滑动即可。
+          4、修复sql和elfk创建的标签页超过之后无法显示问题，现在长按横向拖拽滑动，长按下拉替换顺序。"
 
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \

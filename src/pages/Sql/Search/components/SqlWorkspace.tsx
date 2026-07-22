@@ -60,6 +60,7 @@ interface Props {
   // SQL 智能提示
   tableList?: string[];
   project?: string;
+  lastExecutedSql?: string;
 }
 
 const SqlWorkspace = ({
@@ -86,7 +87,8 @@ const SqlWorkspace = ({
   onExport,
   messages,
   tableList = [],
-  project = ''
+  project = '',
+  lastExecutedSql = ''
 }: Props) => {
   // 用 ref 持有最新回调，避免 memo 因回调引用变化而失效
   const onSqlChangeRef = useRef(onSqlChange);
@@ -159,8 +161,8 @@ const SqlWorkspace = ({
     tableList.map(name => ({ name, dbName })), [tableList, dbName]
   );
 
-  // 获取列备注（根据当前 SQL 中涉及的表）
-  const columnComments = useColumnComments(sql, project, dbName, queryId);
+  // 获取列备注（仅根据实际执行的 SQL 中涉及的表，避免编辑器内其他语句干扰）
+  const columnComments = useColumnComments(lastExecutedSql, project, dbName, queryId);
 
   // 加载表结构的回调 - 与 Vue 版本对齐
   const loadTableStructure = useCallback(async (tableName: string): Promise<FieldInfo[] | null> => {

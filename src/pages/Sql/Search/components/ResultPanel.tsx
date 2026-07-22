@@ -65,6 +65,9 @@ const ResultPanel = ({
   const tableWrapperRef = useRef<HTMLDivElement>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; rowIndex: number; cellValue: string; colName?: string; colIdx?: number } | null>(null);
 
+  // 划选（拖拽选择）状态
+  const dragSelectRef = useRef<{ anchor: number; active: boolean }>({ anchor: -1, active: false });
+
   // 列宽
   const [colWidths, setColWidths] = useState<number[]>([]);
   const colWidthsRef = useRef<number[]>([]);
@@ -226,7 +229,8 @@ const ResultPanel = ({
   }, []);
 
 
-  const handleRowClick = useCallback((absoluteIndex: number, e: React.MouseEvent) => {
+  const handleRowNumClick = useCallback((absoluteIndex: number, e: React.MouseEvent) => {
+    e.stopPropagation();
     if (e.shiftKey && lastClickedRow.current !== null) {
       const start = Math.min(lastClickedRow.current, absoluteIndex);
       const end = Math.max(lastClickedRow.current, absoluteIndex);
@@ -238,6 +242,42 @@ const ResultPanel = ({
       setSelectedRows(prev => (prev.size === 1 && prev.has(absoluteIndex) ? new Set() : new Set([absoluteIndex])));
       lastClickedRow.current = absoluteIndex;
     }
+  }, []);
+
+  // 序号列按下开始划选
+  const handleRowNumMouseDown = useCallback((absoluteIndex: number, e: React.MouseEvent) => {
+    if (e.button !== 0 || e.shiftKey || e.ctrlKey || e.metaKey) return;
+    dragSelectRef.current = { anchor: absoluteIndex, active: true };
+    document.body.style.userSelect = 'none';
+
+    const onMouseUp = () => {
+      if (dragSelectRef.current.active) {
+        dragSelectRef.current.active = false;
+        lastClickedRow.current = dragSelectRef.current.anchor;
+      }
+      document.body.style.userSelect = '';
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+    document.addEventListener('mouseup', onMouseUp);
+  }, []);
+
+  // 划选过程中经过行
+  const handleRowDragEnter = useCallback((absoluteIndex: number) => {
+    if (!dragSelectRef.current.active) return;
+    const anchor = dragSelectRef.current.anchor;
+    const start = Math.min(anchor, absoluteIndex);
+    const end = Math.max(anchor, absoluteIndex);
+    setSelectedRows(() => { const next = new Set<number>(); for (let i = start; i <= end; i++) next.add(i); return next; });
+  }, []);
+
+  // 双击单元格复制
+  const handleCellDoubleClick = useCallback(async (val: unknown) => {
+    const text = formatValueForCopy(val);
+    try {
+      await navigator.clipboard.writeText(text);
+      const display = text.length > 20 ? text.substring(0, 20) + '...' : text;
+      toast.success(`已复制: ${display}`);
+    } catch { toast.error('复制失败'); }
   }, []);
 
   const handleRowContextMenu = useCallback((absoluteIndex: number, cellValue: string, e: React.MouseEvent) => {
@@ -289,6 +329,14 @@ const ResultPanel = ({
   const handleHeaderContextMenu = useCallback((e: React.MouseEvent, col: string, colIdx: number) => {
     e.preventDefault();
     setContextMenu({ x: e.clientX, y: e.clientY, rowIndex: -1, cellValue: '', colName: col, colIdx });
+  }, []);
+
+  // 双击表头复制字段名
+  const handleHeaderDoubleClick = useCallback(async (col: string) => {
+    try {
+      await navigator.clipboard.writeText(col);
+      toast.success(`已复制字段名: ${col}`);
+    } catch { toast.error('复制失败'); }
   }, []);
 
   const handleCopyColumnName = useCallback(async () => {
@@ -408,6 +456,7 @@ const ResultPanel = ({
                   const w = colWidths[colIdx] ?? DEFAULT_COL_WIDTH;
                   return (
                     <th key={col} style={{ width: w, minWidth: w, maxWidth: w, overflow: 'visible', position: 'relative' }}
+                      onDoubleClick={() => handleHeaderDoubleClick(col)}
                       onContextMenu={(e) => handleHeaderContextMenu(e, col, colIdx)}>
                       <div className="column-header">
                         <span
@@ -440,14 +489,17 @@ const ResultPanel = ({
                 return (
                   <tr key={absoluteIndex} className={isSelected ? 'row-selected' : ''}
                     style={{ userSelect: 'none' }}
-                    onClick={(e) => handleRowClick(absoluteIndex, e)}
+                    onMouseEnter={() => handleRowDragEnter(absoluteIndex)}
                     onContextMenu={(e) => handleRowContextMenu(absoluteIndex, '', e)}>
-                    <td className="row-num" style={selectedTdStyle}>{absoluteIndex + 1}</td>
+                    <td className="row-num row-num-selectable" style={selectedTdStyle}
+                      onClick={(e) => handleRowNumClick(absoluteIndex, e)}
+                      onMouseDown={(e) => handleRowNumMouseDown(absoluteIndex, e)}>{absoluteIndex + 1}</td>
                     {Array.isArray(row) && row.map((val, colIdx) => {
                       const w = colWidths[colIdx] ?? DEFAULT_COL_WIDTH;
                       return (
                         <td key={colIdx}
                           className="cell-copyable"
+                          onDoubleClick={() => handleCellDoubleClick(val)}
                           onContextMenu={(e) => handleRowContextMenu(absoluteIndex, formatValue(val), e)}
                           style={{ ...selectedTdStyle, width: w, minWidth: w, maxWidth: w }}>
                           {formatValue(val)}

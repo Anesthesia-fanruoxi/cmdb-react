@@ -377,6 +377,36 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
+  outline: none;
+}
+
+/* 结果表格滚动条加粗 */
+.sql-databi-container .result-content::-webkit-scrollbar,
+.sql-databi-container .fullscreen-table-wrapper::-webkit-scrollbar {
+  width: 8px;
+  height: 15px;
+}
+
+.sql-databi-container .result-content::-webkit-scrollbar-track,
+.sql-databi-container .fullscreen-table-wrapper::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+.sql-databi-container .result-content::-webkit-scrollbar-thumb,
+.sql-databi-container .fullscreen-table-wrapper::-webkit-scrollbar-thumb {
+  background: var(--border-color-dark, #4a5568);
+  border-radius: 4px;
+  cursor: grab;
+}
+
+.sql-databi-container .result-content::-webkit-scrollbar-thumb:hover,
+.sql-databi-container .fullscreen-table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-color);
+}
+
+.sql-databi-container .result-content::-webkit-scrollbar-thumb:active,
+.sql-databi-container .fullscreen-table-wrapper::-webkit-scrollbar-thumb:active {
+  cursor: grabbing;
 }
 
 .sql-databi-container .result-table {
@@ -384,7 +414,6 @@
   border-collapse: separate;
   border-spacing: 0;
   font-size: 13px;
-  margin: 8px;
 }
 
 .sql-databi-container .result-table thead {
@@ -418,6 +447,26 @@
   max-width: 50px;
   text-align: center;
   padding: 4px;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.sql-databi-container .result-table th.copy-column {
+  z-index: 3;
+}
+
+/* 序号列可点击选中样式 */
+.sql-databi-container .result-table td.row-num-selectable,
+.sql-databi-container .fullscreen-table td.row-num-selectable {
+  cursor: pointer;
+}
+
+.sql-databi-container .result-table td.row-num-selectable:hover,
+.sql-databi-container .fullscreen-table td.row-num-selectable:hover {
+  color: var(--primary-color);
+  background: rgba(99, 102, 241, 0.12) !important;
 }
 
 .sql-databi-container .result-table th {
@@ -470,6 +519,10 @@
 
 .sql-databi-container .result-table tbody tr:nth-child(even) td {
   background: rgba(30, 41, 59, 0.7);
+}
+
+.sql-databi-container .result-table tbody tr:nth-child(even) td.copy-column {
+  background: #1e293b;
 }
 
 .sql-databi-container .result-table tbody tr:hover td {

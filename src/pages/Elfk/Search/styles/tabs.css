@@ -14,7 +14,8 @@
   display: flex;
   gap: 4px;
   overflow-x: auto;
-  flex-shrink: 0;
+  flex: 1;
+  min-width: 0;
 }
 
 .elfk-search-page .tabs-list::-webkit-scrollbar { display: none; }
@@ -71,14 +72,37 @@
   flex-shrink: 0;
 }
 
-/* 拖拽相关样式 */
-.elfk-search-page .tab-item.dragging {
-  opacity: 0.5;
+/* 摘取后原位置占位框：半透明虚线框，保持原宽度 */
+.elfk-search-page .tab-item.dragging-placeholder {
+  opacity: 0.35;
+  border: 1px dashed var(--primary-color, #1890ff);
+  background: transparent;
+  color: transparent;
 }
 
-.elfk-search-page .tab-item.drag-over {
-  border-left: 2px solid var(--primary-color, #1890ff);
+/* 拖拽幽灵：摘取后跟随鼠标的悬浮标签 */
+.elfk-search-page .tab-ghost {
+  position: fixed;
+  z-index: 9999;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--bg-secondary, #f5f5f5);
+  color: var(--primary-color, #1890ff);
+  border: 1px solid var(--primary-color, #1890ff);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  transform: scale(1.03);
 }
+
+.elfk-search-page .tab-ghost .tab-name { overflow: hidden; text-overflow: ellipsis; }
 
 /* 内联编辑输入框 */
 .elfk-search-page .tab-name-input {

@@ -1158,6 +1158,7 @@ const SqlSearch = () => {
                 messages={tab.messages}
                 tableList={tab.tableList}
                 project={tab.project}
+                lastExecutedSql={tab.lastExecutedSql}
               />
             </div>
           ))}

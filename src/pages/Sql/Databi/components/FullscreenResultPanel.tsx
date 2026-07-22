@@ -26,6 +26,9 @@ const FullscreenResultPanel = ({ columns, results, took, onClose }: Props) => {
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
   const lastClickedRow = useRef<number | null>(null);
 
+  // 划选（拖拽选择）状态
+  const dragSelectRef = useRef<{ anchor: number; active: boolean }>({ anchor: -1, active: false });
+
   // 右键菜单
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     visible: false, x: 0, y: 0, rowIndex: -1, cellValue: ''
@@ -62,8 +65,9 @@ const FullscreenResultPanel = ({ columns, results, took, onClose }: Props) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [contextMenu.visible]);
 
-  // 单击行：选中
-  const handleRowClick = useCallback((idx: number, e: React.MouseEvent) => {
+  // 序号列点击：选中/取消选中
+  const handleRowNumClick = useCallback((idx: number, e: React.MouseEvent) => {
+    e.stopPropagation();
     if (e.shiftKey && lastClickedRow.current !== null) {
       const start = Math.min(lastClickedRow.current, idx);
       const end = Math.max(lastClickedRow.current, idx);
@@ -80,17 +84,46 @@ const FullscreenResultPanel = ({ columns, results, took, onClose }: Props) => {
       });
       lastClickedRow.current = idx;
     } else {
-      setSelectedRows(new Set([idx]));
+      setSelectedRows(prev => (prev.size === 1 && prev.has(idx) ? new Set() : new Set([idx])));
       lastClickedRow.current = idx;
     }
   }, []);
 
-  // 双击行：取消选中
-  const handleRowDoubleClick = useCallback((idx: number) => {
-    setSelectedRows(prev => {
-      const next = new Set(prev);
-      next.delete(idx);
+  // 序号列按下开始划选
+  const handleRowNumMouseDown = useCallback((idx: number, e: React.MouseEvent) => {
+    if (e.button !== 0 || e.shiftKey || e.ctrlKey || e.metaKey) return;
+    dragSelectRef.current = { anchor: idx, active: true };
+    document.body.style.userSelect = 'none';
+
+    const onMouseUp = () => {
+      if (dragSelectRef.current.active) {
+        dragSelectRef.current.active = false;
+        lastClickedRow.current = dragSelectRef.current.anchor;
+      }
+      document.body.style.userSelect = '';
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+    document.addEventListener('mouseup', onMouseUp);
+  }, []);
+
+  // 划选过程中经过行
+  const handleRowDragEnter = useCallback((idx: number) => {
+    if (!dragSelectRef.current.active) return;
+    const anchor = dragSelectRef.current.anchor;
+    const start = Math.min(anchor, idx);
+    const end = Math.max(anchor, idx);
+    setSelectedRows(() => {
+      const next = new Set<number>();
+      for (let i = start; i <= end; i++) next.add(i);
       return next;
+    });
+  }, []);
+
+  // 双击单元格复制
+  const handleCellDoubleClick = useCallback((value: string) => {
+    navigator.clipboard.writeText(value).then(() => {
+      const display = value.length > 20 ? value.slice(0, 20) + '...' : value;
+      toast.success(`已复制: ${display}`);
     });
   }, []);
 
@@ -251,22 +284,28 @@ const FullscreenResultPanel = ({ columns, results, took, onClose }: Props) => {
                     '--row-highlight': isSelected ? `rgba(${r},${g},${b},0.35)` : undefined,
                     userSelect: 'none' 
                   } as React.CSSProperties}
-                  onClick={(e) => handleRowClick(idx, e)}
-                  onDoubleClick={() => handleRowDoubleClick(idx)}
+                  onMouseEnter={() => handleRowDragEnter(idx)}
                 >
-                  <td className="row-num">{idx + 1}</td>
+                  <td className="row-num row-num-selectable"
+                    onClick={(e) => handleRowNumClick(idx, e)}
+                    onMouseDown={(e) => handleRowNumMouseDown(idx, e)}
+                  >{idx + 1}</td>
                   {Array.isArray(row) ? (
                     row.map((val, colIdx) => {
                       const formatted = formatValue(val);
                       return (
-                        <td key={colIdx} onContextMenu={(e) => handleContextMenu(e, idx, formatted)}>{formatted}</td>
+                        <td key={colIdx}
+                          onDoubleClick={() => handleCellDoubleClick(formatted)}
+                          onContextMenu={(e) => handleContextMenu(e, idx, formatted)}>{formatted}</td>
                       );
                     })
                   ) : (
                     columns.map((col, colIdx) => {
                       const formatted = formatValue((row as any)[col]);
                       return (
-                        <td key={colIdx} onContextMenu={(e) => handleContextMenu(e, idx, formatted)}>{formatted}</td>
+                        <td key={colIdx}
+                          onDoubleClick={() => handleCellDoubleClick(formatted)}
+                          onContextMenu={(e) => handleContextMenu(e, idx, formatted)}>{formatted}</td>
                       );
                     })
                   )}

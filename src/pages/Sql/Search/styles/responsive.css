@@ -29,6 +29,11 @@
 /* 独立窗口工作区 */
 .sql-search.detached-workspace { height: 100vh; }
 
+/* 独立窗口无侧边栏，内容区四角圆角 */
+.sql-search.detached-workspace .content {
+  border-radius: 8px;
+}
+
 .sql-search .detached-header {
   display: flex;
   align-items: center;

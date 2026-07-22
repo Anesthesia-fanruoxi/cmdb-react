@@ -37,11 +37,17 @@ export const QueryResult = ({
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
   const lastClickedRow = useRef<number | null>(null);
 
+  // 划选（拖拽选择）状态
+  const dragSelectRef = useRef<{ anchor: number; active: boolean }>({ anchor: -1, active: false });
+
   // 右键菜单
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     visible: false, x: 0, y: 0, rowIndex: -1, cellValue: ''
   });
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // 滚动容器
+  const resultContentRef = useRef<HTMLDivElement>(null);
   
   // 颜色选取器
   const { uiPrefs, setUiPref } = useUserPrefsStore();
@@ -61,8 +67,33 @@ export const QueryResult = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [contextMenu.visible]);
 
-  // 单击行：选中（已选中则不重复操作）
-  const handleRowClick = useCallback((idx: number, e: React.MouseEvent) => {
+  // 键盘横向滚动（按住方向键连续滚动）
+  useEffect(() => {
+    const el = resultContentRef.current;
+    if (!el) return;
+    let rafId: number | null = null;
+    const speed = 8;
+    const startScroll = (dir: 1 | -1) => {
+      if (rafId !== null) return;
+      const step = () => { el.scrollLeft += dir * speed; rafId = requestAnimationFrame(step); };
+      rafId = requestAnimationFrame(step);
+    };
+    const stopScroll = () => { if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; } };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') { e.preventDefault(); startScroll(-1); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); startScroll(1); }
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') stopScroll();
+    };
+    el.addEventListener('keydown', onKeyDown);
+    el.addEventListener('keyup', onKeyUp);
+    return () => { stopScroll(); el.removeEventListener('keydown', onKeyDown); el.removeEventListener('keyup', onKeyUp); };
+  }, [resultData.length > 0]);
+
+  // 序号列点击：选中/取消选中
+  const handleRowNumClick = useCallback((idx: number, e: React.MouseEvent) => {
+    e.stopPropagation();
     if (e.shiftKey && lastClickedRow.current !== null) {
       const start = Math.min(lastClickedRow.current, idx);
       const end = Math.max(lastClickedRow.current, idx);
@@ -79,17 +110,46 @@ export const QueryResult = ({
       });
       lastClickedRow.current = idx;
     } else {
-      setSelectedRows(new Set([idx]));
+      setSelectedRows(prev => (prev.size === 1 && prev.has(idx) ? new Set() : new Set([idx])));
       lastClickedRow.current = idx;
     }
   }, []);
 
-  // 双击行：取消选中
-  const handleRowDoubleClick = useCallback((idx: number) => {
-    setSelectedRows(prev => {
-      const next = new Set(prev);
-      next.delete(idx);
+  // 序号列按下开始划选
+  const handleRowNumMouseDown = useCallback((idx: number, e: React.MouseEvent) => {
+    if (e.button !== 0 || e.shiftKey || e.ctrlKey || e.metaKey) return;
+    dragSelectRef.current = { anchor: idx, active: true };
+    document.body.style.userSelect = 'none';
+
+    const onMouseUp = () => {
+      if (dragSelectRef.current.active) {
+        dragSelectRef.current.active = false;
+        lastClickedRow.current = dragSelectRef.current.anchor;
+      }
+      document.body.style.userSelect = '';
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+    document.addEventListener('mouseup', onMouseUp);
+  }, []);
+
+  // 划选过程中经过行
+  const handleRowDragEnter = useCallback((idx: number) => {
+    if (!dragSelectRef.current.active) return;
+    const anchor = dragSelectRef.current.anchor;
+    const start = Math.min(anchor, idx);
+    const end = Math.max(anchor, idx);
+    setSelectedRows(() => {
+      const next = new Set<number>();
+      for (let i = start; i <= end; i++) next.add(i);
       return next;
+    });
+  }, []);
+
+  // 双击单元格复制
+  const handleCellDoubleClick = useCallback((value: string) => {
+    navigator.clipboard.writeText(value).then(() => {
+      const display = value.length > 20 ? value.slice(0, 20) + '...' : value;
+      toast.success(`已复制: ${display}`);
     });
   }, []);
 
@@ -181,7 +241,7 @@ export const QueryResult = ({
         </div>
       </div>
 
-      <div className="result-content">
+      <div className="result-content" ref={resultContentRef} tabIndex={0}>
         {loading ? (
           <div className="loading">查询中...</div>
         ) : resultData.length > 0 ? (
@@ -221,10 +281,12 @@ export const QueryResult = ({
                       '--row-highlight': isSelected ? `rgba(${r},${g},${b},0.35)` : undefined,
                       userSelect: 'none'
                     } as React.CSSProperties}
-                    onClick={(e) => handleRowClick(rowIndex, e)}
-                    onDoubleClick={() => handleRowDoubleClick(rowIndex)}
+                    onMouseEnter={() => handleRowDragEnter(rowIndex)}
                   >
-                    <td className="copy-column">
+                    <td className="copy-column row-num-selectable"
+                      onClick={(e) => handleRowNumClick(rowIndex, e)}
+                      onMouseDown={(e) => handleRowNumMouseDown(rowIndex, e)}
+                    >
                       {rowIndex + 1}
                     </td>
                     {resultColumns.map((col, colIndex) => {
@@ -235,6 +297,7 @@ export const QueryResult = ({
                       return (
                         <td
                           key={colIndex}
+                          onDoubleClick={() => handleCellDoubleClick(formatted)}
                           onContextMenu={(e) => handleContextMenu(e, rowIndex, formatted)}
                         >
                           {formatted}
