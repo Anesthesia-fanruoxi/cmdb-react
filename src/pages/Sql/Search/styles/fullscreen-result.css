@@ -66,8 +66,8 @@
 .sql-search .fullscreen-table td {
   padding: 7px 12px;
   text-align: left;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  border-right: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
   white-space: nowrap;
   max-width: 360px;
   overflow: hidden;
@@ -80,15 +80,15 @@
 }
 
 .sql-search .fullscreen-table th {
-  background: #334155;
+  background: var(--bg-secondary);
   font-weight: 500;
-  color: #e2e8f0;
+  color: var(--text-color);
   position: sticky;
   top: 0;
   z-index: 3;
   font-size: 12px;
   letter-spacing: 0.3px;
-  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  border-right: 1px solid var(--border-color);
 }
 
 .sql-search .fullscreen-table th:last-child {
@@ -101,27 +101,32 @@
   position: sticky;
   left: 0;
   z-index: 2;
-  background: #1e293b;
+  background: var(--bg-color);
 }
 
 /* 左上角交叉单元格层级最高 */
 .sql-search .fullscreen-table th.row-num {
   z-index: 4;
-  background: #334155;
+  background: var(--bg-secondary);
 }
 
 .sql-search .fullscreen-table td {
   color: var(--text-color);
-  background: #1e293b;
+  background: var(--bg-color);
   line-height: 1.5;
 }
 
 .sql-search .fullscreen-table tbody tr:nth-child(even) td {
-  background: rgba(30, 41, 59, 0.7);
+  background: color-mix(in srgb, var(--bg-secondary) 35%, var(--bg-color));
+}
+
+/* 偶数行序号列保持不透明条纹底色（sticky 列防穿透） */
+.sql-search .fullscreen-table tbody tr:nth-child(even) td.row-num {
+  background: color-mix(in srgb, var(--bg-secondary) 35%, var(--bg-color));
 }
 
 .sql-search .fullscreen-table tbody tr:hover td {
-  background: rgba(71, 85, 105, 0.5);
+  background: var(--bg-hover);
 }
 
 .sql-search .fullscreen-footer {

@@ -60,6 +60,12 @@
 .sql-search .hl-comment { color: #6b7280; font-style: italic; } /* 灰色 */
 .sql-search .hl-placeholder { color: var(--text-muted); }
 
+/* 亮色主题语法高亮（加深对比度） */
+:root:not(.dark) .sql-search .hl-keyword { color: #7c3aed; }
+:root:not(.dark) .sql-search .hl-string { color: #059669; }
+:root:not(.dark) .sql-search .hl-number { color: #d97706; }
+:root:not(.dark) .sql-search .hl-comment { color: #9ca3af; }
+
 /* 工作区工具栏 */
 .sql-search .workspace-toolbar {
   display: flex;

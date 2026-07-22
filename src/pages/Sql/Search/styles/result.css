@@ -17,7 +17,7 @@
   align-items: center;
   padding: 6px 12px;
   border-bottom: none;
-  background: #1e293b;
+  background: var(--bg-secondary);
   flex-shrink: 0;
 }
 
@@ -98,8 +98,8 @@
 .sql-search .result-panel .result-table td {
   padding: 7px 12px;
   text-align: left;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  border-right: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
   white-space: nowrap;
   max-width: 360px;
   overflow: hidden;
@@ -118,25 +118,25 @@
 }
 
 .sql-search .result-panel .result-table th {
-  background: #334155;
+  background: var(--bg-secondary);
   font-weight: 500;
-  color: #e2e8f0;
+  color: var(--text-color);
   padding: 7px 12px;
   font-size: 12px;
   letter-spacing: 0.3px;
-  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  border-right: 1px solid var(--border-color);
 }
 
 .sql-search .result-panel .result-table td {
   color: var(--text-color);
-  background: #1e293b;
+  background: var(--bg-color);
   padding: 6px 12px;
   line-height: 1.5;
   transition: background-color 0.1s ease;
 }
 
 .sql-search .result-panel .result-table tbody tr:nth-child(even) td {
-  background: rgba(30, 41, 59, 0.7);
+  background: color-mix(in srgb, var(--bg-secondary) 35%, var(--bg-color));
 }
 
 .sql-search .result-panel .result-table tbody tr {
@@ -144,7 +144,7 @@
 }
 
 .sql-search .result-panel .result-table tbody tr:hover td {
-  background: rgba(71, 85, 105, 0.5);
+  background: var(--bg-hover);
 }
 
 /* 选中行高亮由 inline style 控制，font-weight 保留 */
@@ -185,7 +185,7 @@
   white-space: nowrap;
   text-align: center !important;
   color: var(--text-muted);
-  background: #1e293b !important;
+  background: var(--bg-color) !important;
   padding: 6px 12px !important;
   font-size: 12px;
   font-weight: 500;
@@ -196,14 +196,19 @@
 
 /* 左上角 th.row-num */
 .sql-search .result-panel .result-table th.row-num {
-  background: #334155 !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
+  background: var(--bg-secondary) !important;
+  border-right: 1px solid var(--border-color) !important;
   z-index: 3;
 }
 
 .sql-search .result-panel .result-table td.row-num {
-  background: #1e293b !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--bg-color) !important;
+  border-right: 1px solid var(--border-color);
+}
+
+/* 偶数行序号列保持不透明条纹底色（sticky 列防穿透） */
+.sql-search .result-panel .result-table tbody tr:nth-child(even) td.row-num {
+  background: color-mix(in srgb, var(--bg-secondary) 35%, var(--bg-color)) !important;
 }
 
 /* 序号列可点击选中样式 */
@@ -216,25 +221,6 @@
   background: rgba(99, 102, 241, 0.12) !important;
 }
 
-/* 亮色模式覆盖 - 使用变量 */
-:root:not(.dark) .sql-search .result-panel .result-table th {
-  background: var(--bg-secondary);
-}
-:root:not(.dark) .sql-search .result-panel .result-table td {
-  background: var(--bg-color);
-}
-:root:not(.dark) .sql-search .result-panel .result-table tbody tr:nth-child(even) td {
-  background: var(--bg-secondary);
-}
-:root:not(.dark) .sql-search .result-panel .result-table tbody tr:hover td {
-  background: var(--bg-hover);
-}
-:root:not(.dark) .sql-search .result-panel .row-num {
-  background: var(--bg-secondary) !important;
-}
-:root:not(.dark) .sql-search .result-panel .result-table td.row-num-selectable:hover {
-  background: rgba(99, 102, 241, 0.08) !important;
-}
 
 .sql-search .result-footer {
   display: flex;
@@ -242,7 +228,7 @@
   align-items: center;
   padding: 6px 12px;
   border-top: 1px solid rgba(99, 102, 241, 0.12);
-  background: #1e293b;
+  background: var(--bg-secondary);
   flex-shrink: 0;
 }
 
