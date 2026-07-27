@@ -5,16 +5,12 @@
 
 .tags-view {
   height: 48px;
-  background: #e8e8e8;
+  background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   padding: 0 12px;
   gap: 12px;
-}
-
-:root.dark .tags-view {
-  background: #2a2a2a;
 }
 
 /* 左侧区域 */

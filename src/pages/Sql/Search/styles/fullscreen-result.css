@@ -116,6 +116,11 @@
   line-height: 1.5;
 }
 
+/* 数据单元格可点击查看详情 */
+.sql-search .fullscreen-table td:not(.row-num) {
+  cursor: pointer;
+}
+
 .sql-search .fullscreen-table tbody tr:nth-child(even) td {
   background: color-mix(in srgb, var(--bg-secondary) 35%, var(--bg-color));
 }

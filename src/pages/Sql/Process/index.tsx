@@ -197,55 +197,77 @@ const SqlProcess = () => {
       {/* 弹窗 */}
       {dialogVisible && (
         <div className="modal-overlay" onClick={() => setDialogVisible(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
+          <div className="modal-content process-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h4>{dialogType === 'create' ? '创建审核流程' : '更新审核流程'}</h4>
-              <button className="close-btn" onClick={() => setDialogVisible(false)}>×</button>
+              <div className="process-modal-title">
+                <span className="process-modal-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                    <path d="M9 14l2 2 4-4" />
+                  </svg>
+                </span>
+                <h4>{dialogType === 'create' ? '创建审核流程' : '更新审核流程'}</h4>
+              </div>
+              <button className="process-close-btn" onClick={() => setDialogVisible(false)} title="关闭">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
             </div>
             <form onSubmit={handleSubmit}>
-              <div className="form-item">
-                <label>所属项目 <span className="required">*</span></label>
-                <select 
-                  value={formData.projectId}
-                  onChange={e => setFormData(p => ({ ...p, projectId: e.target.value }))}
-                  disabled={dialogType === 'update'}
-                  required
-                >
-                  <option value="">请选择项目</option>
-                  {projectOptions.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
+              <div className="modal-body">
+                <div className="form-item">
+                  <label><span className="required">*</span>所属项目</label>
+                  <div className="process-select-wrapper">
+                    <select 
+                      value={formData.projectId}
+                      onChange={e => setFormData(p => ({ ...p, projectId: e.target.value }))}
+                      disabled={dialogType === 'update'}
+                      required
+                    >
+                      <option value="">请选择项目</option>
+                      {projectOptions.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="form-item">
+                  <label><span className="required">*</span>审批人</label>
+                  <div className="process-select-wrapper">
+                    <select 
+                      value={formData.applyId}
+                      onChange={e => setFormData(p => ({ ...p, applyId: Number(e.target.value) }))}
+                      required
+                    >
+                      <option value={0}>请选择审批人</option>
+                      {approvers.map(u => (
+                        <option key={u.id} value={u.id}>{u.nick_name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="form-item">
+                  <label><span className="required">*</span>执行人</label>
+                  <div className="process-select-wrapper">
+                    <select 
+                      value={formData.executorId}
+                      onChange={e => setFormData(p => ({ ...p, executorId: Number(e.target.value) }))}
+                      required
+                    >
+                      <option value={0}>请选择执行人</option>
+                      {executors.map(u => (
+                        <option key={u.id} value={u.id}>{u.nick_name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
               </div>
-              <div className="form-item">
-                <label>审批人 <span className="required">*</span></label>
-                <select 
-                  value={formData.applyId}
-                  onChange={e => setFormData(p => ({ ...p, applyId: Number(e.target.value) }))}
-                  required
-                >
-                  <option value={0}>请选择审批人</option>
-                  {approvers.map(u => (
-                    <option key={u.id} value={u.id}>{u.nick_name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-item">
-                <label>执行人 <span className="required">*</span></label>
-                <select 
-                  value={formData.executorId}
-                  onChange={e => setFormData(p => ({ ...p, executorId: Number(e.target.value) }))}
-                  required
-                >
-                  <option value={0}>请选择执行人</option>
-                  {executors.map(u => (
-                    <option key={u.id} value={u.id}>{u.nick_name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-actions">
+              <div className="modal-footer">
                 <button type="button" className="btn btn-default" onClick={() => setDialogVisible(false)}>取消</button>
-                <button type="submit" className="btn btn-primary" disabled={submitting}>
+                <button type="submit" className="btn btn-primary process-submit-btn" disabled={submitting}>
+                  {submitting && <span className="process-spinner" />}
                   {submitting ? '提交中...' : '确定'}
                 </button>
               </div>

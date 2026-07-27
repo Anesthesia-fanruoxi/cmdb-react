@@ -431,8 +431,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  border-right: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
 }
 
 .sql-databi-container .result-table th:last-child,
@@ -450,7 +450,7 @@
   position: sticky;
   left: 0;
   z-index: 1;
-  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  border-right: 1px solid var(--border-color);
 }
 
 .sql-databi-container .result-table th.copy-column {
@@ -470,13 +470,13 @@
 }
 
 .sql-databi-container .result-table th {
-  background: #334155;
+  background: var(--bg-secondary);
   font-weight: 500;
-  color: #e2e8f0;
+  color: var(--text-color);
   padding: 8px 12px;
   font-size: 12px;
   letter-spacing: 0.3px;
-  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  border-right: 1px solid var(--border-color);
 }
 
 .sql-databi-container .result-table th:last-child {
@@ -485,7 +485,7 @@
 
 .sql-databi-container .result-table td {
   color: var(--text-color);
-  background: #1e293b;
+  background: var(--bg-color);
 }
 
 .sql-databi-container .th-content {
@@ -518,15 +518,16 @@
 }
 
 .sql-databi-container .result-table tbody tr:nth-child(even) td {
-  background: rgba(30, 41, 59, 0.7);
+  background: color-mix(in srgb, var(--bg-secondary) 35%, var(--bg-color));
 }
 
+/* 偶数行序号列保持不透明条纹底色（sticky 列防穿透） */
 .sql-databi-container .result-table tbody tr:nth-child(even) td.copy-column {
-  background: #1e293b;
+  background: color-mix(in srgb, var(--bg-secondary) 35%, var(--bg-color));
 }
 
 .sql-databi-container .result-table tbody tr:hover td {
-  background: rgba(71, 85, 105, 0.5);
+  background: var(--bg-hover);
 }
 
 .sql-databi-container .result-table tbody tr.row-selected td,
@@ -1259,8 +1260,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  border-right: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
 }
 
 .sql-databi-container .fullscreen-table th:last-child,
@@ -1284,15 +1285,15 @@
 }
 
 .sql-databi-container .fullscreen-table thead th {
-  background: #334155;
+  background: var(--bg-secondary);
   font-weight: 500;
-  color: #e2e8f0;
+  color: var(--text-color);
   position: sticky;
   top: 0;
   z-index: 100;
   font-size: 12px;
   letter-spacing: 0.3px;
-  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  border-right: 1px solid var(--border-color);
 }
 
 .sql-databi-container .fullscreen-table thead th:last-child {
@@ -1308,7 +1309,7 @@
 }
 
 .sql-databi-container .fullscreen-table tbody tr:hover td {
-  background: rgba(71, 85, 105, 0.5);
+  background: var(--bg-hover);
 }
 
 .sql-databi-container .fullscreen-table tbody tr.row-selected td,

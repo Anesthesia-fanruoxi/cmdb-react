@@ -82,7 +82,7 @@
 .pro-update-page .status-tag.success { background: #f6ffed; color: #52c41a; }
 .pro-update-page .status-tag.danger { background: #fff2f0; color: #ff4d4f; }
 .pro-update-page .status-tag.warning { background: #fff7e6; color: #fa8c16; }
-.pro-update-page .status-tag.default { background: #f0f0f0; color: #666; }
+.pro-update-page .status-tag.default { background: var(--bg-secondary); color: var(--text-secondary); }
 
 /* 链路追踪 checkbox */
 .pro-update-page .data-table input[type="checkbox"] {

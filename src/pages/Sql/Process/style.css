@@ -16,3 +16,175 @@
   overflow: auto;
   padding: 16px;
 }
+
+/* ==================== 流程弹框美化 ==================== */
+.process-modal {
+  width: 440px;
+  border: 1px solid var(--border-color);
+}
+
+/* 标题区域 */
+.process-modal .modal-header {
+  padding: 18px 20px;
+}
+
+.process-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.process-modal-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(24, 144, 255, 0.1);
+  color: var(--primary-color);
+  flex-shrink: 0;
+}
+
+.process-modal .modal-header h4 {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* 关闭按钮 */
+.process-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted, #999);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.process-close-btn:hover {
+  background: var(--bg-secondary, #f5f5f5);
+  color: var(--text-color);
+}
+
+/* 表单主体 */
+.process-modal .modal-body {
+  padding: 24px 20px 8px;
+}
+
+.process-modal .form-item {
+  margin-bottom: 20px;
+}
+
+.process-modal .form-item label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary, #666);
+  margin-bottom: 8px;
+}
+
+.process-modal .form-item .required {
+  margin-right: 4px;
+}
+
+/* 自定义下拉框样式 */
+.process-select-wrapper {
+  position: relative;
+}
+
+.process-select-wrapper::after {
+  content: '';
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid var(--text-muted, #999);
+  pointer-events: none;
+  transition: transform 0.2s ease;
+}
+
+.process-select-wrapper select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 10px 36px 10px 12px;
+  border-radius: 8px;
+  background: var(--bg-secondary, #f8f9fa);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.process-select-wrapper select:hover:not(:disabled) {
+  border-color: var(--primary-color);
+}
+
+.process-select-wrapper select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.1);
+  background: var(--bg-color);
+}
+
+.process-select-wrapper select:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* 底部按钮区 */
+.process-modal .modal-footer {
+  padding: 16px 20px;
+}
+
+.process-modal .modal-footer .btn {
+  min-width: 72px;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.process-modal .modal-footer .btn-default:hover {
+  border-color: var(--text-muted, #999);
+}
+
+.process-submit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 2px 6px rgba(24, 144, 255, 0.25);
+}
+
+.process-submit-btn:hover:not(:disabled) {
+  box-shadow: 0 4px 10px rgba(24, 144, 255, 0.35);
+  transform: translateY(-1px);
+}
+
+.process-submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* 提交加载动画 */
+.process-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: process-spin 0.6s linear infinite;
+}
+
+@keyframes process-spin {
+  to { transform: rotate(360deg); }
+}

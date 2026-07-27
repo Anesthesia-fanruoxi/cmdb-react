@@ -47,17 +47,3 @@
 @keyframes status-spin {
   to { transform: rotate(360deg); }
 }
-
-/* 暗色模式 */
-:root.dark .status-modal-overlay .status-modal {
-  background: #1f2937;
-}
-
-:root.dark .status-modal-overlay .status-message {
-  color: #e5e7eb;
-}
-
-:root.dark .status-modal-overlay .status-spinner {
-  border-color: #374151;
-  border-top-color: #60a5fa;
-}

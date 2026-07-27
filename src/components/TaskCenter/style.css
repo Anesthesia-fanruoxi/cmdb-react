@@ -414,7 +414,7 @@
 }
 
 .task-drawer .step-running {
-  color: #1890ff;
+  color: var(--primary-color);
 }
 
 .task-drawer .step-success {

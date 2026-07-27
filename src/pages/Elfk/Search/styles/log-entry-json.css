@@ -66,16 +66,16 @@
   gap: 4px;
   height: 24px;
   padding: 0 8px;
-  border: 1px solid #1890ff;
+  border: 1px solid var(--primary-color);
   border-radius: 4px;
-  background: rgba(24, 144, 255, 0.1);
-  color: #1890ff;
+  background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+  color: var(--primary-color);
   font-size: 12px;
   cursor: pointer;
   white-space: nowrap;
 }
 
 .elfk-search-page .log-entry-json .btn-context:hover {
-  background: #1890ff;
+  background: var(--primary-color);
   color: #fff;
 }

@@ -107,10 +107,10 @@
 .bind-error {
   margin: 12px 0 0;
   padding: 8px 12px;
-  background: #fef2f2;
+  background: color-mix(in srgb, var(--danger-color) 8%, transparent);
   border-radius: 6px;
   font-size: 13px;
-  color: #dc2626;
+  color: var(--danger-color);
   text-align: center;
 }
 

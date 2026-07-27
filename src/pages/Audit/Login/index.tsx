@@ -12,7 +12,7 @@ import './index.css';
 const formatDate = (date: Date, isEnd = false) => {
   const pad = (n: number) => String(n).padStart(2, '0');
   const y = date.getFullYear(), m = pad(date.getMonth() + 1), d = pad(date.getDate());
-  return isEnd ? `${y}-${m}-${d}T23:59:59+08:00` : `${y}-${m}-${d}T00:00:00+08:00`;
+  return isEnd ? `${y}-${m}-${d} 23:59:59` : `${y}-${m}-${d} 00:00:00`;
 };
 
 const getDefaultDateRange = () => {

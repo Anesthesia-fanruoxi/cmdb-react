@@ -285,13 +285,181 @@
   gap: 8px;
 }
 
+/* 表头复制列数据图标 */
+.sql-search .col-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 3px;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.sql-search .result-table th:hover .col-copy-btn {
+  opacity: 1;
+}
+
+.sql-search .col-copy-btn:hover {
+  background: var(--bg-hover);
+  color: var(--primary-color);
+}
+
 /* 可复制单元格 */
 .sql-search .cell-copyable {
-  cursor: default;
+  cursor: pointer;
 }
 
 .sql-search .cell-copyable:active {
   background: rgba(99, 102, 241, 0.15) !important;
+}
+
+/* ── 单元格详情弹框 ── */
+.cell-detail-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cell-detail-modal {
+  width: 640px;
+  max-width: 85vw;
+  max-height: 75vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.cell-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.cell-detail-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cell-detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.cell-detail-btn {
+  padding: 3px 10px;
+  font-size: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-color);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.cell-detail-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.cell-detail-btn.primary {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #fff;
+}
+
+.cell-detail-btn.primary:hover {
+  background: var(--primary-hover);
+  color: #fff;
+}
+
+.cell-detail-close {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.cell-detail-close:hover {
+  background: var(--bg-hover);
+  color: var(--text-color);
+}
+
+.cell-detail-body {
+  flex: 1;
+  margin: 0;
+  padding: 14px 16px;
+  overflow: auto;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-color);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.cell-detail-footer {
+  display: flex;
+  gap: 12px;
+  padding: 6px 14px;
+  border-top: 1px solid var(--border-color);
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+}
+
+/* ── 单元格悬浮提示 ── */
+.cell-hover-tip {
+  position: fixed;
+  z-index: 10001;
+  max-width: 480px;
+  max-height: 240px;
+  overflow: auto;
+  padding: 8px 10px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-all;
+  pointer-events: none;
 }
 
 /* 列头备注 tooltip */

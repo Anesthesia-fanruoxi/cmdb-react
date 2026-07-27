@@ -1,6 +1,7 @@
 /**
  * 全屏结果面板组件
  * 支持无限滚动加载、列宽拖拽调整
+ * 注意：全屏模式仅用于数据预览，不提供任何复制功能（数据安全）
  *
  * 加载状态机（loadPhase）：
  *   init   → 组件挂载，等待第1页数据
@@ -11,23 +12,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useUserPrefsStore } from '@/stores/userPrefsStore';
-import toast from '@/components/Toast';
-
-const copyCellValue = async (value: unknown) => {
-  try {
-    const text =
-      value === null || value === undefined
-        ? ''
-        : typeof value === 'object'
-        ? JSON.stringify(value)
-        : String(value);
-    await navigator.clipboard.writeText(text);
-    const display = text.length > 20 ? text.substring(0, 20) + '...' : text;
-    toast.success(`已复制: ${display}`);
-  } catch {
-    toast.error('复制失败');
-  }
-};
+import CellDetailModal from './CellDetailModal';
+import { useCellHoverTip, CellHoverTip } from './CellHoverTip';
 
 interface Props {
   columns: string[];
@@ -60,6 +46,8 @@ const FullscreenResultPanel = ({
   const [accumulatedData, setAccumulatedData] = useState<unknown[][]>([]);
   const [loadPhase, setLoadPhase] = useState<LoadPhase>('init');
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
+  const [cellDetail, setCellDetail] = useState<{ value: string; colName: string } | null>(null);
+  const { tip: cellTip, showTip, hideTip } = useCellHoverTip();
   const lastClickedRow = useRef<number | null>(null);
 
   // 划选（拖拽选择）状态
@@ -305,6 +293,13 @@ const FullscreenResultPanel = ({
     });
   }, []);
 
+  // 单击单元格：弹出详情框（全屏模式仅预览，无复制，无双击冲突）
+  const handleCellClick = useCallback((val: unknown, colName: string) => {
+    if (val === null || val === undefined) return; // NULL 不弹框
+    const text = typeof val === 'object' ? JSON.stringify(val) : String(val);
+    setCellDetail({ value: text, colName });
+  }, []);
+
   // ─── 滚动处理 ──────────────────────────────────────────────────────────────
   const handleScroll = useCallback(
     (event: React.UIEvent<HTMLDivElement>) => {
@@ -343,6 +338,8 @@ const FullscreenResultPanel = ({
   // ─── 键盘快捷键 ────────────────────────────────────────────────────────────
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // 详情弹框打开时，按键全部交给弹框处理（Esc 先关弹框，再按一次才退出全屏）
+      if (cellDetail) return;
       if (e.key === 'Escape') {
         e.preventDefault();
         onClose();
@@ -364,7 +361,7 @@ const FullscreenResultPanel = ({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  }, [onClose, cellDetail]);
 
   // ─── 高亮颜色解析 ──────────────────────────────────────────────────────────
   const hex = highlightColor.replace('#', '');
@@ -422,12 +419,6 @@ const FullscreenResultPanel = ({
                   return (
                     <th
                       key={col}
-                      onDoubleClick={async () => {
-                        try {
-                          await navigator.clipboard.writeText(col);
-                          toast.success(`已复制字段名: ${col}`);
-                        } catch { toast.error('复制失败'); }
-                      }}
                       style={{
                         width: w,
                         minWidth: w,
@@ -489,11 +480,12 @@ const FullscreenResultPanel = ({
                         return (
                           <td
                             key={colIdx}
-                            onDoubleClick={(e) => {
-                              e.stopPropagation();
-                              copyCellValue(val);
+                            onClick={() => handleCellClick(val, columns[colIdx] ?? `col_${colIdx}`)}
+                            onMouseEnter={(e) => {
+                              const td = e.currentTarget;
+                              if (td.scrollWidth > td.clientWidth) showTip(formatValue(val), td);
                             }}
-                            className="cell-copyable"
+                            onMouseLeave={hideTip}
                             style={{
                               ...selectedStyle,
                               width: w,
@@ -524,6 +516,19 @@ const FullscreenResultPanel = ({
           </>
         )}
       </div>
+
+      {/* 单元格悬浮提示 */}
+      <CellHoverTip tip={cellTip} />
+
+      {/* 单元格详情弹框（仅预览，不提供复制） */}
+      {cellDetail && (
+        <CellDetailModal
+          value={cellDetail.value}
+          colName={cellDetail.colName}
+          readonly
+          onClose={() => setCellDetail(null)}
+        />
+      )}
 
       <div className="fullscreen-footer">
         <div className="result-stats">

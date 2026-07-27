@@ -45,12 +45,12 @@
 }
 
 .document-page .btn-primary {
-  background: linear-gradient(135deg, #1890ff, #40a9ff);
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
   color: #fff;
 }
 
 .document-page .btn-primary:hover {
-  background: linear-gradient(135deg, #40a9ff, #69c0ff);
+  background: var(--primary-hover);
 }
 
 .document-page .btn-info {

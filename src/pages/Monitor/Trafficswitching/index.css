@@ -57,10 +57,10 @@
   font-weight: 500;
 }
 
-.traffic-monitor .flow-node.client { background: #e6f7ff; color: #1890ff; }
-.traffic-monitor .flow-node.nginx { background: #fff7e6; color: #fa8c16; }
-.traffic-monitor .flow-node.plugin { background: #f6ffed; color: #52c41a; }
-.traffic-monitor .flow-node.gateway { background: #f9f0ff; color: #722ed1; }
+.traffic-monitor .flow-node.client { background: color-mix(in srgb, var(--info-color) 12%, transparent); color: var(--info-color); }
+.traffic-monitor .flow-node.nginx { background: color-mix(in srgb, var(--warning-color) 12%, transparent); color: var(--warning-color); }
+.traffic-monitor .flow-node.plugin { background: color-mix(in srgb, var(--success-color) 12%, transparent); color: var(--success-color); }
+.traffic-monitor .flow-node.gateway { background: color-mix(in srgb, #722ed1 12%, transparent); color: #722ed1; }
 
 .traffic-monitor .flow-arrow {
   font-size: 18px;
@@ -132,9 +132,3 @@
 .traffic-monitor .chart-header:hover .chart-zoom-hint {
   opacity: 1;
 }
-
-/* 深色主题 */
-[data-theme="dark"] .traffic-monitor .flow-node.client { background: rgba(24, 144, 255, 0.2); }
-[data-theme="dark"] .traffic-monitor .flow-node.nginx { background: rgba(250, 140, 22, 0.2); }
-[data-theme="dark"] .traffic-monitor .flow-node.plugin { background: rgba(82, 196, 26, 0.2); }
-[data-theme="dark"] .traffic-monitor .flow-node.gateway { background: rgba(114, 46, 209, 0.2); }

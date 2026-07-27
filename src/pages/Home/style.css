@@ -8,7 +8,7 @@
   width: 100%;
   height: 100vh;
   overflow: hidden;
-  background: #f0f2f5;
+  background: var(--bg-page);
 }
 
 /* 主内容区容器 */

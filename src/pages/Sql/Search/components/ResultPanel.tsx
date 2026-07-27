@@ -9,6 +9,8 @@ import { useUserPrefsStore } from '../../../../stores/userPrefsStore';
 import toast from '../../../../components/Toast';
 import type { ResultSet } from './SqlWorkspace';
 import FullscreenResultPanel from './FullscreenResultPanel';
+import CellDetailModal from './CellDetailModal';
+import { useCellHoverTip, CellHoverTip } from './CellHoverTip';
 import type { CommentMap } from '../hooks/useColumnComments';
 import '../styles/fullscreen-result.css';
 
@@ -61,9 +63,12 @@ const ResultPanel = ({
   const [localPage, setLocalPage] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
+  const [cellDetail, setCellDetail] = useState<{ value: string; colName: string } | null>(null);
+  const { tip: cellTip, showTip, hideTip } = useCellHoverTip();
   const lastClickedRow = useRef<number | null>(null);
+  const clickTimerRef = useRef<number | null>(null);
   const tableWrapperRef = useRef<HTMLDivElement>(null);
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; rowIndex: number; cellValue: string; colName?: string; colIdx?: number } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; rowIndex: number; cellValue: string } | null>(null);
 
   // 划选（拖拽选择）状态
   const dragSelectRef = useRef<{ anchor: number; active: boolean }>({ anchor: -1, active: false });
@@ -270,14 +275,36 @@ const ResultPanel = ({
     setSelectedRows(() => { const next = new Set<number>(); for (let i = start; i <= end; i++) next.add(i); return next; });
   }, []);
 
+  // 单击单元格：延迟弹出详情框（避免与双击复制冲突）
+  const handleCellClick = useCallback((val: unknown, colName: string, e: React.MouseEvent) => {
+    if (e.detail !== 1) return; // 双击的第二下不处理
+    const text = formatValueForCopy(val);
+    if (!text) return; // NULL/空值不弹框
+    if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+    clickTimerRef.current = window.setTimeout(() => {
+      setCellDetail({ value: text, colName });
+    }, 220);
+  }, []);
+
   // 双击单元格复制
   const handleCellDoubleClick = useCallback(async (val: unknown) => {
+    if (clickTimerRef.current) {
+      clearTimeout(clickTimerRef.current);
+      clickTimerRef.current = null;
+    }
     const text = formatValueForCopy(val);
     try {
       await navigator.clipboard.writeText(text);
       const display = text.length > 20 ? text.substring(0, 20) + '...' : text;
       toast.success(`已复制: ${display}`);
     } catch { toast.error('复制失败'); }
+  }, []);
+
+  // 卸载时清理定时器
+  useEffect(() => {
+    return () => {
+      if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+    };
   }, []);
 
   const handleRowContextMenu = useCallback((absoluteIndex: number, cellValue: string, e: React.MouseEvent) => {
@@ -326,11 +353,6 @@ const ResultPanel = ({
     setContextMenu(null);
   }, [contextMenu]);
 
-  const handleHeaderContextMenu = useCallback((e: React.MouseEvent, col: string, colIdx: number) => {
-    e.preventDefault();
-    setContextMenu({ x: e.clientX, y: e.clientY, rowIndex: -1, cellValue: '', colName: col, colIdx });
-  }, []);
-
   // 双击表头复制字段名
   const handleHeaderDoubleClick = useCallback(async (col: string) => {
     try {
@@ -338,21 +360,6 @@ const ResultPanel = ({
       toast.success(`已复制字段名: ${col}`);
     } catch { toast.error('复制失败'); }
   }, []);
-
-  const handleCopyColumnName = useCallback(async () => {
-    if (!contextMenu?.colName) return;
-    try {
-      await navigator.clipboard.writeText(contextMenu.colName);
-      toast.success(`已复制字段名: ${contextMenu.colName}`);
-    } catch { toast.error('复制失败'); }
-    setContextMenu(null);
-  }, [contextMenu]);
-
-  const handleCopyColumnData = useCallback(async () => {
-    if (!contextMenu || contextMenu.colIdx === undefined) return;
-    await copyColumnData(results, contextMenu.colIdx, contextMenu.colName || '');
-    setContextMenu(null);
-  }, [contextMenu, results]);
 
   const rowNumberStart = (currentPage - 1) * pageSize;
 
@@ -383,19 +390,22 @@ const ResultPanel = ({
     <div className={`result-panel ${isFullscreen ? 'fullscreen' : ''}`} onClick={() => setContextMenu(null)}>
       {contextMenu && (
         <div className="row-context-menu" style={{ top: contextMenu.y, left: contextMenu.x }} onClick={e => e.stopPropagation()}>
-          {contextMenu.rowIndex === -1 ? (
-            <>
-              <button onClick={handleCopyColumnName}>📝 复制字段名</button>
-              <button onClick={handleCopyColumnData}>📋 复制此列数据</button>
-            </>
-          ) : (
-            <>
-              <button onClick={handleCopyCell}>📋 复制此单元格</button>
-              <button onClick={handleCopyCurrentRow}>📄 复制当前行</button>
-              <button onClick={handleCopySelectedRows}>📑 复制选中行 ({selectedRows.size})</button>
-            </>
-          )}
+          <button onClick={handleCopyCell}>📋 复制此单元格</button>
+          <button onClick={handleCopyCurrentRow}>📄 复制当前行</button>
+          <button onClick={handleCopySelectedRows}>📑 复制选中行 ({selectedRows.size})</button>
         </div>
+      )}
+
+      {/* 单元格悬浮提示 */}
+      <CellHoverTip tip={cellTip} />
+
+      {/* 单元格详情弹框 */}
+      {cellDetail && (
+        <CellDetailModal
+          value={cellDetail.value}
+          colName={cellDetail.colName}
+          onClose={() => setCellDetail(null)}
+        />
       )}
 
       <div className="result-header">
@@ -456,8 +466,7 @@ const ResultPanel = ({
                   const w = colWidths[colIdx] ?? DEFAULT_COL_WIDTH;
                   return (
                     <th key={col} style={{ width: w, minWidth: w, maxWidth: w, overflow: 'visible', position: 'relative' }}
-                      onDoubleClick={() => handleHeaderDoubleClick(col)}
-                      onContextMenu={(e) => handleHeaderContextMenu(e, col, colIdx)}>
+                      onDoubleClick={() => handleHeaderDoubleClick(col)}>
                       <div className="column-header">
                         <span
                           className={comment ? 'col-name-has-comment' : ''}
@@ -472,6 +481,13 @@ const ResultPanel = ({
                           {col}
                           {comment && <span className="col-comment-popup">{comment}</span>}
                         </span>
+                        <button className="col-copy-btn" title="复制此列数据"
+                          onClick={(e) => { e.stopPropagation(); copyColumnData(results, colIdx, col); }}>
+                          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" />
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                          </svg>
+                        </button>
                       </div>
                       {colIdx < columns.length - 1 && (
                         <div className="col-resize-handle" onMouseDown={(e) => handleResizeMouseDown(colIdx, e)} />
@@ -499,7 +515,13 @@ const ResultPanel = ({
                       return (
                         <td key={colIdx}
                           className="cell-copyable"
+                          onClick={(e) => handleCellClick(val, columns[colIdx] ?? `col_${colIdx}`, e)}
                           onDoubleClick={() => handleCellDoubleClick(val)}
+                          onMouseEnter={(e) => {
+                            const td = e.currentTarget;
+                            if (td.scrollWidth > td.clientWidth) showTip(formatValue(val), td);
+                          }}
+                          onMouseLeave={hideTip}
                           onContextMenu={(e) => handleRowContextMenu(absoluteIndex, formatValue(val), e)}
                           style={{ ...selectedTdStyle, width: w, minWidth: w, maxWidth: w }}>
                           {formatValue(val)}
