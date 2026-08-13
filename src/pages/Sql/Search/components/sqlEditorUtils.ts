@@ -7,6 +7,19 @@ import { format } from 'sql-formatter'
 import { message } from 'antd'
 import type { FieldInfo } from '@/utils/sql'
 
+/** 精简 sql-formatter 解析报错：去掉海量期望 token 语法列表与 token JSON 详情 */
+function summarizeFormatError(error: unknown): string {
+  const raw = String((error as any)?.message || error || '未知错误')
+  // 只保留 "Instead, I was expecting..." 之前的核心报错
+  let core = raw.split(/instead,?\s+i\s+was\s+expecting/i)[0].trim()
+  // 去掉 token 的 JSON 详情，如 token: {"type":"CLOSE_PAREN",...}.
+  core = core.replace(/\s*token:\s*\{[^}]*\}\.?\s*/i, ' token ')
+  core = core.replace(/\s{2,}/g, ' ').trim()
+  if (!core) core = 'SQL 语法错误'
+  if (core.length > 160) core = `${core.slice(0, 160)}…`
+  return core
+}
+
 /** 格式化 SQL 内容 */
 export function formatSqlContent(editor: ace.Ace.Editor) {
   try {
@@ -41,7 +54,7 @@ export function formatSqlContent(editor: ace.Ace.Editor) {
     
     message.success('SQL格式化成功')
   } catch (error: any) {
-    message.error(`SQL格式化失败: ${error.message}`)
+    message.error(`SQL格式化失败: ${summarizeFormatError(error)}`)
   }
 }
 

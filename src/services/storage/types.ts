@@ -102,6 +102,7 @@ export interface SqlMetadataCache {
       dataLength: number;
       indexLength?: number;
     }>;
+    tableComments?: Record<string, string>;       // 表级注释（db.table 与裸表名双键）
     fields: Record<string, Array<{                // 表->字段映射
       caption: string;
       value: string;

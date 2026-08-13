@@ -13,6 +13,8 @@ export interface DomainMapProject {
 /** 主域名选项 */
 export interface DomainOption {
   name: string;
+  /** 域名归属方 */
+  owner?: string;
 }
 
 /** 已生成的 nginx 配置文件 */

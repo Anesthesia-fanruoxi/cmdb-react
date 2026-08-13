@@ -66,33 +66,32 @@
 .sql-search .fullscreen-table td {
   padding: 7px 12px;
   text-align: left;
-  border-bottom: 1px solid var(--border-color);
-  border-right: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color-dark);
+  border-right: 1px solid var(--border-color-dark);
   white-space: nowrap;
   max-width: 360px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.sql-search .fullscreen-table th:last-child,
-.sql-search .fullscreen-table td:last-child {
-  border-right: none;
+/* 第一列补左边线，闭合表格左边缘 */
+.sql-search .fullscreen-table th:first-child,
+.sql-search .fullscreen-table td:first-child {
+  border-left: 1px solid var(--border-color-dark);
 }
 
 .sql-search .fullscreen-table th {
-  background: var(--bg-secondary);
-  font-weight: 500;
+  background: color-mix(in srgb, var(--bg-secondary) 86%, var(--text-color) 7%);
+  font-weight: 600;
   color: var(--text-color);
   position: sticky;
   top: 0;
   z-index: 3;
   font-size: 12px;
   letter-spacing: 0.3px;
-  border-right: 1px solid var(--border-color);
-}
-
-.sql-search .fullscreen-table th:last-child {
-  border-right: none;
+  border-top: 1px solid var(--border-color-dark);
+  border-right: 1px solid var(--border-color-dark);
+  border-bottom: 2px solid var(--border-color-dark);
 }
 
 /* 行号列左侧固定 */
@@ -107,7 +106,7 @@
 /* 左上角交叉单元格层级最高 */
 .sql-search .fullscreen-table th.row-num {
   z-index: 4;
-  background: var(--bg-secondary);
+  background: color-mix(in srgb, var(--bg-secondary) 86%, var(--text-color) 7%);
 }
 
 .sql-search .fullscreen-table td {
@@ -122,12 +121,12 @@
 }
 
 .sql-search .fullscreen-table tbody tr:nth-child(even) td {
-  background: color-mix(in srgb, var(--bg-secondary) 35%, var(--bg-color));
+  background: color-mix(in srgb, var(--bg-secondary) 50%, var(--bg-color));
 }
 
 /* 偶数行序号列保持不透明条纹底色（sticky 列防穿透） */
 .sql-search .fullscreen-table tbody tr:nth-child(even) td.row-num {
-  background: color-mix(in srgb, var(--bg-secondary) 35%, var(--bg-color));
+  background: color-mix(in srgb, var(--bg-secondary) 50%, var(--bg-color));
 }
 
 .sql-search .fullscreen-table tbody tr:hover td {

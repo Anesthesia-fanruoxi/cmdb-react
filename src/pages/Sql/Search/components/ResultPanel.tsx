@@ -373,6 +373,7 @@ const ResultPanel = ({
         dbName={dbName}
         currentPage={currentPage}
         onPageChange={onPageChange}
+        columnComments={columnComments}
         onClose={() => {
           setIsFullscreen(false);
           if (currentPage !== 1) onPageChange(1, pageSize);

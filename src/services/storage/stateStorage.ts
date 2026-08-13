@@ -113,6 +113,7 @@ export async function saveSqlMetadata(
     databases: string[];
     dbTables: Record<string, string[]>;
     tableStats: Record<string, { rowCount: number; dataLength: number; indexLength?: number }>;
+    tableComments?: Record<string, string>;
     fields: Record<string, Array<{ caption: string; value: string; meta: string; comment?: string; score: number }>>;
   }
 ): Promise<void> {
@@ -125,7 +126,7 @@ export async function saveSqlMetadata(
   state.sqlMetadata[projectName] = {
     ...metadata,
     timestamp: Date.now(),
-    version: '1.0',
+    version: '1.1',
   };
   
   await saveState(username, state);

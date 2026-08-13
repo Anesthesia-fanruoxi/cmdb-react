@@ -38,6 +38,10 @@ export function createSqlCompleter(ace: any, { getTables, loadTableStructure: _l
         const lineUntilCursor = currentLine.substring(0, pos.column)
         const isDotContext = /\.\w*$/.test(lineUntilCursor)
         
+        // 当前选中库的表列表（TableInfo 均带 dbName，可推导当前库）
+        const tables = typeof getTables === 'function' ? getTables() : []
+        const currentDbName = tables[0]?.dbName
+        
         // 处理点号后的字段提示（table.field）
         if (isDotContext) {
           const dotMatch = lineUntilCursor.match(/(\w+)\.\w*$/)
@@ -47,7 +51,7 @@ export function createSqlCompleter(ace: any, { getTables, loadTableStructure: _l
             const afterDotPrefix = afterDotPrefixMatch ? afterDotPrefixMatch[1] : ''
             const fullSql = session.getValue()
             const context = analyzeContext(fullSql)
-            const fields = getDotCompletions(identifier, afterDotPrefix, context.tableAliases)
+            const fields = getDotCompletions(identifier, afterDotPrefix, context.tableAliases, currentDbName)
             
             if (fields.length > 0) {
               return callback(null, fields)
@@ -55,7 +59,6 @@ export function createSqlCompleter(ace: any, { getTables, loadTableStructure: _l
           }
         }
         
-        const tables = typeof getTables === 'function' ? getTables() : []
         const fullSql = session.getValue()
         const context = analyzeContext(fullSql)
         
@@ -139,15 +142,20 @@ export function createSqlCompleter(ace: any, { getTables, loadTableStructure: _l
         const { primary, secondary, rest } = getTablesNearCursor(fullSql, pos.row)
 
         const addFieldsForTable = (tableName: string, baseScore: number) => {
-          const shortName = tableName.includes('.') ? tableName.split('.').pop()! : tableName
-          const fields = getTableFields(shortName) || getTableFields(tableName)
+          const hasDb = tableName.includes('.')
+          const shortName = hasDb ? tableName.split('.').pop()! : tableName
+          // 裸表名按当前选中库解析（与 SQL 执行时的解析一致），避免跨库同名表串字段
+          const dbName = hasDb ? tableName.slice(0, tableName.indexOf('.')) : currentDbName
+          // 按 db.table 精确命中，避免跨库同名表串注释
+          const fields = getTableFields(shortName, dbName) || getTableFields(tableName)
           if (!fields || fields.length === 0) return
           fields.forEach(field => {
             const matchResult = fuzzyMatch(prefix, field.caption)
             if (matchResult.match) {
               allSuggestions.push({
                 ...field,
-                comment: `${shortName}.${field.caption}`,
+                // 保留字段原始元数据注释，缺失时才回退为 table.field 定位信息
+                comment: field.comment || `${shortName}.${field.caption}`,
                 score: matchResult.score + baseScore
               })
             }

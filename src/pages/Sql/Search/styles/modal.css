@@ -454,6 +454,40 @@
   }
 }
 
+/* 抽屉关闭动画：滑出 + 遮罩淡出 */
+.sql-search .table-detail-drawer.closing {
+  animation: sql-search-slide-out-right 0.25s ease forwards;
+}
+
+@keyframes sql-search-slide-out-right {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+.sql-search .table-detail-drawer-overlay {
+  animation: sql-search-overlay-fade-in 0.3s ease;
+}
+
+.sql-search .table-detail-drawer-overlay.closing {
+  animation: sql-search-overlay-fade-out 0.25s ease forwards;
+}
+
+@keyframes sql-search-overlay-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes sql-search-overlay-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
 .sql-search .table-detail-drawer .drawer-header {
   display: flex;
   justify-content: space-between;

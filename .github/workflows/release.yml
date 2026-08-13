@@ -163,7 +163,11 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"
-          DESCRIPTION="1、小优化。"
+          DESCRIPTION="1、修复 SQL 查询表元数据注释丢失：表级注释未写入缓存、字段/统计缓存未按库前缀分类导致跨库同名表互相覆盖。
+          2、修复元数据文件缓存版本号不匹配无法恢复的问题；启动时自动清理旧缓存并重新拉取全量元数据。
+          3、修复查询结果列头注释悬浮提示在跨库（db.table）场景缺失，全屏结果面板补充列头注释。
+          4、修复 SQL 格式化失败时错误提示铺满整屏，报错信息精简为一行。
+          5、优化查询结果表格样式：表头与数据区分色、表格边线闭合、斑马纹对比增强。"
 
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \

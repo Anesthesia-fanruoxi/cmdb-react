@@ -3,10 +3,10 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { 
+import {
   getExportListSSE, getSqlExportProjects, submitExport, getProcessList, getDatabases,
-  generateExportDownloadLink, EXPORT_STATUS_MAP, 
-  type ExportItem, type ExportProject, type ProcessInfo
+  generateExportDownloadLink, EXPORT_STATUS_MAP,
+  type ExportItem, type ExportProject, type ProcessInfo, type CreateExportData
 } from '@/services/sql';
 import { toast } from '@/components/AppNotification';
 import ExportDetailDrawer from './ExportDetail';
@@ -129,10 +129,11 @@ const SqlExport = () => {
       return;
     }
 
-    // 查找流程配置
-    const selectedProject = projects.find(p => p.project === projectId);
-    const processData = processList.find(p => 
-      String(p.agent) === String(projectId) || 
+    // 查找流程配置（项目下拉值为项目ID，与流程列表 projectId 匹配）
+    const selectedProject = projects.find(p => String(p.id) === projectId);
+    const processData = processList.find(p =>
+      (p.projectId != null && String(p.projectId) === projectId) ||
+      (selectedProject?.project != null && String(p.agent) === String(selectedProject.project)) ||
       p.projectName === selectedProject?.project_name
     );
     
@@ -155,10 +156,10 @@ const SqlExport = () => {
       toast.warning('该项目未配置审批流程');
     }
 
-    // 如果开启了提交SQL，加载数据库列表
+    // 如果开启了提交SQL，加载数据库列表（使用项目简称作为 agent 参数）
     if (formData.submitSql && selectedProject) {
       try {
-        const res = await getDatabases({ agent: selectedProject.agent || projectId });
+        const res = await getDatabases({ agent: selectedProject.project || projectId });
         if (res.code === 200 && res.data?.databases) {
           const dbs = res.data.databases;
           setDatabases(Array.isArray(dbs) ? dbs : Object.keys(dbs));
@@ -174,10 +175,10 @@ const SqlExport = () => {
     setFormData(prev => ({ ...prev, submitSql: checked, database_name: '', sql_content: '' }));
     
     if (checked && formData.project) {
-      const selectedProject = projects.find(p => p.project === formData.project);
+      const selectedProject = projects.find(p => String(p.id) === formData.project);
       if (selectedProject) {
         try {
-          const res = await getDatabases({ agent: selectedProject.agent || formData.project });
+          const res = await getDatabases({ agent: selectedProject.project || formData.project });
           if (res.code === 200 && res.data?.databases) {
             const dbs = res.data.databases;
             setDatabases(Array.isArray(dbs) ? dbs : Object.keys(dbs));
@@ -207,7 +208,7 @@ const SqlExport = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.project) {
+    if (!formData.project || Number.isNaN(Number(formData.project))) {
       toast.warning('请选择项目');
       return;
     }
@@ -232,8 +233,8 @@ const SqlExport = () => {
 
     setSubmitting(true);
     try {
-      const submitData = {
-        project: formData.project,
+      const submitData: CreateExportData = {
+        project: Number(formData.project),
         apply_id: flowPersons.applyId!,
         reviewer_id: flowPersons.reviewerId,
         executor_id: flowPersons.executorId!,
@@ -374,7 +375,7 @@ const SqlExport = () => {
                 <label><span className="required">*</span> 所属项目</label>
                 <select value={formData.project} onChange={e => handleProjectChange(e.target.value)} required>
                   <option value="">请选择项目</option>
-                  {projects.map(p => <option key={p.project} value={p.project}>{p.project_name}</option>)}
+                  {projects.map(p => <option key={p.id} value={String(p.id)}>{p.project_name}</option>)}
                 </select>
               </div>
               

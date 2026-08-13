@@ -146,8 +146,23 @@ const SqlSearch = () => {
   
   // 表详情抽屉状态
   const [tableDetailDrawerVisible, setTableDetailDrawerVisible] = useState(false);
+  const [tableDetailClosing, setTableDetailClosing] = useState(false);
   const [drawerTableName, setDrawerTableName] = useState('');
   const [drawerActiveTab, setDrawerActiveTab] = useState<'fields' | 'preview' | 'indexes' | 'ddl'>('fields');
+
+  // 关闭抽屉：先播放退出动画，动画结束后再卸载
+  const closeTableDetailDrawer = useCallback(() => {
+    setTableDetailClosing(true);
+  }, []);
+
+  useEffect(() => {
+    if (!tableDetailClosing) return;
+    const timer = setTimeout(() => {
+      setTableDetailClosing(false);
+      setTableDetailDrawerVisible(false);
+    }, 260);
+    return () => clearTimeout(timer);
+  }, [tableDetailClosing]);
 
   // 页面状态管理
   const { setPageState, getPageState, _hasHydrated } = usePageStateStore();
@@ -160,6 +175,9 @@ const SqlSearch = () => {
   // 保存最新的 tabs 引用，用于在异步操作中获取最新状态
   const tabsRef = useRef(tabs);
   tabsRef.current = tabs;
+
+  // 本次会话已完成“清理旧缓存+重新拉取”的项目集合（启动后每个项目执行一次）
+  const startupRefreshedProjects = useRef<Set<string>>(new Set());
 
   const currentTab = tabs.find(t => t.id === activeTabId) || tabs[0];
 
@@ -179,8 +197,16 @@ const SqlSearch = () => {
     // 后台异步，不阻塞 UI
     (async () => {
       try {
-        const { getAllCachedDatabases, restoreMetadataFromStorage, getTableFields, cacheTableFields } = await import('../../../utils/sql/cache');
-        
+        const { getAllCachedDatabases, restoreMetadataFromStorage, getTableFields, cacheTableFields, clearMetadataStorage } = await import('../../../utils/sql/cache');
+
+        // 启动后首次进入该项目：清理旧缓存并重新拉取全量元数据，保证注释等数据最新
+        if (!startupRefreshedProjects.current.has(project)) {
+          startupRefreshedProjects.current.add(project);
+          await clearMetadataStorage(project, userName);
+          await fetchAndCacheMetadata(project, tab.id);
+          return;
+        }
+
         // 检查内存里有没有这个 project 的数据库列表
         const cachedDbs = getAllCachedDatabases();
         if (cachedDbs.length > 0) return; // 内存已有，不需要恢复
@@ -472,7 +498,7 @@ const SqlSearch = () => {
     console.log(`[元数据] 加载项目 "${project}" 元数据，共 ${dbList.length} 个库`);
     
     // 缓存数据库列表
-    const { cacheDatabases, cacheDbTables, cacheTableFields, cacheTableStats, initCache, persistMetadataToStorage, getMetadataCacheAge } = await import('../../../utils/sql/cache');
+    const { cacheDatabases, cacheDbTables, cacheTableFields, cacheTableStats, cacheTableComment, initCache, persistMetadataToStorage, getMetadataCacheAge } = await import('../../../utils/sql/cache');
     initCache();
     cacheDatabases(dbList);
 
@@ -501,12 +527,17 @@ const SqlSearch = () => {
           const tableName = table.name;
           const columns = table.columns || [];
 
+          // 缓存表级注释（按 db.table 分类）
+          if (tableName && table.comment) {
+            cacheTableComment(dbName, tableName, table.comment);
+          }
+
           if (tableName && (table.row_count !== undefined || table.data_length !== undefined)) {
             cacheTableStats(tableName, {
               rowCount: table.row_count || 0,
               dataLength: table.data_length || 0,
               indexLength: table.index_length
-            });
+            }, dbName);
             totalStats++;
           }
 
@@ -521,7 +552,7 @@ const SqlSearch = () => {
               isPrimaryKey: col.column_key === 'PRI' || col.is_primary_key,
               score: 900 - index
             }));
-            cacheTableFields(tableName, fieldSuggestions);
+            cacheTableFields(tableName, fieldSuggestions, dbName);
             totalFields += fieldSuggestions.length;
           }
         });
@@ -607,6 +638,15 @@ const SqlSearch = () => {
           // 恢复到内存缓存
           cacheDbTables(dbName, tableList);
 
+          // 恢复表级注释到内存
+          if (cacheData.tableComments) {
+            if (!window.sqlMetadataCache) window.sqlMetadataCache = {};
+            window.sqlMetadataCache.tableComments = {
+              ...(window.sqlMetadataCache.tableComments || {}),
+              ...cacheData.tableComments
+            };
+          }
+
           // 同时恢复字段到内存（如果 window.sqlFieldSuggestions 里还没有）
           if (cacheData.fields) {
             const { cacheTableFields } = await import('../../../utils/sql/cache');
@@ -643,10 +683,15 @@ const SqlSearch = () => {
                 cacheDbTables(dbName, tableList);
                 
                 // 同时缓存表的字段和统计信息
-                const { cacheTableFields, cacheTableStats } = await import('../../../utils/sql/cache');
+                const { cacheTableFields, cacheTableStats, cacheTableComment } = await import('../../../utils/sql/cache');
                 dbMetadata.tables.forEach((table: any) => {
                   const tableName = table.name;
                   const columns = table.columns || [];
+
+                  // 缓存表级注释（按 db.table 分类）
+                  if (tableName && table.comment) {
+                    cacheTableComment(dbName, tableName, table.comment);
+                  }
                   
                   // 缓存表统计信息
                   if (tableName && (table.row_count !== undefined || table.data_length !== undefined)) {
@@ -654,7 +699,7 @@ const SqlSearch = () => {
                       rowCount: table.row_count || 0,
                       dataLength: table.data_length || 0,
                       indexLength: table.index_length
-                    });
+                    }, dbName);
                   }
                   
                   // 缓存字段信息
@@ -669,7 +714,7 @@ const SqlSearch = () => {
                       isPrimaryKey: col.column_key === 'PRI' || col.is_primary_key,
                       score: 900 - index
                     }));
-                    cacheTableFields(tableName, fieldSuggestions);
+                    cacheTableFields(tableName, fieldSuggestions, dbName);
                   }
                 });
                 
@@ -956,6 +1001,7 @@ const SqlSearch = () => {
     // 打开抽屉
     setDrawerTableName(tableName);
     setDrawerActiveTab(tabMap[command] || 'fields');
+    setTableDetailClosing(false);
     setTableDetailDrawerVisible(true);
   };
   
@@ -975,7 +1021,7 @@ const SqlSearch = () => {
       height: 700
     });
     // 关闭抽屉
-    setTableDetailDrawerVisible(false);
+    closeTableDetailDrawer();
   };
 
   // 在查询中打开表
@@ -1010,7 +1056,7 @@ const SqlSearch = () => {
     setTabs(prev => [...prev, newTab]);
     
     // 关闭抽屉
-    setTableDetailDrawerVisible(false);
+    closeTableDetailDrawer();
     
     // 切换到新标签页并执行查询
     setActiveTabId(newId);
@@ -1191,8 +1237,8 @@ const SqlSearch = () => {
       {/* 表详情抽屉 */}
       {tableDetailDrawerVisible && (
         <>
-          <div className="drawer-overlay" onClick={() => setTableDetailDrawerVisible(false)} />
-          <div className="drawer table-detail-drawer" onClick={e => e.stopPropagation()}>
+          <div className={`drawer-overlay table-detail-drawer-overlay${tableDetailClosing ? ' closing' : ''}`} onClick={closeTableDetailDrawer} />
+          <div className={`drawer table-detail-drawer${tableDetailClosing ? ' closing' : ''}`} onClick={e => e.stopPropagation()}>
             <div className="drawer-header">
               <h4>📋 表详情 - {drawerTableName}</h4>
               <div className="drawer-header-actions">
@@ -1203,7 +1249,7 @@ const SqlSearch = () => {
                 >
                   🗗
                 </button>
-                <button className="close-btn" onClick={() => setTableDetailDrawerVisible(false)}>×</button>
+                <button className="close-btn" onClick={closeTableDetailDrawer}>×</button>
               </div>
             </div>
             <div className="drawer-body">

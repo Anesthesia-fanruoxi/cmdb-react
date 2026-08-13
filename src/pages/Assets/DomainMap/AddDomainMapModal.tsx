@@ -22,6 +22,12 @@ const AddDomainMapModal = ({ visible, domains, onSubmit, onClose }: AddDomainMap
     [subDomain, domain]
   );
 
+  // 当前选中主域名的归属方
+  const selectedDomain = useMemo(
+    () => domains.find(d => d.name === domain),
+    [domains, domain]
+  );
+
   if (!visible) return null;
 
   const handleSubmit = async () => {
@@ -65,9 +71,19 @@ const AddDomainMapModal = ({ visible, domains, onSubmit, onClose }: AddDomainMap
               <label>主域名</label>
               <select value={domain} onChange={e => setDomain(e.target.value)}>
                 <option value="">请选择主域名</option>
-                {domains.map(d => <option key={d.name} value={d.name}>{d.name}</option>)}
+                {domains.map(d => (
+                  <option key={d.name} value={d.name}>
+                    {d.owner ? `${d.name}（${d.owner}）` : d.name}
+                  </option>
+                ))}
               </select>
             </div>
+            {selectedDomain?.owner && (
+              <div className="dm-add-preview">
+                <label>归属方</label>
+                <div className="dm-add-preview-domain">{selectedDomain.owner}</div>
+              </div>
+            )}
             {fullDomain && (
               <div className="dm-add-preview">
                 <label>完整域名</label>

@@ -15,6 +15,7 @@ export interface ApplyProject {
 
 export interface ProcessInfo {
   agent: number;
+  projectId?: string | number;
   projectName: string;
   applyId: number;
   applyName: string;

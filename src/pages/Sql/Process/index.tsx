@@ -2,7 +2,7 @@
  * SQL审核流程管理页面
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   getProcessList, getProcessUsers, getSqlProcessProjects, createProcess, updateProcess, deleteProcess,
   type ProcessItem, type ProcessUser 
@@ -16,6 +16,73 @@ interface ProjectOption {
   label: string;
 }
 
+interface SelectOption {
+  value: string | number;
+  label: string;
+}
+
+/** 自定义下拉选择组件 */
+const ProcessSelect = ({ value, options, placeholder, disabled, onChange }: {
+  value: string | number;
+  options: SelectOption[];
+  placeholder?: string;
+  disabled?: boolean;
+  onChange: (val: string | number) => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const selected = options.find(o => String(o.value) === String(value));
+
+  if (disabled) {
+    return (
+      <div className="p-select p-select--disabled" ref={ref}>
+        <div className="p-select__display">
+          <span>{selected?.label || placeholder}</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`p-select${open ? ' p-select--open' : ''}`} ref={ref}>
+      <div className="p-select__display" onClick={() => setOpen(v => !v)}>
+        <span className={selected ? '' : 'p-select__placeholder'}>{selected?.label || placeholder}</span>
+        <span className="p-select__arrow" />
+      </div>
+      {open && (
+        <div className="p-select__dropdown">
+          {options.length === 0 ? (
+            <div className="p-select__empty">暂无选项</div>
+          ) : (
+            options.map(opt => (
+              <div
+                key={String(opt.value)}
+                className={`p-select__option${String(opt.value) === String(value) ? ' p-select__option--active' : ''}`}
+                onClick={() => { onChange(opt.value); setOpen(false); }}
+              >
+                <span>{opt.label}</span>
+                {String(opt.value) === String(value) && (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const SqlProcess = () => {
   const [loading, setLoading] = useState(false);
   const [processList, setProcessList] = useState<ProcessItem[]>([]);
@@ -27,6 +94,7 @@ const SqlProcess = () => {
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogType, setDialogType] = useState<'create' | 'update'>('create');
   const [submitting, setSubmitting] = useState(false);
+  const [projectName, setProjectName] = useState('');
   const [formData, setFormData] = useState({
     id: '',
     projectId: '',
@@ -101,6 +169,7 @@ const SqlProcess = () => {
       applyId: row.applyId,
       executorId: row.executorId
     });
+    setProjectName(row.projectName);
     setDialogType('update');
     setDialogVisible(true);
   };
@@ -219,49 +288,38 @@ const SqlProcess = () => {
               <div className="modal-body">
                 <div className="form-item">
                   <label><span className="required">*</span>所属项目</label>
-                  <div className="process-select-wrapper">
-                    <select 
+                  {dialogType === 'update' ? (
+                    <div className="p-select p-select--disabled">
+                      <div className="p-select__display">
+                        <span>{projectName || formData.projectId}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <ProcessSelect
                       value={formData.projectId}
-                      onChange={e => setFormData(p => ({ ...p, projectId: e.target.value }))}
-                      disabled={dialogType === 'update'}
-                      required
-                    >
-                      <option value="">请选择项目</option>
-                      {projectOptions.map(opt => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </select>
-                  </div>
+                      onChange={val => setFormData(p => ({ ...p, projectId: String(val) }))}
+                      options={projectOptions.map(o => ({ value: o.value, label: o.label }))}
+                      placeholder="请选择项目"
+                    />
+                  )}
                 </div>
                 <div className="form-item">
                   <label><span className="required">*</span>审批人</label>
-                  <div className="process-select-wrapper">
-                    <select 
-                      value={formData.applyId}
-                      onChange={e => setFormData(p => ({ ...p, applyId: Number(e.target.value) }))}
-                      required
-                    >
-                      <option value={0}>请选择审批人</option>
-                      {approvers.map(u => (
-                        <option key={u.id} value={u.id}>{u.nick_name}</option>
-                      ))}
-                    </select>
-                  </div>
+                  <ProcessSelect
+                    value={formData.applyId}
+                    onChange={val => setFormData(p => ({ ...p, applyId: Number(val) }))}
+                    options={approvers.map(u => ({ value: u.id, label: u.nick_name }))}
+                    placeholder="请选择审批人"
+                  />
                 </div>
                 <div className="form-item">
                   <label><span className="required">*</span>执行人</label>
-                  <div className="process-select-wrapper">
-                    <select 
-                      value={formData.executorId}
-                      onChange={e => setFormData(p => ({ ...p, executorId: Number(e.target.value) }))}
-                      required
-                    >
-                      <option value={0}>请选择执行人</option>
-                      {executors.map(u => (
-                        <option key={u.id} value={u.id}>{u.nick_name}</option>
-                      ))}
-                    </select>
-                  </div>
+                  <ProcessSelect
+                    value={formData.executorId}
+                    onChange={val => setFormData(p => ({ ...p, executorId: Number(val) }))}
+                    options={executors.map(u => ({ value: u.id, label: u.nick_name }))}
+                    placeholder="请选择执行人"
+                  />
                 </div>
               </div>
               <div className="modal-footer">

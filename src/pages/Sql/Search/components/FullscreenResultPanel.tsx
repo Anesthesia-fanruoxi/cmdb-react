@@ -14,6 +14,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useUserPrefsStore } from '@/stores/userPrefsStore';
 import CellDetailModal from './CellDetailModal';
 import { useCellHoverTip, CellHoverTip } from './CellHoverTip';
+import type { CommentMap } from '../hooks/useColumnComments';
 
 interface Props {
   columns: string[];
@@ -24,6 +25,7 @@ interface Props {
   currentPage: number;
   onPageChange: (page: number, size: number) => void;
   onClose: () => void;
+  columnComments?: CommentMap;
 }
 
 const PAGE_SIZE = 20;
@@ -42,6 +44,7 @@ const FullscreenResultPanel = ({
   dbName,
   onPageChange,
   onClose,
+  columnComments = new Map(),
 }: Props) => {
   const [accumulatedData, setAccumulatedData] = useState<unknown[][]>([]);
   const [loadPhase, setLoadPhase] = useState<LoadPhase>('init');
@@ -415,6 +418,7 @@ const FullscreenResultPanel = ({
                   #
                 </th>
                 {columns.map((col, colIdx) => {
+                  const comment = columnComments.get(col.toLowerCase()) || '';
                   const w = colWidths[colIdx] ?? 120;
                   return (
                     <th
@@ -424,9 +428,22 @@ const FullscreenResultPanel = ({
                         minWidth: w,
                         maxWidth: w,
                         position: 'relative',
+                        overflow: 'visible',
                       }}
                     >
-                      {col}
+                      <span
+                        className={comment ? 'col-name-has-comment' : ''}
+                        onMouseEnter={comment ? (e) => {
+                          const popup = (e.currentTarget as HTMLElement).querySelector('.col-comment-popup') as HTMLElement;
+                          if (!popup) return;
+                          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                          popup.style.left = `${rect.left + rect.width / 2}px`;
+                          popup.style.top = `${rect.top - 6}px`;
+                        } : undefined}
+                      >
+                        {col}
+                        {comment && <span className="col-comment-popup">{comment}</span>}
+                      </span>
                       <div
                         className="col-resize-handle"
                         onMouseDown={(e) => handleResizeMouseDown(colIdx, e)}

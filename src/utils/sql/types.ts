@@ -68,6 +68,7 @@ export interface SqlCache {
     dbTables?: Record<string, string[]>
     tables?: TableInfo[]
     tableStats?: Record<string, { rowCount: number; dataLength: number; indexLength?: number }> // 表统计信息
+    tableComments?: Record<string, string> // 表级注释（支持 db.table 与裸表名双键）
   }
 }
 
@@ -80,6 +81,7 @@ declare global {
       dbTables?: Record<string, string[]>
       tables?: TableInfo[]
       tableStats?: Record<string, { rowCount: number; dataLength: number; indexLength?: number }>
+      tableComments?: Record<string, string>
     }
   }
 }

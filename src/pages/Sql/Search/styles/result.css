@@ -98,17 +98,18 @@
 .sql-search .result-panel .result-table td {
   padding: 7px 12px;
   text-align: left;
-  border-bottom: 1px solid var(--border-color);
-  border-right: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color-dark);
+  border-right: 1px solid var(--border-color-dark);
   white-space: nowrap;
   max-width: 360px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.sql-search .result-panel .result-table th:last-child,
-.sql-search .result-panel .result-table td:last-child {
-  border-right: none;
+/* 第一列补左边线，闭合表格左边缘 */
+.sql-search .result-panel .result-table th:first-child,
+.sql-search .result-panel .result-table td:first-child {
+  border-left: 1px solid var(--border-color-dark);
 }
 
 .sql-search .result-panel .result-table thead {
@@ -118,13 +119,15 @@
 }
 
 .sql-search .result-panel .result-table th {
-  background: var(--bg-secondary);
-  font-weight: 500;
+  background: color-mix(in srgb, var(--bg-secondary) 86%, var(--text-color) 7%);
+  font-weight: 600;
   color: var(--text-color);
   padding: 7px 12px;
   font-size: 12px;
   letter-spacing: 0.3px;
-  border-right: 1px solid var(--border-color);
+  border-top: 1px solid var(--border-color-dark);
+  border-right: 1px solid var(--border-color-dark);
+  border-bottom: 2px solid var(--border-color-dark);
 }
 
 .sql-search .result-panel .result-table td {
@@ -136,7 +139,7 @@
 }
 
 .sql-search .result-panel .result-table tbody tr:nth-child(even) td {
-  background: color-mix(in srgb, var(--bg-secondary) 35%, var(--bg-color));
+  background: color-mix(in srgb, var(--bg-secondary) 50%, var(--bg-color));
 }
 
 .sql-search .result-panel .result-table tbody tr {
@@ -196,8 +199,8 @@
 
 /* 左上角 th.row-num */
 .sql-search .result-panel .result-table th.row-num {
-  background: var(--bg-secondary) !important;
-  border-right: 1px solid var(--border-color) !important;
+  background: color-mix(in srgb, var(--bg-secondary) 86%, var(--text-color) 7%) !important;
+  border-right: 1px solid var(--border-color-dark) !important;
   z-index: 3;
 }
 

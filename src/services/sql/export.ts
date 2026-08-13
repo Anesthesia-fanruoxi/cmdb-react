@@ -8,6 +8,7 @@ import { createGatewayConnection } from '../sse/compat';
 
 // 类型定义
 export interface ExportProject {
+  id: string | number;
   project: string;
   project_name: string;
   agent?: string;
@@ -49,7 +50,7 @@ export interface ExportDetail extends ExportItem {
 }
 
 export interface CreateExportData {
-  project: string;
+  project: number;
   apply_id: number;
   reviewer_id: number;
   executor_id: number;

@@ -14,22 +14,33 @@ export function initCache(): void {
   }
 }
 
-/** 获取所有缓存的表名建议 */
+/** 获取所有缓存的表名建议（遍历各库的表，附带库名前缀与表注释） */
 export function getAllCachedTableSuggestions(): Suggestion[] {
   const suggestions: Suggestion[] = []
-  
-  if (window.sqlMetadataCache?.tables) {
-    window.sqlMetadataCache.tables.forEach(table => {
-      suggestions.push({
-        caption: table.name,
-        value: table.name,
-        meta: 'table',
-        comment: table.comment || '',
-        score: 900
+  const seen = new Set<string>()
+
+  const dbTables = window.sqlMetadataCache?.dbTables
+  if (dbTables) {
+    Object.keys(dbTables).forEach(dbKey => {
+      // 跳过小写重复键
+      if (dbKey !== dbKey.toLowerCase() && dbTables[dbKey.toLowerCase()]) return
+      const dbName = dbKey
+      ;(dbTables[dbKey] || []).forEach(tableName => {
+        const dedupeKey = `${dbName.toLowerCase()}.${tableName.toLowerCase()}`
+        if (seen.has(dedupeKey)) return
+        seen.add(dedupeKey)
+        suggestions.push({
+          caption: tableName,
+          value: tableName,
+          meta: 'table',
+          comment: getTableComment(dbName, tableName) || '',
+          dbName,
+          score: 900
+        })
       })
     })
   }
-  
+
   return suggestions
 }
 
@@ -58,27 +69,53 @@ export function getAllCachedFieldSuggestions(prefix = ''): Suggestion[] {
   return suggestions.sort((a, b) => b.score - a.score)
 }
 
-/** 获取指定表的字段 */
-export function getTableFields(tableName: string): FieldInfo[] {
+/** 获取指定表的字段（优先 db.table 精确命中，回退裸表名） */
+export function getTableFields(tableName: string, dbName?: string): FieldInfo[] {
   if (!window.sqlFieldSuggestions) return []
+  if (dbName) {
+    const qualified = `${dbName}.${tableName}`.toLowerCase()
+    const hit = window.sqlFieldSuggestions[qualified]
+    if (hit && hit.length > 0) return hit
+  }
   const key = tableName.toLowerCase()
   return window.sqlFieldSuggestions[key] || window.sqlFieldSuggestions[tableName] || []
 }
 
-/** 缓存表字段 */
-export function cacheTableFields(tableName: string, fields: FieldInfo[]): void {
+/** 缓存表字段（有 dbName 时同时写入 db.table 与裸表名双键） */
+export function cacheTableFields(tableName: string, fields: FieldInfo[], dbName?: string): void {
   if (!window.sqlFieldSuggestions) window.sqlFieldSuggestions = {}
   window.sqlFieldSuggestions[tableName] = fields
   window.sqlFieldSuggestions[tableName.toLowerCase()] = fields
+  if (dbName) {
+    const qualified = `${dbName}.${tableName}`
+    window.sqlFieldSuggestions[qualified] = fields
+    window.sqlFieldSuggestions[qualified.toLowerCase()] = fields
+  }
 }
 
-/** 获取所有缓存的表名列表 */
+/** 获取所有缓存的表名列表（基于 dbTables 映射，附带库名与表注释） */
 export function getAllCachedTables(): TableInfo[] {
   const tables: TableInfo[] = []
   const seen = new Set<string>()
-  
-  if (window.sqlFieldSuggestions) {
+
+  const dbTables = window.sqlMetadataCache?.dbTables
+  if (dbTables) {
+    Object.keys(dbTables).forEach(dbKey => {
+      // 跳过小写重复键
+      if (dbKey !== dbKey.toLowerCase() && dbTables[dbKey.toLowerCase()]) return
+      ;(dbTables[dbKey] || []).forEach(tableName => {
+        const key = tableName.toLowerCase()
+        if (seen.has(key)) return
+        seen.add(key)
+        tables.push({ name: tableName, comment: getTableComment(dbKey, tableName) || '', dbName: dbKey })
+      })
+    })
+  }
+
+  // 回退：dbTables 缺失时从字段缓存推导（跳过 db.table 限定键）
+  if (tables.length === 0 && window.sqlFieldSuggestions) {
     Object.keys(window.sqlFieldSuggestions).forEach(tableName => {
+      if (tableName.includes('.')) return
       const key = tableName.toLowerCase()
       if (!seen.has(key)) {
         seen.add(key)
@@ -86,7 +123,7 @@ export function getAllCachedTables(): TableInfo[] {
       }
     })
   }
-  
+
   return tables
 }
 
@@ -115,22 +152,53 @@ export function getDbTables(dbName: string): string[] {
   return window.sqlMetadataCache.dbTables[dbName] || window.sqlMetadataCache.dbTables[dbName.toLowerCase()] || []
 }
 
-/** 缓存表的统计信息 */
-export function cacheTableStats(tableName: string, stats: { rowCount: number; dataLength: number; indexLength?: number }): void {
+/** 缓存表的统计信息（有 dbName 时同时写入 db.table 与裸表名双键） */
+export function cacheTableStats(tableName: string, stats: { rowCount: number; dataLength: number; indexLength?: number }, dbName?: string): void {
   if (!window.sqlMetadataCache) window.sqlMetadataCache = {}
   if (!window.sqlMetadataCache.tableStats) window.sqlMetadataCache.tableStats = {}
   
   const key = tableName.toLowerCase()
   window.sqlMetadataCache.tableStats[key] = stats
   window.sqlMetadataCache.tableStats[tableName] = stats
+  if (dbName) {
+    const qualified = `${dbName}.${tableName}`
+    window.sqlMetadataCache.tableStats[qualified] = stats
+    window.sqlMetadataCache.tableStats[qualified.toLowerCase()] = stats
+  }
 }
 
-/** 获取表的统计信息 */
-export function getTableStats(tableName: string): { rowCount: number; dataLength: number; indexLength?: number } | null {
+/** 获取表的统计信息（优先 db.table 精确命中，回退裸表名） */
+export function getTableStats(tableName: string, dbName?: string): { rowCount: number; dataLength: number; indexLength?: number } | null {
   if (!window.sqlMetadataCache?.tableStats) return null
   
+  if (dbName) {
+    const qualified = `${dbName}.${tableName}`.toLowerCase()
+    const hit = window.sqlMetadataCache.tableStats[qualified]
+    if (hit) return hit
+  }
   const key = tableName.toLowerCase()
   return window.sqlMetadataCache.tableStats[key] || window.sqlMetadataCache.tableStats[tableName] || null
+}
+
+/** 缓存表级注释（有 dbName 时同时写入 db.table 与裸表名双键） */
+export function cacheTableComment(dbName: string, tableName: string, comment: string): void {
+  if (!window.sqlMetadataCache) window.sqlMetadataCache = {}
+  if (!window.sqlMetadataCache.tableComments) window.sqlMetadataCache.tableComments = {}
+
+  const qualified = `${dbName}.${tableName}`
+  window.sqlMetadataCache.tableComments[qualified] = comment
+  window.sqlMetadataCache.tableComments[qualified.toLowerCase()] = comment
+  // 裸表名仅作回退，同名表后写覆盖前写，精确查询请用带库名的 key
+  window.sqlMetadataCache.tableComments[tableName] = comment
+  window.sqlMetadataCache.tableComments[tableName.toLowerCase()] = comment
+}
+
+/** 获取表级注释（优先 db.table 精确命中，回退裸表名） */
+export function getTableComment(dbName: string, tableName: string): string {
+  const comments = window.sqlMetadataCache?.tableComments
+  if (!comments) return ''
+  const qualified = `${dbName}.${tableName}`
+  return comments[qualified] ?? comments[qualified.toLowerCase()] ?? comments[tableName] ?? comments[tableName.toLowerCase()] ?? ''
 }
 
 /** 持久化元数据到文件存储 */
@@ -141,6 +209,7 @@ export async function persistMetadataToStorage(projectName: string, username: st
     databases: window.sqlMetadataCache.databases || [],
     dbTables: window.sqlMetadataCache.dbTables || {},
     tableStats: window.sqlMetadataCache.tableStats || {},
+    tableComments: window.sqlMetadataCache.tableComments || {},
     fields: window.sqlFieldSuggestions || {},
   }
   
@@ -165,7 +234,7 @@ export async function restoreMetadataFromStorage(projectName: string, username: 
     }
     
     // 检查缓存版本
-    if (cacheData.version !== '1.0') {
+    if (cacheData.version !== '1.1') {
       console.log('[缓存恢复] ⚠️ 缓存版本不匹配,忽略')
       return false
     }
@@ -177,6 +246,7 @@ export async function restoreMetadataFromStorage(projectName: string, username: 
     window.sqlMetadataCache.databases = cacheData.databases || []
     window.sqlMetadataCache.dbTables = cacheData.dbTables || {}
     window.sqlMetadataCache.tableStats = cacheData.tableStats || {}
+    window.sqlMetadataCache.tableComments = cacheData.tableComments || {}
     window.sqlFieldSuggestions = cacheData.fields || {}
     
     const dbCount = cacheData.databases?.length || 0

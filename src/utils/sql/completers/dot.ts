@@ -10,7 +10,8 @@ import type { Suggestion } from '../types'
 export function getDotCompletions(
   identifier: string, 
   afterDotPrefix: string, 
-  tableAliases: Record<string, string>
+  tableAliases: Record<string, string>,
+  currentDbName?: string
 ): Suggestion[] {
   const suggestions: Suggestion[] = []
   const key = identifier.toLowerCase()
@@ -52,10 +53,10 @@ export function getDotCompletions(
     actualTableName = tableAliases[key]
   }
   
-  // 获取字段
-  let fields = getTableFields(actualTableName)
+  // 获取字段（裸表名按当前库优先命中，避免跨库同名表串字段）
+  let fields = getTableFields(actualTableName, currentDbName)
   if (!fields || fields.length === 0) {
-    fields = getTableFields(identifier)
+    fields = getTableFields(identifier, currentDbName)
   }
   
   if (fields && fields.length > 0) {
