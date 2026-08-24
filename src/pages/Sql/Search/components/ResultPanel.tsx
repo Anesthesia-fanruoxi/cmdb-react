@@ -12,6 +12,7 @@ import FullscreenResultPanel from './FullscreenResultPanel';
 import CellDetailModal from './CellDetailModal';
 import { useCellHoverTip, CellHoverTip } from './CellHoverTip';
 import type { CommentMap } from '../hooks/useColumnComments';
+import { buildInsertStatements, extractTableNameFromSql } from '../utils/copyFormat';
 import '../styles/fullscreen-result.css';
 
 interface Props {
@@ -32,6 +33,7 @@ interface Props {
   onExport?: () => void;
   queryId?: string;
   columnComments?: CommentMap;
+  lastExecutedSql?: string;
 }
 
 const formatValueForCopy = (value: unknown): string => {
@@ -58,7 +60,8 @@ const ResultPanel = ({
   allResults = [], currentResultIndex = 0, onResultChange,
   currentPage: externalPage, onPageChange,
   exportLoading = false, onExport, queryId,
-  columnComments = new Map()
+  columnComments = new Map(),
+  lastExecutedSql = ''
 }: Props) => {
   const [localPage, setLocalPage] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -353,6 +356,50 @@ const ResultPanel = ({
     setContextMenu(null);
   }, [contextMenu]);
 
+  // 复制为 INSERT：表名优先从执行的 SQL 解析，解析不到时弹框手动输入
+  const [insertRows, setInsertRows] = useState<unknown[][] | null>(null);
+  const [insertTableInput, setInsertTableInput] = useState('');
+
+  const doCopyInsert = useCallback(async (tableName: string, rows: unknown[][]) => {
+    try {
+      await navigator.clipboard.writeText(buildInsertStatements(tableName, columns, rows));
+      toast.success(`已复制 ${rows.length} 条 INSERT 语句`);
+    } catch { toast.error('复制失败'); }
+    setInsertRows(null);
+    setContextMenu(null);
+  }, [columns]);
+
+  const copyAsInsert = useCallback((rows: unknown[][]) => {
+    if (rows.length === 0) return;
+    // 优先当前结果集对应的 SQL，其次整个执行 SQL 兜底
+    const sql = allResults[currentResultIndex]?.sql || lastExecutedSql;
+    const tableName = extractTableNameFromSql(sql);
+    if (tableName) {
+      doCopyInsert(tableName, rows);
+    } else {
+      setInsertTableInput('');
+      setInsertRows(rows);
+    }
+    setContextMenu(null);
+  }, [allResults, currentResultIndex, lastExecutedSql, doCopyInsert]);
+
+  const copyCurrentRowAsInsert = useCallback(() => {
+    if (!contextMenu) return;
+    const rowStart = (currentPage - 1) * pageSize;
+    const row = currentData[contextMenu.rowIndex - rowStart];
+    if (!Array.isArray(row)) return;
+    copyAsInsert([row]);
+  }, [contextMenu, currentData, currentPage, pageSize, copyAsInsert]);
+
+  const copySelectedRowsAsInsert = useCallback(() => {
+    if (selectedRows.size === 0) return;
+    const rowStart = (currentPage - 1) * pageSize;
+    const rows = [...selectedRows].sort((a, b) => a - b)
+      .map(absIdx => currentData[absIdx - rowStart])
+      .filter((r): r is unknown[] => Array.isArray(r));
+    copyAsInsert(rows);
+  }, [selectedRows, currentData, currentPage, pageSize, copyAsInsert]);
+
   // 双击表头复制字段名
   const handleHeaderDoubleClick = useCallback(async (col: string) => {
     try {
@@ -392,8 +439,35 @@ const ResultPanel = ({
       {contextMenu && (
         <div className="row-context-menu" style={{ top: contextMenu.y, left: contextMenu.x }} onClick={e => e.stopPropagation()}>
           <button onClick={handleCopyCell}>📋 复制此单元格</button>
-          <button onClick={handleCopyCurrentRow}>📄 复制当前行</button>
-          <button onClick={handleCopySelectedRows}>📑 复制选中行 ({selectedRows.size})</button>
+          <div className="menu-divider" />
+          <button onClick={handleCopyCurrentRow}>📄 当前行 - 复制数据</button>
+          <button onClick={copyCurrentRowAsInsert}>📄 当前行 - 复制 INSERT</button>
+          <div className="menu-divider" />
+          <button onClick={handleCopySelectedRows}>📑 选中行({selectedRows.size}) - 复制数据</button>
+          <button onClick={copySelectedRowsAsInsert}>📑 选中行({selectedRows.size}) - 复制 INSERT</button>
+        </div>
+      )}
+
+      {/* 复制 INSERT 时表名解析失败的手动输入弹框 */}
+      {insertRows && (
+        <div className="insert-table-modal-overlay" onClick={() => setInsertRows(null)}>
+          <div className="insert-table-modal" onClick={e => e.stopPropagation()}>
+            <div className="insert-table-title">复制为 INSERT 语句</div>
+            <div className="insert-table-tip">未能从 SQL 中解析到表名，请手动输入目标表名</div>
+            <input
+              className="insert-table-input"
+              value={insertTableInput}
+              autoFocus
+              placeholder="如 db_name.table_name"
+              onChange={e => setInsertTableInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && insertTableInput.trim()) doCopyInsert(insertTableInput.trim(), insertRows); }}
+            />
+            <div className="insert-table-actions">
+              <button className="btn" onClick={() => setInsertRows(null)}>取消</button>
+              <button className="btn btn-primary" disabled={!insertTableInput.trim()}
+                onClick={() => doCopyInsert(insertTableInput.trim(), insertRows)}>复制</button>
+            </div>
+          </div>
         </div>
       )}
 

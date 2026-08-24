@@ -372,6 +372,7 @@ const SqlWorkspace = ({
           onExport={onExport}
           queryId={queryId}
           columnComments={columnComments}
+          lastExecutedSql={lastExecutedSql}
         />
       </div>
     </div>

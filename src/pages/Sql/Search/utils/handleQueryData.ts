@@ -17,6 +17,30 @@ interface QueryResultItem {
   sql?: string;
 }
 
+/** 按语句拆分执行的 SQL（忽略语句内字符串中的分号） */
+function splitSqlStatements(sql: string): string[] {
+  const statements: string[] = [];
+  let current = '';
+  let inQuote: string | null = null;
+  for (let i = 0; i < sql.length; i++) {
+    const ch = sql[i];
+    if (inQuote) {
+      current += ch;
+      if (ch === inQuote && sql[i - 1] !== '\\') inQuote = null;
+      continue;
+    }
+    if (ch === "'" || ch === '"' || ch === '`') { inQuote = ch; current += ch; continue; }
+    if (ch === ';') {
+      if (current.trim()) statements.push(current.trim());
+      current = '';
+      continue;
+    }
+    current += ch;
+  }
+  if (current.trim()) statements.push(current.trim());
+  return statements;
+}
+
 // API 响应数据结构
 interface QueryResponseData {
   results?: QueryResultItem[];
@@ -51,6 +75,8 @@ export function handleQueryData(
   executedSql: string = ''
 ): HandleQueryDataResult {
   const allResults: ResultSet[] = [];
+  // 后端多结果集不一定回传每条 sql，按顺序用执行 SQL 拆分补齐
+  const executedStatements = splitSqlStatements(executedSql);
 
   // 检查是否为多结果集格式
   if (data.results && Array.isArray(data.results) && data.results.length > 0) {
@@ -63,7 +89,7 @@ export function handleQueryData(
         total: result.total || processedRows.length,
         took: result.took || 0,
         db_name: result.db_name || defaultDbName,
-        sql: result.sql || '',
+        sql: result.sql || executedStatements[index] || executedSql,
         queryId: result.query_id || '',
         name: `结果集 ${index + 1}`
       });
