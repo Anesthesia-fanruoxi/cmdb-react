@@ -87,7 +87,7 @@ export function ensureAceSqlKeywordsPatched() {
   }
 
   oop.inherits(CmdbSqlHighlightRules, TextHighlightRules)
-  rulesMod.SqlHighlightRules = CmdbSqlHighlightRules as typeof rulesMod.SqlHighlightRules
+  rulesMod.SqlHighlightRules = CmdbSqlHighlightRules as unknown as typeof rulesMod.SqlHighlightRules
 
   const OrigMode = modeMod.Mode
   function Mode(this: { HighlightRules: unknown }) {
@@ -95,7 +95,7 @@ export function ensureAceSqlKeywordsPatched() {
     this.HighlightRules = CmdbSqlHighlightRules
   }
   oop.inherits(Mode, OrigMode)
-  modeMod.Mode = Mode as typeof modeMod.Mode
+  modeMod.Mode = Mode as unknown as typeof modeMod.Mode
 }
 
 /** 精简 sql-formatter 解析报错：去掉海量期望 token 语法列表与 token JSON 详情 */
