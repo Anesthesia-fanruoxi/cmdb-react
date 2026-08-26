@@ -7,7 +7,7 @@
 export const SQL_KEYWORDS = {
   // 初始提示词（SQL语句起始词）
   INITIAL: [
-    'SELECT', 'WITH', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'ALTER', 'TRUNCATE', 'SHOW'
+    'SELECT', 'WITH', 'INSERT', 'UPDATE', 'DELETE', 'EXPLAIN', 'CREATE', 'DROP', 'ALTER', 'TRUNCATE', 'SHOW'
   ],
   
   // SELECT子句后的提示词
@@ -15,9 +15,12 @@ export const SQL_KEYWORDS = {
     'DISTINCT', 'ALL', 'TOP', '*', 'AS', 'FROM'
   ],
   
-  // FROM子句后的提示词
+  // FROM子句后的提示词（JOIN 类用连拼短语，与 Navicat 一致）
   FROM: [
-    'WHERE', 'GROUP BY', 'HAVING', 'ORDER BY', 'LIMIT', 'JOIN', 'LEFT JOIN', 'RIGHT JOIN', 'INNER JOIN'
+    'WHERE', 'GROUP BY', 'HAVING', 'ORDER BY', 'LIMIT',
+    'JOIN',
+    'LEFT JOIN', 'RIGHT JOIN', 'INNER JOIN', 'FULL JOIN', 'CROSS JOIN',
+    'LEFT OUTER JOIN', 'RIGHT OUTER JOIN', 'FULL OUTER JOIN'
   ],
   
   // WHERE子句后的提示词
@@ -73,7 +76,7 @@ export const SQL_KEYWORDS_LIST = [
   'JOIN', 'LEFT', 'RIGHT', 'INNER', 'OUTER', 'FULL', 'ON', 'AS', 'AND', 'OR',
   'IN', 'BETWEEN', 'LIKE', 'IS', 'NOT', 'NULL', 'UNION', 'ALL', 'CASE', 'WHEN',
   'THEN', 'ELSE', 'END', 'EXISTS', 'DISTINCT', 'SET', 'VALUES', 'INTO',
-  'UPDATE', 'DELETE', 'INSERT', 'CREATE', 'DROP', 'ALTER', 'TRUNCATE',
+  'UPDATE', 'DELETE', 'INSERT', 'EXPLAIN', 'CREATE', 'DROP', 'ALTER', 'TRUNCATE',
   'INDEX', 'TABLE', 'DATABASE', 'VIEW', 'TRIGGER', 'PROCEDURE', 'FUNCTION'
 ]
 
@@ -84,6 +87,7 @@ export const KEYWORD_PRIORITY: Record<string, number> = {
   'INSERT': 95,
   'UPDATE': 95,
   'DELETE': 95,
+  'EXPLAIN': 92,
   'CREATE': 90,
   'ALTER': 90,
   'DROP': 90,
@@ -92,6 +96,14 @@ export const KEYWORD_PRIORITY: Record<string, number> = {
   'FROM': 85,
   'WHERE': 85,
   'JOIN': 80,
+  'LEFT JOIN': 88,
+  'RIGHT JOIN': 86,
+  'INNER JOIN': 86,
+  'FULL JOIN': 84,
+  'CROSS JOIN': 84,
+  'LEFT OUTER JOIN': 85,
+  'RIGHT OUTER JOIN': 85,
+  'FULL OUTER JOIN': 85,
   'LEFT': 80,
   'RIGHT': 80,
   'INNER': 80,

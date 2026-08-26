@@ -21,7 +21,7 @@ import MessageCenter from '../MessageCenter';
 import ProfileDrawer from '../ProfileDrawer';
 import TaskCenter from '../TaskCenter';
 import SSEMonitor from '../SSEMonitor';
-import { openComponentWindow } from '../../utils/window';
+import SystemInfoModal from '../../pages/SystemInfo/SystemInfoModal';
 import { isTauriEnv } from '../../services/machine';
 import './Sidebar.css';
 
@@ -43,6 +43,7 @@ const Sidebar = ({ collapsed = false }: SidebarProps) => {
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [profileVisible, setProfileVisible] = useState(false);
   const [messageCenterVisible, setMessageCenterVisible] = useState(false);
+  const [systemInfoVisible, setSystemInfoVisible] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -236,7 +237,7 @@ const Sidebar = ({ collapsed = false }: SidebarProps) => {
                     <ListTodo size={16} /><span>任务中心</span>
                   </div>
                   {isTauriEnv() && (
-                    <div className="dropdown-item" onClick={() => { setDropdownVisible(false); openComponentWindow({ type: 'system-info', label: 'system-info', title: '系统信息', width: 400, height: 600 }); }}>
+                    <div className="dropdown-item" onClick={() => { setDropdownVisible(false); setSystemInfoVisible(true); }}>
                       <Info size={16} />
                       <span>系统信息</span>
                       {hasUpdate && <span className="new-badge">NEW</span>}
@@ -280,6 +281,7 @@ const Sidebar = ({ collapsed = false }: SidebarProps) => {
       <ProfileDrawer visible={profileVisible} onClose={handleProfileClose} />
       <TaskCenter visible={taskCenterVisible} onClose={closeTaskCenter} />
       <MessageCenter visible={messageCenterVisible} onClose={() => setMessageCenterVisible(false)} />
+      <SystemInfoModal visible={systemInfoVisible} onClose={() => setSystemInfoVisible(false)} />
     </aside>
   );
 };

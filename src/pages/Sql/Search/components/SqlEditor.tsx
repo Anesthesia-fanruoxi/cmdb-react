@@ -13,7 +13,7 @@ import 'ace-builds/src-noconflict/ext-language_tools'
 import { createSqlCompleter } from '@/utils/sql'
 import { updateTabTables } from '@/utils/sql/tableExtractor'
 import { useUserPrefsStore } from '@/stores/userPrefsStore'
-import { formatSqlContent, createDotHandler } from './sqlEditorUtils'
+import { formatSqlContent, createDotHandler, ensureAceSqlKeywordsPatched } from './sqlEditorUtils'
 import SearchDialog from './SearchDialog'
 import ReplaceDialog from './ReplaceDialog'
 import type { TableInfo, FieldInfo } from '@/utils/sql'
@@ -163,6 +163,7 @@ const SqlEditor = forwardRef<SqlEditorRef, Props>(({
       return dark ? 'ace/theme/tomorrow_night' : 'ace/theme/xcode';
     };
     editor.setTheme(getTheme(isDark, sqlEyeProtect))
+    ensureAceSqlKeywordsPatched()
     editor.session.setMode('ace/mode/sql')
 
     // 监听主题变化
@@ -237,7 +238,7 @@ const SqlEditor = forwardRef<SqlEditorRef, Props>(({
     editor.on('focus', () => onFocus?.())
 
     // 添加点号处理器（用于 table.field 补全）
-    createDotHandler(editor, loadTableStructure)
+    createDotHandler(editor)
 
     // 设置初始值（在 change 监听之后，但标记初始化中，不触发表名提取）
     if (value) {

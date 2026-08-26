@@ -13,6 +13,20 @@ const storeInstances: Map<StorageFile, Store> = new Map();
 // 内存缓存（存储解密后的数据）
 const memoryCache: Map<StorageFile, Record<string, unknown>> = new Map();
 
+/**
+ * 异步存储写入按文件合并。当前 IPC 尚未完成时，只保留最新快照，
+ * 避免输入期间不断堆积 save_store_async 请求。
+ */
+type PendingAsyncSave = {
+  data: Record<string, unknown> | null;
+  scheduled: boolean;
+  inFlight: Promise<void> | null;
+  idleCallbackId: number | null;
+  timeoutId: ReturnType<typeof setTimeout> | null;
+};
+
+const pendingAsyncSaves: Map<StorageFile, PendingAsyncSave> = new Map();
+
 // 初始化状态
 let isInitialized = false;
 let initPromiseResolve: (() => void) | null = null;
@@ -90,17 +104,162 @@ async function loadAndDecrypt(file: StorageFile): Promise<Record<string, unknown
 /**
  * 加密并保存数据到文件（异步后台，不等待返回，不阻塞主线程）
  */
+
+function logStoragePerf(event: string, details: Record<string, unknown>): void {
+  if (import.meta.env.DEV) {
+    console.warn(`[StoragePerf] ${event}`, details);
+  }
+}
+
+function clearScheduledSave(state: PendingAsyncSave): void {
+  if (state.idleCallbackId !== null && typeof window !== 'undefined') {
+    const idleWindow = window as Window & {
+      cancelIdleCallback?: (id: number) => void;
+    };
+    idleWindow.cancelIdleCallback?.(state.idleCallbackId);
+    state.idleCallbackId = null;
+  }
+
+  if (state.timeoutId !== null) {
+    clearTimeout(state.timeoutId);
+    state.timeoutId = null;
+  }
+
+  state.scheduled = false;
+}
+
+function dispatchAsyncSave(file: StorageFile, state: PendingAsyncSave): void {
+  if (state.inFlight || !state.data) return;
+
+  const data = state.data;
+  state.data = null;
+
+  const stringifyStarted = performance.now();
+  const plaintext = JSON.stringify(data);
+  const stringifyMs = performance.now() - stringifyStarted;
+
+  if (stringifyMs >= 8) {
+    logStoragePerf('stringify', {
+      file,
+      bytes: plaintext.length,
+      ms: Number(stringifyMs.toFixed(1)),
+    });
+  }
+
+  const invokeStarted = performance.now();
+  const request = invoke<void>('save_store_async', { file, plaintext })
+    .then(() => {
+      const invokeMs = performance.now() - invokeStarted;
+      if (invokeMs >= 32) {
+        logStoragePerf('ipc-ack', {
+          file,
+          bytes: plaintext.length,
+          ms: Number(invokeMs.toFixed(1)),
+        });
+      }
+    })
+    .catch((error) => {
+      console.error(`[AsyncSave] save failed for ${file}:`, error);
+    })
+    .finally(() => {
+      if (state.inFlight === request) {
+        state.inFlight = null;
+      }
+
+      if (state.data) {
+        scheduleAsyncSaveFlush(file, state);
+      } else {
+        pendingAsyncSaves.delete(file);
+      }
+    });
+
+  state.inFlight = request;
+}
+
+/**
+ * Defer the request and stringify only when the snapshot is sent.
+ */
+function scheduleAsyncSaveFlush(file: StorageFile, state: PendingAsyncSave): void {
+  if (state.scheduled || state.inFlight || !state.data) return;
+  state.scheduled = true;
+
+  const flush = () => {
+    state.scheduled = false;
+    state.idleCallbackId = null;
+    state.timeoutId = null;
+    dispatchAsyncSave(file, state);
+  };
+
+  const idleWindow = typeof window !== 'undefined'
+    ? window as Window & {
+        requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+      }
+    : null;
+
+  if (idleWindow?.requestIdleCallback) {
+    state.idleCallbackId = idleWindow.requestIdleCallback(flush, { timeout: 2000 });
+  } else if (typeof window !== 'undefined') {
+    state.timeoutId = window.setTimeout(flush, 0);
+  } else {
+    flush();
+  }
+}
+
 export function saveStorageDataAsync(file: StorageFile, data: Record<string, unknown>): void {
   if (!isTauriEnv()) return;
 
-  // 先更新内存缓存
+  // Update the memory cache first so readers see the latest value.
   memoryCache.set(file, data);
 
-  const jsonStr = JSON.stringify(data);
-  // fire-and-forget：invoke 不 await，Rust 后台线程处理加密+写文件
-  invoke('save_store_async', { file, plaintext: jsonStr }).catch((err) => {
-    console.error(`[AsyncSave] 后台保存 ${file} 失败:`, err);
-  });
+  let state = pendingAsyncSaves.get(file);
+  if (!state) {
+    state = {
+      data,
+      scheduled: false,
+      inFlight: null,
+      idleCallbackId: null,
+      timeoutId: null,
+    };
+    pendingAsyncSaves.set(file, state);
+  } else {
+    // Keep only the latest snapshot while a request is pending.
+    state.data = data;
+  }
+
+  scheduleAsyncSaveFlush(file, state);
+}
+
+/**
+ * Flush snapshots that have not been sent yet,
+ * then wait for the Rust worker queue to reach disk.
+ */
+export async function flushStorageWrites(): Promise<void> {
+  if (!isTauriEnv()) return;
+
+  while (true) {
+    for (const [file, state] of pendingAsyncSaves) {
+      clearScheduledSave(state);
+      dispatchAsyncSave(file, state);
+    }
+
+    const requests = Array.from(pendingAsyncSaves.values())
+      .map((state) => state.inFlight)
+      .filter((request): request is Promise<void> => request !== null);
+    if (requests.length > 0) {
+      await Promise.all(requests);
+    }
+
+    const hasPendingData = Array.from(pendingAsyncSaves.values())
+      .some((state) => state.data !== null || state.inFlight !== null || state.scheduled);
+    if (!hasPendingData) break;
+  }
+
+  const started = performance.now();
+  await invoke<void>('flush_store_save_queue');
+  const ms = performance.now() - started;
+  if (ms >= 32) {
+    logStoragePerf('backend-flush', { ms: Number(ms.toFixed(1)) });
+  }
 }
 
 /**
@@ -125,28 +284,33 @@ async function encryptAndSave(file: StorageFile, data: Record<string, unknown>):
 }
 
 /**
- * 删除存储文件
+ * 物理删除存储文件。
+ * 注意：不要用 store.clear()+save——文件不存在时 load 会先创建空的 `{}`。
  */
 async function deleteStoreFile(file: StorageFile): Promise<void> {
-  if (!isTauriEnv()) {
-    return;
+  if (!isTauriEnv()) return;
+
+  // Cancel queued snapshots and wait for an in-flight write before deleting the file.
+  const pending = pendingAsyncSaves.get(file);
+  if (pending) {
+    clearScheduledSave(pending);
+    pending.data = null;
+    if (pending.inFlight) await pending.inFlight;
+    pendingAsyncSaves.delete(file);
   }
 
+  storeInstances.delete(file);
+  memoryCache.delete(file);
+
   try {
-    const store = await loadStoreFile(file);
-    await store.clear();
-    await store.save();
-    memoryCache.delete(file);
+    await invoke<void>('delete_store_file', { file });
   } catch (error) {
-    console.warn(`删除 ${file} 失败:`, error);
+    console.warn(`[Storage] delete failed for ${file}:`, error);
   }
 }
 
-// ==================== 公共 API ====================
+// ==================== Public API ====================
 
-/**
- * 等待存储初始化完成
- */
 export function waitForStorageInit(): Promise<void> {
   if (isInitialized) return Promise.resolve();
   return initPromise;
@@ -164,9 +328,15 @@ export async function initAllStorage(): Promise<void> {
     'app.dat',
     'tokens.dat',
     'profiles.dat',
+    // states.dat 保留用于兼容旧版本，states/ 目录存储拆分后的状态数据
     'states.dat',
+    'states/index.dat',
+    'states/navigation.dat',
+    'states/page-states.dat',
+    'states/sqlSearch/index.dat',
+    'states/sqlMetadata/index.dat',
     'preferences.dat',
-    // credentials.dat 由 Rust 端管理，不在此初始化
+    // credentials.dat 由 Rust 端负责管理
   ];
 
   // ✅ 并行解密所有文件（无依赖关系）
@@ -177,6 +347,17 @@ export async function initAllStorage(): Promise<void> {
   files.forEach((file, index) => {
     memoryCache.set(file, results[index]);
   });
+
+  // 将旧 states.dat 中的数据迁移到 states/ 分片文件
+  try {
+    const { migrateLegacyStates } = await import('./stateShardStorage');
+    await migrateLegacyStates();
+    const { loadSqlSearchTabFiles } = await import('./sqlSearchStorage');
+    const { loadSqlMetadataFiles } = await import('./sqlMetadataStorage');
+    await Promise.all([loadSqlSearchTabFiles(), loadSqlMetadataFiles()]);
+  } catch (error) {
+    console.warn('[Storage] state shard migration failed:', error);
+  }
 
   isInitialized = true;
   if (initPromiseResolve) {
@@ -190,6 +371,16 @@ export async function initAllStorage(): Promise<void> {
 export function getStorageData<T>(file: StorageFile): T {
   const data = memoryCache.get(file) || {};
   return data as T;
+}
+
+/**
+ * 懒加载单个存储文件（未在启动阶段预加载的动态文件使用，如 sqlMetadata/<项目>.dat）
+ * 已缓存时直接返回，不重复解密
+ */
+export async function ensureStorageFileLoaded(file: StorageFile): Promise<void> {
+  if (memoryCache.has(file)) return;
+  const data = await loadAndDecrypt(file);
+  memoryCache.set(file, data);
 }
 
 /**
@@ -238,6 +429,17 @@ export function clearMemoryCache(): void {
   memoryCache.delete('tokens.dat');
   memoryCache.delete('profiles.dat');
   memoryCache.delete('states.dat');
+  memoryCache.delete('states/index.dat');
+  memoryCache.delete('states/navigation.dat');
+  memoryCache.delete('states/page-states.dat');
+  memoryCache.delete('states/sqlSearch/index.dat');
+  memoryCache.delete('states/sqlMetadata/index.dat');
   memoryCache.delete('preferences.dat');
+  // Clear dynamic SQL tab and metadata file caches.
+  for (const key of Array.from(memoryCache.keys())) {
+    if (key.startsWith('states/sqlSearch/') || key.startsWith('states/sqlMetadata/')) {
+      memoryCache.delete(key);
+    }
+  }
   // credentials.dat 保留，用于下次自动登录
 }

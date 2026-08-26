@@ -195,18 +195,18 @@ export interface PreferencesData {
 }
 
 // ==================== 设备凭据 ====================
-export interface CredentialsData {
-  deviceKey: string;           // 设备绑定密钥
-  bindTime: number;            // 绑定时间戳
-  machineId: string;           // 机器码
-}
-
-// ==================== 存储文件映射 ====================
-export type StorageFile = 
+export type StorageFile =
   | 'app.dat'
   | 'tokens.dat'
   | 'profiles.dat'
   | 'states.dat'
+  | 'states/index.dat'
+  | 'states/navigation.dat'
+  | 'states/page-states.dat'
+  | 'states/sqlSearch/index.dat'
+  | `states/sqlSearch/${string}.dat`
+  | 'states/sqlMetadata/index.dat'
+  | `states/sqlMetadata/${string}.dat`
   | 'preferences.dat'
   | 'credentials.dat';
 

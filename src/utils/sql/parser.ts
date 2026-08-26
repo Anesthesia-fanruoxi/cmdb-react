@@ -40,8 +40,9 @@ export function analyzeContext(sql: string): SqlContext {
     context.isAfterDot = true
     context.dotIdentifier = dotMatch[1]
   } else {
-    const wordMatch = currentSql.match(/[a-zA-Z0-9_]+$/)
-    if (wordMatch) context.previousWord = wordMatch[0].toUpperCase()
+    // 允许尾随空格（如 "LEFT "），以便连拼补全 JOIN
+    const wordMatch = currentSql.match(/([a-zA-Z0-9_]+)\s*$/)
+    if (wordMatch) context.previousWord = wordMatch[1].toUpperCase()
   }
 
   const upperSql = cleanSql.toUpperCase()

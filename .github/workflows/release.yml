@@ -163,12 +163,11 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"
-          DESCRIPTION="1、查询结果新增复制格式选择：右键可复制数据或复制 INSERT 语句，表名自动从执行 SQL 解析，解析不到时支持手动输入。
-          2、修复复制 INSERT 在多结果集场景下表名解析失败的问题。
-          3、修复跨库同名表字段补全串库：裸表名补全按当前选中库优先命中。
-          4、表结构详情抽屉新增关闭动画。
-          5、域名地图主域名下拉与新增表单展示域名归属方。
-          6、cmdb-ui 网页版新增安全组管理功能（规则增删改、快捷添加、批量备注）。"
+          DESCRIPTION="1、SQL 本地状态按分片存储（查询会话 / 元数据独立落盘），降低 page-states 体积并避免互相覆盖。
+          2、修复恢复会话后侧边库表树不显示的问题。
+          3、优化 SQL 补全：FROM/JOIN 优先表名、LEFT JOIN 等连拼匹配、空格后不弹补全。
+          4、修复 EXPLAIN 关键字在编辑器中不高亮。
+          5、系统信息改为弹窗展示；修复头像刷新丢失；登录页与桌面通知体验优化。"
 
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \

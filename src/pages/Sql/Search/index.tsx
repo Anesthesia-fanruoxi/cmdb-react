@@ -10,6 +10,14 @@ import {
 } from '../../../services/sql/search';
 import { openComponentWindow, onReattachTab } from '../../../utils/window';
 import { usePageStateStore, useMessageStore, useUserPrefsStore, useAuthStore, useTaskCenterStore } from '../../../stores';
+import {
+  createSqlTabId,
+  deleteSqlTabState,
+  getSqlSearchIndex,
+  getSqlTabState,
+  saveSqlTabState,
+  updateSqlSearchUser,
+} from '../../../services/storage/sqlSearchStorage';
 import { toast } from '../../../components/Toast';
 import TableTree from './components/TableTree';
 import SqlWorkspace from './components/SqlWorkspace';
@@ -67,21 +75,18 @@ export interface Tab {
   messages: Message[];
 }
 
-const createTab = (id: string): Tab => ({
-  id, name: `查询 ${id}`, project: '', dbName: '', sqlQuery: '',
+const createTab = (id: string, name = '查询 1'): Tab => ({
+  id, name, project: '', dbName: '', sqlQuery: '',
   dbList: [], tableList: [], queryLoading: false, treeLoading: false, exportLoading: false,
   metadataRefreshing: false, metadataCacheAge: null,
   results: [], columns: [], total: 0, took: 0, queryId: '', currentPage: 1, pageSize: 50,
   allResults: [], currentResultIndex: 0, lastExecutedSql: '', messages: []
 });
 
-// 页面状态 key
-const PAGE_KEY = 'sql/search';
-const DETACHED_KEY = 'sql/detached-tabs';
+// SQL tabs are persisted in one file per tab id.
 
-// 需要保存的 Tab 字段（不包含查询结果，避免大数据问题）
-const serializeTab = (tab: Tab): Partial<Tab> => ({
-  id: tab.id,
+// Keep only lightweight editor state; query result data is intentionally excluded.
+const serializeTab = (tab: Tab) => ({
   name: tab.name,
   project: tab.project,
   dbName: tab.dbName,
@@ -96,9 +101,9 @@ const serializeTab = (tab: Tab): Partial<Tab> => ({
 const SqlSearch = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectLoading, setProjectLoading] = useState(false);
-  const [tabs, setTabs] = useState<Tab[]>([createTab('1')]);
-  const [activeTabId, setActiveTabId] = useState('1');
-  const [tabCounter, setTabCounter] = useState(1);
+  const initialTabId = useRef(createSqlTabId());
+  const [tabs, setTabs] = useState<Tab[]>([createTab(initialTabId.current)]);
+  const [activeTabId, setActiveTabId] = useState(initialTabId.current);
   
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [sqlHistoryPanelVisible, setSqlHistoryPanelVisible] = useState(false);
@@ -165,7 +170,7 @@ const SqlSearch = () => {
   }, [tableDetailClosing]);
 
   // 页面状态管理
-  const { setPageState, getPageState, _hasHydrated } = usePageStateStore();
+  const { _hasHydrated } = usePageStateStore();
   const addMessage = useMessageStore(state => state.addMessage);
   const { sqlShortcuts } = useUserPrefsStore();
   const userName = useAuthStore(state => state.userName);
@@ -175,6 +180,7 @@ const SqlSearch = () => {
   // 保存最新的 tabs 引用，用于在异步操作中获取最新状态
   const tabsRef = useRef(tabs);
   tabsRef.current = tabs;
+  const persistedTabSnapshots = useRef<Map<string, string>>(new Map());
 
   // 本次会话已完成“清理旧缓存+重新拉取”的项目集合（启动后每个项目执行一次）
   const startupRefreshedProjects = useRef<Set<string>>(new Set());
@@ -185,55 +191,89 @@ const SqlSearch = () => {
     setTabs(prev => prev.map(t => t.id === tabId ? { ...t, ...updates } : t));
   }, []);
 
-  // 切换标签页时，后台静默检查并恢复元数据
-  // 场景：恢复工作区后 project/dbName 有值，但内存元数据为空
+  // 切换标签页 / 恢复工作区后：确保元数据在内存中，并同步侧边表树
+  // 场景：恢复后 project/dbName 有值，但 tableList 未从元数据缓存回填
   useEffect(() => {
     const tab = tabsRef.current.find(t => t.id === activeTabId);
     if (!tab?.project || !userName) return;
 
     const project = tab.project;
     const dbName = tab.dbName;
+    const tabId = tab.id;
 
-    // 后台异步，不阻塞 UI
     (async () => {
       try {
-        const { getAllCachedDatabases, restoreMetadataFromStorage, getTableFields, cacheTableFields, clearMetadataStorage } = await import('../../../utils/sql/cache');
+        const {
+          getAllCachedDatabases,
+          getDbTables,
+          restoreMetadataFromStorage,
+          getTableFields,
+          cacheTableFields,
+          clearMetadataStorage,
+        } = await import('../../../utils/sql/cache');
 
-        // 启动后首次进入该项目：清理旧缓存并重新拉取全量元数据，保证注释等数据最新
+        /** 把当前项目/库的缓存同步到侧边树（dbList + tableList） */
+        const syncTreeFromCache = () => {
+          const updates: Partial<Tab> = {};
+          const cachedDbList = getAllCachedDatabases();
+          if (cachedDbList.length > 0) {
+            updates.dbList = cachedDbList;
+          }
+          if (dbName) {
+            const tables = getDbTables(dbName);
+            if (tables.length > 0) {
+              updates.tableList = tables;
+            }
+          }
+          if (Object.keys(updates).length > 0) {
+            updateTab(tabId, updates);
+          }
+        };
+
+        // 启动后首次进入该项目：清理旧缓存并重新拉取全量元数据
         if (!startupRefreshedProjects.current.has(project)) {
           startupRefreshedProjects.current.add(project);
-          await clearMetadataStorage(project, userName);
-          await fetchAndCacheMetadata(project, tab.id);
+          await clearMetadataStorage(project);
+          await fetchAndCacheMetadata(project, tabId);
+          syncTreeFromCache();
           return;
         }
 
-        // 检查内存里有没有这个 project 的数据库列表
-        const cachedDbs = getAllCachedDatabases();
-        if (cachedDbs.length > 0) return; // 内存已有，不需要恢复
+        // 内存是全局单份缓存，切换项目 Tab 时必须按当前项目重新灌入，
+        // 不能仅因「内存非空」就跳过（否则会串到上一个项目的库表）
+        const restored = await restoreMetadataFromStorage(project);
+        if (!restored) {
+          await fetchAndCacheMetadata(project, tabId);
+          syncTreeFromCache();
+          return;
+        }
 
-        // 从持久化存储恢复
-        const restored = await restoreMetadataFromStorage(project, userName);
-        if (!restored) return;
+        syncTreeFromCache();
 
-        // 如果当前 tab 有 dbName，额外确保字段也恢复了
+        // 确保当前库相关字段也恢复到内存（供补全使用）
         if (dbName) {
-          const { getSqlMetadata } = await import('../../../services/storage/stateStorage');
-          const cacheData = getSqlMetadata(userName, project);
-          if (cacheData?.fields && tab.tableList?.length > 0) {
-            tab.tableList.forEach((tableName: string) => {
-              const key = tableName.toLowerCase();
-              if (getTableFields(tableName).length === 0) {
-                const fields = cacheData.fields[key] || cacheData.fields[tableName];
-                if (fields?.length > 0) cacheTableFields(tableName, fields);
+          const { getSqlMetadata } = await import('../../../services/storage/sqlMetadataStorage');
+          const cacheData = await getSqlMetadata(project);
+          const tables = getDbTables(dbName);
+          if (cacheData?.fields && tables.length > 0) {
+            tables.forEach((tableName: string) => {
+              if (getTableFields(tableName, dbName).length === 0) {
+                const qualified = `${dbName}.${tableName}`.toLowerCase();
+                const key = tableName.toLowerCase();
+                const fields =
+                  cacheData.fields[qualified] ||
+                  cacheData.fields[key] ||
+                  cacheData.fields[tableName];
+                if (fields?.length > 0) cacheTableFields(tableName, fields, dbName);
               }
             });
           }
         }
-      } catch (e) {
+      } catch {
         // 静默失败，不影响用户
       }
     })();
-  }, [activeTabId, userName]);
+  }, [activeTabId, userName, updateTab]);
 
 
   // ESC 关闭弹框
@@ -286,73 +326,77 @@ const SqlSearch = () => {
 
   // 恢复保存的状态（等待 hydration 完成）
   useEffect(() => {
-    if (!_hasHydrated || hasRestored.current) return;
+    if (!_hasHydrated || hasRestored.current || !userName) return;
     hasRestored.current = true;
 
     try {
-      const saved = getPageState<{ tabs: Partial<Tab>[]; activeTabId: string; tabCounter: number }>(PAGE_KEY);
-      const detached = getPageState<{ tabs: Partial<Tab>[] }>(DETACHED_KEY);
-
-      let restoredTabs: Tab[] = [];
-      
-      // 恢复主窗口标签页
-      if (saved?.tabs?.length) {
-        restoredTabs = saved.tabs.map(t => ({ ...createTab(t.id || '1'), ...t }));
-      }
-      
-      // 恢复独立窗口的标签页
-      if (detached?.tabs?.length) {
-        const detachedTabs = detached.tabs.map(t => ({
-          ...createTab(t.id || 'detached'),
-          ...t,
+      const userIndex = getSqlSearchIndex().users[userName];
+      const detachedTabIds = new Set(userIndex?.detachedTabIds || []);
+      const restoredTabs = (userIndex?.tabIds || [])
+        .filter(tabId => !detachedTabIds.has(tabId))
+        .map(tabId => getSqlTabState(tabId))
+        .filter((tab): tab is NonNullable<ReturnType<typeof getSqlTabState>> => Boolean(tab))
+        .map(tab => ({
+          ...createTab(tab.tabId),
+          ...tab,
+          id: tab.tabId,
           results: [], columns: [], total: 0, took: 0, queryId: '',
           allResults: [], currentResultIndex: 0, messages: [],
         }));
-        restoredTabs = [...restoredTabs, ...detachedTabs];
-        setPageState(DETACHED_KEY, { tabs: [] });
-      }
 
       if (restoredTabs.length > 0) {
         setTabs(restoredTabs);
-        setActiveTabId(saved?.activeTabId || restoredTabs[0].id);
-        // 取已有 tab id 中最大的数值，避免序号重复
-        const maxIdNum = restoredTabs.reduce((max, t) => {
-          const n = parseInt(t.id, 10);
-          return isNaN(n) ? max : Math.max(max, n);
-        }, 0);
-        setTabCounter(saved?.tabCounter || Math.max(maxIdNum, restoredTabs.length));
+        setActiveTabId(
+          restoredTabs.some(tab => tab.id === userIndex?.activeTabId)
+            ? userIndex!.activeTabId
+            : restoredTabs[0].id,
+        );
       }
     } catch (error) {
-      console.error('恢复 SQL 页面状态失败:', error);
+      console.error('Failed to restore SQL tabs:', error);
     } finally {
       setIsRestoring(false);
     }
-  }, [_hasHydrated, getPageState, setPageState]);
+  }, [_hasHydrated, userName]);
 
-  // 保存状态（防抖，仅在 hydration 完成后）
   useEffect(() => {
-    if (!_hasHydrated || !hasRestored.current) return;
+    if (!_hasHydrated || !hasRestored.current || !userName) return;
 
     const timer = setTimeout(() => {
-      const stateToSave = {
-        tabs: tabs.map(serializeTab),
+      const currentIndex = getSqlSearchIndex().users[userName];
+      const detachedTabIds = currentIndex?.detachedTabIds || [];
+      const mainTabIds = tabs.map(tab => tab.id);
+
+      // Write only tab files whose serialized content changed.
+      tabs.forEach(tab => {
+        const payload = {
+          ...serializeTab(tab),
+          detached: false,
+        };
+        const signature = JSON.stringify(payload);
+        if (persistedTabSnapshots.current.get(tab.id) === signature) return;
+        saveSqlTabState(tab.id, payload);
+        persistedTabSnapshots.current.set(tab.id, signature);
+      });
+
+      // Keep detached tab associations in index.dat.
+      updateSqlSearchUser(userName, {
+        tabIds: Array.from(new Set([...mainTabIds, ...detachedTabIds])),
         activeTabId,
-        tabCounter,
-      };
-      setPageState(PAGE_KEY, stateToSave);
+        detachedTabIds,
+      });
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [tabs, activeTabId, tabCounter, setPageState, _hasHydrated]);
+  }, [tabs, activeTabId, userName, _hasHydrated]);
 
-  // 监听放回事件
   useEffect(() => {
     const unlisten = onReattachTab((data) => {
       if (data.type !== 'sql') return;
       
       const tabData = data.tabData as Partial<Tab>;
       const newTab: Tab = {
-        ...createTab(tabData.id || `tab-${Date.now()}`),
+        ...createTab(tabData.id || createSqlTabId()),
         ...tabData,
         queryLoading: false,
         treeLoading: false,
@@ -417,34 +461,25 @@ const SqlSearch = () => {
   }
 
   const addTab = () => {
-    setTabCounter(prev => {
-      const newCounter = prev + 1;
-      const newId = String(newCounter);
-      setTabs(tabs => [...tabs, createTab(newId)]);
-      setActiveTabId(newId);
-      return newCounter;
-    });
+    const newId = createSqlTabId();
+    setTabs(current => [...current, createTab(newId, `查询 ${current.length + 1}`)]);
+    setActiveTabId(newId);
   };
 
   const duplicateTab = (sourceId: string) => {
     const source = tabs.find(t => t.id === sourceId);
     if (!source) return;
-    setTabCounter(prev => {
-      const newCounter = prev + 1;
-      const newId = String(newCounter);
-      const newTab: Tab = {
-        ...createTab(newId),
-        name: `${source.name} 副本`,
-        project: source.project,
-        dbName: source.dbName,
-        dbList: source.dbList,
-        tableList: source.tableList,
-        sqlQuery: source.sqlQuery,
-      };
-      setTabs(tabs => [...tabs, newTab]);
-      setActiveTabId(newId);
-      return newCounter;
-    });
+    const newId = createSqlTabId();
+    const newTab: Tab = {
+      ...createTab(newId, `${source.name} 副本`),
+      project: source.project,
+      dbName: source.dbName,
+      dbList: source.dbList,
+      tableList: source.tableList,
+      sqlQuery: source.sqlQuery,
+    };
+    setTabs(current => [...current, newTab]);
+    setActiveTabId(newId);
   };
 
   const removeTab = (id: string) => {
@@ -452,6 +487,7 @@ const SqlSearch = () => {
     const idx = tabs.findIndex(t => t.id === id);
     const newTabs = tabs.filter(t => t.id !== id);
     setTabs(newTabs);
+    void deleteSqlTabState(id);
     if (activeTabId === id) setActiveTabId(newTabs[Math.max(0, idx - 1)].id);
   };
 
@@ -466,12 +502,12 @@ const SqlSearch = () => {
       try {
         // 1. 尝试从文件存储恢复缓存
         const { restoreMetadataFromStorage, getMetadataCacheAge, getAllCachedDatabases } = await import('../../../utils/sql/cache');
-        const restored = await restoreMetadataFromStorage(project, userName || '');
+        const restored = await restoreMetadataFromStorage(project);
         
         if (restored) {
           // ✅ 文件缓存存在,直接使用
           const cachedDbList = getAllCachedDatabases();
-          const cacheAge = await getMetadataCacheAge(project, userName || '');
+          const cacheAge = await getMetadataCacheAge(project);
           
 
           updateTab(tabId, { dbList: cachedDbList, metadataCacheAge: cacheAge });
@@ -561,12 +597,12 @@ const SqlSearch = () => {
       // 重建 L1 全量池（已移除，cache 不支持）
 
       // 持久化到文件存储
-      await persistMetadataToStorage(project, userName || '');
+      await persistMetadataToStorage(project);
       console.log(`[元数据] 项目 "${project}" 缓存完成，共 ${totalTables} 张表，${totalFields} 个字段`);
     }
     
     // 更新标签页状态
-    const cacheAge = await getMetadataCacheAge(project, userName || '');
+    const cacheAge = await getMetadataCacheAge(project);
     updateTab(tabId, { dbList, metadataCacheAge: cacheAge });
   };
 
@@ -605,15 +641,14 @@ const SqlSearch = () => {
       // 1. 先从内存缓存读取
       const { getDbTables, cacheDbTables } = await import('../../../utils/sql/cache');
       let tableList = getDbTables(dbName);
-      console.log(`[库切换] 选择库 "${dbName}"，内存缓存表数: ${tableList.length}`);
 
       // 内存有表列表但字段可能没恢复，检查并从文件补充字段
       if (tableList.length > 0) {
         const sampleTable = tableList[0];
         const { getTableFields, cacheTableFields } = await import('../../../utils/sql/cache');
         if (getTableFields(sampleTable).length === 0) {
-          const { getSqlMetadata } = await import('../../../services/storage/stateStorage');
-          const cacheData = getSqlMetadata(userName || '', project);
+          const { getSqlMetadata } = await import('../../../services/storage/sqlMetadataStorage');
+          const cacheData = await getSqlMetadata(project);
           if (cacheData?.fields) {
             tableList.forEach((tableName: string) => {
               const key = tableName.toLowerCase();
@@ -629,8 +664,8 @@ const SqlSearch = () => {
       if (tableList.length === 0) {
 
         
-        const { getSqlMetadata } = await import('../../../services/storage/stateStorage');
-        const cacheData = getSqlMetadata(userName || '', project);
+        const { getSqlMetadata } = await import('../../../services/storage/sqlMetadataStorage');
+        const cacheData = await getSqlMetadata(project);
         
         if (cacheData?.dbTables?.[dbName]) {
           // 文件中有这个数据库的表列表
@@ -720,7 +755,7 @@ const SqlSearch = () => {
                 
                 // 持久化到文件
                 const { persistMetadataToStorage } = await import('../../../utils/sql/cache');
-                await persistMetadataToStorage(project, userName || '');
+                await persistMetadataToStorage(project);
 
               }
             }
@@ -734,7 +769,6 @@ const SqlSearch = () => {
       }
       
       // 4. 更新状态
-      console.log(`[库切换] 库 "${dbName}" 最终加载表数: ${tableList.length}`);
       
       // 重要：表数据加载完成后，重新同步 L2 池子（rebuildL2 已移除）
       
@@ -1124,8 +1158,7 @@ const SqlSearch = () => {
       
       // 如果只有一个标签页，创建新空白标签
       if (prevTabs.length <= 1) {
-        const newId = String(tabCounter + 1);
-        setTabCounter(c => c + 1);
+        const newId = createSqlTabId();
         setTimeout(() => setActiveTabId(newId), 0);
         return [createTab(newId)];
       } else {

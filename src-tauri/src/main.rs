@@ -49,6 +49,8 @@ fn main() {
             encrypt_data,
             decrypt_data,
             save_store_async,
+            flush_store_save_queue,
+            delete_store_file,
             bind_device,
             unbind_device,
             auto_login,

@@ -15,6 +15,7 @@ import ace from 'ace-builds';
 import 'ace-builds/src-noconflict/mode-sql';
 import 'ace-builds/src-noconflict/theme-xcode';
 import 'ace-builds/src-noconflict/theme-twilight';
+import { ensureAceSqlKeywordsPatched } from '../Search/components/sqlEditorUtils';
 
 interface Props {
   detail: ApplyDetailType;
@@ -40,6 +41,7 @@ const ApplyDetailDrawer = ({ detail, onClose, onRefresh, onResubmit }: Props) =>
     
     const isDark = document.documentElement.classList.contains('dark');
     editor.setTheme(isDark ? 'ace/theme/twilight' : 'ace/theme/xcode');
+    ensureAceSqlKeywordsPatched();
     editor.session.setMode('ace/mode/sql');
     editor.setReadOnly(true);
     editor.setOptions({

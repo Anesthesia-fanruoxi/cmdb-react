@@ -12,7 +12,9 @@ import { getLoginHistory, getLastUser } from '../../services/loginHistory';
 import {
   setDefaultTheme,
   getActiveRoute,
+  getUserAvatar,
 } from '../../services/storage';
+import { startBouncingBalls } from './bouncingStick';
 import './style.css';
 
 type LoginType = 'password' | 'totp';
@@ -42,6 +44,13 @@ const Login = () => {
   const passwordRef = useRef<HTMLInputElement>(null);
   const usernameRef = useRef<HTMLInputElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // 弹球动画
+  useEffect(() => {
+    if (!containerRef.current) return;
+    return startBouncingBalls(containerRef.current);
+  }, []);
 
   // 已登录则跳转到上次访问的路由
   useEffect(() => {
@@ -143,7 +152,12 @@ const Login = () => {
     }
   };
 
-  // 选择历史用户
+  // 历史用户头像从 preferences.dat 中读取。
+  function getHistoryInitial(user: string): string {
+    return user.trim().charAt(0).toUpperCase() || 'U';
+  }
+
+  // 选择历史用户。
   const selectHistoryUser = (user: string) => {
     setUsername(user);
     setShowHistory(false);
@@ -324,7 +338,7 @@ const Login = () => {
   };
 
   return (
-    <div className={`login-container ${theme}`}>
+    <div ref={containerRef} className={`login-container ${theme}`}>
       <button className="theme-switch" onClick={toggleTheme}>
         {theme === 'dark' ? '☀️' : '🌙'}
       </button>
@@ -332,17 +346,29 @@ const Login = () => {
       <div className="login-content">
         {/* 左侧品牌区 */}
         <div className="login-left">
+          <div className="ambient-scene" aria-hidden="true">
+            <span className="ambient-ripple ripple-one" />
+            <span className="ambient-ripple ripple-two" />
+            <span className="ambient-ripple ripple-three" />
+            <span className="ambient-particle particle-one" />
+            <span className="ambient-particle particle-two" />
+            <span className="ambient-particle particle-three" />
+            <span className="ambient-particle particle-four" />
+            <span className="ambient-particle particle-five" />
+            <span className="ambient-particle particle-six" />
+            <span className="ambient-particle particle-seven" />
+            <span className="ambient-particle particle-eight" />
+          </div>
           <div className="brand-content">
             <div className="brand-icon">🖥️</div>
             <h1 className="brand-title">CMDB</h1>
             <p className="brand-desc">运维管理平台</p>
             <div className="brand-features">
-              {['资产管理', '资源监控', '运维自动化', 'MySQL查询', 'ELFK查询'].map(f => (
-                <div key={f} className="feature-item">
-                  <span className="feature-check">✓</span>
-                  <span>{f}</span>
-                </div>
-              ))}
+              <span className="feature-tag">资产管理</span>
+              <span className="feature-tag">资源监控</span>
+              <span className="feature-tag">运维自动化</span>
+              <span className="feature-tag">MySQL 查询</span>
+              <span className="feature-tag">EFK 查询</span>
             </div>
           </div>
         </div>
@@ -352,6 +378,15 @@ const Login = () => {
           <form className="login-form" onSubmit={handleSubmit}>
             <h2 className="login-title">CMDB运维管理系统</h2>
             <p className="login-subtitle">欢迎回来，请登录您的账号</p>
+
+            {/* 用户头像 */}
+            <div className="login-avatar">
+              {username && getUserAvatar(username) ? (
+                <img src={getUserAvatar(username)} alt="avatar" className="login-avatar-img" />
+              ) : (
+                <div className="login-avatar-default">👤</div>
+              )}
+            </div>
 
             {/* 用户名输入 */}
             <div className="form-item" ref={historyRef}>
@@ -377,16 +412,30 @@ const Login = () => {
                 )}
                 {showHistory && loginHistory.length > 0 && (
                   <div className="history-dropdown">
-                    {loginHistory.map(user => (
-                      <div 
-                        key={user} 
-                        className={`history-item ${user === username ? 'active' : ''}`}
-                        onClick={() => selectHistoryUser(user)}
-                      >
-                        <span className="history-icon">👤</span>
-                        <span className="history-name">{user}</span>
-                      </div>
-                    ))}
+                    {loginHistory.map(user => {
+                      const avatar = getUserAvatar(user);
+
+                      return (
+                        <div
+                          key={user}
+                          className={`history-item ${user === username ? 'active' : ''}`}
+                          onClick={() => selectHistoryUser(user)}
+                        >
+                          {avatar ? (
+                            <img
+                              src={avatar}
+                              alt={`${user} avatar`}
+                              className="history-avatar"
+                            />
+                          ) : (
+                            <span className="history-avatar history-avatar-fallback">
+                              {getHistoryInitial(user)}
+                            </span>
+                          )}
+                          <span className="history-name">{user}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>

@@ -6,9 +6,8 @@ import { useState, useRef, useCallback, useEffect, useMemo, memo } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import SqlEditor, { type SqlEditorRef } from './SqlEditor';
 import ResultPanel from './ResultPanel';
-import { getTableStructure } from '@/services/sql/search';
 import { useUserPrefsStore } from '@/stores/userPrefsStore';
-import type { TableInfo, FieldInfo } from '@/utils/sql';
+import type { TableInfo } from '@/utils/sql';
 import { useColumnComments } from '../hooks/useColumnComments';
 
 /** 结果集类型 */
@@ -31,9 +30,10 @@ export interface Message {
 
 interface Props {
   tabId?: string  // 标签页唯一键
+  isActive?: boolean
   sql: string;
   onSqlChange: (sql: string) => void;
-  onExecute: (sql: string, isSelection: boolean) => void;
+  onExecute: (sql: string) => void;
   onCancelQuery?: () => void;
   onNewTab?: () => void;
   onShowHistory?: () => void;
@@ -64,7 +64,6 @@ interface Props {
 }
 
 const SqlWorkspace = ({
-  tabId,
   sql,
   onSqlChange,
   onExecute,
@@ -164,57 +163,11 @@ const SqlWorkspace = ({
   // 获取列备注（仅根据实际执行的 SQL 中涉及的表，避免编辑器内其他语句干扰）
   const columnComments = useColumnComments(lastExecutedSql, project, dbName, queryId);
 
-  // 加载表结构的回调 - 与 Vue 版本对齐
-  const loadTableStructure = useCallback(async (tableName: string): Promise<FieldInfo[] | null> => {
-    if (!project || !dbName) return null;
-    try {
-      const res = await getTableStructure({ agent: project, dbName, tbName: tableName });
-      if (res.code === 200 && res.data) {
-        // 新的数据结构处理 - 与 Vue 版本一致
-        const tableInfo = res.data;
-        const columns = tableInfo.columns || [];
-        
-        // 转换为 FieldInfo 格式
-        const fields: FieldInfo[] = columns.map((field: any) => ({
-          caption: field.field,
-          value: field.field,
-          meta: field.type || 'field',
-          comment: `${tableName} - ${field.comment || ''}`,
-          score: field.key === 'PRI' ? 1000 : 900,
-          tableName,
-          isPrimaryKey: field.key === 'PRI'
-        }));
-        
-        // 直接缓存到 window.sqlFieldSuggestions - 与 Vue 版本一致
-        // 修改：缓存字段时记录数据库名称
-        if (typeof window !== 'undefined' && fields.length > 0) {
-          if (!window.sqlFieldSuggestions) {
-            window.sqlFieldSuggestions = {};
-          }
-          // 为每个字段添加 dbName 属性
-          const fieldsWithDb = fields.map(f => ({
-            ...f,
-            dbName: dbName
-          }));
-          window.sqlFieldSuggestions[tableName] = fieldsWithDb;
-          window.sqlFieldSuggestions[tableName.toLowerCase()] = fieldsWithDb;
-        }
-        
-        return fields;
-      }
-    } catch (error) {
-      console.error('加载表结构失败:', error);
-    }
-    return null;
-  }, [project, dbName]);
-
-  // 执行 SQL - 从编辑器直接取最新值，不依赖 React 状态（避免防抖延迟导致执行旧 SQL）
   const handleExecute = useCallback(() => {
     const selectedText = sqlEditorRef.current?.getSelectedText()?.trim()
-    const isSelection = !!selectedText
     const sqlToExecute = selectedText || sqlEditorRef.current?.getValue() || sql
     setIsExecuting(true)
-    onExecuteRef.current(sqlToExecute, isSelection)
+    onExecuteRef.current(sqlToExecute)
   }, [sql])
 
   // 格式化 SQL
@@ -328,8 +281,6 @@ const SqlWorkspace = ({
           loading={loading}
           tables={tables}
           currentDb={dbName}
-          loadTableStructure={loadTableStructure}
-          tabId={tabId}
         />
       </div>
 
@@ -379,4 +330,27 @@ const SqlWorkspace = ({
   );
 };
 
-export default memo(SqlWorkspace);
+function areSqlWorkspacePropsEqual(previous: Props, next: Props): boolean {
+  return (
+    previous.tabId === next.tabId
+    && previous.isActive === next.isActive
+    && previous.sql === next.sql
+    && previous.loading === next.loading
+    && previous.exportLoading === next.exportLoading
+    && previous.results === next.results
+    && previous.columns === next.columns
+    && previous.total === next.total
+    && previous.took === next.took
+    && previous.dbName === next.dbName
+    && previous.queryId === next.queryId
+    && previous.allResults === next.allResults
+    && previous.currentResultIndex === next.currentResultIndex
+    && previous.currentPage === next.currentPage
+    && previous.messages === next.messages
+    && previous.tableList === next.tableList
+    && previous.project === next.project
+    && previous.lastExecutedSql === next.lastExecutedSql
+  )
+}
+
+export default memo(SqlWorkspace, areSqlWorkspacePropsEqual);

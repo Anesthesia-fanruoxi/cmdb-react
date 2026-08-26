@@ -79,11 +79,6 @@ const DetachedWindow = () => {
           setComponent(() => mod.default);
           break;
         }
-        case 'system-info': {
-          const mod = await import('../SystemInfo');
-          setComponent(() => mod.default);
-          break;
-        }
         case 'desktop-notify': {
           const mod = await import('./components/DesktopNotifyWindow');
           setComponent(() => mod.default);

@@ -20,8 +20,9 @@ import 'ace-builds/src-noconflict/mode-sql';
 import 'ace-builds/src-noconflict/theme-xcode';
 import 'ace-builds/src-noconflict/theme-twilight';
 import 'ace-builds/src-noconflict/ext-language_tools';
-import { createSqlCompleter, type TableInfo, type FieldInfo } from '../../../utils/sql';
-import { getTables, getTableStructure } from '../../../services/sql/search';
+import { createSqlCompleter, type TableInfo } from '../../../utils/sql';
+import { getTables } from '../../../services/sql/search';
+import { ensureAceSqlKeywordsPatched } from '../Search/components/sqlEditorUtils';
 
 interface Props {
   prefillData: Partial<ApplyItem> | null;
@@ -57,33 +58,6 @@ const ApplyCreateDrawer = ({ prefillData, onClose, onSuccess }: Props) => {
     remark: '', sqlContent: ''
   });
 
-  // 加载表结构（用于智能提示）- 使用 ref 避免重新创建
-  const formDataRef = useRef(formData);
-  formDataRef.current = formData;
-  
-  const loadTableStructure = useCallback(async (tableName: string): Promise<FieldInfo[] | null> => {
-    const { project, database } = formDataRef.current;
-    if (!project || !database) return null;
-    try {
-      const res = await getTableStructure({ 
-        agent: project, 
-        dbName: database, 
-        tbName: tableName 
-      });
-      if (res.code === 200 && res.data?.columns) {
-        return res.data.columns.map(col => ({
-          caption: col.field || col.name || '',
-          value: col.field || col.name || '',
-          meta: col.type || 'field',
-          score: 900,
-          comment: col.comment
-        }));
-      }
-    } catch (e) { console.error('加载表结构失败:', e); }
-    return null;
-  }, []); // 空依赖，使用 ref 获取最新值
-
-  // 初始化 Ace 编辑器
   useEffect(() => {
     if (!editorRef.current) return;
     
@@ -92,6 +66,7 @@ const ApplyCreateDrawer = ({ prefillData, onClose, onSuccess }: Props) => {
     
     const isDark = document.documentElement.classList.contains('dark');
     editor.setTheme(isDark ? 'ace/theme/twilight' : 'ace/theme/xcode');
+    ensureAceSqlKeywordsPatched();
     editor.session.setMode('ace/mode/sql');
     
     editor.setOptions({
@@ -108,10 +83,10 @@ const ApplyCreateDrawer = ({ prefillData, onClose, onSuccess }: Props) => {
     });
     
     // 初始化自定义 SQL 补全器
-    createSqlCompleter(ace, {
+    const completer = createSqlCompleter(ace, {
       getTables: () => tablesRef.current,
-      loadTableStructure
     });
+    editor.completers = [completer];
     
     editor.on('change', () => {
       setFormData(p => ({ ...p, sqlContent: editor.getValue() }));
@@ -127,7 +102,7 @@ const ApplyCreateDrawer = ({ prefillData, onClose, onSuccess }: Props) => {
       observer.disconnect();
       editor.destroy();
     };
-  }, [loadTableStructure]);
+  }, []);
 
   // 同步 sqlContent 到编辑器
   useEffect(() => {

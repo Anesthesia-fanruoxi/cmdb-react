@@ -6,11 +6,68 @@
 import type { MatchResult, Suggestion } from './types'
 
 /**
+ * 连拼关键字匹配（LEFT JOIN 等）
+ * 只允许从前端词开始匹配，不因后半段（JOIN）或词中字符误匹配
+ * 允许：left / leftj / leftjoin / left j / lj
+ * 不允许：j / join / i（RIGHT 中的 i）单独命中 LEFT JOIN / RIGHT JOIN
+ */
+export function matchCompoundKeyword(query: string, phrase: string): MatchResult {
+  if (!query || !phrase) return { match: false, score: 0 }
+
+  const q = query.toLowerCase()
+  const words = phrase.toLowerCase().split(/\s+/).filter(Boolean)
+  if (words.length === 0) return { match: false, score: 0 }
+
+  const phraseLower = words.join(' ')
+  const compact = words.join('')
+  const qCompact = q.replace(/\s+/g, '')
+
+  // 1. 完整短语前缀（含空格）："left" / "left " / "left j"
+  if (phraseLower.startsWith(q) || `${phraseLower} `.startsWith(q)) {
+    return { match: true, score: 200 - Math.min(phraseLower.length, 50) }
+  }
+
+  // 2. 去空格连拼前缀：leftj / leftjoin
+  if (qCompact && compact.startsWith(qCompact)) {
+    return { match: true, score: 195 - Math.min(compact.length, 50) }
+  }
+
+  // 3. 按词递进前缀：必须从第一个词开始
+  const qParts = q.split(/\s+/).filter(Boolean)
+  if (qParts.length > 0 && qParts.length <= words.length) {
+    let ok = true
+    for (let i = 0; i < qParts.length; i++) {
+      if (!words[i].startsWith(qParts[i])) {
+        ok = false
+        break
+      }
+    }
+    if (ok) {
+      return { match: true, score: 190 - Math.min(qParts.length, 20) }
+    }
+  }
+
+  // 4. 各词首字母前缀：lj → LEFT JOIN（必须从头匹配，j 单独不能命中）
+  const initials = words.map(w => w[0] || '').join('')
+  if (qCompact && initials.startsWith(qCompact)) {
+    return { match: true, score: 75 }
+  }
+
+  return { match: false, score: 0 }
+}
+
+/**
  * 模糊匹配函数 - 支持首字母匹配、包含匹配、驼峰匹配
+ * 多词目标走连拼规则，避免后半段/词中字符误匹配
  */
 export function fuzzyMatch(query: string, target: string): MatchResult {
   // 空查询或空目标不匹配
   if (!query || !target) return { match: false, score: 0 }
+
+  // 连拼短语：只做前置匹配
+  if (/\s/.test(target)) {
+    return matchCompoundKeyword(query, target)
+  }
   
   const q = query.toLowerCase()
   const t = target.toLowerCase()
@@ -27,8 +84,11 @@ export function fuzzyMatch(query: string, target: string): MatchResult {
   }
   
   // 首字母匹配（如 "ct" 匹配 "created_time"）
-  const parts = t.split(/[_\-\s]+/)
+  const parts = t.split(/[_\-]+/)
   const initials = parts.map(p => p[0]).join('')
+  if (initials.startsWith(q)) {
+    return { match: true, score: 75 }
+  }
   if (initials.includes(q)) {
     return { match: true, score: 70 }
   }

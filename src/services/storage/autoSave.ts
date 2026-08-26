@@ -14,6 +14,8 @@
 
 import { scheduler } from './scheduler';
 import { SaveType } from './strategies';
+import { excludeSqlPageStates } from './stateShardStorage';
+import type { PageState } from './types';
 import { useMenuStore } from '@/stores/menuStore';
 import { usePageStateStore } from '@/stores/pageStateStore';
 import { useUserPrefsStore } from '@/stores/userPrefsStore';
@@ -49,7 +51,7 @@ export function markDirty(): void {
       cachedViews: menuState.cachedViews,
       sidebarCollapsed: menuState.collapsed,
       activeRoute,
-      pageStates: pageState.pages as Record<string, unknown>,
+      pageStates: excludeSqlPageStates(pageState.pages as Record<string, PageState>),
     };
   });
 
@@ -78,7 +80,10 @@ export async function forceSave(): Promise<void> {
  * 注册窗口关闭前的强制保存钩子
  */
 export async function startAutoSave(): Promise<void> {
-  if (isInitialized) return;
+  if (isInitialized) {
+    console.info('[AutoSave] auto-save already enabled; duplicate start ignored');
+    return;
+  }
   isInitialized = true;
 
   // 窗口关闭前强制保存

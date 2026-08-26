@@ -5,7 +5,98 @@
 import ace from 'ace-builds'
 import { format } from 'sql-formatter'
 import { message } from 'antd'
-import type { FieldInfo } from '@/utils/sql'
+
+/**
+ * Ace 默认 SQL 关键字不含 EXPLAIN/SHOW 等，补全后高亮才生效。
+ * 须在 import mode-sql 之后、setMode 之前调用。
+ */
+export function ensureAceSqlKeywordsPatched() {
+  const modeMod = ace.require('ace/mode/sql') as { Mode: new () => unknown; __cmdbSqlKwPatched?: boolean }
+  if (modeMod.__cmdbSqlKwPatched) return
+  modeMod.__cmdbSqlKwPatched = true
+
+  const rulesMod = ace.require('ace/mode/sql_highlight_rules') as {
+    SqlHighlightRules: new () => unknown
+  }
+  const oop = ace.require('ace/lib/oop') as {
+    inherits: (ctor: unknown, superCtor: unknown) => void
+  }
+  const TextHighlightRules = ace.require('ace/mode/text_highlight_rules').TextHighlightRules
+
+  // Ace 原词表 + MySQL 常用缺失项（explain 为首要修复）
+  const keywords =
+    'select|insert|update|delete|from|where|and|or|group|by|order|limit|offset|having|as|case|' +
+    'when|then|else|end|type|left|right|join|on|outer|desc|asc|union|create|table|primary|key|if|' +
+    'foreign|not|references|default|null|inner|cross|natural|database|drop|grant|distinct|is|in|' +
+    'all|alter|any|array|at|authorization|between|both|cast|check|collate|column|commit|constraint|' +
+    'cube|current|current_date|current_time|current_timestamp|current_user|describe|escape|except|' +
+    'exists|external|extract|fetch|filter|for|full|function|global|grouping|intersect|interval|' +
+    'into|leading|like|local|no|of|only|out|overlaps|partition|position|range|revoke|rollback|rollup|' +
+    'row|rows|session_user|set|some|start|tablesample|time|to|trailing|truncate|unique|unknown|' +
+    'user|using|values|window|with|' +
+    'explain|show|analyze|replace|call|use|optimize'
+  const builtinConstants = 'true|false'
+  const builtinFunctions =
+    'avg|count|first|last|max|min|sum|ucase|lcase|mid|len|round|rank|now|format|' +
+    'coalesce|ifnull|isnull|nvl'
+  const dataTypes =
+    'int|numeric|decimal|date|varchar|char|bigint|float|double|bit|binary|text|set|timestamp|' +
+    'money|real|number|integer|string'
+
+  function CmdbSqlHighlightRules(this: {
+    createKeywordMapper: (
+      map: Record<string, string>,
+      defaultToken: string,
+      ignoreCase?: boolean
+    ) => unknown
+    $rules: Record<string, unknown[]>
+    normalizeRules: () => void
+  }) {
+    const keywordMapper = this.createKeywordMapper(
+      {
+        'support.function': builtinFunctions,
+        keyword: keywords,
+        'constant.language': builtinConstants,
+        'storage.type': dataTypes,
+      },
+      'identifier',
+      true
+    )
+    this.$rules = {
+      start: [
+        { token: 'comment', regex: '--.*$' },
+        { token: 'comment', start: '/\\*', end: '\\*/' },
+        { token: 'string', regex: '".*?"' },
+        { token: 'string', regex: "'.*?'" },
+        { token: 'string', regex: '`.*?`' },
+        {
+          token: 'constant.numeric',
+          regex: '[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b',
+        },
+        { token: keywordMapper, regex: '[a-zA-Z_$][a-zA-Z0-9_$]*\\b' },
+        {
+          token: 'keyword.operator',
+          regex: '\\+|\\-|\\/|\\/\\/|%|<@>|@>|<@|&|\\^|~|<|>|<=|=>|==|!=|<>|=',
+        },
+        { token: 'paren.lparen', regex: '[\\(]' },
+        { token: 'paren.rparen', regex: '[\\)]' },
+        { token: 'text', regex: '\\s+' },
+      ],
+    }
+    this.normalizeRules()
+  }
+
+  oop.inherits(CmdbSqlHighlightRules, TextHighlightRules)
+  rulesMod.SqlHighlightRules = CmdbSqlHighlightRules as typeof rulesMod.SqlHighlightRules
+
+  const OrigMode = modeMod.Mode
+  function Mode(this: { HighlightRules: unknown }) {
+    OrigMode.call(this)
+    this.HighlightRules = CmdbSqlHighlightRules
+  }
+  oop.inherits(Mode, OrigMode)
+  modeMod.Mode = Mode as typeof modeMod.Mode
+}
 
 /** 精简 sql-formatter 解析报错：去掉海量期望 token 语法列表与 token JSON 详情 */
 function summarizeFormatError(error: unknown): string {
@@ -59,71 +150,13 @@ export function formatSqlContent(editor: ace.Ace.Editor) {
 }
 
 /** 创建点号处理器，用于 table.field 补全 - 与 Vue 版本对齐 */
-export function createDotHandler(
-  editor: ace.Ace.Editor, 
-  _loadTableStructure?: (tableName: string) => Promise<FieldInfo[] | null>
-) {
+export function createDotHandler(editor: ace.Ace.Editor) {
   editor.commands.addCommand({
     name: 'dotAndComplete',
     bindKey: { win: '.', mac: '.' },
-    exec: async (ed) => {
-      // 插入点号
+    exec: (ed) => {
+      // The completer parses the current statement and resolves table aliases.
       ed.insert('.')
-
-      // 获取光标位置和当前行
-      const pos = ed.getCursorPosition()
-      const line = ed.session.getLine(pos.row)
-      const cursorColumn = pos.column
-
-      // 点号前的文本
-      const textBeforeDot = line.substring(0, cursorColumn - 1)
-      // 尝试提取表名或别名
-      const match = textBeforeDot.match(/(\w+)$/)
-
-      if (!match) {
-        // 没有匹配到标识符，触发普通补全
-        setTimeout(() => ed.execCommand('startAutocomplete'), 50)
-        return true
-      }
-
-      const identifier = match[1]
-      const key = identifier.toLowerCase()
-
-      // 初始化缓存
-      if (!window.sqlFieldSuggestions) {
-        window.sqlFieldSuggestions = {}
-      }
-
-      // 检查是否需要缓存别名对应的表字段
-      if (!window.sqlFieldSuggestions[key] && !window.sqlFieldSuggestions[identifier]) {
-        const fullSql = ed.getValue()
-        // 获取当前语句（分号后的部分）
-        const lastSemicolon = fullSql.lastIndexOf(';')
-        const currentSql = lastSemicolon === -1 ? fullSql : fullSql.substring(lastSemicolon + 1)
-        
-        // 分析当前 SQL 找出别名对应的表名
-        const fromMatch = currentSql.match(/\bFROM\b\s+([^;]*?)(?:\bWHERE\b|\bGROUP\s+BY\b|\bHAVING\b|\bORDER\s+BY\b|\bLIMIT\b|$)/is)
-        if (fromMatch) {
-          const fromClause = fromMatch[1].trim()
-          // 匹配 "表名 别名" 或 "表名 AS 别名"
-          const tableAliasMatch = fromClause.match(new RegExp(`\\b(\\w+)\\s+(?:AS\\s+)?${identifier}\\b`, 'i'))
-          if (tableAliasMatch) {
-            const tableName = tableAliasMatch[1]
-            const tableKey = tableName.toLowerCase()
-            // 将表字段缓存到别名下
-            const fields = window.sqlFieldSuggestions[tableKey] || window.sqlFieldSuggestions[tableName]
-            if (fields) {
-              window.sqlFieldSuggestions[identifier] = fields
-              window.sqlFieldSuggestions[key] = fields
-            }
-            // 元数据已在项目切换时全部缓存,不需要异步加载
-          }
-          // 元数据已在项目切换时全部缓存,不需要异步加载
-        }
-        // 元数据已在项目切换时全部缓存,不需要异步加载
-      }
-
-      // 触发自动补全
       setTimeout(() => {
         ed.execCommand('startAutocomplete')
       }, 50)

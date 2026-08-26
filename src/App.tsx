@@ -11,7 +11,7 @@ import { useAppStore } from './stores/appStore';
 import { usePageStateStore } from './stores/pageStateStore';
 import { useMenuStore } from './stores/menuStore';
 import { initSecurity } from './utils/security';
-import { startAutoSave, stopAutoSave, forceSave, initAllStorage, getDefaultTheme, scheduler, removeStorageFile } from './services/storage';
+import { startAutoSave, stopAutoSave, forceSave, initAllStorage, getDefaultTheme, scheduler, resetStateShards, removeStorageFile } from './services/storage';
 import { useSqlApplyStore } from './stores/sqlApplyStore';
 import { useTaskCenterStore } from './stores/taskCenterStore';
 import { getLoginHistory, getLastUser } from './services/loginHistory';
@@ -323,7 +323,7 @@ const startup = async () => {
 
       // ========== 清除缓存 ==========
       // 设计原则：
-      // ✅ 清除: states.dat（标签页/页面快照/SQL元数据）、profiles.dat（用户信息/权限/菜单快照）
+      // ✅ 清除: states/ 分片（标签页/页面快照/SQL查询/SQL元数据）、profiles.dat（用户信息/权限/菜单快照）
       // ❌ 保留: app.dat、tokens.dat、preferences.dat、credentials.dat
       if (clear === '1') {
         // 校验前置条件：必须有 token，否则直接跳登录
@@ -349,9 +349,9 @@ const startup = async () => {
             usePageStateStore.getState().clearAllPageStates();
             useMenuStore.getState().delAllViews();
 
-            // 物理删除 states.dat + profiles.dat
+            // 清空新的 states/ 分片并删除 profiles.dat；原 states.dat 保留不动
             await Promise.allSettled([
-              removeStorageFile('states.dat'),
+              resetStateShards(),
               removeStorageFile('profiles.dat'),
             ]);
           },

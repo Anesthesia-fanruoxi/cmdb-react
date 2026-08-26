@@ -28,18 +28,23 @@ const Header = ({ collapsed, onToggleCollapse }: HeaderProps) => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // 加载头像
+  // 加载头像：优先使用偏好存储中的头像，避免刷新时等待接口导致头像短暂或持续丢失。
+  // user.avatar 作为接口恢复后的兜底，并且纳入依赖，确保 fetchProfile 异步完成后重新渲染。
+  const loadAvatar = () => {
+    const storedAvatar = userName ? getUserAvatar(userName) : '';
+    setAvatarUrl(storedAvatar || user?.avatar || null);
+  };
+
   useEffect(() => {
-    if (userName) {
-      setAvatarUrl(getUserAvatar(userName));
-    }
-  }, [userName]);
+    loadAvatar();
+  }, [userName, user?.avatar]);
 
   // ProfileDrawer 关闭时刷新头像
   const handleProfileClose = () => {
     setProfileVisible(false);
     if (userName) {
-      setAvatarUrl(getUserAvatar(userName));
+      const storedAvatar = getUserAvatar(userName);
+      setAvatarUrl(storedAvatar || user?.avatar || null);
     }
   };
 

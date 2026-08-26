@@ -58,20 +58,29 @@ export function createSqlCompleter(ace: any, { getTables, loadTableStructure: _l
             }
           }
         }
+
+        // 空格之后不补全：避免沿用上一个 token（如别名 i）继续模糊匹配
+        if (/\s$/.test(lineUntilCursor)) {
+          return callback(null, [])
+        }
         
         const fullSql = session.getValue()
         const context = analyzeContext(fullSql)
-        
-        // 简化逻辑：没有输入就不提示
+        const isInWhereClause = context.clause === 'WHERE'
+        const isInFromOrJoin = context.clause === 'FROM' || context.clause === 'JOIN'
+
+        const JOIN_PHRASES = new Set([
+          'LEFT JOIN', 'RIGHT JOIN', 'INNER JOIN', 'FULL JOIN', 'CROSS JOIN',
+          'LEFT OUTER JOIN', 'RIGHT OUTER JOIN', 'FULL OUTER JOIN',
+        ])
+
+        // 没有输入前缀就不提示
         if (!prefix || prefix.trim() === '') {
           return callback(null, [])
         }
         
         // Navicat风格：收集所有可能的建议，通过匹配分数排序
         const allSuggestions: Suggestion[] = []
-        
-        // 判断是否在 WHERE 子句中
-        const isInWhereClause = context.clause === 'WHERE'
         
         // 1. SQL关键字
         const allKeywords = [
@@ -84,8 +93,16 @@ export function createSqlCompleter(ace: any, { getTables, loadTableStructure: _l
           const matchResult = fuzzyMatch(prefix, keyword)
           if (matchResult.match) {
             const priorityBonus = KEYWORD_PRIORITY[keyword] || 50
-            // WHERE 子句中关键字评分大幅降低，让字段优先
-            const baseScore = isInWhereClause ? 3000 : 10000
+            // 默认：WHERE 压低关键字；FROM/JOIN 按 表>库>关键字
+            let baseScore = isInWhereClause ? 3000 : (isInFromOrJoin ? 5000 : 10000)
+
+            // FROM/JOIN：JOIN 连拼略高于普通关键字，但仍低于表/库
+            if (isInFromOrJoin && JOIN_PHRASES.has(keyword)) {
+              baseScore = 7500
+            } else if (isInFromOrJoin && keyword === 'JOIN') {
+              baseScore = 7000
+            }
+
             allSuggestions.push({ 
               caption: keyword, value: keyword, meta: 'keyword', 
               score: baseScore + (priorityBonus * 10) + matchResult.score
@@ -93,12 +110,14 @@ export function createSqlCompleter(ace: any, { getTables, loadTableStructure: _l
           }
         })
         
-        // 2. SQL函数
+        // 2. SQL函数（FROM/JOIN 中评分低于表/库；LEFT/RIGHT 不提示以免盖过 LEFT JOIN）
         SQL_KEYWORDS.FUNCTIONS.forEach(func => {
+          if (isInFromOrJoin && (func === 'LEFT' || func === 'RIGHT')) return
           const matchResult = fuzzyMatch(prefix, func)
           if (matchResult.match) {
-            // WHERE 子句中函数评分也降低
-            const baseScore = isInWhereClause ? 4000 : 9000
+            let baseScore = 9000
+            if (isInWhereClause) baseScore = 4000
+            else if (isInFromOrJoin) baseScore = 4000
             allSuggestions.push({ 
               caption: func, value: func + '()', meta: 'function', 
               score: baseScore + matchResult.score
@@ -106,27 +125,29 @@ export function createSqlCompleter(ace: any, { getTables, loadTableStructure: _l
           }
         })
         
-        // 3. 数据库名
+        // 3. 数据库名（FROM/JOIN：表 > 库 > 关键字）
         const { getAllCachedDatabases } = await import('./cache')
         const databases = getAllCachedDatabases()
         databases.forEach(dbName => {
           const matchResult = fuzzyMatch(prefix, dbName)
           if (matchResult.match) {
+            const baseScore = isInFromOrJoin ? 9000 : 8500
             allSuggestions.push({
               caption: dbName,
               value: dbName,
               meta: 'database',
-              score: 8500 + matchResult.score
+              score: baseScore + matchResult.score
             })
           }
         })
         
-        // 4. 表名
+        // 4. 表名（FROM/JOIN 最高优先）
         tables.forEach(table => {
           const matchResult = fuzzyMatch(prefix, table.name)
           if (matchResult.match) {
-            // WHERE 子句中表名优先级降低（因为通常不直接使用表名）
-            const baseScore = isInWhereClause ? 6000 : 8000
+            let baseScore = 8000
+            if (isInWhereClause) baseScore = 6000
+            else if (isInFromOrJoin) baseScore = 12000
             allSuggestions.push({ 
               caption: table.name, 
               value: table.name, 
@@ -139,32 +160,35 @@ export function createSqlCompleter(ace: any, { getTables, loadTableStructure: _l
         
         // 5. 按光标距离分配字段权重
         // primary = 最近的表（最高权重），secondary = 同语句其他表，rest = 其他语句的表
-        const { primary, secondary, rest } = getTablesNearCursor(fullSql, pos.row)
+        // FROM/JOIN 中不提示字段，避免干扰表名选择
+        if (!isInFromOrJoin) {
+          const { primary, secondary, rest } = getTablesNearCursor(fullSql, pos.row)
 
-        const addFieldsForTable = (tableName: string, baseScore: number) => {
-          const hasDb = tableName.includes('.')
-          const shortName = hasDb ? tableName.split('.').pop()! : tableName
-          // 裸表名按当前选中库解析（与 SQL 执行时的解析一致），避免跨库同名表串字段
-          const dbName = hasDb ? tableName.slice(0, tableName.indexOf('.')) : currentDbName
-          // 按 db.table 精确命中，避免跨库同名表串注释
-          const fields = getTableFields(shortName, dbName) || getTableFields(tableName)
-          if (!fields || fields.length === 0) return
-          fields.forEach(field => {
-            const matchResult = fuzzyMatch(prefix, field.caption)
-            if (matchResult.match) {
-              allSuggestions.push({
-                ...field,
-                // 保留字段原始元数据注释，缺失时才回退为 table.field 定位信息
-                comment: field.comment || `${shortName}.${field.caption}`,
-                score: matchResult.score + baseScore
-              })
-            }
-          })
+          const addFieldsForTable = (tableName: string, baseScore: number) => {
+            const hasDb = tableName.includes('.')
+            const shortName = hasDb ? tableName.split('.').pop()! : tableName
+            // 裸表名按当前选中库解析（与 SQL 执行时的解析一致），避免跨库同名表串字段
+            const dbName = hasDb ? tableName.slice(0, tableName.indexOf('.')) : currentDbName
+            // 按 db.table 精确命中，避免跨库同名表串注释
+            const fields = getTableFields(shortName, dbName) || getTableFields(tableName)
+            if (!fields || fields.length === 0) return
+            fields.forEach(field => {
+              const matchResult = fuzzyMatch(prefix, field.caption)
+              if (matchResult.match) {
+                allSuggestions.push({
+                  ...field,
+                  // 保留字段原始元数据注释，缺失时才回退为 table.field 定位信息
+                  comment: field.comment || `${shortName}.${field.caption}`,
+                  score: matchResult.score + baseScore
+                })
+              }
+            })
+          }
+
+          if (primary) addFieldsForTable(primary, isInWhereClause ? 14000 : 11000)
+          secondary.forEach(t => addFieldsForTable(t, isInWhereClause ? 12000 : 9000))
+          rest.forEach(t => addFieldsForTable(t, isInWhereClause ? 10000 : 7000))
         }
-
-        if (primary) addFieldsForTable(primary, isInWhereClause ? 14000 : 11000)
-        secondary.forEach(t => addFieldsForTable(t, isInWhereClause ? 12000 : 9000))
-        rest.forEach(t => addFieldsForTable(t, isInWhereClause ? 10000 : 7000))
         
         // 6. 如果有上下文中的表别名，提供别名建议
         if (context.tableAliases && Object.keys(context.tableAliases).length > 0) {

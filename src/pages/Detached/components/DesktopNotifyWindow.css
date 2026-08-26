@@ -132,3 +132,13 @@
 .notify-btn--execute:hover:not(:disabled) {
   background: #4a72f0;
 }
+
+/* 待确认态：警示色提示再点一次才执行 */
+.notify-btn--arm {
+  background: #faad14;
+  color: #1a1a1a;
+}
+
+.notify-btn--arm:hover:not(:disabled) {
+  background: #ffc53d;
+}

@@ -7,9 +7,15 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { 
   executeQuery, 
-  executePageQuery, exportQueryResult
+  executePageQuery, exportQueryResult, type QueryResult
 } from '../../../../services/sql/search';
-import { usePageStateStore } from '../../../../stores/pageStateStore';
+import { useAuthStore } from '../../../../stores/authStore';
+import {
+  createSqlTabId,
+  getSqlSearchIndex,
+  saveSqlTabState,
+  updateSqlSearchUser,
+} from '../../../../services/storage/sqlSearchStorage';
 import { emitReattachTab, closeCurrentWindow } from '../../../../utils/window';
 import SqlWorkspace from './SqlWorkspace';
 import { handleQueryData } from '../utils/handleQueryData';
@@ -23,7 +29,6 @@ interface Props {
   initialTab?: Tab;
 }
 
-const DETACHED_KEY = 'sql/detached-tabs';
 
 // 创建默认 Tab
 const createDefaultTab = (id: string): Tab => ({
@@ -53,14 +58,14 @@ const SqlWorkspaceDetached = ({ detachKey, project, dbName, initialTab }: Props)
   };
   
   const initData = getInitialTab();
-  const tabId = useRef(initData.id || `detached-${Date.now()}`);
+  const tabId = useRef(initData.id || createSqlTabId());
   // 合并默认值和传入的初始数据
   const [tab, setTab] = useState<Tab>(() => ({
     ...createDefaultTab(tabId.current),
     ...initData,
     id: tabId.current,
   }));
-  const { setPageState, getPageState } = usePageStateStore();
+  const userName = useAuthStore(state => state.userName);
 
   const updateTab = useCallback((updates: Partial<Tab>) => {
     setTab(prev => ({ ...prev, ...updates }));
@@ -68,22 +73,26 @@ const SqlWorkspaceDetached = ({ detachKey, project, dbName, initialTab }: Props)
 
   // 保存独立窗口状态
   const saveDetachedState = useCallback(() => {
-    if (!tab.project) return; // 没选项目不保存
-    
-    const existing = getPageState<{ tabs: Partial<Tab>[] }>(DETACHED_KEY) || { tabs: [] };
-    const stateToSave = {
-      id: tab.id, name: tab.name, project: tab.project, dbName: tab.dbName,
-      sqlQuery: tab.sqlQuery, dbList: tab.dbList, tableList: tab.tableList,
-    };
-    
-    const idx = existing.tabs.findIndex(t => t.id === tab.id);
-    if (idx >= 0) existing.tabs[idx] = stateToSave;
-    else existing.tabs.push(stateToSave);
-    
-    setPageState(DETACHED_KEY, existing);
-  }, [tab, setPageState, getPageState]);
+    if (!tab.project || !userName) return;
 
-  // 定时保存 + 窗口关闭前保存
+    saveSqlTabState(tab.id, {
+      name: tab.name,
+      project: tab.project,
+      dbName: tab.dbName,
+      sqlQuery: tab.sqlQuery,
+      dbList: tab.dbList,
+      tableList: tab.tableList,
+      detached: true,
+    });
+
+    const userIndex = getSqlSearchIndex().users[userName];
+    updateSqlSearchUser(userName, {
+      tabIds: Array.from(new Set([...(userIndex?.tabIds || []), tab.id])),
+      detachedTabIds: Array.from(new Set([...(userIndex?.detachedTabIds || []), tab.id])),
+      activeTabId: userIndex?.activeTabId || tab.id,
+    });
+  }, [tab, userName]);
+
   useEffect(() => {
     const timer = setInterval(saveDetachedState, 10000);
     
@@ -124,10 +133,12 @@ const SqlWorkspaceDetached = ({ detachKey, project, dbName, initialTab }: Props)
     try {
       const res = await executePageQuery({ query_id: tab.queryId, page, size, result_index: tab.currentResultIndex });
       if (res.code === 200 && res.data) {
-        const data = res.data as any;
-        let rows = data.results?.[0]?.rows || data.rows || [];
-        let cols = data.results?.[0]?.columns || data.columns || tab.columns;
-        let total = data.results?.[0]?.total ?? data.total ?? tab.total;
+        const data = res.data as QueryResult | { results: QueryResult[] };
+        const result = 'results' in data ? data.results[0] : data;
+        if (!result) return;
+        const rows = result.rows || [];
+        const cols = result.columns || tab.columns;
+        const total = result.total ?? tab.total;
         const newAll = [...tab.allResults];
         if (newAll[tab.currentResultIndex]) newAll[tab.currentResultIndex] = { ...newAll[tab.currentResultIndex], data: rows, total };
         updateTab({ results: rows, columns: cols, total, currentPage: page, allResults: newAll });

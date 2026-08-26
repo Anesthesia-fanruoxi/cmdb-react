@@ -3,35 +3,34 @@
  */
 
 .system-info-page {
-  padding: 24px;
-  height: 100vh;
+  padding: 16px 20px;
   box-sizing: border-box;
   background: var(--bg-color, #fff);
-  overflow-y: auto;
 }
 
 .system-info-page .system-info-logo {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
-.system-info-page .logo-icon { font-size: 48px; }
-.system-info-page .logo-text { font-size: 18px; font-weight: 600; color: var(--text-color, #1f2937); }
+.system-info-page .logo-icon { font-size: 28px; }
+.system-info-page .logo-text { font-size: 15px; font-weight: 600; color: var(--text-color, #1f2937); }
 
 .system-info-page .system-info-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .system-info-page .info-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 14px;
+  padding: 8px 12px;
   background: var(--bg-secondary, #f9fafb);
   border-radius: 8px;
 }
@@ -114,20 +113,20 @@
 
 /* 资源区域 */
 .system-info-page .resource-section {
-  margin-top: 24px;
-  padding-top: 20px;
+  margin-top: 16px;
+  padding-top: 12px;
   border-top: 1px solid var(--border-color, #e5e7eb);
 }
 
 .system-info-page .resource-section h4 {
-  margin: 0 0 12px;
-  font-size: 14px;
+  margin: 0 0 8px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-color, #1f2937);
 }
 
 .system-info-page .resource-section .info-item {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .system-info-page .resource-section .info-item:last-child {
@@ -136,7 +135,7 @@
 
 /* 页脚 */
 .system-info-page .system-info-footer {
-  margin-top: 24px;
+  margin-top: 12px;
   text-align: center;
 }
 

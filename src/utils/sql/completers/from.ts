@@ -14,22 +14,19 @@ export function getFromCompletions(_context: SqlContext, prefix: string, tables:
   const p = (prefix || '').toLowerCase()
   const pNorm = p.replace(/_/g, '')
   
-  // 先添加 FROM 子句关键词（优先级最高，因为用户可能想输入 WHERE/JOIN 等）
+  // FROM 优先级：表 > 库 > 关键字（JOIN 连拼略高于普通关键字，仍低于表/库）
   SQL_KEYWORDS.FROM.forEach(keyword => {
     const matchResult = fuzzyMatch(prefix, keyword)
     if (matchResult.match) {
-      // 关键词前缀匹配时给最高分
-      const keywordLower = keyword.toLowerCase()
-      const isPrefixMatch = p && keywordLower.startsWith(p)
-      const baseScore = isPrefixMatch ? 2000 : 900
+      const isJoinPhrase = keyword.includes('JOIN')
+      const baseScore = isJoinPhrase ? 1000 : 600
       suggestions.push({ caption: keyword, value: keyword, meta: 'keyword', score: baseScore + matchResult.score })
     }
   })
   
-  // 获取所有数据库名称
+  // 数据库名（低于表名）
   const databases = getAllCachedDatabases() || []
   
-  // 添加数据库名称建议
   databases.forEach(dbName => {
     const db = typeof dbName === 'string' ? dbName : ''
     if (!db) return
@@ -39,7 +36,7 @@ export function getFromCompletions(_context: SqlContext, prefix: string, tables:
       const n = db.toLowerCase()
       const nNorm = n.replace(/_/g, '')
       const isPrefixMatch = p && (n.startsWith(p) || (pNorm && nNorm.startsWith(pNorm)))
-      const baseScore = isPrefixMatch ? 1800 : 1200
+      const baseScore = isPrefixMatch ? 1600 : 1200
       
       suggestions.push({
         caption: db,
@@ -65,16 +62,15 @@ export function getFromCompletions(_context: SqlContext, prefix: string, tables:
     ...cachedTables.filter(t => !seen.has(t.name.toLowerCase())).map(t => ({ ...t, isCurrentDb: false }))
   ]
   
-  // 添加表名建议
+  // 表名最高优先
   allTables.forEach(table => {
     const tableName = typeof table === 'string' ? table : table.name
     if (tableName) {
       const matchResult = fuzzyMatch(prefix, tableName)
       if (matchResult.match) {
-        let baseScore = table.isCurrentDb ? 1500 : 1000
+        let baseScore = table.isCurrentDb ? 2500 : 2000
         const n = tableName.toLowerCase()
         const nNorm = n.replace(/_/g, '')
-        // 只有前缀匹配才加分
         if (p && (n.startsWith(p) || (pNorm && nNorm.startsWith(pNorm)))) baseScore += 500
         
         suggestions.push({

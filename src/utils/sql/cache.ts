@@ -202,7 +202,7 @@ export function getTableComment(dbName: string, tableName: string): string {
 }
 
 /** 持久化元数据到文件存储 */
-export async function persistMetadataToStorage(projectName: string, username: string): Promise<void> {
+export async function persistMetadataToStorage(projectName: string): Promise<void> {
   if (!window.sqlMetadataCache) return
   
   const cacheData = {
@@ -214,28 +214,26 @@ export async function persistMetadataToStorage(projectName: string, username: st
   }
   
   try {
-    const { saveSqlMetadata } = await import('../../services/storage/stateStorage')
-    await saveSqlMetadata(username, projectName, cacheData)
-    console.log(`[缓存持久化] ✅ 已保存到 states.dat: 项目=${projectName}, 用户=${username}`)
+    const { saveSqlMetadata } = await import('../../services/storage/sqlMetadataStorage')
+    await saveSqlMetadata(projectName, cacheData)
+    console.log(`[缓存持久化] ✅ 已保存到 states/sqlMetadata/${projectName}.dat: 项目=${projectName}`)
   } catch (error) {
     console.error('[缓存持久化] ❌ 保存失败:', error)
   }
 }
 
 /** 从文件存储恢复元数据 */
-export async function restoreMetadataFromStorage(projectName: string, username: string): Promise<boolean> {
+export async function restoreMetadataFromStorage(projectName: string): Promise<boolean> {
   try {
-    const { getSqlMetadata } = await import('../../services/storage/stateStorage')
-    const cacheData = getSqlMetadata(username, projectName)
+    const { getSqlMetadata } = await import('../../services/storage/sqlMetadataStorage')
+    const cacheData = await getSqlMetadata(projectName)
     
     if (!cacheData) {
-      console.log(`[缓存恢复] ⚠️ 未找到缓存: 项目=${projectName}, 用户=${username}`)
       return false
     }
     
     // 检查缓存版本
     if (cacheData.version !== '1.1') {
-      console.log('[缓存恢复] ⚠️ 缓存版本不匹配,忽略')
       return false
     }
     
@@ -249,42 +247,28 @@ export async function restoreMetadataFromStorage(projectName: string, username: 
     window.sqlMetadataCache.tableComments = cacheData.tableComments || {}
     window.sqlFieldSuggestions = cacheData.fields || {}
     
-    const dbCount = cacheData.databases?.length || 0
-    const tableCount = Object.keys(cacheData.dbTables || {}).length
-    const fieldCount = Object.keys(cacheData.fields || {}).length
-    const statsCount = Object.keys(cacheData.tableStats || {}).length
-    
-    const cacheAge = Date.now() - (cacheData.timestamp || 0)
-    const ageHours = Math.floor(cacheAge / 1000 / 60 / 60)
-    const ageDays = Math.floor(ageHours / 24)
-    const ageDisplay = ageDays > 0 ? `${ageDays}天前` : `${ageHours}小时前`
-    
-    console.log(`[缓存恢复] ✅ 已从 states.dat 恢复: ${dbCount} 个数据库, ${tableCount} 个表映射, ${fieldCount} 个表字段, ${statsCount} 个表统计`)
-    console.log(`[缓存恢复] 📅 缓存时间: ${new Date(cacheData.timestamp).toLocaleString()} (${ageDisplay})`)
-    
     return true
-  } catch (error) {
-    console.error('[缓存恢复] ❌ 恢复失败:', error)
+  } catch {
     return false
   }
 }
 
 /** 清除指定项目的元数据缓存 */
-export async function clearMetadataStorage(projectName: string, username: string): Promise<void> {
+export async function clearMetadataStorage(projectName: string): Promise<void> {
   try {
-    const { clearSqlMetadata } = await import('../../services/storage/stateStorage')
-    await clearSqlMetadata(username, projectName)
-    console.log(`[缓存清除] ✅ 已清除缓存: 项目=${projectName}, 用户=${username}`)
+    const { clearSqlMetadata } = await import('../../services/storage/sqlMetadataStorage')
+    await clearSqlMetadata(projectName)
+    console.log(`[缓存清除] ✅ 已清除缓存: 项目=${projectName}`)
   } catch (error) {
     console.error('[缓存清除] ❌ 清除失败:', error)
   }
 }
 
 /** 获取缓存的时间戳 */
-export async function getMetadataCacheAge(projectName: string, username: string): Promise<number | null> {
+export async function getMetadataCacheAge(projectName: string): Promise<number | null> {
   try {
-    const { getSqlMetadata } = await import('../../services/storage/stateStorage')
-    const cacheData = getSqlMetadata(username, projectName)
+    const { getSqlMetadata } = await import('../../services/storage/sqlMetadataStorage')
+    const cacheData = await getSqlMetadata(projectName)
     return cacheData?.timestamp || null
   } catch {
     return null

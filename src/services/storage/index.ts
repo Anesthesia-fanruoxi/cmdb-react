@@ -10,6 +10,7 @@ export {
   waitForStorageInit,
   clearMemoryCache,
   removeStorageFile,
+  flushStorageWrites,
 } from './core';
 
 // App 公共存储
@@ -62,6 +63,29 @@ export {
   getSidebarCollapsed,
   removeState,
 } from './stateStorage';
+
+// states/ 分片存储
+export {
+  createSqlTabId,
+  getSqlSearchIndex,
+  saveSqlSearchIndex,
+  getSqlTabState,
+  saveSqlTabState,
+  deleteSqlTabState,
+  getSqlSearchState,
+  saveSqlSearchState,
+  clearSqlSearchState,
+} from './sqlSearchStorage';
+export {
+  resetStateShards,
+} from './stateShardStorage';
+
+// sqlMetadata/ 按项目分文件存储（resetSqlMetadataDir 为内部使用，由 resetStateShards 调用）
+export {
+  getSqlMetadata,
+  saveSqlMetadata,
+  clearSqlMetadata,
+} from './sqlMetadataStorage';
 
 // 偏好设置存储
 export {

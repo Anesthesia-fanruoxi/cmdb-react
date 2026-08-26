@@ -14,8 +14,10 @@
  */
 
 import { SaveType, SaveStrategy, SAVE_CONFIG } from './strategies';
-import { getStorageData, saveStorageDataAsync } from './core';
+import { getStorageData, saveStorageDataAsync, flushStorageWrites } from './core';
 import { useAuthStore } from '@/stores/authStore';
+import { STATE_STORAGE_FILES, excludeSqlPageStates, markStateShardUpdated } from './stateShardStorage';
+import type { PageState, StorageFile } from './types';
 
 /** 数据构建函数，延迟执行以获取最新状态 */
 type DataBuilder = () => Record<string, unknown>;
@@ -76,8 +78,23 @@ class SaveScheduler {
 
     this.saving.add(type);
     try {
+      const buildStarted = performance.now();
       const data = builder();
+      const buildMs = performance.now() - buildStarted;
+      if (buildMs >= 8) {
+        console.warn(`[StoragePerf] snapshot-builder ${type}`, {
+          ms: Number(buildMs.toFixed(1)),
+        });
+      }
+
+      const writeStarted = performance.now();
       this.writeToStorage(type, userName, data);
+      const writeMs = performance.now() - writeStarted;
+      if (writeMs >= 8) {
+        console.warn(`[StoragePerf] snapshot-memory-merge ${type}`, {
+          ms: Number(writeMs.toFixed(1)),
+        });
+      }
       this.pendingBuilders.delete(type);
     } catch (error) {
       console.error(`[Scheduler] ${type} 保存失败:`, error);
@@ -100,26 +117,39 @@ class SaveScheduler {
   ): void {
     switch (type) {
       case SaveType.TAB:
-      case SaveType.SNAPSHOT:
       case SaveType.ROUTE:
-      case SaveType.SIDEBAR: {
-        // 写入 states.dat
-        const existingState = getStorageData<Record<string, Record<string, unknown>>>('states.dat');
-        const existingUserState = existingState[username] || {};
+      case SaveType.SIDEBAR:
+        this.mergeUserShard(STATE_STORAGE_FILES.navigation, username, data);
+        break;
 
-        const newState = {
-          ...existingUserState,
-          ...data,
-          lastSnapshot: Date.now(),
-        };
+      case SaveType.SNAPSHOT: {
+        // 快照中的普通页面状态与当前路由分开写入，避免再次触碰完整 states.dat。
+        if (data.pageStates && typeof data.pageStates === 'object') {
+          const pageStates = excludeSqlPageStates(data.pageStates as Record<string, PageState>);
+          const existing = getStorageData<Record<string, Record<string, unknown>>>(
+            STATE_STORAGE_FILES.pageStates,
+          );
+          const existingUserState = existing[username] || {};
+          saveStorageDataAsync(STATE_STORAGE_FILES.pageStates, {
+            ...existing,
+            [username]: {
+              ...existingUserState,
+              pageStates,
+              lastSnapshot: Date.now(),
+            },
+          });
+          markStateShardUpdated('pageStates');
+        }
 
-        saveStorageDataAsync('states.dat', {
-          ...existingState,
-          [username]: newState,
-        });
+        if (typeof data.activeRoute === 'string') {
+          this.mergeUserShard(
+            STATE_STORAGE_FILES.navigation,
+            username,
+            { activeRoute: data.activeRoute },
+          );
+        }
         break;
       }
-
       case SaveType.PREFERENCE: {
         // 写入 preferences.dat
         const existingPrefs = getStorageData<Record<string, Record<string, unknown>>>('preferences.dat');
@@ -139,6 +169,26 @@ class SaveScheduler {
     }
   }
 
+  /** 将同一用户的局部状态合并到指定分片，绝不读取旧的 states.dat。 */
+  private mergeUserShard(
+    file: StorageFile,
+    username: string,
+    data: Record<string, unknown>,
+  ): void {
+    const existing = getStorageData<Record<string, Record<string, unknown>>>(file);
+    const existingUserState = existing[username] || {};
+
+    saveStorageDataAsync(file, {
+      ...existing,
+      [username]: {
+        ...existingUserState,
+        ...data,
+        lastSnapshot: Date.now(),
+      },
+    });
+    markStateShardUpdated('navigation');
+  }
+
   /**
    * 强制立即保存指定类型（清除防抖定时器，立即执行）
    */
@@ -152,6 +202,7 @@ class SaveScheduler {
     if (this.pendingBuilders.has(type)) {
       await this.executeSave(type);
     }
+    await flushStorageWrites();
   }
 
   /**
@@ -169,6 +220,7 @@ class SaveScheduler {
     for (const type of types) {
       await this.executeSave(type);
     }
+    await flushStorageWrites();
   }
 
   /**

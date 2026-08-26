@@ -9,6 +9,8 @@
 
 import { scheduler } from './scheduler';
 import { SaveType } from './strategies';
+import { excludeSqlPageStates } from './stateShardStorage';
+import type { PageState } from './types';
 import { usePageStateStore } from '@/stores/pageStateStore';
 import { useMenuStore } from '@/stores/menuStore';
 
@@ -44,8 +46,8 @@ export function saveSnapshot(): void {
       ? '/dashboard'
       : currentPath;
 
-    const filteredPages = filterPagesByVisitedViews(
-      pageState.pages as Record<string, unknown>
+    const filteredPages = excludeSqlPageStates(
+      filterPagesByVisitedViews(pageState.pages as Record<string, unknown>) as Record<string, PageState>,
     );
     return {
       pageStates: filteredPages,
@@ -60,8 +62,8 @@ export function saveSnapshot(): void {
 export function saveActiveRoute(route: string): void {
   scheduler.schedule(SaveType.SNAPSHOT, () => {
     const pageState = usePageStateStore.getState();
-    const filteredPages = filterPagesByVisitedViews(
-      pageState.pages as Record<string, unknown>
+    const filteredPages = excludeSqlPageStates(
+      filterPagesByVisitedViews(pageState.pages as Record<string, unknown>) as Record<string, PageState>,
     );
     return {
       activeRoute: route,

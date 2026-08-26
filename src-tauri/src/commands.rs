@@ -6,6 +6,9 @@ use serde::Serialize;
 use sysinfo::System;
 use std::fs;
 use std::path::Path;
+use std::collections::HashMap;
+use std::sync::{Arc, Condvar, Mutex, OnceLock};
+use std::thread;
 use crate::device;
 use crate::crypto;
 use crate::auth::{self, AutoLoginResult};
@@ -102,28 +105,159 @@ pub fn decrypt_data(encrypted: String) -> Result<String, String> {
     crypto::decrypt(&encrypted)
 }
 
-/// 后台异步保存：加密并写入 tauri-plugin-store 文件，不阻塞 JS 主线程
-/// JS 侧直接 invoke 不 await，Rust 在 tokio 后台线程处理
+/// 后台异步保存：加密并写入 tauri-plugin-store 文件，不阻塞 JS 主线程。
+///
+/// `async fn` 本身不会自动把同步加密和文件 IO 移出 tokio worker；如果直接在
+/// 命令体内调用 `crypto::encrypt` / `store.save`，它们仍会占用运行时线程。这里
+/// The command only enqueues the latest snapshot.
+///
+/// It returns an ACK immediately; encryption and disk IO happen on a worker.
+/// This keeps the IPC request short instead of holding it during persistence.
+/// Asynchronous store persistence. The command only enqueues the latest snapshot;
+/// a dedicated worker performs encryption and disk IO, then the command returns.
+/// This keeps the IPC request short and coalesces repeated updates for each file.
+struct StoreSaveQueue {
+    app_handle: AppHandle,
+    state: Mutex<StoreSaveQueueState>,
+    wake: Condvar,
+}
+
+struct StoreSaveQueueState {
+    pending: HashMap<String, String>,
+    in_flight: usize,
+}
+
+static STORE_SAVE_QUEUE: OnceLock<Arc<StoreSaveQueue>> = OnceLock::new();
+
+fn get_store_save_queue(app_handle: &AppHandle) -> &'static Arc<StoreSaveQueue> {
+    STORE_SAVE_QUEUE.get_or_init(|| {
+        let queue = Arc::new(StoreSaveQueue {
+            app_handle: app_handle.clone(),
+            state: Mutex::new(StoreSaveQueueState {
+                pending: HashMap::new(),
+                in_flight: 0,
+            }),
+            wake: Condvar::new(),
+        });
+
+        let worker_queue = Arc::clone(&queue);
+        thread::Builder::new()
+            .name("store-save-worker".to_string())
+            .spawn(move || store_save_worker(worker_queue))
+            .expect("failed to start store save worker");
+
+        queue
+    })
+}
+
+fn store_save_worker(queue: Arc<StoreSaveQueue>) {
+    loop {
+        let (file, plaintext) = {
+            let mut state = queue.state.lock().expect("store save queue poisoned");
+            while state.pending.is_empty() {
+                state = queue.wake.wait(state).expect("store save queue poisoned");
+            }
+
+            let file = state
+                .pending
+                .keys()
+                .next()
+                .cloned()
+                .expect("pending store save is not empty");
+            let plaintext = state
+                .pending
+                .remove(&file)
+                .expect("pending store save payload is missing");
+            state.in_flight += 1;
+            (file, plaintext)
+        };
+
+        let result = persist_store_snapshot(&queue.app_handle, &file, &plaintext);
+
+        if let Err(error) = result {
+            eprintln!("[Storage] save failed for {file}: {error}");
+        }
+
+        let mut state = queue.state.lock().expect("store save queue poisoned");
+        state.in_flight = state.in_flight.saturating_sub(1);
+        queue.wake.notify_all();
+    }
+}
+
+fn persist_store_snapshot(
+    app_handle: &AppHandle,
+    file: &str,
+    plaintext: &str,
+) -> Result<(), String> {
+    use tauri_plugin_store::StoreExt;
+
+    let encrypted = crypto::encrypt(plaintext)?;
+    let store = app_handle.store(file).map_err(|e| e.to_string())?;
+    store.set("data", serde_json::Value::String(encrypted));
+    store.save().map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+/// Enqueue a snapshot and return an immediate ACK.
 #[tauri::command]
-pub async fn save_store_async(
+pub fn save_store_async(
     app_handle: AppHandle,
     file: String,
     plaintext: String,
 ) -> Result<(), String> {
-    use tauri_plugin_store::StoreExt;
+    let queue = get_store_save_queue(&app_handle);
+    let mut state = queue.state.lock().map_err(|_| "store save queue poisoned".to_string())?;
 
-    // 加密
-    let encrypted = crypto::encrypt(&plaintext)?;
+    // Keep only the latest snapshot for each file.
+    state.pending.insert(file, plaintext);
+    queue.wake.notify_one();
+    Ok(())
+}
 
-    // 写入 store
-    let store = app_handle.store(&file).map_err(|e| e.to_string())?;
-    store.set("data", serde_json::Value::String(encrypted));
-    store.save().map_err(|e| e.to_string())?;
+/// Wait until all queued snapshots have reached disk.
+#[tauri::command]
+pub fn flush_store_save_queue(app_handle: AppHandle) -> Result<(), String> {
+    let Some(queue) = STORE_SAVE_QUEUE.get() else {
+        return Ok(());
+    };
+
+    // Keep the argument so this remains a normal Tauri command.
+    let _ = app_handle;
+    let mut state = queue.state.lock().map_err(|_| "store save queue poisoned".to_string())?;
+    while !state.pending.is_empty() || state.in_flight > 0 {
+        state = queue.wake.wait(state).map_err(|_| "store save queue poisoned".to_string())?;
+    }
+    Ok(())
+}
+
+/// 物理删除 app_data_dir 下的 store 文件。
+/// 文件不存在时视为成功；绝不会创建空文件（与 store.clear()+save 不同）。
+#[tauri::command]
+pub fn delete_store_file(app_handle: AppHandle, file: String) -> Result<(), String> {
+    if file.is_empty() || file.contains("..") {
+        return Err("invalid store file path".to_string());
+    }
+
+    // Drop any queued writes for this file so a late flush cannot recreate it.
+    if let Some(queue) = STORE_SAVE_QUEUE.get() {
+        if let Ok(mut state) = queue.state.lock() {
+            state.pending.remove(&file);
+        }
+    }
+
+    let app_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| format!("获取应用目录失败: {e}"))?;
+    let path = app_dir.join(&file);
+
+    if path.is_file() {
+        fs::remove_file(&path).map_err(|e| format!("删除 {file} 失败: {e}"))?;
+    }
 
     Ok(())
 }
 
-/// 绑定设备（登录成功后调用，需要双因子验证）
 #[tauri::command]
 pub async fn bind_device(
     app_handle: AppHandle,
