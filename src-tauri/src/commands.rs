@@ -230,6 +230,19 @@ pub fn flush_store_save_queue(app_handle: AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+/// 判断 app_data_dir 下相对路径是否存在（文件或目录），不创建任何文件。
+#[tauri::command]
+pub fn store_path_exists(app_handle: AppHandle, path: String) -> Result<bool, String> {
+    if path.is_empty() || path.contains("..") {
+        return Err("invalid store path".to_string());
+    }
+    let app_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| format!("获取应用目录失败: {e}"))?;
+    Ok(app_dir.join(&path).exists())
+}
+
 /// 物理删除 app_data_dir 下的 store 文件。
 /// 文件不存在时视为成功；绝不会创建空文件（与 store.clear()+save 不同）。
 #[tauri::command]

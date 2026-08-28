@@ -8,6 +8,7 @@ export {
   isTauriEnv,
   initAllStorage,
   waitForStorageInit,
+  ensureSqlSearchTabsReady,
   clearMemoryCache,
   removeStorageFile,
   flushStorageWrites,

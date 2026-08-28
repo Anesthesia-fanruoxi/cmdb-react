@@ -3,10 +3,10 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { X, Loader2, Plus, Trash2 } from 'lucide-react';
+import { X, Loader2, Plus, Trash2, Upload } from 'lucide-react';
 import { installContainerPlugin, installBinaryPlugin, getPluginDetail, StorePlugin, StoreProject, ContainerInstallRequest, BinaryInstallRequest } from '@/services/agent/store';
 import toast from '@/components/Toast';
-import { parseConfigTemplate, renderConfigTemplate, createEmptyItem, type TemplateVar, type SimpleVar, type ArrayVar } from './configTemplateParser';
+import { parseConfigTemplate, renderConfigTemplate, extractVarsFromConfig, createEmptyItem, type TemplateVar, type SimpleVar, type ArrayVar } from './configTemplateParser';
 
 interface ConfigItem { key: string; value: string; }
 
@@ -119,6 +119,10 @@ const InstallDrawer = ({ visible, plugin, projects, onClose, onSuccess }: Props)
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewVars, setPreviewVars] = useState<TemplateVar[]>([]);
   const [previewRendered, setPreviewRendered] = useState('');
+
+  // 导入配置弹框
+  const [importDialogVisible, setImportDialogVisible] = useState(false);
+  const [importText, setImportText] = useState('');
 
   useEffect(() => {
     if (visible && plugin) {
@@ -291,7 +295,7 @@ const InstallDrawer = ({ visible, plugin, projects, onClose, onSuccess }: Props)
     return () => clearTimeout(timer);
   }, [previewVars, previewVisible, updatePreview]);
 
-  // 预览确认后安装
+  // 预览确认后安装（始终按模板重新渲染，不用粘贴原文）
   const handleConfirmPreviewInstall = async () => {
     // 校验单变量是否填完（注释含"留空""可选""optional"的字段不强制）
     const isOptional = (desc: string) => /留空|可选|optional|二选一/i.test(desc);
@@ -300,6 +304,35 @@ const InstallDrawer = ({ visible, plugin, projects, onClose, onSuccess }: Props)
     const rendered = renderConfigTemplate(configTemplate, previewVars);
     setPreviewVisible(false);
     await performInstall(rendered);
+  };
+
+  const handleOpenImport = () => {
+    setImportText('');
+    setImportDialogVisible(true);
+  };
+
+  const handleSaveImport = () => {
+    if (!importText.trim()) {
+      toast.warning('请粘贴配置内容');
+      return;
+    }
+    if (!configTemplate) {
+      toast.error('配置模板未加载');
+      return;
+    }
+    const { vars, matched, unmatched } = extractVarsFromConfig(configTemplate, importText, previewVars);
+    setPreviewVars(vars);
+    setImportDialogVisible(false);
+    setImportText('');
+    if (matched === 0) {
+      toast.warning('未能从导入内容中解析到变量，请检查格式是否与模板一致');
+      return;
+    }
+    if (unmatched.length > 0) {
+      toast.warning(`已填充 ${matched} 项，未匹配：${unmatched.join(', ')}`);
+    } else {
+      toast.success(`已填充 ${matched} 项变量`);
+    }
   };
 
   // 单变量值变化
@@ -450,12 +483,17 @@ const InstallDrawer = ({ visible, plugin, projects, onClose, onSuccess }: Props)
             <div className="modal-content modal-xl" onClick={e => e.stopPropagation()}>
               <div className="modal-header">
                 <h3>配置预览 - {plugin?.name}</h3>
-                <button className="close-btn" onClick={() => setPreviewVisible(false)}><X size={18} /></button>
+                <button className="close-btn" onClick={() => { setPreviewVisible(false); setImportDialogVisible(false); }}><X size={18} /></button>
               </div>
               <div className="modal-body">
                 <div className="pv-layout">
                   <div className="pv-left">
-                    <div className="pv-label">配置变量</div>
+                    <div className="pv-label">
+                      <span>配置变量</span>
+                      <button type="button" className="pv-btn-import" onClick={handleOpenImport}>
+                        <Upload size={12} /> 导入配置
+                      </button>
+                    </div>
                     <div className="pv-vars">
                       {previewVars.map((v, i) => v.type === 'simple' ? (
                         <div key={v.key} className="pv-var-row">
@@ -514,7 +552,7 @@ const InstallDrawer = ({ visible, plugin, projects, onClose, onSuccess }: Props)
                 </div>
               </div>
               <div className="modal-footer">
-                <button className="btn-default" onClick={() => setPreviewVisible(false)}>取消</button>
+                <button className="btn-default" onClick={() => { setPreviewVisible(false); setImportDialogVisible(false); }}>取消</button>
                 <button className="btn-primary" onClick={handleConfirmPreviewInstall} disabled={loading}>
                   {loading && <Loader2 size={14} className="spin" />} 确认安装
                 </button>
@@ -522,6 +560,35 @@ const InstallDrawer = ({ visible, plugin, projects, onClose, onSuccess }: Props)
             </div>
           </div>
         </>
+      )}
+
+      {/* 导入配置弹框 */}
+      {importDialogVisible && (
+        <div className="modal-overlay" onClick={() => setImportDialogVisible(false)} style={{ zIndex: 1300 }}>
+          <div className="modal-content modal-lg" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>导入配置</h3>
+              <button className="close-btn" onClick={() => setImportDialogVisible(false)}><X size={18} /></button>
+            </div>
+            <div className="modal-body">
+              <div className="import-tip">
+                粘贴完整 YAML 配置，将按当前模板解析并填充左侧变量；右侧预览与安装内容以模板重新渲染为准，多余字段/注释会被忽略。
+              </div>
+              <textarea
+                className="import-textarea"
+                value={importText}
+                onChange={e => setImportText(e.target.value)}
+                placeholder="在此粘贴已有配置文件内容…"
+                rows={18}
+                spellCheck={false}
+              />
+            </div>
+            <div className="modal-footer">
+              <button className="btn-default" onClick={() => setImportDialogVisible(false)}>取消</button>
+              <button className="btn-primary" onClick={handleSaveImport}>保存</button>
+            </div>
+          </div>
+        </div>
       )}
       <style>{`
         .install-drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1100; }
@@ -576,8 +643,13 @@ const InstallDrawer = ({ visible, plugin, projects, onClose, onSuccess }: Props)
         .pv-layout { display: flex; gap: 20px; min-height: 400px; }
         .pv-left { flex: 0 0 45%; display: flex; flex-direction: column; }
         .pv-right { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-        .pv-label { display: flex; align-items: center; margin-bottom: 10px; font-size: 13px; font-weight: 500; color: var(--text-color); }
+        .pv-label { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; font-size: 13px; font-weight: 500; color: var(--text-color); }
+        .pv-btn-import { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; padding: 4px 10px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 4px; color: var(--primary-color); cursor: pointer; font-size: 12px; font-weight: 500; }
+        .pv-btn-import:hover { border-color: var(--primary-color); background: rgba(64, 158, 255, 0.08); }
         .pv-vars { display: flex; flex-direction: column; gap: 12px; overflow: auto; flex: 1; }
+        .import-tip { padding: 8px 12px; margin-bottom: 10px; background: rgba(64, 158, 255, 0.08); border: 1px solid rgba(64, 158, 255, 0.2); border-radius: 4px; color: var(--text-secondary); font-size: 12px; line-height: 1.5; }
+        .import-textarea { width: 100%; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; color: var(--text-color); resize: vertical; line-height: 1.6; tab-size: 2; box-sizing: border-box; }
+        .import-textarea:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.15); }
         .pv-var-row { display: flex; flex-direction: row; align-items: flex-start; gap: 12px; }
         .pv-var-key { display: flex; flex-direction: column; flex: 0 0 180px; min-width: 0; padding-top: 7px; }
         .pv-var-name { font-size: 13px; font-weight: 500; color: var(--text-color); font-family: 'Consolas', monospace; word-break: break-all; }

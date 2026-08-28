@@ -97,6 +97,10 @@ function getIndexFromMemory(): SqlSearchIndexData {
   };
 }
 
+export function isSqlSearchMigrationCompleted(): boolean {
+  return getIndexFromMemory().migration.status === 'completed';
+}
+
 export function getSqlSearchIndex(): SqlSearchIndexData {
   return getIndexFromMemory();
 }
@@ -165,14 +169,31 @@ export async function deleteSqlTabState(tabId: string): Promise<void> {
   await removeStorageFile(getSqlSearchTabFile(tabId));
 }
 
-export async function loadSqlSearchTabFiles(): Promise<void> {
+export async function loadSqlSearchTabFiles(concurrency = 4): Promise<void> {
   const index = getIndexFromMemory();
   const tabIds = new Set<string>();
   Object.values(index.users).forEach(user => {
     user.tabIds.forEach(tabId => tabIds.add(tabId));
     user.detachedTabIds.forEach(tabId => tabIds.add(tabId));
   });
-  await Promise.all([...tabIds].map(tabId => ensureStorageFileLoaded(getSqlSearchTabFile(tabId))));
+  const ids = [...tabIds];
+  if (ids.length === 0) return;
+
+  const limit = Math.max(1, Math.min(concurrency, ids.length));
+  let cursor = 0;
+  await Promise.all(
+    Array.from({ length: limit }, async () => {
+      while (cursor < ids.length) {
+        const id = ids[cursor];
+        cursor += 1;
+        await ensureStorageFileLoaded(getSqlSearchTabFile(id));
+        await new Promise<void>((resolve) => {
+          if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => resolve());
+          else setTimeout(resolve, 0);
+        });
+      }
+    }),
+  );
 }
 
 /** Create a deterministic UUID-shaped ID for a migrated legacy tab. */

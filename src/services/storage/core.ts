@@ -85,16 +85,29 @@ async function loadAndDecrypt(file: StorageFile): Promise<Record<string, unknown
     return {};
   }
 
+  const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now();
   try {
     const store = await loadStoreFile(file);
+    const tStore = typeof performance !== 'undefined' ? performance.now() : Date.now();
     const encrypted = await store.get<string>('data');
-    
+
     if (!encrypted) {
       return {};
     }
 
     const decrypted = await decryptData(encrypted);
-    return JSON.parse(decrypted);
+    const tEnd = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    const ms = tEnd - t0;
+    if (ms >= 50) {
+      logStoragePerf('loadAndDecrypt', {
+        file,
+        ms: Math.round(ms),
+        storeMs: Math.round(tStore - t0),
+        decryptMs: Math.round(tEnd - tStore),
+        encryptedKB: Math.round(encrypted.length / 1024),
+      });
+    }
+    return JSON.parse(decrypted) as Record<string, unknown>;
   } catch (error) {
     console.warn(`加载 ${file} 失败:`, error);
     return {};
@@ -316,45 +329,60 @@ export function waitForStorageInit(): Promise<void> {
   return initPromise;
 }
 
+/** app_data_dir 下相对路径是否存在（不创建文件） */
+export async function storePathExists(relativePath: string): Promise<boolean> {
+  if (!isTauriEnv()) return false;
+  try {
+    return await invoke<boolean>('store_path_exists', { path: relativePath });
+  } catch {
+    return false;
+  }
+}
+
 /**
- * 初始化所有存储文件（并行优化版）
- * 5 个文件独立解密，使用 Promise.all 同时加载
- * 预期提速：3-5 倍（从 ~500ms 降至 ~100-150ms）
+ * 初始化启动必需的存储文件。
+ * - 若 `states/` 目录已存在（已切割），绝不解密 legacy `states.dat`
+ * - 不预热 sqlMetadata 项目分片（按需懒加载）
+ * - SQL 查询 Tab 分片在后台预热（体积小）
  */
 export async function initAllStorage(): Promise<void> {
   if (isInitialized) return;
 
+  const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now();
+
+  // 必须在 load 任何 states/* 之前检测：plugin-store load 会创建目录/空文件
+  const hasStatesDir = await storePathExists('states');
+
+  // 启动关键路径：小文件索引 + 登录相关；不含 sqlMetadata 项目分片
   const files: StorageFile[] = [
     'app.dat',
     'tokens.dat',
     'profiles.dat',
-    // states.dat 保留用于兼容旧版本，states/ 目录存储拆分后的状态数据
-    'states.dat',
-    'states/index.dat',
-    'states/navigation.dat',
-    'states/page-states.dat',
-    'states/sqlSearch/index.dat',
-    'states/sqlMetadata/index.dat',
     'preferences.dat',
-    // credentials.dat 由 Rust 端负责管理
   ];
 
-  // ✅ 并行解密所有文件（无依赖关系）
-  const loadPromises = files.map(file => loadAndDecrypt(file));
-  const results = await Promise.all(loadPromises);
+  if (hasStatesDir) {
+    // 已切割：只读分片，跳过巨大的 states.dat
+    files.push(
+      'states/index.dat',
+      'states/navigation.dat',
+      'states/page-states.dat',
+      'states/sqlSearch/index.dat',
+      'states/sqlMetadata/index.dat',
+    );
+  } else {
+    // 尚未切割：需要 legacy states.dat 做一次迁移
+    files.push('states.dat');
+  }
 
-  // 写入各自的内存缓存
+  const results = await Promise.all(files.map((file) => loadAndDecrypt(file)));
   files.forEach((file, index) => {
     memoryCache.set(file, results[index]);
   });
 
-  // 将旧 states.dat 中的数据迁移到 states/ 分片文件
   try {
     const { migrateLegacyStates } = await import('./stateShardStorage');
-    await migrateLegacyStates();
-    const { loadSqlSearchTabFiles } = await import('./sqlSearchStorage');
-    const { loadSqlMetadataFiles } = await import('./sqlMetadataStorage');
-    await Promise.all([loadSqlSearchTabFiles(), loadSqlMetadataFiles()]);
+    await migrateLegacyStates({ hasStatesDir });
   } catch (error) {
     console.warn('[Storage] state shard migration failed:', error);
   }
@@ -363,6 +391,37 @@ export async function initAllStorage(): Promise<void> {
   if (initPromiseResolve) {
     initPromiseResolve();
   }
+
+  const elapsed = (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0;
+  logStoragePerf('initAllStorage.core', { ms: Math.round(elapsed), files: files.length });
+
+  // 仅后台预热 SQL Tab（KB 级）；元数据按项目打开时懒加载
+  void warmSqlSearchTabsInBackground();
+}
+
+let sqlSearchTabsWarmPromise: Promise<void> | null = null;
+
+async function warmSqlSearchTabsInBackground(): Promise<void> {
+  if (sqlSearchTabsWarmPromise) return sqlSearchTabsWarmPromise;
+  sqlSearchTabsWarmPromise = (async () => {
+    const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    try {
+      const { loadSqlSearchTabFiles } = await import('./sqlSearchStorage');
+      await loadSqlSearchTabFiles(4);
+    } catch (error) {
+      console.warn('[Storage] warm sql search tabs failed:', error);
+    } finally {
+      const elapsed = (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0;
+      logStoragePerf('warmSqlSearchTabs', { ms: Math.round(elapsed) });
+    }
+  })();
+  return sqlSearchTabsWarmPromise;
+}
+
+/** SQL 查询页恢复 Tab 前调用，确保分片已解密进内存 */
+export async function ensureSqlSearchTabsReady(): Promise<void> {
+  await waitForStorageInit();
+  await warmSqlSearchTabsInBackground();
 }
 
 /**

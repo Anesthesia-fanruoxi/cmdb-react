@@ -50,6 +50,7 @@ fn main() {
             decrypt_data,
             save_store_async,
             flush_store_save_queue,
+            store_path_exists,
             delete_store_file,
             bind_device,
             unbind_device,

@@ -44,6 +44,10 @@ function getMetadataIndex(): SqlMetadataIndex {
   };
 }
 
+export function isSqlMetadataMigrationCompleted(): boolean {
+  return getMetadataIndex().migrationStatus === 'completed';
+}
+
 async function saveMetadataIndex(index: SqlMetadataIndex): Promise<void> {
   await setStorageData(METADATA_INDEX_FILE, index as unknown as Record<string, unknown>);
 }
@@ -72,10 +76,27 @@ async function removeProjectFromIndex(projectName: string): Promise<void> {
   });
 }
 
-export async function loadSqlMetadataFiles(): Promise<void> {
+export async function loadSqlMetadataFiles(concurrency = 4): Promise<void> {
   await ensureStorageFileLoaded(METADATA_INDEX_FILE);
   const index = getMetadataIndex();
-  await Promise.all(index.projects.map(project => ensureStorageFileLoaded(getProjectMetadataFile(project))));
+  const projects = index.projects;
+  if (projects.length === 0) return;
+
+  const limit = Math.max(1, Math.min(concurrency, projects.length));
+  let cursor = 0;
+  await Promise.all(
+    Array.from({ length: limit }, async () => {
+      while (cursor < projects.length) {
+        const project = projects[cursor];
+        cursor += 1;
+        await ensureStorageFileLoaded(getProjectMetadataFile(project));
+        await new Promise<void>((resolve) => {
+          if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => resolve());
+          else setTimeout(resolve, 0);
+        });
+      }
+    }),
+  );
 }
 
 /** Migrate SQL metadata directly from states.dat. */

@@ -163,11 +163,11 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"
-          DESCRIPTION="1、SQL 本地状态按分片存储（查询会话 / 元数据独立落盘），降低 page-states 体积并避免互相覆盖。
-          2、修复恢复会话后侧边库表树不显示的问题。
-          3、优化 SQL 补全：FROM/JOIN 优先表名、LEFT JOIN 等连拼匹配、空格后不弹补全。
-          4、修复 EXPLAIN 关键字在编辑器中不高亮。
-          5、系统信息改为弹窗展示；修复头像刷新丢失；登录页与桌面通知体验优化。"
+          DESCRIPTION="1、新增 SQL Sync 数据同步监控页：实时监控、对比查询、补全进度与详情。
+          2、对比支持今天/昨天/本周/上周/本月/上月快捷填入与重置；有差异时可点击发起补全，隐藏独立补全入口。
+          3、对比与补全前端限制：单次范围最多一个月，补全进行中不可重复发起。
+          4、启动存储优化：已切割 states 目录则跳过解密巨型 states.dat；设备密钥缓存，显著缩短初始化耗时。
+          5、Sync 监控 SSE 使用 Tauri HTTP 流式解析，兼容缺空行的事件流。"
 
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \

@@ -18,7 +18,7 @@
   z-index: 9999;
 }
 
-/* 动态网格背景 */
+/* 动态网格背景 — 降低动画频率，减轻启动解密时的掉帧感 */
 .startup-screen::before {
   content: '';
   position: absolute;
@@ -27,7 +27,9 @@
     linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
   background-size: 50px 50px;
-  animation: startup-grid-move 20s linear infinite;
+  animation: startup-grid-move 40s linear infinite;
+  will-change: transform;
+  pointer-events: none;
 }
 
 @keyframes startup-grid-move {

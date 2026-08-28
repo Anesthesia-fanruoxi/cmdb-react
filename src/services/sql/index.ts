@@ -6,6 +6,7 @@ export * from './search';
 export * from './apply';
 export * from './export';
 export * from './sharedHistory';
+export * from './sync';
 // process 和 rules 中有与 apply 重复的导出，使用具名导出
 export { 
   getProcessList as getProcessListAdmin,

@@ -18,6 +18,7 @@ import {
   saveSqlTabState,
   updateSqlSearchUser,
 } from '../../../services/storage/sqlSearchStorage';
+import { ensureSqlSearchTabsReady } from '../../../services/storage';
 import { toast } from '../../../components/Toast';
 import TableTree from './components/TableTree';
 import SqlWorkspace from './components/SqlWorkspace';
@@ -324,39 +325,50 @@ const SqlSearch = () => {
     return () => window.removeEventListener('keydown', handleShortcut);
   }, [sqlShortcuts, activeTabId]);
 
-  // 恢复保存的状态（等待 hydration 完成）
+  // 恢复保存的状态（等待 hydration + SQL Tab 分片解密完成）
   useEffect(() => {
     if (!_hasHydrated || hasRestored.current || !userName) return;
-    hasRestored.current = true;
+    let cancelled = false;
 
-    try {
-      const userIndex = getSqlSearchIndex().users[userName];
-      const detachedTabIds = new Set(userIndex?.detachedTabIds || []);
-      const restoredTabs = (userIndex?.tabIds || [])
-        .filter(tabId => !detachedTabIds.has(tabId))
-        .map(tabId => getSqlTabState(tabId))
-        .filter((tab): tab is NonNullable<ReturnType<typeof getSqlTabState>> => Boolean(tab))
-        .map(tab => ({
-          ...createTab(tab.tabId),
-          ...tab,
-          id: tab.tabId,
-          results: [], columns: [], total: 0, took: 0, queryId: '',
-          allResults: [], currentResultIndex: 0, messages: [],
-        }));
+    (async () => {
+      try {
+        await ensureSqlSearchTabsReady();
+        if (cancelled || hasRestored.current) return;
+        hasRestored.current = true;
 
-      if (restoredTabs.length > 0) {
-        setTabs(restoredTabs);
-        setActiveTabId(
-          restoredTabs.some(tab => tab.id === userIndex?.activeTabId)
-            ? userIndex!.activeTabId
-            : restoredTabs[0].id,
-        );
+        const userIndex = getSqlSearchIndex().users[userName];
+        const detachedTabIds = new Set(userIndex?.detachedTabIds || []);
+        const restoredTabs = (userIndex?.tabIds || [])
+          .filter(tabId => !detachedTabIds.has(tabId))
+          .map(tabId => getSqlTabState(tabId))
+          .filter((tab): tab is NonNullable<ReturnType<typeof getSqlTabState>> => Boolean(tab))
+          .map(tab => ({
+            ...createTab(tab.tabId),
+            ...tab,
+            id: tab.tabId,
+            results: [], columns: [], total: 0, took: 0, queryId: '',
+            allResults: [], currentResultIndex: 0, messages: [],
+          }));
+
+        if (restoredTabs.length > 0) {
+          setTabs(restoredTabs);
+          setActiveTabId(
+            restoredTabs.some(tab => tab.id === userIndex?.activeTabId)
+              ? userIndex!.activeTabId
+              : restoredTabs[0].id,
+          );
+        }
+      } catch (error) {
+        console.error('Failed to restore SQL tabs:', error);
+        hasRestored.current = true;
+      } finally {
+        if (!cancelled) setIsRestoring(false);
       }
-    } catch (error) {
-      console.error('Failed to restore SQL tabs:', error);
-    } finally {
-      setIsRestoring(false);
-    }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [_hasHydrated, userName]);
 
   useEffect(() => {

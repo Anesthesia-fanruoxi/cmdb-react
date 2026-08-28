@@ -5,12 +5,19 @@
  */
 
 import {
+  ensureStorageFileLoaded,
   getStorageData,
   saveStorageDataAsync,
   setStorageData,
+  storePathExists,
 } from './core';
-import { migrateSqlMetadataFromLegacyStates, resetSqlMetadataDir } from './sqlMetadataStorage';
 import {
+  isSqlMetadataMigrationCompleted,
+  migrateSqlMetadataFromLegacyStates,
+  resetSqlMetadataDir,
+} from './sqlMetadataStorage';
+import {
+  isSqlSearchMigrationCompleted,
   migrateSqlSearchFromLegacyStates,
   resetSqlSearchStorage,
 } from './sqlSearchStorage';
@@ -133,13 +140,65 @@ function splitLegacyPageStates(pageStates: Record<string, PageState>): Record<st
   return excludeSqlPageStates(pageStates);
 }
 
+async function markStateMigrationCompleted(): Promise<void> {
+  const current = getStateIndex();
+  if (current.migrationCompleted) return;
+  const now = Date.now();
+  await setStorageData(
+    STATE_STORAGE_FILES.index,
+    asStorageRecord<StateIndexData>({
+      schemaVersion: 1,
+      migrationCompleted: true,
+      legacySource: 'states.dat',
+      files: {
+        navigation: {
+          file: STATE_STORAGE_FILES.navigation,
+          version: 1,
+          updatedAt: current.files.navigation?.updatedAt || now,
+        },
+        pageStates: {
+          file: STATE_STORAGE_FILES.pageStates,
+          version: 1,
+          updatedAt: current.files.pageStates?.updatedAt || now,
+        },
+      },
+      updatedAt: now,
+    }),
+  );
+}
+
 /**
  * Split ordinary state from states.dat and trigger SQL migrations.
  * states.dat is the only migration source for SQL data.
+ *
+ * 规则：只要 `states/` 目录已存在（已切割），就跳过解密 legacy states.dat。
  */
-export async function migrateLegacyStates(): Promise<void> {
-  const legacy = getStorageData<MultiUserData<Partial<StateData>>>('states.dat');
+export async function migrateLegacyStates(options?: {
+  hasStatesDir?: boolean;
+}): Promise<void> {
+  const hasStatesDir =
+    options?.hasStatesDir ?? (await storePathExists('states'));
+
+  // 已切割：不触碰 states.dat；补齐迁移标记后返回
+  if (hasStatesDir) {
+    await markStateMigrationCompleted();
+    // 用空 legacy 走一遍：内部若未 completed 只会把标记写成 completed，不会抹掉已有分片索引
+    await migrateSqlSearchFromLegacyStates({});
+    await migrateSqlMetadataFromLegacyStates({});
+    return;
+  }
+
   const currentIndex = getStateIndex();
+  const sqlSearchDone = isSqlSearchMigrationCompleted();
+  const sqlMetaDone = isSqlMetadataMigrationCompleted();
+
+  if (currentIndex.migrationCompleted && sqlSearchDone && sqlMetaDone) {
+    return;
+  }
+
+  // 尚未切割：才解密巨大的 legacy states.dat
+  await ensureStorageFileLoaded('states.dat');
+  const legacy = getStorageData<MultiUserData<Partial<StateData>>>('states.dat');
 
   if (!currentIndex.migrationCompleted) {
     const navigation: UserNavigationData = {};
@@ -162,24 +221,9 @@ export async function migrateLegacyStates(): Promise<void> {
 
     await setStorageData(STATE_STORAGE_FILES.navigation, asStorageRecord(navigation));
     await setStorageData(STATE_STORAGE_FILES.pageStates, asStorageRecord(pageStates));
-
-    const now = Date.now();
-    await setStorageData(
-      STATE_STORAGE_FILES.index,
-      asStorageRecord<StateIndexData>({
-        schemaVersion: 1,
-        migrationCompleted: true,
-        legacySource: 'states.dat',
-        files: {
-          navigation: { file: STATE_STORAGE_FILES.navigation, version: 1, updatedAt: now },
-          pageStates: { file: STATE_STORAGE_FILES.pageStates, version: 1, updatedAt: now },
-        },
-        updatedAt: now,
-      }),
-    );
+    await markStateMigrationCompleted();
   }
 
-  // SQL tabs and metadata are also migrated only from states.dat.
   await migrateSqlSearchFromLegacyStates(legacy);
   await migrateSqlMetadataFromLegacyStates(legacy);
 }
