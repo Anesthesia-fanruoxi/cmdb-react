@@ -17,14 +17,14 @@ export function IncrTable({ data }: { data: SyncIncrementalPoint[] }) {
         <h2>最近增量</h2>
         <span className="tag">最新 360 条</span>
       </div>
-      <div className="card-body table-wrap" style={{ padding: '0 6px 8px' }}>
+      <div className="card-body table-wrap incr-recent-table" style={{ padding: '0 6px 8px' }}>
         <table>
           <thead>
             <tr>
               <th>时间</th>
               <th>窗口</th>
-              <th>hits</th>
-              <th>written</th>
+              <th>查询</th>
+              <th>写入</th>
               <th>耗时</th>
               <th>状态</th>
             </tr>
@@ -215,11 +215,11 @@ export default function IncrChart({ data }: IncrChartProps) {
         <div className="incr-legend">
           <span className="lg">
             <span className="sw" style={{ background: 'var(--accent)' }} />
-            hits / 窗
+            查询 / 窗
           </span>
           <span className="lg">
             <span className="sw" style={{ background: '#9aa6b2' }} />
-            written / 窗
+            写入 / 窗
           </span>
           <span className="lg">移动鼠标查看明细</span>
         </div>
@@ -235,11 +235,11 @@ export default function IncrChart({ data }: IncrChartProps) {
                   {new Date(tipPt.window?.start || tipPt.atStr || '').toTimeString().slice(0, 8)}
                 </div>
                 <div className="t-row">
-                  <span>hits</span>
+                  <span>查询</span>
                   <b>{tipPt.hits || 0}</b>
                 </div>
                 <div className="t-row">
-                  <span>written</span>
+                  <span>写入</span>
                   <b>{tipPt.written || 0}</b>
                 </div>
                 <div className="t-row">

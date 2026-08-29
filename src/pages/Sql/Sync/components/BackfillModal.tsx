@@ -178,7 +178,7 @@ export default function BackfillModal({ open, project, onClose }: BackfillModalP
                 <span className="bf-progress-pct">{pct.toFixed(1)}%</span>
               </div>
               <div className="bar bar-lg">
-                <i style={{ width: `${pct}%` }} />
+                <span className="bar-fill" style={{ width: `${Math.max(0, Math.min(100, pct))}%` }} />
               </div>
               <div className="bf-progress-grid">
                 <div className="cell">

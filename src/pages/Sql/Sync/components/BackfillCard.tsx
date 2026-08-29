@@ -18,14 +18,26 @@ export function BackfillProgressCard({
       : '';
 
   return (
-    <div className="card">
+    <div
+      className="card bf-progress-card"
+      onClick={onOpenDetail}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onOpenDetail();
+        }
+      }}
+      title="点击查看补全详情"
+    >
       <div className="card-head">
         <h2>补全进度</h2>
-        <span className="tag">点击进度条查看详情</span>
+        <span className="tag">点击卡片查看详情</span>
       </div>
       <div className="card-body chart-wrap">
-        <div className="bar" title="点击打开详情" onClick={onOpenDetail} role="button">
-          <i style={{ width: `${pct}%` }} />
+        <div className="bar">
+          <span className="bar-fill" style={{ width: `${Math.max(0, Math.min(100, pct))}%` }} />
         </div>
         <div className="bf-meta">
           <span>{(pct.toFixed(1) || '0')}%</span>
@@ -34,7 +46,7 @@ export function BackfillProgressCard({
           </span>
         </div>
         <p style={{ fontSize: '.72rem', color: 'var(--muted)', marginBottom: 4 }}>{txt}</p>
-        <p className="bf-click-hint">点击进度条打开详情弹框（独立 SSE）</p>
+        <p className="bf-click-hint">点击卡片打开详情弹框（独立 SSE）</p>
       </div>
     </div>
   );

@@ -51,9 +51,15 @@ export function getCompareQuickRange(
   const today = startOfDay(now);
 
   if (key === 'today') {
-    const end = new Date(today);
-    end.setDate(end.getDate() + 1);
-    return { start: formatSyncDateTime(today), end: formatSyncDateTime(end) };
+    // [今日 00:00, 当前整点) —— 截止到「上一个完整小时」的结束边界（非整点减 1 小时）
+    const start = today;
+    const end = new Date(now);
+    end.setMinutes(0, 0, 0);
+    if (end.getTime() <= start.getTime()) {
+      // 当天 0 点后尚未跨过整点：退到当前时刻，避免空区间
+      return { start: formatSyncDateTime(start), end: formatSyncDateTime(now) };
+    }
+    return { start: formatSyncDateTime(start), end: formatSyncDateTime(end) };
   }
 
   if (key === 'yesterday') {

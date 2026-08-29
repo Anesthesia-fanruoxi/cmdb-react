@@ -6,7 +6,7 @@ interface EventLogProps {
 
 export default function EventLog({ logs }: EventLogProps) {
   return (
-    <div className="card" style={{ flex: 1.2, minHeight: 140 }}>
+    <div className="card event-log-card" style={{ minHeight: 120 }}>
       <div className="card-head">
         <h2>事件日志</h2>
       </div>

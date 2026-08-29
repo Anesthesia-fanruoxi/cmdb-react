@@ -17,7 +17,6 @@ import { useSyncProjects } from './hooks/useSyncProjects';
 import { useSyncMonitor, type ConnState } from './hooks/useSyncMonitor';
 import HeaderBar from './components/HeaderBar';
 import KpiBar from './components/KpiBar';
-import PipelineBar from './components/PipelineBar';
 import IncrChart, { IncrTable } from './components/IncrChart';
 import { BackfillProgressCard } from './components/BackfillCard';
 import CompareCard from './components/CompareCard';
@@ -25,6 +24,7 @@ import RuntimeCard from './components/RuntimeCard';
 import EventLog from './components/EventLog';
 import BackfillModal from './components/BackfillModal';
 import { isRangeWithinOneMonth, parseSyncDateTime } from './utils/backfillGuard';
+import { useAuthStore } from '@/stores/authStore';
 import './style.css';
 
 interface SyncWorkbenchProps {
@@ -42,7 +42,6 @@ function SyncWorkbench({ project, onConnStateChange, onReconnectChange }: SyncWo
     backfillProgress,
     runtime,
     logs,
-    pipeFlash,
     appendLog,
     reconnect,
   } = useSyncMonitor(project);
@@ -62,6 +61,7 @@ function SyncWorkbench({ project, onConnStateChange, onReconnectChange }: SyncWo
 
   const [modalOpen, setModalOpen] = useState(false);
   const compareReadyRef = useRef(false);
+  const canWrite = useAuthStore((s) => s.hasPermission('sql:sync:w'));
 
   useEffect(() => {
     onConnStateChange(connState);
@@ -216,6 +216,10 @@ function SyncWorkbench({ project, onConnStateChange, onReconnectChange }: SyncWo
 
   const fillBackfillFromCompare = useCallback(async () => {
     if (!cmpHasDiff || !cmpActualRange?.start) return;
+    if (!canWrite) {
+      toast.warning('无写权限（sql:sync:w）');
+      return;
+    }
     if (pipeline?.backfillActive || bfLoading) {
       toast.warning('补全进行中，请等待完成后再试');
       return;
@@ -251,6 +255,7 @@ function SyncWorkbench({ project, onConnStateChange, onReconnectChange }: SyncWo
     appendLog,
     pipeline?.backfillActive,
     bfLoading,
+    canWrite,
   ]);
 
   const resetCompare = useCallback(() => {
@@ -270,7 +275,6 @@ function SyncWorkbench({ project, onConnStateChange, onReconnectChange }: SyncWo
   return (
     <>
       <KpiBar pipeline={pipeline} backfillProgress={backfillProgress} />
-      <PipelineBar pipeline={pipeline} flash={pipeFlash} />
 
       <div className="work">
         <div className="col-main">
@@ -280,6 +284,7 @@ function SyncWorkbench({ project, onConnStateChange, onReconnectChange }: SyncWo
 
         <div className="col-side">
           <CompareCard
+            project={project}
             cmpStart={cmpStart}
             cmpEnd={cmpEnd}
             onCmpStartChange={setCmpStart}
@@ -293,8 +298,12 @@ function SyncWorkbench({ project, onConnStateChange, onReconnectChange }: SyncWo
             diff={cmpDiff}
             diffCls={cmpDiffCls}
             rangeText={cmpRange}
-            diffClickable={cmpHasDiff && !!cmpActualRange?.start && !pipeline?.backfillActive}
-            onDiffClick={fillBackfillFromCompare}
+            actualRange={cmpActualRange}
+            hasDiff={cmpHasDiff}
+            canWrite={canWrite}
+            backfillBusy={!!pipeline?.backfillActive || bfLoading}
+            onFullBackfill={fillBackfillFromCompare}
+            onLog={appendLog}
           />
           <BackfillProgressCard
             progress={backfillProgress}

@@ -27,15 +27,24 @@ export default function KpiBar({ pipeline, backfillProgress }: KpiBarProps) {
 
   return (
     <section className="kpis">
-      <div className="kpi">
-        <div className={`dot ${incrRunning ? 'on' : 'off'}`}>{incrRunning ? '▶' : '‖'}</div>
+      <div className="kpi kpi-incr">
+        <div className={`kpi-breath ${incrRunning ? 'on' : 'off'}`} aria-hidden />
         <div className="body">
-          <div className="lbl">增量写入</div>
-          <div className="val">{p ? (incrRunning ? '运行中' : '已停止') : '--'}</div>
-          <div className="sub">
-            {p?.lastIncremental
-              ? `最近 ${p.lastIncremental.hits} 条 / ${p.lastIncremental.durationMs}ms`
-              : '等待数据'}
+          <div className="val">
+            {p?.lastIncremental ? (
+              <>
+                <span className="kpi-incr-label kpi-incr-label-hits">查询</span>
+                {' '}
+                <span className="kpi-incr-hits">{p.lastIncremental.hits ?? 0}</span>
+                {' '}条{' '}
+                <span className="kpi-incr-label kpi-incr-label-ms">耗时</span>
+                {' '}
+                <span className="kpi-incr-ms">{p.lastIncremental.durationMs ?? 0}</span>
+                ms
+              </>
+            ) : (
+              '等待数据'
+            )}
           </div>
         </div>
       </div>

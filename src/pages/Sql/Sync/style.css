@@ -156,54 +156,68 @@
 .sql-sync .kpi .lbl { font-size: .68rem; color: var(--faint); margin-bottom: 2px; }
 .sql-sync .kpi .val { font-size: .92rem; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sql-sync .kpi .sub { font-size: .66rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-/* ---------- 数据流 ---------- */
-.sql-sync .pipeline {
+.sql-sync .kpi-incr .val { font-size: 1.84rem; font-weight: 700; line-height: 1.25; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.sql-sync .kpi-breath {
+  width: 12px;
+  height: 12px;
   flex-shrink: 0;
-  background: var(--surface);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 10px 16px;
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  flex-wrap: wrap;
+  border-radius: 50%;
+  background: var(--amber, #f59e0b);
+  box-shadow: 0 0 0 0 rgba(245, 158, 11, .45);
 }
-.sql-sync .pipe {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  flex: 1;
+.sql-sync .kpi-breath.on {
+  background: var(--green);
+  box-shadow: 0 0 0 0 rgba(73, 170, 25, .45);
+  animation: sql-sync-kpi-breath 1.6s ease-in-out infinite;
 }
-.sql-sync .box {
-  border: 2px solid var(--border);
-  border-radius: 10px;
-  padding: 8px 14px;
-  min-width: 92px;
-  max-width: 140px;
-  flex: 1;
-  text-align: center;
-  background: var(--well);
-  transition: all .3s;
+.sql-sync .kpi-breath.off {
+  opacity: .55;
 }
-.sql-sync .box.on { border-color: var(--green); background: #f0fdf7; box-shadow: 0 0 0 3px rgba(16,185,129,.12); }
-.sql-sync .box .name { font-weight: 650; font-size: .85rem; }
-.sql-sync .box small { color: var(--muted); font-size: .68rem; display: block; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sql-sync .arrow { color: var(--faint); font-size: 1rem; flex-shrink: 0; }
-.sql-sync .pipe-info {
-  flex-shrink: 0; max-width: 340px;
-  font-size: .76rem; color: var(--muted);
-  border-left: 1px solid var(--border-soft);
-  padding-left: 18px;
-  line-height: 1.5;
-  word-break: break-all; overflow-wrap: anywhere;
+@keyframes sql-sync-kpi-breath {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(73, 170, 25, .45); }
+  50% { transform: scale(1.15); box-shadow: 0 0 0 8px rgba(73, 170, 25, 0); }
 }
-@media (max-width: 900px) {
-  .sql-sync .pipe-info { border-left: none; padding-left: 0; max-width: 100%; width: 100%; }
+.sql-sync .kpi-incr .kpi-incr-label {
+  font-size: .78rem;
+  font-weight: 650;
+  border-radius: 5px;
+  padding: 2px 7px;
+  line-height: 1.3;
 }
+.sql-sync .kpi-incr .kpi-incr-label-hits {
+  color: var(--accent);
+  background: var(--accent-soft, rgba(14, 124, 134, .14));
+}
+.sql-sync .kpi-incr .kpi-incr-label-ms {
+  color: #b45309;
+  background: rgba(245, 158, 11, .16);
+}
+.sql-sync .kpi-incr .kpi-incr-hits,
+.sql-sync .kpi-incr .kpi-incr-ms {
+  color: inherit;
+  background: none;
+  padding: 0;
+  border-radius: 0;
+}
+.sql-sync .kpi-incr .kpi-incr-status {
+  font-size: .72rem;
+  font-weight: 600;
+  color: var(--muted);
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+.sql-sync .kpi-incr .kpi-breath.on + .body .kpi-incr-status { color: var(--green); }
+.sql-sync .kpi-incr .kpi-breath.off + .body .kpi-incr-status { color: var(--amber); }
+:root.dark .sql-sync .kpi-incr .kpi-incr-label-hits {
+  color: var(--accent);
+  background: rgba(59, 205, 212, .16);
+}
+:root.dark .sql-sync .kpi-incr .kpi-incr-label-ms {
+  color: #e8b84b;
+  background: rgba(232, 184, 75, .16);
+}
+:root.dark .sql-sync .kpi-incr .kpi-incr-hits,
+:root.dark .sql-sync .kpi-incr .kpi-incr-ms { color: #e2e8f0; }
 
 /* ---------- 主工作区 ---------- */
 .sql-sync .work {
@@ -217,7 +231,35 @@
   .sql-sync .work { grid-template-columns: minmax(0, 1fr); overflow-y: auto; }
 }
 .sql-sync .col-main { min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 10px; }
-.sql-sync .col-side { min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 10px; }
+.sql-sync .col-side { min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+.sql-sync .col-side > .compare-card {
+  flex: 0 0 auto;
+  min-height: 280px;
+  max-height: 55vh;
+}
+.sql-sync .col-side > .compare-card .card-body {
+  overflow: auto;
+}
+.sql-sync .col-side > .bf-progress-card {
+  flex: 0 0 auto;
+}
+.sql-sync .col-side > .bf-progress-card .card-body,
+.sql-sync .col-side > .bf-progress-card .chart-wrap {
+  flex: 0 0 auto;
+  min-height: auto;
+  overflow: visible;
+}
+.sql-sync .col-side > .rt-card-compact {
+  flex: 0 0 auto;
+}
+.sql-sync .col-side > .event-log-card {
+  flex: 1 1 auto;
+  min-height: 80px;
+}
+.sql-sync .col-side > .event-log-card .card-body,
+.sql-sync .col-side > .event-log-card .event-log {
+  min-height: 0;
+}
 
 .sql-sync .card {
   background: var(--surface);
@@ -234,7 +276,14 @@
   display: flex; align-items: center; justify-content: space-between;
   padding: 11px 14px 6px;
 }
-.sql-sync .card h2 { margin: 0; font-size: .78rem; color: var(--muted); font-weight: 650; letter-spacing: .2px; }
+.sql-sync .card h2 {
+  margin: 0;
+  font-size: .92rem;
+  color: var(--text, #0f172a);
+  font-weight: 700;
+  letter-spacing: .3px;
+}
+:root.dark .sql-sync .card h2 { color: #e2e8f0; }
 .sql-sync .card .tag { font-size: .66rem; color: var(--faint); white-space: nowrap; }
 .sql-sync .card-body { flex: 1; min-height: 0; overflow: auto; padding: 0 14px 13px; }
 
@@ -286,14 +335,17 @@
   position: fixed; inset: 0; z-index: 1000;
   background: rgba(15, 23, 42, .45);
   align-items: center; justify-content: center;
-  padding: 3vh 3vw;
+  padding: 10vh 7.5vw;
+  box-sizing: border-box;
 }
 .sql-sync-modal-mask.open,
 .sql-sync .modal-mask.open { display: flex; }
 .sql-sync-modal-mask .modal,
 .sql-sync .modal {
-  width: min(96vw, 1180px);
-  height: min(92vh, 780px);
+  width: 85vw;
+  height: 80vh;
+  max-width: none;
+  max-height: none;
   background: var(--surface);
   border-radius: 14px;
   box-shadow: 0 20px 50px rgba(0,0,0,.25);
@@ -460,16 +512,46 @@
 .sql-sync .chart-wrap { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 .sql-sync .bar,
 .sql-sync-modal-mask .bar {
-  height: 7px; background: var(--border); border-radius: 4px; overflow: hidden; margin: 4px 0 8px; cursor: pointer;
+  height: 10px;
+  min-height: 10px;
+  background: #d8e2e8;
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 4px 0 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+:root.dark .sql-sync .bar,
+:root.dark .sql-sync-modal-mask .bar {
+  background: #3a4a5a;
 }
 .sql-sync .bar:hover { box-shadow: 0 0 0 2px rgba(14,124,134,.2); }
+.sql-sync .bar .bar-fill,
+.sql-sync-modal-mask .bar .bar-fill,
 .sql-sync .bar i,
 .sql-sync-modal-mask .bar i {
-  display: block; height: 100%;
+  display: block;
+  height: 100%;
+  min-height: 10px;
   background: linear-gradient(90deg, #0e7c86, #34d399);
-  width: 0; transition: width .3s; border-radius: 4px; pointer-events: none;
+  width: 0;
+  transition: width .3s;
+  border-radius: 5px;
+  pointer-events: none;
 }
 .sql-sync .bf-click-hint { font-size: .66rem; color: var(--faint); margin-top: 2px; }
+.sql-sync .bf-progress-card {
+  cursor: pointer;
+  transition: border-color .15s, box-shadow .15s;
+}
+.sql-sync .bf-progress-card:hover {
+  border-color: rgba(14, 124, 134, .35);
+  box-shadow: 0 0 0 2px rgba(14, 124, 134, .12);
+}
+:root.dark .sql-sync .bf-progress-card:hover {
+  border-color: rgba(59, 205, 212, .4);
+  box-shadow: 0 0 0 2px rgba(59, 205, 212, .12);
+}
 .sql-sync .bf-meta { display: flex; justify-content: space-between; align-items: baseline; font-size: .78rem; margin: -2px 0 4px; }
 .sql-sync .bf-meta span:first-child { font-weight: 700; color: var(--accent); }
 .sql-sync .bf-meta span:last-child { color: var(--muted); font-size: .7rem; }
@@ -479,7 +561,7 @@
 .sql-sync label {
   flex: 1 1 130px; min-width: 0;
   display: flex; flex-direction: column; gap: 4px;
-  font-size: .72rem; color: var(--muted);
+  font-size: .8rem; color: var(--muted);
 }
 .sql-sync input[type=text] {
   width: 100%; max-width: 100%;
@@ -510,11 +592,12 @@
 .sql-sync .btn-primary:hover:not(:disabled) { background: #0b6a73; }
 .sql-sync .btn-secondary { background: var(--green); color: #fff; }
 .sql-sync .btn-secondary:hover:not(:disabled) { background: #0da271; }
-.sql-sync .hint { font-size: .68rem; color: var(--faint); margin-top: 7px; line-height: 1.35; }
+.sql-sync .hint { font-size: .78rem; color: var(--faint); margin-top: 7px; line-height: 1.4; }
 .sql-sync .card .card-head.compare-card-head {
   justify-content: space-between;
   gap: 8px;
   flex-wrap: wrap;
+  padding-bottom: 8px;
 }
 .sql-sync .compare-card-head-left {
   display: inline-flex;
@@ -524,6 +607,20 @@
 }
 .sql-sync .compare-card-head-left h2 {
   margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+.sql-sync .compare-card .card-body {
+  padding-top: 4px;
+  padding-bottom: 16px;
+}
+.sql-sync .compare-card .form-row label {
+  font-weight: 700;
+}
+.sql-sync .compare-card .hint {
+  font-weight: 600;
+  font-size: .82rem;
+  color: var(--muted);
 }
 .sql-sync .compare-card-head > .compare-quick-reset {
   flex-shrink: 0;
@@ -539,11 +636,11 @@
 }
 .sql-sync .compare-quick-btn {
   border: 1px solid var(--line, #d8e0e6);
-  background: #f8fafc;
-  color: var(--muted, #64748b);
+  background: var(--well);
+  color: var(--muted);
   border-radius: 6px;
-  padding: 2px 8px;
-  font-size: .66rem;
+  padding: 4px 11px;
+  font-size: .8rem;
   line-height: 1.4;
   cursor: pointer;
   box-sizing: border-box;
@@ -558,15 +655,15 @@
   cursor: not-allowed;
 }
 .sql-sync .compare-quick-reset {
-  border-color: #f59e0b;
-  background: #fffbeb;
-  color: #d97706;
+  border-color: var(--amber);
+  background: var(--amber-soft);
+  color: var(--amber);
   font-weight: 600;
 }
 .sql-sync .compare-quick-reset:hover:not(:disabled) {
-  border-color: #f59e0b;
-  background: #fef3c7;
-  color: #b45309;
+  border-color: var(--amber);
+  background: var(--amber-soft);
+  color: var(--amber);
 }
 .sql-sync .result {
   margin-top: 9px;
@@ -581,13 +678,13 @@
 .sql-sync .result.ok { border-color: #b7ecd8; background: var(--green-soft); color: #0a7a5f; white-space: normal; }
 .sql-sync .result.fail { border-color: #f3c1bd; background: var(--red-soft); color: #c0392b; white-space: normal; }
 
-.sql-sync .compare-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; margin-top: 10px; }
+.sql-sync .compare-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; margin-top: 14px; }
 .sql-sync .compare-grid > div {
-  text-align: center; padding: 9px 6px;
+  text-align: center; padding: 14px 8px;
   background: var(--well); border-radius: 9px;
   border: 1px solid var(--border-soft); min-width: 0;
 }
-.sql-sync .compare-grid .num { font-size: 1.25rem; font-weight: 700; }
+.sql-sync .compare-grid .num { font-size: 1.7rem; font-weight: 800; }
 .sql-sync .compare-grid .num.diff-zero { color: var(--green); }
 .sql-sync .compare-grid .num.diff-pos { color: var(--red); }
 .sql-sync .compare-grid .num.diff-clickable {
@@ -600,18 +697,113 @@
 .sql-sync .compare-grid .num.diff-clickable:hover {
   background: rgba(239, 68, 68, .08);
 }
-.sql-sync .compare-grid .lbl { font-size: .66rem; color: var(--faint); margin-top: 2px; }
+.sql-sync .compare-grid .lbl { font-size: .82rem; color: var(--muted); margin-top: 4px; font-weight: 700; }
+
+.sql-sync .compare-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.sql-sync .compare-drill {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-soft);
+}
+
+/* ---------- 异常分析下钻（嵌在对比卡内） ---------- */
+.sql-sync .drill-progress { margin-top: 4px; }
+.sql-sync .drill-progress-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--border-soft);
+  overflow: hidden;
+}
+.sql-sync .drill-progress-bar .bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+  transition: width .2s ease;
+}
+.sql-sync .drill-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: .78rem;
+  color: var(--muted);
+}
+.sql-sync .drill-range {
+  margin: 6px 0 0;
+  font-size: .78rem;
+  color: var(--muted);
+}
+.sql-sync .drill-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.sql-sync .drill-abnormal {
+  font-size: .8rem;
+  font-weight: 650;
+  color: var(--text);
+}
+.sql-sync .drill-toolbar-btns {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.sql-sync .drill-table-wrap {
+  margin-top: 8px;
+  max-height: 200px;
+  overflow: auto;
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+}
+.sql-sync .drill-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .74rem;
+  table-layout: fixed;
+}
+.sql-sync .drill-table th,
+.sql-sync .drill-table td {
+  padding: 5px 6px;
+  border-bottom: 1px solid var(--border-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sql-sync .drill-table th {
+  position: sticky;
+  top: 0;
+  background: var(--well);
+  z-index: 1;
+}
+.sql-sync .drill-table tr.is-selected td {
+  background: rgba(14, 124, 134, .08);
+}
 
 .sql-sync .rt-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 6px; }
+.sql-sync .rt-grid-compact { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 .sql-sync .rt-grid .cell {
   background: var(--well); border: 1px solid var(--border-soft);
   border-radius: 8px; padding: 6px 9px; min-width: 0;
 }
+.sql-sync .rt-grid-compact .cell { padding: 6px 8px; text-align: center; }
 .sql-sync .rt-grid .cell .v { font-size: .92rem; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sql-sync .rt-grid .cell .l { font-size: .62rem; color: var(--faint); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .sql-sync .table-wrap { height: 100%; overflow: auto; }
 .sql-sync table { width: 100%; border-collapse: collapse; font-size: .74rem; table-layout: fixed; }
+.sql-sync .incr-recent-table table { font-size: 18px; }
+.sql-sync .incr-recent-table th,
+.sql-sync .incr-recent-table td { padding: 8px 10px; }
 .sql-sync th, .sql-sync td {
   padding: 6px 8px; text-align: left;
   border-bottom: 1px solid var(--border-soft);
@@ -630,10 +822,10 @@
 .sql-sync .event-log {
   flex: 1; min-height: 0;
   overflow-y: auto;
-  font-size: .72rem;
+  font-size: .88rem;
   color: var(--muted);
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-  line-height: 1.65;
+  line-height: 1.7;
   padding: 4px 12px 8px;
 }
 .sql-sync .event-log .err { color: var(--red); }
@@ -677,7 +869,6 @@
 :root.dark .sql-sync .conn-badge.ok { color: #6fcf97; }
 :root.dark .sql-sync .conn-badge.err { color: #eb5757; }
 :root.dark .sql-sync .stat-card { background: var(--surface); }
-:root.dark .sql-sync .box.on { border-color: var(--green); background: #1a3310; box-shadow: 0 0 0 3px rgba(73,170,25,.18); }
 :root.dark .sql-sync .chart-stage .dot-on-hover { stroke: #1a202c; }
 :root.dark .sql-sync .incr-tip { background: rgba(45, 55, 72, .96); color: #e2e8f0; border: 1px solid #4a5568; }
 :root.dark .sql-sync .incr-tip .t-ok { color: #6fcf97; }
@@ -729,11 +920,6 @@
 :root.dark .sql-sync .incr-smooth-line { stroke: var(--accent); }
 :root.dark .sql-sync .incr-trend-line { stroke: #49aa19; }
 :root.dark .sql-sync .axis-text { fill: #a0aec0; }
-:root.dark .sql-sync .pipeline-bar-empty { fill: #3a4a5a; }
-:root.dark .sql-sync .pipeline-bar-fill { fill: var(--accent); }
-:root.dark .sql-sync .pipeline-bar-fail { fill: var(--red); }
-:root.dark .sql-sync .pipeline-bar-ok { fill: var(--green); }
-:root.dark .sql-sync .pipeline-bar-warn { fill: var(--amber); }
 :root.dark .sql-sync .kpi-bar-bg { fill: #3a4a5a; }
 :root.dark .sql-sync .kpi-bar-fg { fill: var(--accent); }
 :root.dark .sql-sync .kpi-bar-val { fill: #e2e8f0; }
@@ -741,10 +927,8 @@
 :root.dark .sql-sync .rt-grid .cell .l { color: #718096; }
 :root.dark .sql-sync .table-wrap { background: transparent; }
 :root.dark .sql-sync .event-log { color: #a0aec0; }
-:root.dark .sql-sync .pipeline-wrap { background: transparent; }
 :root.dark .sql-sync .kpi-wrap { background: transparent; }
 :root.dark .sql-sync .chart-wrap { background: transparent; }
-:root.dark .sql-sync .pipeline-bar { stroke: #1a202c; }
 
 /* ===== 补全详情弹框（独立于 .sql-sync 作用域）主题变量 ===== */
 .sql-sync-modal-mask {
