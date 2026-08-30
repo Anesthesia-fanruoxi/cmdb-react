@@ -102,6 +102,19 @@ export function useSyncMonitor(project: string) {
           if (cancelled || projectRef.current !== project) return;
           setConnState('connecting');
         },
+        onConnected: () => {
+          if (cancelled || projectRef.current !== project) return;
+          setConnState('open');
+          appendLog('[监控] SSE 连接成功');
+        },
+        onHub: () => {
+          if (cancelled || projectRef.current !== project) return;
+          appendLog('[监控] 等待上游快照…');
+        },
+        onErrorEvent: (msg) => {
+          if (cancelled || projectRef.current !== project) return;
+          appendLog(`[监控] 错误: ${msg}`, true);
+        },
         onClosed: () => {
           if (cancelled || projectRef.current !== project) return;
           if (closedByUs) return;

@@ -19,10 +19,13 @@ import HeaderBar from './components/HeaderBar';
 import KpiBar from './components/KpiBar';
 import IncrChart, { IncrTable } from './components/IncrChart';
 import { BackfillProgressCard } from './components/BackfillCard';
+import { AnalyzeProgressCard } from './components/AnalyzeProgressCard';
 import CompareCard from './components/CompareCard';
 import RuntimeCard from './components/RuntimeCard';
 import EventLog from './components/EventLog';
 import BackfillModal from './components/BackfillModal';
+import AnalyzeModal from './components/AnalyzeModal';
+import { useAnalyzeDrilldown } from './hooks/useAnalyzeDrilldown';
 import { isRangeWithinOneMonth, parseSyncDateTime } from './utils/backfillGuard';
 import { useAuthStore } from '@/stores/authStore';
 import './style.css';
@@ -60,8 +63,37 @@ function SyncWorkbench({ project, onConnStateChange, onReconnectChange }: SyncWo
   const [cmpHasDiff, setCmpHasDiff] = useState(false);
 
   const [modalOpen, setModalOpen] = useState(false);
+  const [analyzeOpen, setAnalyzeOpen] = useState(false);
   const compareReadyRef = useRef(false);
   const canWrite = useAuthStore((s) => s.hasPermission('sql:sync:w'));
+
+  const {
+    progress: analyzeProgress,
+    phase: analyzePhase,
+    percent: analyzePercent,
+    hint: analyzeHint,
+    rangeText: analyzeRangeText,
+    analysisId,
+    windows: analyzeWindows,
+    abnormal: analyzeAbnormal,
+    selDay,
+    selHour,
+    selFive,
+    selTen,
+    setSelTen,
+    selectDay,
+    selectHour,
+    selectFive,
+    start: startAnalyzeDrill,
+    reset: resetAnalyze,
+    retry: retryAnalyze,
+  } = useAnalyzeDrilldown(project, appendLog);
+  const cmpResultKey = `${cmpActualRange?.start || ''}|${cmpActualRange?.end || ''}|${cmpDiff}`;
+
+  useEffect(() => {
+    resetAnalyze();
+    setAnalyzeOpen(false);
+  }, [cmpResultKey, resetAnalyze]);
 
   useEffect(() => {
     onConnStateChange(connState);
@@ -268,7 +300,34 @@ function SyncWorkbench({ project, onConnStateChange, onReconnectChange }: SyncWo
     setCmpRange('');
     setCmpActualRange(null);
     setCmpHasDiff(false);
-  }, []);
+    resetAnalyze();
+    setAnalyzeOpen(false);
+  }, [resetAnalyze]);
+
+  const openAnalyzeDetail = useCallback(() => {
+    if (!project) {
+      toast.warning('请先选择项目');
+      return;
+    }
+    if (analyzePhase === 'idle') {
+      toast.warning('请先点击「分析异常」开始分析');
+      return;
+    }
+    setAnalyzeOpen(true);
+  }, [project, analyzePhase]);
+
+  const startAnalyze = useCallback(() => {
+    if (!cmpActualRange?.start || !cmpActualRange?.end) {
+      toast.warning('缺少对比实际范围，请先完成对比');
+      return;
+    }
+    if (analyzePhase === 'running') {
+      toast.info('异常分析进行中，请查看下方进度卡');
+      return;
+    }
+    // 只启动分析，不弹详情；详情由点击「异常分析」进度卡打开
+    startAnalyzeDrill(cmpActualRange);
+  }, [cmpActualRange, analyzePhase, startAnalyzeDrill]);
 
   const disabled = !project;
 
@@ -284,7 +343,6 @@ function SyncWorkbench({ project, onConnStateChange, onReconnectChange }: SyncWo
 
         <div className="col-side">
           <CompareCard
-            project={project}
             cmpStart={cmpStart}
             cmpEnd={cmpEnd}
             onCmpStartChange={setCmpStart}
@@ -302,8 +360,13 @@ function SyncWorkbench({ project, onConnStateChange, onReconnectChange }: SyncWo
             hasDiff={cmpHasDiff}
             canWrite={canWrite}
             backfillBusy={!!pipeline?.backfillActive || bfLoading}
+            analyzeRunning={analyzePhase === 'running'}
             onFullBackfill={fillBackfillFromCompare}
-            onLog={appendLog}
+            onAnalyze={startAnalyze}
+          />
+          <AnalyzeProgressCard
+            progress={analyzeProgress}
+            onOpenDetail={openAnalyzeDetail}
           />
           <BackfillProgressCard
             progress={backfillProgress}
@@ -321,6 +384,31 @@ function SyncWorkbench({ project, onConnStateChange, onReconnectChange }: SyncWo
         open={modalOpen}
         project={project}
         onClose={() => setModalOpen(false)}
+      />
+      <AnalyzeModal
+        open={analyzeOpen}
+        project={project}
+        analysisId={analysisId}
+        phase={analyzePhase}
+        percent={analyzePercent}
+        hint={analyzeHint}
+        rangeText={analyzeRangeText}
+        windows={analyzeWindows}
+        abnormal={analyzeAbnormal}
+        selDay={selDay}
+        selHour={selHour}
+        selFive={selFive}
+        selTen={selTen}
+        onSelectDay={selectDay}
+        onSelectHour={selectHour}
+        onSelectFive={selectFive}
+        onSelectTen={setSelTen}
+        onRetry={retryAnalyze}
+        canWrite={canWrite}
+        backfillBusy={!!pipeline?.backfillActive || bfLoading}
+        onFullResync={fillBackfillFromCompare}
+        onClose={() => setAnalyzeOpen(false)}
+        onLog={appendLog}
       />
     </>
   );

@@ -55,6 +55,9 @@ interface Pt {
   y: number;
 }
 
+/** 相邻点时间差超过此值则断线（默认增量约 10s/次，3 倍以上视为缺数） */
+const GAP_BREAK_MS = 30_000;
+
 /** Catmull-Rom → Bezier 平滑折线路径 */
 function smoothLinePath(coords: Pt[]): string | null {
   if (coords.length === 0) return null;
@@ -73,6 +76,38 @@ function smoothLinePath(coords: Pt[]): string | null {
     d += ` C ${c1x.toFixed(1)} ${c1y.toFixed(1)}, ${c2x.toFixed(1)} ${c2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
   }
   return d;
+}
+
+/** 按时间缺口切段，避免缺数区间被画成一条长斜线 */
+function splitByTimeGap(coords: Pt[], times: number[], gapMs: number): Pt[][] {
+  if (!coords.length) return [];
+  const segs: Pt[][] = [[coords[0]]];
+  for (let i = 1; i < coords.length; i++) {
+    const dt = times[i] - times[i - 1];
+    if (!Number.isFinite(dt) || dt > gapMs) segs.push([coords[i]]);
+    else segs[segs.length - 1].push(coords[i]);
+  }
+  return segs;
+}
+
+function multiSmoothLine(segs: Pt[][]): string | null {
+  const parts = segs.map(smoothLinePath).filter((p): p is string => !!p);
+  return parts.length ? parts.join(' ') : null;
+}
+
+function multiAreaPath(segs: Pt[][], bottom: number): string | null {
+  const parts: string[] = [];
+  for (const seg of segs) {
+    if (seg.length < 2) continue;
+    const line = smoothLinePath(seg);
+    if (!line) continue;
+    const first = seg[0];
+    const last = seg[seg.length - 1];
+    parts.push(
+      `${line} L ${last.x.toFixed(1)} ${bottom} L ${first.x.toFixed(1)} ${bottom} Z`,
+    );
+  }
+  return parts.length ? parts.join(' ') : null;
 }
 
 export default function IncrChart({ data }: IncrChartProps) {
@@ -140,11 +175,13 @@ export default function IncrChart({ data }: IncrChartProps) {
     const hitsCoords = data.map((p, i) => ({ i, x: x(times[i]), y: y(p.hits || 0) }));
     const writtenCoords =
       maxW > 0 ? data.map((p, i) => ({ i, x: x(times[i]), y: y(p.written || 0) })) : [];
-    const hitsLine = smoothLinePath(hitsCoords);
-    const writtenLine = smoothLinePath(writtenCoords);
-    const areaPath = hitsLine
-      ? `${hitsLine} L ${(w - pad.r).toFixed(1)} ${bottom} L ${pad.l} ${bottom} Z`
-      : null;
+    const hitsSegs = splitByTimeGap(hitsCoords, times, GAP_BREAK_MS);
+    const writtenSegs = writtenCoords.length
+      ? splitByTimeGap(writtenCoords, times, GAP_BREAK_MS)
+      : [];
+    const hitsLine = multiSmoothLine(hitsSegs);
+    const writtenLine = multiSmoothLine(writtenSegs);
+    const areaPath = multiAreaPath(hitsSegs, bottom);
 
     const dense = data.length > 1 && (w - pad.l - pad.r) / data.length < 8;
 

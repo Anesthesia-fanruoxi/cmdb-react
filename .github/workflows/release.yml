@@ -163,11 +163,11 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"
-          DESCRIPTION="1、新增 SQL Sync 数据同步监控页：实时监控、对比查询、补全进度与详情。
-          2、对比支持今天/昨天/本周/上周/本月/上月快捷填入与重置；有差异时可点击发起补全，隐藏独立补全入口。
-          3、对比与补全前端限制：单次范围最多一个月，补全进行中不可重复发起。
-          4、启动存储优化：已切割 states 目录则跳过解密巨型 states.dat；设备密钥缓存，显著缩短初始化耗时。
-          5、Sync 监控 SSE 使用 Tauri HTTP 流式解析，兼容缺空行的事件流。"
+          DESCRIPTION="1、SQL Sync 异常分析：四级下钻（日 / 小时 / 5 分钟 / 10 秒），侧栏进度卡点击查看详情。
+          2、对接分析进度与详情 SSE（ready → snapshot / update）；窗口补全带 analysisId，补全后列表与总数随 update 刷新。
+          3、无末级异常时父节点自动消失；按包容关系展开末级窗再提交补全。
+          4、对比快捷「本周/本月」截止今天 0 点；增量折线缺数断线，避免长斜线误导。
+          5、对比卡与补全展示优化（查询/写入等）。"
 
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \

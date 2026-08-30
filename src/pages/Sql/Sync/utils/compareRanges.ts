@@ -69,10 +69,9 @@ export function getCompareQuickRange(
   }
 
   if (key === 'thisWeek') {
+    // [本周一 00:00, 今天 00:00)
     const start = startOfWeekMonday(today);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 7);
-    return { start: formatSyncDateTime(start), end: formatSyncDateTime(end) };
+    return { start: formatSyncDateTime(start), end: formatSyncDateTime(today) };
   }
 
   if (key === 'lastWeek') {
@@ -83,9 +82,9 @@ export function getCompareQuickRange(
   }
 
   if (key === 'thisMonth') {
+    // [本月 1 日 00:00, 今天 00:00)
     const start = new Date(today.getFullYear(), today.getMonth(), 1);
-    const end = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-    return { start: formatSyncDateTime(start), end: formatSyncDateTime(end) };
+    return { start: formatSyncDateTime(start), end: formatSyncDateTime(today) };
   }
 
   // lastMonth

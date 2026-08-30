@@ -240,11 +240,14 @@
 .sql-sync .col-side > .compare-card .card-body {
   overflow: auto;
 }
-.sql-sync .col-side > .bf-progress-card {
+.sql-sync .col-side > .bf-progress-card,
+.sql-sync .col-side > .analyze-progress-card {
   flex: 0 0 auto;
 }
 .sql-sync .col-side > .bf-progress-card .card-body,
-.sql-sync .col-side > .bf-progress-card .chart-wrap {
+.sql-sync .col-side > .bf-progress-card .chart-wrap,
+.sql-sync .col-side > .analyze-progress-card .card-body,
+.sql-sync .col-side > .analyze-progress-card .chart-wrap {
   flex: 0 0 auto;
   min-height: auto;
   overflow: visible;
@@ -507,6 +510,8 @@
 }
 .sql-sync-modal-mask .modal-badge.on,
 .sql-sync .modal-badge.on { background: #e6f7f1; color: #0f7a5f; }
+.sql-sync-modal-mask .modal-badge.warn,
+.sql-sync .modal-badge.warn { background: #fef3e2; color: #b45309; }
 
 /* ---------- 补全小图 ---------- */
 .sql-sync .chart-wrap { flex: 1; display: flex; flex-direction: column; min-height: 0; }
@@ -540,17 +545,28 @@
   pointer-events: none;
 }
 .sql-sync .bf-click-hint { font-size: .66rem; color: var(--faint); margin-top: 2px; }
-.sql-sync .bf-progress-card {
+.sql-sync .bf-progress-card,
+.sql-sync .analyze-progress-card {
   cursor: pointer;
   transition: border-color .15s, box-shadow .15s;
 }
-.sql-sync .bf-progress-card:hover {
+.sql-sync .bf-progress-card:hover,
+.sql-sync .analyze-progress-card:hover {
   border-color: rgba(14, 124, 134, .35);
   box-shadow: 0 0 0 2px rgba(14, 124, 134, .12);
 }
-:root.dark .sql-sync .bf-progress-card:hover {
+:root.dark .sql-sync .bf-progress-card:hover,
+:root.dark .sql-sync .analyze-progress-card:hover {
   border-color: rgba(59, 205, 212, .4);
   box-shadow: 0 0 0 2px rgba(59, 205, 212, .12);
+}
+.sql-sync .analyze-progress-card .card-head h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.sql-sync .analyze-progress-card .modal-badge {
+  font-size: .68rem;
 }
 .sql-sync .bf-meta { display: flex; justify-content: space-between; align-items: baseline; font-size: .78rem; margin: -2px 0 4px; }
 .sql-sync .bf-meta span:first-child { font-weight: 700; color: var(--accent); }
@@ -705,88 +721,273 @@
   gap: 8px;
   margin-top: 12px;
 }
-.sql-sync .compare-drill {
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border-soft);
-}
 
-/* ---------- 异常分析下钻（嵌在对比卡内） ---------- */
-.sql-sync .drill-progress { margin-top: 4px; }
-.sql-sync .drill-progress-bar {
-  height: 8px;
-  border-radius: 999px;
-  background: var(--border-soft);
-  overflow: hidden;
+/* ---------- 异常分析弹框 ---------- */
+.sql-sync-modal-mask .analyze-modal,
+.sql-sync .analyze-modal {
+  width: 85vw;
+  height: 85vh;
+  max-width: none;
+  max-height: none;
 }
-.sql-sync .drill-progress-bar .bar-fill {
-  display: block;
-  height: 100%;
-  background: var(--accent);
-  border-radius: 999px;
-  transition: width .2s ease;
-}
-.sql-sync .drill-progress-meta {
-  display: flex;
-  justify-content: space-between;
+.sql-sync-modal-mask .analyze-modal .modal-head h3,
+.sql-sync .analyze-modal .modal-head h3 {
+  display: inline-flex;
+  align-items: center;
   gap: 8px;
-  margin-top: 6px;
-  font-size: .78rem;
-  color: var(--muted);
 }
-.sql-sync .drill-range {
-  margin: 6px 0 0;
-  font-size: .78rem;
-  color: var(--muted);
-}
-.sql-sync .drill-toolbar {
+.sql-sync-modal-mask .analyze-summary,
+.sql-sync .analyze-summary {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 12px;
   flex-wrap: wrap;
-  margin-top: 10px;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--well);
 }
-.sql-sync .drill-abnormal {
-  font-size: .8rem;
+.sql-sync-modal-mask .analyze-summary-stats,
+.sql-sync .analyze-summary-stats {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  font-size: .82rem;
+  color: var(--muted);
+}
+.sql-sync-modal-mask .analyze-summary-stats b,
+.sql-sync .analyze-summary-stats b {
+  color: var(--text);
+  font-weight: 700;
+  margin-left: 4px;
+}
+.sql-sync-modal-mask .analyze-summary-range,
+.sql-sync .analyze-summary-range {
+  color: var(--faint);
+  font-size: .76rem;
+}
+.sql-sync-modal-mask .analyze-modal-body,
+.sql-sync .analyze-modal-body {
+  padding-top: 10px;
+}
+.sql-sync-modal-mask .analyze-progress-stage,
+.sql-sync .analyze-progress-stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px 18px 32px;
+  text-align: center;
+}
+.sql-sync-modal-mask .analyze-progress-title,
+.sql-sync .analyze-progress-title {
+  font-size: 1.05rem;
   font-weight: 650;
   color: var(--text);
 }
-.sql-sync .drill-toolbar-btns {
+.sql-sync-modal-mask .analyze-progress-hint,
+.sql-sync .analyze-progress-hint {
+  margin: 0;
+  font-size: .86rem;
+  color: var(--muted);
+}
+.sql-sync-modal-mask .analyze-progress-bar,
+.sql-sync .analyze-progress-bar {
+  width: min(420px, 88%);
+  margin: 6px 0 0;
+}
+.sql-sync-modal-mask .analyze-progress-bar .bar-fill,
+.sql-sync .analyze-progress-bar .bar-fill {
+  transition: width .25s ease;
+}
+.sql-sync-modal-mask .analyze-progress-meta,
+.sql-sync .analyze-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  width: min(420px, 88%);
+  font-size: .78rem;
+  color: var(--muted);
+}
+.sql-sync-modal-mask .analyze-progress-range,
+.sql-sync .analyze-progress-range {
+  margin: 4px 0 0;
+  font-size: .76rem;
+  color: var(--faint);
+}
+.sql-sync-modal-mask .analyze-progress-actions,
+.sql-sync .analyze-progress-actions {
   display: inline-flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
-}
-.sql-sync .drill-table-wrap {
+  gap: 8px;
   margin-top: 8px;
-  max-height: 200px;
-  overflow: auto;
+}
+.sql-sync-modal-mask .analyze-cols,
+.sql-sync .analyze-cols {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.sql-sync-modal-mask .analyze-col,
+.sql-sync .analyze-col {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   border: 1px solid var(--border-soft);
-  border-radius: 8px;
+  border-radius: 10px;
+  background: var(--surface);
+  overflow: hidden;
 }
-.sql-sync .drill-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: .74rem;
-  table-layout: fixed;
-}
-.sql-sync .drill-table th,
-.sql-sync .drill-table td {
-  padding: 5px 6px;
+.sql-sync-modal-mask .analyze-col-head,
+.sql-sync .analyze-col-head {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px;
   border-bottom: 1px solid var(--border-soft);
+  background: var(--well);
+  font-size: .92rem;
+  font-weight: 650;
+  color: var(--text);
+}
+.sql-sync-modal-mask .analyze-col-count,
+.sql-sync .analyze-col-count {
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+.sql-sync-modal-mask .analyze-col-body,
+.sql-sync .analyze-col-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sql-sync-modal-mask .analyze-col-empty,
+.sql-sync .analyze-col-empty {
+  height: 100%;
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 12px;
+  text-align: center;
+  font-size: .88rem;
+  color: var(--faint);
+  line-height: 1.5;
+}
+.sql-sync-modal-mask .analyze-row,
+.sql-sync .analyze-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background .12s ease, border-color .12s ease;
+}
+.sql-sync-modal-mask .analyze-row:hover,
+.sql-sync .analyze-row:hover {
+  background: rgba(14, 124, 134, .06);
+}
+.sql-sync-modal-mask .analyze-row.is-selected,
+.sql-sync .analyze-row.is-selected {
+  background: rgba(14, 124, 134, .1);
+  border-color: rgba(14, 124, 134, .28);
+}
+.sql-sync-modal-mask .analyze-row.is-done,
+.sql-sync .analyze-row.is-done {
+  opacity: .72;
+}
+.sql-sync-modal-mask .analyze-row-main,
+.sql-sync .analyze-row-main {
+  flex: 1;
+  min-width: 0;
+}
+.sql-sync-modal-mask .analyze-row-line,
+.sql-sync .analyze-row-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.sql-sync-modal-mask .analyze-row-time,
+.sql-sync .analyze-row-time {
+  flex: 1;
+  min-width: 0;
+  font-size: .9rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.4;
 }
-.sql-sync .drill-table th {
-  position: sticky;
-  top: 0;
-  background: var(--well);
-  z-index: 1;
+.sql-sync-modal-mask .analyze-row-diff,
+.sql-sync .analyze-row-diff {
+  flex-shrink: 0;
+  color: var(--green);
+  font-weight: 700;
+  font-size: .9rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
 }
-.sql-sync .drill-table tr.is-selected td {
-  background: rgba(14, 124, 134, .08);
+.sql-sync-modal-mask .analyze-row-tag,
+.sql-sync .analyze-row-tag {
+  flex-shrink: 0;
+  color: var(--green);
+  font-weight: 650;
+  font-size: .8rem;
+}
+.sql-sync-modal-mask .analyze-row-bf,
+.sql-sync .analyze-row-bf {
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--accent);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: .82rem;
+  font-weight: 650;
+  cursor: pointer;
+  line-height: 1.3;
+}
+.sql-sync-modal-mask .analyze-row-bf:hover:not(:disabled),
+.sql-sync .analyze-row-bf:hover:not(:disabled) {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+.sql-sync-modal-mask .analyze-row-bf:disabled,
+.sql-sync .analyze-row-bf:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+@media (max-width: 960px) {
+  .sql-sync-modal-mask .analyze-cols,
+  .sql-sync .analyze-cols {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .sql-sync-modal-mask .analyze-modal,
+  .sql-sync .analyze-modal {
+    width: 85vw;
+    height: 85vh;
+  }
 }
 
 .sql-sync .rt-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 6px; }
