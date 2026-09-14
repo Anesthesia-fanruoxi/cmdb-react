@@ -12,7 +12,7 @@ import FullscreenResultPanel from './FullscreenResultPanel';
 import CellDetailModal from './CellDetailModal';
 import { useCellHoverTip, CellHoverTip } from './CellHoverTip';
 import type { CommentMap } from '../hooks/useColumnComments';
-import { buildInsertStatements, extractTableNameFromSql } from '../utils/copyFormat';
+import { buildInsertStatements, extractTableNameFromSql, copyColumnData, formatValueForCopy } from '../utils/copyFormat';
 import '../styles/fullscreen-result.css';
 
 interface Props {
@@ -35,20 +35,6 @@ interface Props {
   columnComments?: CommentMap;
   lastExecutedSql?: string;
 }
-
-const formatValueForCopy = (value: unknown): string => {
-  if (value === null || value === undefined) return '';
-  if (typeof value === 'object') return JSON.stringify(value);
-  return String(value);
-};
-
-const copyColumnData = async (results: unknown[][], colIndex: number, colName: string) => {
-  try {
-    const text = results.map(row => (!Array.isArray(row) ? '' : formatValueForCopy(row[colIndex]))).join('\n');
-    await navigator.clipboard.writeText(text);
-    toast.success(`已复制 ${colName} 列 (${results.length} 行)`);
-  } catch { toast.error('复制失败'); }
-};
 
 const DEFAULT_COL_WIDTH = 150;
 const MIN_COL_WIDTH = 80;

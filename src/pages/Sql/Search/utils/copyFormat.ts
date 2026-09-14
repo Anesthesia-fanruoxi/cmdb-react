@@ -2,6 +2,32 @@
  * 查询结果复制格式化：数据 / INSERT 语句
  */
 
+import toast from '@/components/Toast';
+
+/** 剪贴板纯文本：null → 空串，对象 → JSON */
+export const formatValueForCopy = (value: unknown): string => {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'object') return JSON.stringify(value);
+  return String(value);
+};
+
+/** 复制整列（按行换行拼接） */
+export async function copyColumnData(
+  results: unknown[][],
+  colIndex: number,
+  colName: string,
+) {
+  try {
+    const text = results
+      .map((row) => (!Array.isArray(row) ? '' : formatValueForCopy(row[colIndex])))
+      .join('\n');
+    await navigator.clipboard.writeText(text);
+    toast.success(`已复制 ${colName} 列 (${results.length} 行)`);
+  } catch {
+    toast.error('复制失败');
+  }
+}
+
 /** SQL 字符串转义：反斜杠与单引号 */
 const escapeSqlString = (s: string): string =>
   s.replace(/\\/g, '\\\\').replace(/'/g, "''");

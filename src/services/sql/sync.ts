@@ -730,11 +730,20 @@ export function openSqlSyncMonitorSSE(
       switch (name) {
         case 'snapshot':
         case 'history': {
-          const snap = data as SyncHistory;
+          // history 是全量快照、重置语义：es-adb 重连首包直接推数组，
+          // hub 快照则推 SyncHistory 对象。统一归一后触发「清空重建」而非追加。
+          let snap: SyncHistory | null = null;
+          if (Array.isArray(payload)) {
+            snap = { incremental: payload as SyncIncrementalPoint[] } as SyncHistory;
+          } else if (payload && typeof payload === 'object') {
+            const obj = camelizeKeys(payload) as SyncHistory;
+            if (obj?.incremental) snap = obj;
+          }
+          if (!snap) break;
           handlers.onHistory?.(snap);
-          if (snap?.pipeline) handlers.onPipeline?.(snap.pipeline);
-          if (snap?.runtime) handlers.onRuntime?.(snap.runtime);
-          if (snap?.backfillProgress) handlers.onBackfill?.(snap.backfillProgress);
+          if (snap.pipeline) handlers.onPipeline?.(snap.pipeline);
+          if (snap.runtime) handlers.onRuntime?.(snap.runtime);
+          if (snap.backfillProgress) handlers.onBackfill?.(snap.backfillProgress);
           break;
         }
         case 'pipeline':

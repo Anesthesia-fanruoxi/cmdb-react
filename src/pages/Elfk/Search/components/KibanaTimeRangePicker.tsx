@@ -73,7 +73,8 @@ const quickOptions = {
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
         const start = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
-        const end = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 23, 59, 59);
+        // gte/lt 左闭右开：end 为次日 00:00:00
+        const end = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate() + 1);
         return { start, end };
       },
     },
@@ -84,7 +85,7 @@ const quickOptions = {
         const dayBefore = new Date();
         dayBefore.setDate(dayBefore.getDate() - 2);
         const start = new Date(dayBefore.getFullYear(), dayBefore.getMonth(), dayBefore.getDate());
-        const end = new Date(dayBefore.getFullYear(), dayBefore.getMonth(), dayBefore.getDate(), 23, 59, 59);
+        const end = new Date(dayBefore.getFullYear(), dayBefore.getMonth(), dayBefore.getDate() + 1);
         return { start, end };
       },
     },
@@ -116,8 +117,7 @@ const quickOptions = {
         start.setDate(thisWeekStart.getDate() - 7);
         start.setHours(0, 0, 0, 0);
         const end = new Date(thisWeekStart);
-        end.setDate(thisWeekStart.getDate() - 1);
-        end.setHours(23, 59, 59);
+        end.setHours(0, 0, 0, 0);
         return { start, end };
       },
     },
@@ -134,8 +134,8 @@ const quickOptions = {
         start.setDate(thisWeekStart.getDate() - 14);
         start.setHours(0, 0, 0, 0);
         const end = new Date(thisWeekStart);
-        end.setDate(thisWeekStart.getDate() - 8);
-        end.setHours(23, 59, 59);
+        end.setDate(thisWeekStart.getDate() - 7);
+        end.setHours(0, 0, 0, 0);
         return { start, end };
       },
     },
@@ -156,7 +156,7 @@ const quickOptions = {
       getRange: () => {
         const now = new Date();
         const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+        const end = new Date(now.getFullYear(), now.getMonth(), 1);
         return { start, end };
       },
     },
@@ -166,7 +166,7 @@ const quickOptions = {
       getRange: () => {
         const now = new Date();
         const start = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-        const end = new Date(now.getFullYear(), now.getMonth() - 1, 0, 23, 59, 59);
+        const end = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         return { start, end };
       },
     },

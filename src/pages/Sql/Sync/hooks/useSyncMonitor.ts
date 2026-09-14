@@ -55,7 +55,20 @@ export function useSyncMonitor(project: string) {
 
   const loadHistory = useCallback((h: SyncHistory) => {
     if (h.incremental) {
-      setIncremental(h.incremental.slice(-MAX_INCR));
+      // history 全量快照：按时间戳去重后重建（重置语义），同名只留第一条
+      const seen = new Set<string>();
+      const uniq: SyncIncrementalPoint[] = [];
+      for (const p of h.incremental) {
+        const k = String(p.atStr || p.window?.start || '');
+        if (!k) {
+          uniq.push(p);
+          continue;
+        }
+        if (seen.has(k)) continue;
+        seen.add(k);
+        uniq.push(p);
+      }
+      setIncremental(uniq.slice(-MAX_INCR));
     }
     if (h.backfill && h.backfill.length) {
       setBackfillProgress(h.backfill[h.backfill.length - 1]);
@@ -64,7 +77,19 @@ export function useSyncMonitor(project: string) {
 
   const addIncr = useCallback((pt: SyncIncrementalPoint) => {
     setIncremental((prev) => {
-      const next = [...prev, pt];
+      // 同一时刻（atStr 或窗口起点）只保留最新一条，避免重连/补全造成重复时间戳
+      const key = String(pt.atStr || pt.window?.start || '');
+      let next: SyncIncrementalPoint[];
+      if (key) {
+        const idx = prev.findIndex((p) => String(p.atStr || p.window?.start || '') === key);
+        if (idx >= 0) {
+          next = prev.map((p, i) => (i === idx ? pt : p));
+        } else {
+          next = prev.concat([pt]);
+        }
+      } else {
+        next = prev.concat([pt]);
+      }
       return next.length > MAX_INCR ? next.slice(-MAX_INCR) : next;
     });
   }, []);

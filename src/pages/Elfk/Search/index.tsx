@@ -145,7 +145,8 @@ const calculateRelativeTime = (label: string): { start: string; end: string } | 
     const yesterday = new Date(now);
     yesterday.setDate(yesterday.getDate() - 1);
     start = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 0, 0, 0, 0);
-    end = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 23, 59, 59, 999);
+    // 后端 range 为 gte/lt 左闭右开：end 取次日 00:00:00，避免 23:59:59 漏最后一秒
+    end = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate() + 1, 0, 0, 0, 0);
     return { start: formatLocalDateTime(start), end: formatLocalDateTime(end) };
   }
   
@@ -153,7 +154,7 @@ const calculateRelativeTime = (label: string): { start: string; end: string } | 
     const dayBefore = new Date(now);
     dayBefore.setDate(dayBefore.getDate() - 2);
     start = new Date(dayBefore.getFullYear(), dayBefore.getMonth(), dayBefore.getDate(), 0, 0, 0, 0);
-    end = new Date(dayBefore.getFullYear(), dayBefore.getMonth(), dayBefore.getDate(), 23, 59, 59, 999);
+    end = new Date(dayBefore.getFullYear(), dayBefore.getMonth(), dayBefore.getDate() + 1, 0, 0, 0, 0);
     return { start: formatLocalDateTime(start), end: formatLocalDateTime(end) };
   }
   
@@ -176,8 +177,7 @@ const calculateRelativeTime = (label: string): { start: string; end: string } | 
     start.setDate(thisWeekStart.getDate() - 7);
     start.setHours(0, 0, 0, 0);
     end = new Date(thisWeekStart);
-    end.setDate(thisWeekStart.getDate() - 1);
-    end.setHours(23, 59, 59, 999);
+    end.setHours(0, 0, 0, 0);
     return { start: formatLocalDateTime(start), end: formatLocalDateTime(end) };
   }
   
@@ -190,8 +190,8 @@ const calculateRelativeTime = (label: string): { start: string; end: string } | 
     start.setDate(thisWeekStart.getDate() - 14);
     start.setHours(0, 0, 0, 0);
     end = new Date(thisWeekStart);
-    end.setDate(thisWeekStart.getDate() - 8);
-    end.setHours(23, 59, 59, 999);
+    end.setDate(thisWeekStart.getDate() - 7);
+    end.setHours(0, 0, 0, 0);
     return { start: formatLocalDateTime(start), end: formatLocalDateTime(end) };
   }
   
@@ -203,13 +203,13 @@ const calculateRelativeTime = (label: string): { start: string; end: string } | 
   
   if (label === '上个月') {
     start = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
-    end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+    end = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
     return { start: formatLocalDateTime(start), end: formatLocalDateTime(end) };
   }
   
   if (label === '上上个月') {
     start = new Date(now.getFullYear(), now.getMonth() - 2, 1, 0, 0, 0, 0);
-    end = new Date(now.getFullYear(), now.getMonth() - 1, 0, 23, 59, 59, 999);
+    end = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
     return { start: formatLocalDateTime(start), end: formatLocalDateTime(end) };
   }
   

@@ -54,7 +54,8 @@ const shortcuts = [
     value: 'yesterday',
     getRange: () => {
       const yesterday = dayjs().subtract(1, 'day');
-      return [yesterday.startOf('day'), yesterday.endOf('day')] as [Dayjs, Dayjs];
+      // gte/lt 左闭右开：end 为次日 00:00，避免 endOf 漏最后一秒
+      return [yesterday.startOf('day'), yesterday.add(1, 'day').startOf('day')] as [Dayjs, Dayjs];
     },
   },
   { label: '近3天', value: '3d', ms: 3 * 24 * 3600 * 1000 },
@@ -72,7 +73,7 @@ const shortcuts = [
     value: 'lastMonth',
     getRange: () => {
       const lastMonth = dayjs().subtract(1, 'month');
-      return [lastMonth.startOf('month'), lastMonth.endOf('month')] as [Dayjs, Dayjs];
+      return [lastMonth.startOf('month'), lastMonth.add(1, 'month').startOf('month')] as [Dayjs, Dayjs];
     },
   },
   { label: '近1个月', value: '1M', ms: 30 * 24 * 3600 * 1000 },

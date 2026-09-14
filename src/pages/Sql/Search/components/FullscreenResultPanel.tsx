@@ -1,7 +1,7 @@
 /**
  * 全屏结果面板组件
  * 支持无限滚动加载、列宽拖拽调整
- * 注意：全屏模式仅用于数据预览，不提供任何复制功能（数据安全）
+ * 复制列需 sql:search:w（与导出按钮权限一致）；单元格详情仍为只读预览
  *
  * 加载状态机（loadPhase）：
  *   init   → 组件挂载，等待第1页数据
@@ -11,9 +11,11 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useAuthStore } from '@/stores/authStore';
 import { useUserPrefsStore } from '@/stores/userPrefsStore';
 import CellDetailModal from './CellDetailModal';
 import { useCellHoverTip, CellHoverTip } from './CellHoverTip';
+import { copyColumnData } from '../utils/copyFormat';
 import type { CommentMap } from '../hooks/useColumnComments';
 
 interface Props {
@@ -46,6 +48,8 @@ const FullscreenResultPanel = ({
   onClose,
   columnComments = new Map(),
 }: Props) => {
+  const hasPermission = useAuthStore((state) => state.hasPermission);
+  const canCopyColumn = hasPermission('sql:search:w');
   const [accumulatedData, setAccumulatedData] = useState<unknown[][]>([]);
   const [loadPhase, setLoadPhase] = useState<LoadPhase>('init');
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
@@ -431,19 +435,37 @@ const FullscreenResultPanel = ({
                         overflow: 'visible',
                       }}
                     >
-                      <span
-                        className={comment ? 'col-name-has-comment' : ''}
-                        onMouseEnter={comment ? (e) => {
-                          const popup = (e.currentTarget as HTMLElement).querySelector('.col-comment-popup') as HTMLElement;
-                          if (!popup) return;
-                          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                          popup.style.left = `${rect.left + rect.width / 2}px`;
-                          popup.style.top = `${rect.top - 6}px`;
-                        } : undefined}
-                      >
-                        {col}
-                        {comment && <span className="col-comment-popup">{comment}</span>}
-                      </span>
+                      <div className="column-header">
+                        <span
+                          className={comment ? 'col-name-has-comment' : ''}
+                          onMouseEnter={comment ? (e) => {
+                            const popup = (e.currentTarget as HTMLElement).querySelector('.col-comment-popup') as HTMLElement;
+                            if (!popup) return;
+                            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                            popup.style.left = `${rect.left + rect.width / 2}px`;
+                            popup.style.top = `${rect.top - 6}px`;
+                          } : undefined}
+                        >
+                          {col}
+                          {comment && <span className="col-comment-popup">{comment}</span>}
+                        </span>
+                        {canCopyColumn && (
+                          <button
+                            type="button"
+                            className="col-copy-btn"
+                            title="复制此列数据（已加载行）"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              copyColumnData(accumulatedData, colIdx, col);
+                            }}
+                          >
+                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="9" y="9" width="13" height="13" rx="2" />
+                              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
                       <div
                         className="col-resize-handle"
                         onMouseDown={(e) => handleResizeMouseDown(colIdx, e)}
