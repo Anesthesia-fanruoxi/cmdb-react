@@ -163,11 +163,9 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"
-          DESCRIPTION="1、SQL Sync 异常分析：四级下钻（日 / 小时 / 5 分钟 / 10 秒），侧栏进度卡点击查看详情。
-          2、对接分析进度与详情 SSE（ready → snapshot / update）；窗口补全带 analysisId，补全后列表与总数随 update 刷新。
-          3、无末级异常时父节点自动消失；按包容关系展开末级窗再提交补全。
-          4、对比快捷「本周/本月」截止今天 0 点；增量折线缺数断线，避免长斜线误导。
-          5、对比卡与补全展示优化（查询/写入等）。"
+          DESCRIPTION="1、Elfk 日志搜索相对时间改为 gte/lt 左闭右开：已完结时段（昨天 / 上周 / 上月等）结束取次日 00:00:00，消除 23:59:59 漏最后一秒数据。
+          2、SQL Sync 监控：SSE history 快照归一化（数组 / 对象双形态）与增量点时间戳去重，修复重连后最近增量表格重复行。
+          3、SQL 查询全屏面板新增表头列复制按钮（权限同导出 sql:search:w），复制工具函数抽取至 copyFormat 统一复用。"
 
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \
