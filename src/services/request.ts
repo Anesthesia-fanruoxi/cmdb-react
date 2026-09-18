@@ -23,6 +23,34 @@ export const CLIENT_AGENT = `CMDB-Desktop/${APP_VERSION} (${OS_NAME})`;
 // Token 刷新状态
 let isRefreshing = false;
 let refreshPromise: Promise<string | null> | null = null;
+/** 防止 401 反复跳转登录页形成死循环 */
+let redirectingToLogin = false;
+
+/**
+ * 刷新失败：清本地会话并进入登录页（须 await 清 token，并同步清内存态）
+ */
+async function forceLogoutToLogin(): Promise<void> {
+  if (redirectingToLogin) return;
+  redirectingToLogin = true;
+  try {
+    await removeToken();
+    sessionStorage.setItem('auth_force_login', '1');
+    try {
+      const { useAuthStore } = await import('../stores/authStore');
+      useAuthStore.setState({
+        token: null,
+        user: null,
+        userName: null,
+        isAuthenticated: false,
+        permissions: new Set(),
+      });
+    } catch {
+      // store 未就绪时忽略，登录页会读 force_login 标记
+    }
+  } finally {
+    window.location.replace('/login');
+  }
+}
 
 /**
  * 自定义请求错误类
@@ -218,16 +246,15 @@ async function request<T>(
       const errorData = responseData as { code?: number; message?: string };
       const errorMessage = errorData?.message || getHttpErrorMessage(response.status);
       
-      // 处理 401 未授权 - 尝试自动刷新 token
+      // 处理 401 未授权 - 尝试自动刷新 token（需设备凭据）
       if (response.status === 401 && !isRetry) {
         const newToken = await tryRefreshToken();
         if (newToken) {
           // 刷新成功，重试请求
           return request<T>(method, url, data, config, true);
         }
-        // 刷新失败，清除 token 并跳转登录
-        removeToken();
-        window.location.href = '/login';
+        // 无凭据或刷新失败：清会话后进登录，避免与登录页「已登录回跳」形成死循环
+        await forceLogoutToLogin();
         throw new RequestError(401, errorMessage || '登录已过期，请重新登录');
       }
 

@@ -163,9 +163,8 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"
-          DESCRIPTION="1、SQL 查询会话统一：query_id 由前端执行时生成并贯穿全部结果集，Tab 级不再被单项覆盖，切换结果集后分页 / 导出不再失效。
-          2、分页解析统一（parsePageResponse）兼容扁平与嵌套结构；切换结果集自动重拉第 1 页（页大小 20）。
-          3、分页请求加世代号防竞态，翻页 / 切结果 / 切 Tab 的过期响应不再写错数据；主窗口与独立窗口行为对齐。"
+          DESCRIPTION="1、修复登录过期死循环：token 刷新失败后强制清理会话并进入登录页，登录页不再“已登录回跳”，401 不再反复跳转。
+          2、启动时菜单 / 资料加载失败不再阻塞进入应用；token 失效时启动后自动停留在登录页。"
 
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \

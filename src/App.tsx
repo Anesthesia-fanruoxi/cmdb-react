@@ -376,11 +376,12 @@ const startup = async () => {
       if (hasToken) {
         // 恢复用户数据（包括主题）
         await initFromStorage();
-        
+
         await runFlow('token', [
           async () => {},
           async () => {
-            await Promise.all([
+            // 菜单/资料内部会吞错；401 时 request 层会 forceLogoutToLogin
+            await Promise.allSettled([
               useMenuStore.getState().fetchUserMenus(),
               useAuthStore.getState().fetchProfile(),
               preloadHome(),
@@ -389,6 +390,24 @@ const startup = async () => {
           async () => {},
           async () => {},
         ]);
+
+        // 无设备凭据且 token 失效：须停在登录页，禁止保持 isAuthenticated
+        const forced = sessionStorage.getItem('auth_force_login') === '1';
+        const stillAuthed = useAuthStore.getState().isAuthenticated;
+        const stillHasToken = !!useAuthStore.getState().token;
+        if (forced || !stillHasToken || !stillAuthed) {
+          useAuthStore.setState({
+            token: null,
+            user: null,
+            userName: null,
+            isAuthenticated: false,
+            permissions: new Set(),
+          });
+          sessionStorage.setItem('auth_force_login', '1');
+          if (window.location.pathname !== '/login') {
+            window.history.replaceState({}, '', '/login');
+          }
+        }
       }
       
       setReady(true);

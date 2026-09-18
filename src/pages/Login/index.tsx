@@ -31,7 +31,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [canAutoLogin, setCanAutoLogin] = useState(false);
-  const [checkingAutoLogin, setCheckingAutoLogin] = useState(true);
+  const [checkingAutoLogin, setCheckingAutoLogin] = useState(false);
   const [loginHistory, setLoginHistory] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [rememberLogin, setRememberLogin] = useState(true);
@@ -45,6 +45,8 @@ const Login = () => {
   const usernameRef = useRef<HTMLInputElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  /** 401 强制登出后禁止「已登录则回跳」 */
+  const blockAuthRedirectRef = useRef(false);
 
   // 弹球动画
   useEffect(() => {
@@ -52,11 +54,26 @@ const Login = () => {
     return startBouncingBalls(containerRef.current);
   }, []);
 
-  // 已登录则跳转到上次访问的路由
+  // 已登录则跳转（排除刚因 401 / 无凭据被踢回登录的情况）
   useEffect(() => {
+    if (sessionStorage.getItem('auth_force_login') === '1') {
+      sessionStorage.removeItem('auth_force_login');
+      blockAuthRedirectRef.current = true;
+      if (isAuthenticated) {
+        useAuthStore.setState({
+          token: null,
+          user: null,
+          userName: null,
+          isAuthenticated: false,
+          permissions: new Set(),
+        });
+      }
+      return;
+    }
+    if (blockAuthRedirectRef.current) return;
     if (isAuthenticated && userName) {
       const lastRoute = getActiveRoute(userName) || '/dashboard';
-      window.location.href = lastRoute;
+      window.location.replace(lastRoute);
     }
   }, [isAuthenticated, userName]);
 
