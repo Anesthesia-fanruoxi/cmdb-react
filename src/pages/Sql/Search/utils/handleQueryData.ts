@@ -15,6 +15,8 @@ interface QueryResultItem {
   db_name?: string;
   query_id?: string;
   sql?: string;
+  page?: number;
+  pages?: number;
 }
 
 /** 按语句拆分执行的 SQL（忽略语句内字符串中的分号） */
@@ -54,6 +56,8 @@ interface QueryResponseData {
   took?: number;
   query_id?: string;
   db_name?: string;
+  page?: number;
+  pages?: number;
 }
 
 // 处理结果
@@ -68,7 +72,9 @@ export interface HandleQueryDataResult {
 }
 
 /**
- * 解析分页响应：扁平 rows，或 results[]（单元素=当前结果，多元素按 result_index）
+ * 解析分页响应。
+ * 后端 /page 约定：带 result_index 时返回 results 长度为 1 的数组（即当前结果切片），
+ * 取 results[0]；若误回全量多结果数组，则按 resultIndex 取值。
  */
 export function parsePageResponse(
   data: unknown,
@@ -120,9 +126,10 @@ export function handleQueryData(
         took: result.took || 0,
         db_name: result.db_name || defaultDbName,
         sql: result.sql || executedStatements[index] || executedSql,
-        // 单项缺省时回退主会话，避免切结果把 Tab queryId 冲成空
+        // 后端每个结果集有独立 query_id，分页必须用该项自己的 id
         queryId: result.query_id || sessionId,
         name: `结果集 ${index + 1}`,
+        page: result.page ?? 1,
       });
     });
   } else {
@@ -136,6 +143,7 @@ export function handleQueryData(
       sql: executedSql,
       queryId: data.query_id || sessionId,
       name: '结果集 1',
+      page: data.page ?? 1,
     });
   }
 

@@ -187,10 +187,12 @@ const SqlWorkspaceDetached = ({ detachKey, project, dbName, initialTab }: Props)
     opts?: { resultIndex?: number },
   ) => {
     const current = tabRef.current;
-    if (!current.queryId) return;
+    const resultIndex = opts?.resultIndex ?? current.currentResultIndex;
+    const resultQueryId =
+      current.allResults[resultIndex]?.queryId || current.queryId;
+    if (!resultQueryId) return;
 
     const sessionQueryId = current.queryId;
-    const resultIndex = opts?.resultIndex ?? current.currentResultIndex;
     const reqId = ++pageReqSeqRef.current;
 
     updateTab({
@@ -202,7 +204,7 @@ const SqlWorkspaceDetached = ({ detachKey, project, dbName, initialTab }: Props)
 
     try {
       const res = await executePageQuery({
-        query_id: sessionQueryId,
+        query_id: resultQueryId,
         page,
         size,
         result_index: resultIndex,
@@ -211,6 +213,8 @@ const SqlWorkspaceDetached = ({ detachKey, project, dbName, initialTab }: Props)
       if (reqId !== pageReqSeqRef.current) return;
       const latest = tabRef.current;
       if (latest.queryId !== sessionQueryId || latest.currentResultIndex !== resultIndex) return;
+      const latestResultQid = latest.allResults[resultIndex]?.queryId || latest.queryId;
+      if (latestResultQid !== resultQueryId) return;
 
       if (res.code === 200 && res.data) {
         const parsed = parsePageResponse(res.data, resultIndex);
@@ -219,7 +223,13 @@ const SqlWorkspaceDetached = ({ detachKey, project, dbName, initialTab }: Props)
         const total = parsed.total !== undefined ? parsed.total : latest.total;
         const newAll = [...latest.allResults];
         if (newAll[resultIndex]) {
-          newAll[resultIndex] = { ...newAll[resultIndex], data: rows, total, columns: cols };
+          newAll[resultIndex] = {
+            ...newAll[resultIndex],
+            data: rows,
+            total,
+            columns: cols,
+            page,
+          };
         }
         updateTab({
           results: rows,
@@ -244,30 +254,32 @@ const SqlWorkspaceDetached = ({ detachKey, project, dbName, initialTab }: Props)
     const current = tabRef.current;
     if (index < 0 || index >= current.allResults.length) return;
     const r = current.allResults[index];
+    const pageSize = current.pageSize || RESULT_PAGE_SIZE;
+    const cachedPage = r.page ?? 1;
     updateTab({
       currentResultIndex: index,
+      results: r.data,
       columns: r.columns,
       total: r.total,
       took: r.took,
-      currentPage: 1,
-      pageSize: RESULT_PAGE_SIZE,
-      results: [],
+      currentPage: cachedPage,
+      pageSize,
     });
-    if (current.queryId) {
-      void handlePageChange(1, RESULT_PAGE_SIZE, { resultIndex: index });
-    } else {
-      updateTab({ results: r.data });
+    if ((!r.data || r.data.length === 0) && current.queryId) {
+      void handlePageChange(1, pageSize, { resultIndex: index });
     }
   };
 
   const handleExport = async () => {
-    if (!tab.queryId) {
+    const exportQueryId =
+      tab.allResults[tab.currentResultIndex]?.queryId || tab.queryId;
+    if (!exportQueryId) {
       updateTab({ messages: [{ type: 'warning', content: '无法导出：缺少查询ID' }] });
       return;
     }
     updateTab({ exportLoading: true });
     try {
-      const res = await exportQueryResult({ query_id: tab.queryId, db_name: tab.dbName });
+      const res = await exportQueryResult({ query_id: exportQueryId, db_name: tab.dbName });
       if (res instanceof Blob) {
         const a = document.createElement('a');
         a.href = URL.createObjectURL(res);

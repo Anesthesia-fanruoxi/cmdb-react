@@ -40,6 +40,8 @@ export interface ResultSet {
   sql: string;
   queryId: string;
   name: string;
+  /** 该结果集当前缓存对应的页码（切结果时用于恢复，避免误显示他页当第 1 页） */
+  page?: number;
 }
 
 // 消息类型
@@ -921,7 +923,7 @@ const SqlSearch = () => {
     }
   };
 
-  // 后端分页 API 调用（必须带 tabId；可指定 resultIndex）
+  // 后端分页：用「当前结果集」自己的 query_id（/data 里每项各有一个），不要用 Tab 主会话 id 去翻别的结果
   const handlePageChange = async (
     page: number,
     size: number,
@@ -929,13 +931,15 @@ const SqlSearch = () => {
   ) => {
     const tabId = opts?.tabId ?? activeTabId;
     const tab = tabsRef.current.find((t) => t.id === tabId);
-    if (!tab?.queryId || !tab.project || !tab.dbName) {
+    const resultIndex = opts?.resultIndex ?? tab?.currentResultIndex ?? 0;
+    const resultQueryId =
+      tab?.allResults[resultIndex]?.queryId || tab?.queryId || '';
+    if (!tab || !resultQueryId || !tab.project || !tab.dbName) {
       console.warn('缺少 queryId，无法进行后端分页');
       return;
     }
 
     const sessionQueryId = tab.queryId;
-    const resultIndex = opts?.resultIndex ?? tab.currentResultIndex;
     const reqId = bumpPageReq(tabId);
 
     updateTab(tabId, {
@@ -947,7 +951,7 @@ const SqlSearch = () => {
 
     try {
       const res = await executePageQuery({
-        query_id: sessionQueryId,
+        query_id: resultQueryId,
         page,
         size,
         result_index: resultIndex,
@@ -958,6 +962,9 @@ const SqlSearch = () => {
       const latest = tabsRef.current.find((t) => t.id === tabId);
       if (!latest || latest.queryId !== sessionQueryId) return;
       if (latest.currentResultIndex !== resultIndex) return;
+      // 结果集自身的 query_id 被新查询替换则丢弃
+      const latestResultQid = latest.allResults[resultIndex]?.queryId || latest.queryId;
+      if (latestResultQid !== resultQueryId) return;
 
       if (res.code === 200 && res.data) {
         const parsed = parsePageResponse(res.data, resultIndex);
@@ -972,6 +979,7 @@ const SqlSearch = () => {
             data: rows,
             total: newTotal,
             columns,
+            page,
           };
         }
 
@@ -997,40 +1005,41 @@ const SqlSearch = () => {
     }
   };
 
-  // 结果集切换：保持主 queryId，按 result_index 重拉第 1 页
+  // 结果集切换：用该结果缓存展示（首包已含各结果第 1 页）；不强制重拉，避免 /page 覆盖成同一份
   const handleResultChange = (index: number, targetTabId?: string) => {
     const tabId = targetTabId || activeTabId;
     const tab = tabsRef.current.find((t) => t.id === tabId);
     if (!tab || index < 0 || index >= tab.allResults.length) return;
 
     const selectedResult = tab.allResults[index];
-    const pageSize = RESULT_PAGE_SIZE;
+    const pageSize = tab.pageSize || RESULT_PAGE_SIZE;
+    const cachedPage = selectedResult.page ?? 1;
 
     updateTab(tabId, {
       currentResultIndex: index,
+      results: selectedResult.data,
       columns: selectedResult.columns,
       total: selectedResult.total,
       took: selectedResult.took,
       // 故意不改 queryId：一次执行共用主会话
-      currentPage: 1,
+      currentPage: cachedPage,
       pageSize,
-      results: [], // 避免展示他页缓存当第 1 页
     });
 
-    if (tab.queryId) {
+    // 仅在无缓存数据时才按 result_index 拉第 1 页
+    if ((!selectedResult.data || selectedResult.data.length === 0) && tab.queryId) {
       void handlePageChange(1, pageSize, { tabId, resultIndex: index });
-    } else {
-      // 无会话时退回缓存首屏（不应出现；兼容旧状态）
-      updateTab(tabId, { results: selectedResult.data });
     }
   };
 
-  // 后端导出（异步导出，创建任务并监听完成状态）
+  // 后端导出（异步导出，创建任务并监听完成状态）— 导出当前结果集
   const handleExport = async (targetTabId?: string) => {
     const tabId = targetTabId || activeTabId;
     const tab = tabsRef.current.find((t) => t.id === tabId) || currentTab;
+    const exportQueryId =
+      tab.allResults[tab.currentResultIndex]?.queryId || tab.queryId;
     
-    if (!tab.queryId) {
+    if (!exportQueryId) {
       updateTab(tabId, {
         messages: [{ type: 'warning', content: '无法导出：缺少查询ID' }]
       });
@@ -1041,7 +1050,7 @@ const SqlSearch = () => {
     
     try {
       const res = await exportQueryResult({
-        query_id: tab.queryId,
+        query_id: exportQueryId,
         db_name: tab.dbName
       });
       
