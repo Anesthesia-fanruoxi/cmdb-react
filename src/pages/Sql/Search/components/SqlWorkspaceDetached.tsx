@@ -5,9 +5,10 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
-import { 
-  executeQuery, 
-  executePageQuery, exportQueryResult, type QueryResult
+import {
+  executeQuery,
+  executePageQuery,
+  exportQueryResult,
 } from '../../../../services/sql/search';
 import { useAuthStore } from '../../../../stores/authStore';
 import {
@@ -18,7 +19,7 @@ import {
 } from '../../../../services/storage/sqlSearchStorage';
 import { emitReattachTab, closeCurrentWindow } from '../../../../utils/window';
 import SqlWorkspace from './SqlWorkspace';
-import { handleQueryData } from '../utils/handleQueryData';
+import { handleQueryData, parsePageResponse } from '../utils/handleQueryData';
 import type { Tab } from '../index';
 import '../styles/index.css';
 
@@ -29,24 +30,42 @@ interface Props {
   initialTab?: Tab;
 }
 
+const RESULT_PAGE_SIZE = 20;
 
 // 创建默认 Tab
 const createDefaultTab = (id: string): Tab => ({
-  id, name: `查询 ${id}`, project: '', dbName: '', sqlQuery: '',
-  dbList: [], tableList: [], queryLoading: false, treeLoading: false, exportLoading: false,
-  results: [], columns: [], total: 0, took: 0, queryId: '', currentPage: 1, pageSize: 50,
-  allResults: [], currentResultIndex: 0, lastExecutedSql: '', messages: [],
-  metadataRefreshing: false, metadataCacheAge: null
+  id,
+  name: `查询 ${id}`,
+  project: '',
+  dbName: '',
+  sqlQuery: '',
+  dbList: [],
+  tableList: [],
+  queryLoading: false,
+  treeLoading: false,
+  exportLoading: false,
+  results: [],
+  columns: [],
+  total: 0,
+  took: 0,
+  queryId: '',
+  currentPage: 1,
+  pageSize: 50,
+  allResults: [],
+  currentResultIndex: 0,
+  lastExecutedSql: '',
+  messages: [],
+  metadataRefreshing: false,
+  metadataCacheAge: null,
 });
 
 const SqlWorkspaceDetached = ({ detachKey, project, dbName, initialTab }: Props) => {
-  // 从 localStorage 读取完整数据
   const getInitialTab = (): Partial<Tab> => {
     if (detachKey) {
       try {
         const saved = localStorage.getItem(detachKey);
         if (saved) {
-          localStorage.removeItem(detachKey); // 读取后删除
+          localStorage.removeItem(detachKey);
           return JSON.parse(saved);
         }
       } catch (e) {
@@ -56,22 +75,23 @@ const SqlWorkspaceDetached = ({ detachKey, project, dbName, initialTab }: Props)
     if (initialTab) return initialTab;
     return { project: project || '', dbName: dbName || '' };
   };
-  
+
   const initData = getInitialTab();
   const tabId = useRef(initData.id || createSqlTabId());
-  // 合并默认值和传入的初始数据
   const [tab, setTab] = useState<Tab>(() => ({
     ...createDefaultTab(tabId.current),
     ...initData,
     id: tabId.current,
   }));
-  const userName = useAuthStore(state => state.userName);
+  const tabRef = useRef(tab);
+  tabRef.current = tab;
+  const pageReqSeqRef = useRef(0);
+  const userName = useAuthStore((state) => state.userName);
 
   const updateTab = useCallback((updates: Partial<Tab>) => {
-    setTab(prev => ({ ...prev, ...updates }));
+    setTab((prev) => ({ ...prev, ...updates }));
   }, []);
 
-  // 保存独立窗口状态
   const saveDetachedState = useCallback(() => {
     if (!tab.project || !userName) return;
 
@@ -95,7 +115,7 @@ const SqlWorkspaceDetached = ({ detachKey, project, dbName, initialTab }: Props)
 
   useEffect(() => {
     const timer = setInterval(saveDetachedState, 10000);
-    
+
     const currentWindow = getCurrentWebviewWindow();
     const unlisten = currentWindow.onCloseRequested(() => {
       saveDetachedState();
@@ -103,60 +123,148 @@ const SqlWorkspaceDetached = ({ detachKey, project, dbName, initialTab }: Props)
 
     return () => {
       clearInterval(timer);
-      unlisten.then(fn => fn());
+      unlisten.then((fn) => fn());
     };
   }, [saveDetachedState]);
 
-  // 执行查询
   const handleExecute = async (sql: string) => {
-    if (!tab.project || !tab.dbName || !sql.trim()) {
+    const current = tabRef.current;
+    if (!current.project || !current.dbName || !sql.trim()) {
       updateTab({ messages: [{ type: 'warning', content: '请选择项目、数据库并输入SQL' }] });
       return;
     }
-    updateTab({ queryLoading: true, results: [], columns: [], total: 0, took: 0, allResults: [], currentResultIndex: 0, messages: [], lastExecutedSql: sql });
+
+    const queryId = `qid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    pageReqSeqRef.current += 1;
+
+    updateTab({
+      queryLoading: true,
+      results: [],
+      columns: [],
+      total: 0,
+      took: 0,
+      allResults: [],
+      currentResultIndex: 0,
+      messages: [],
+      lastExecutedSql: sql,
+      queryId,
+    });
+
     try {
-      const res = await executeQuery({ agent: tab.project, dbName: tab.dbName, query: sql });
+      const res = await executeQuery({
+        agent: current.project,
+        dbName: current.dbName,
+        query: sql,
+        query_id: queryId,
+      });
       if (res.code === 200 && res.data) {
-        const p = handleQueryData(res.data, tab.dbName, sql);
-        updateTab({ results: p.queryResults, columns: p.resultColumns, total: p.total, took: p.took, queryId: p.queryId, allResults: p.allResults, currentResultIndex: 0, currentPage: 1, messages: [] });
+        const p = handleQueryData(res.data, current.dbName, sql, queryId);
+        updateTab({
+          results: p.queryResults,
+          columns: p.resultColumns,
+          total: p.total,
+          took: p.took,
+          queryId,
+          allResults: p.allResults,
+          currentResultIndex: 0,
+          currentPage: 1,
+          messages: [],
+        });
       } else {
         updateTab({ messages: [{ type: 'error', content: res.message || '查询失败' }] });
       }
-    } catch (e) { console.error('执行查询失败:', e); updateTab({ messages: [{ type: 'error', content: '执行查询失败' }] }); }
-    finally { updateTab({ queryLoading: false }); }
+    } catch (e) {
+      console.error('执行查询失败:', e);
+      updateTab({ messages: [{ type: 'error', content: '执行查询失败' }] });
+    } finally {
+      updateTab({ queryLoading: false });
+    }
   };
 
-  // 分页
-  const handlePageChange = async (page: number, size: number) => {
-    if (!tab.queryId) return;
-    updateTab({ queryLoading: true });
+  const handlePageChange = async (
+    page: number,
+    size: number,
+    opts?: { resultIndex?: number },
+  ) => {
+    const current = tabRef.current;
+    if (!current.queryId) return;
+
+    const sessionQueryId = current.queryId;
+    const resultIndex = opts?.resultIndex ?? current.currentResultIndex;
+    const reqId = ++pageReqSeqRef.current;
+
+    updateTab({
+      queryLoading: true,
+      currentPage: page,
+      pageSize: size,
+      ...(opts?.resultIndex != null ? { currentResultIndex: resultIndex } : {}),
+    });
+
     try {
-      const res = await executePageQuery({ query_id: tab.queryId, page, size, result_index: tab.currentResultIndex });
+      const res = await executePageQuery({
+        query_id: sessionQueryId,
+        page,
+        size,
+        result_index: resultIndex,
+      });
+
+      if (reqId !== pageReqSeqRef.current) return;
+      const latest = tabRef.current;
+      if (latest.queryId !== sessionQueryId || latest.currentResultIndex !== resultIndex) return;
+
       if (res.code === 200 && res.data) {
-        const data = res.data as QueryResult | { results: QueryResult[] };
-        const result = 'results' in data ? data.results[0] : data;
-        if (!result) return;
-        const rows = result.rows || [];
-        const cols = result.columns || tab.columns;
-        const total = result.total ?? tab.total;
-        const newAll = [...tab.allResults];
-        if (newAll[tab.currentResultIndex]) newAll[tab.currentResultIndex] = { ...newAll[tab.currentResultIndex], data: rows, total };
-        updateTab({ results: rows, columns: cols, total, currentPage: page, allResults: newAll });
+        const parsed = parsePageResponse(res.data, resultIndex);
+        const rows = parsed.rows;
+        const cols = parsed.columns || latest.columns;
+        const total = parsed.total !== undefined ? parsed.total : latest.total;
+        const newAll = [...latest.allResults];
+        if (newAll[resultIndex]) {
+          newAll[resultIndex] = { ...newAll[resultIndex], data: rows, total, columns: cols };
+        }
+        updateTab({
+          results: rows,
+          columns: cols,
+          total,
+          currentPage: page,
+          pageSize: size,
+          allResults: newAll,
+        });
       }
-    } catch (e) { console.error('分页失败:', e); }
-    finally { updateTab({ queryLoading: false }); }
+    } catch (e) {
+      if (reqId !== pageReqSeqRef.current) return;
+      console.error('分页失败:', e);
+    } finally {
+      if (reqId === pageReqSeqRef.current) {
+        updateTab({ queryLoading: false });
+      }
+    }
   };
 
-  // 结果集切换
   const handleResultChange = (index: number) => {
-    if (index < 0 || index >= tab.allResults.length) return;
-    const r = tab.allResults[index];
-    updateTab({ currentResultIndex: index, results: r.data, columns: r.columns, total: r.total, took: r.took, queryId: r.queryId, currentPage: 1 });
+    const current = tabRef.current;
+    if (index < 0 || index >= current.allResults.length) return;
+    const r = current.allResults[index];
+    updateTab({
+      currentResultIndex: index,
+      columns: r.columns,
+      total: r.total,
+      took: r.took,
+      currentPage: 1,
+      pageSize: RESULT_PAGE_SIZE,
+      results: [],
+    });
+    if (current.queryId) {
+      void handlePageChange(1, RESULT_PAGE_SIZE, { resultIndex: index });
+    } else {
+      updateTab({ results: r.data });
+    }
   };
 
-  // 导出
   const handleExport = async () => {
-    if (!tab.queryId) { updateTab({ messages: [{ type: 'warning', content: '无法导出：缺少查询ID' }] }); return; }
+    if (!tab.queryId) {
+      updateTab({ messages: [{ type: 'warning', content: '无法导出：缺少查询ID' }] });
+      return;
+    }
     updateTab({ exportLoading: true });
     try {
       const res = await exportQueryResult({ query_id: tab.queryId, db_name: tab.dbName });
@@ -166,15 +274,22 @@ const SqlWorkspaceDetached = ({ detachKey, project, dbName, initialTab }: Props)
         a.download = `query_result_${new Date().toISOString().slice(0, 10)}.xlsx`;
         a.click();
       }
-    } catch (e) { console.error('导出失败:', e); }
-    finally { updateTab({ exportLoading: false }); }
+    } catch (e) {
+      console.error('导出失败:', e);
+    } finally {
+      updateTab({ exportLoading: false });
+    }
   };
 
-  // 放回主窗口
   const handleReattach = async () => {
     const tabData = {
-      id: tab.id, name: tab.name, project: tab.project, dbName: tab.dbName,
-      sqlQuery: tab.sqlQuery, dbList: tab.dbList, tableList: tab.tableList,
+      id: tab.id,
+      name: tab.name,
+      project: tab.project,
+      dbName: tab.dbName,
+      sqlQuery: tab.sqlQuery,
+      dbList: tab.dbList,
+      tableList: tab.tableList,
     };
     await emitReattachTab({ type: 'sql', tabData });
     closeCurrentWindow();
@@ -190,13 +305,30 @@ const SqlWorkspaceDetached = ({ detachKey, project, dbName, initialTab }: Props)
       </div>
       <div className="main-content">
         <div className="content">
-          <SqlWorkspace tabId={detachKey} sql={tab.sqlQuery} onSqlChange={(sql: string) => updateTab({ sqlQuery: sql })}
-            onExecute={handleExecute} loading={tab.queryLoading} exportLoading={tab.exportLoading}
-            results={tab.results} columns={tab.columns} total={tab.total} took={tab.took}
-            dbName={tab.dbName} queryId={tab.queryId} allResults={tab.allResults}
-            currentResultIndex={tab.currentResultIndex} onResultChange={handleResultChange}
-            currentPage={tab.currentPage} onPageChange={handlePageChange} onExport={handleExport}
-            messages={tab.messages} tableList={tab.tableList} project={tab.project} lastExecutedSql={tab.lastExecutedSql} />
+          <SqlWorkspace
+            tabId={detachKey}
+            sql={tab.sqlQuery}
+            onSqlChange={(sql: string) => updateTab({ sqlQuery: sql })}
+            onExecute={handleExecute}
+            loading={tab.queryLoading}
+            exportLoading={tab.exportLoading}
+            results={tab.results}
+            columns={tab.columns}
+            total={tab.total}
+            took={tab.took}
+            dbName={tab.dbName}
+            queryId={tab.queryId}
+            allResults={tab.allResults}
+            currentResultIndex={tab.currentResultIndex}
+            onResultChange={handleResultChange}
+            currentPage={tab.currentPage}
+            onPageChange={handlePageChange}
+            onExport={handleExport}
+            messages={tab.messages}
+            tableList={tab.tableList}
+            project={tab.project}
+            lastExecutedSql={tab.lastExecutedSql}
+          />
         </div>
       </div>
     </div>

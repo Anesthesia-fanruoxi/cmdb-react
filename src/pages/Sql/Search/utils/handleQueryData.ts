@@ -29,7 +29,11 @@ function splitSqlStatements(sql: string): string[] {
       if (ch === inQuote && sql[i - 1] !== '\\') inQuote = null;
       continue;
     }
-    if (ch === "'" || ch === '"' || ch === '`') { inQuote = ch; current += ch; continue; }
+    if (ch === "'" || ch === '"' || ch === '`') {
+      inQuote = ch;
+      current += ch;
+      continue;
+    }
     if (ch === ';') {
       if (current.trim()) statements.push(current.trim());
       current = '';
@@ -59,28 +63,54 @@ export interface HandleQueryDataResult {
   resultColumns: string[];
   total: number;
   took: number;
+  /** Tab 级主会话 ID（一次执行共用） */
   queryId: string;
 }
 
 /**
+ * 解析分页响应：扁平 rows，或 results[]（单元素=当前结果，多元素按 result_index）
+ */
+export function parsePageResponse(
+  data: unknown,
+  resultIndex: number,
+): { rows: unknown[][]; columns?: string[]; total?: number } {
+  const d = data as QueryResponseData & { results?: QueryResultItem[] };
+  let raw: QueryResultItem | QueryResponseData | undefined;
+
+  if (d?.results && Array.isArray(d.results) && d.results.length > 0) {
+    raw =
+      d.results.length === 1
+        ? d.results[0]
+        : d.results[resultIndex] ?? d.results[0];
+  } else {
+    raw = d;
+  }
+
+  return {
+    rows: processBigInt(raw?.rows || []) as unknown[][],
+    columns: raw?.columns,
+    total: raw?.total,
+  };
+}
+
+/**
  * 处理查询响应数据，统一转换为多结果集格式
- * @param data API 响应数据
- * @param defaultDbName 默认数据库名
- * @param executedSql 执行的 SQL 语句
- * @returns 处理后的结果
+ * @param sessionQueryId 前端本次执行生成的主会话 ID；多结果共用，优先于单项 query_id
  */
 export function handleQueryData(
   data: QueryResponseData,
   defaultDbName: string = '',
-  executedSql: string = ''
+  executedSql: string = '',
+  sessionQueryId: string = '',
 ): HandleQueryDataResult {
   const allResults: ResultSet[] = [];
   // 后端多结果集不一定回传每条 sql，按顺序用执行 SQL 拆分补齐
   const executedStatements = splitSqlStatements(executedSql);
+  // 主会话 ID：前端传入 > 顶层 query_id（一次执行一个）
+  const sessionId = sessionQueryId || data.query_id || '';
 
   // 检查是否为多结果集格式
   if (data.results && Array.isArray(data.results) && data.results.length > 0) {
-    // 多结果集处理
     data.results.forEach((result, index) => {
       const processedRows = processBigInt(result.rows || []) as unknown[][];
       allResults.push({
@@ -90,12 +120,12 @@ export function handleQueryData(
         took: result.took || 0,
         db_name: result.db_name || defaultDbName,
         sql: result.sql || executedStatements[index] || executedSql,
-        queryId: result.query_id || '',
-        name: `结果集 ${index + 1}`
+        // 单项缺省时回退主会话，避免切结果把 Tab queryId 冲成空
+        queryId: result.query_id || sessionId,
+        name: `结果集 ${index + 1}`,
       });
     });
   } else {
-    // 单结果集处理
     const processedRows = processBigInt(data.rows || []) as unknown[][];
     allResults.push({
       data: processedRows,
@@ -104,18 +134,17 @@ export function handleQueryData(
       took: data.took || 0,
       db_name: data.db_name || defaultDbName,
       sql: executedSql,
-      queryId: data.query_id || '',
-      name: '结果集 1'
+      queryId: data.query_id || sessionId,
+      name: '结果集 1',
     });
   }
 
-  // 返回第一个结果集作为当前显示
   const firstResult = allResults[0] || {
     data: [],
     columns: [],
     total: 0,
     took: 0,
-    queryId: ''
+    queryId: '',
   };
 
   return {
@@ -124,7 +153,8 @@ export function handleQueryData(
     resultColumns: firstResult.columns,
     total: firstResult.total,
     took: firstResult.took,
-    queryId: firstResult.queryId
+    // Tab 始终用主会话 ID，不用某个结果项覆盖
+    queryId: sessionId || firstResult.queryId,
   };
 }
 

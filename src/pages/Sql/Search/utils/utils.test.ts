@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { processBigInt } from './processBigInt';
-import { handleQueryData } from './handleQueryData';
+import { handleQueryData, parsePageResponse } from './handleQueryData';
 
 describe('processBigInt', () => {
   it('应该返回 null 和 undefined 不变', () => {
@@ -101,6 +101,32 @@ describe('handleQueryData', () => {
     expect(result.resultColumns).toEqual(['id']);
   });
 
+  it('多结果缺省单项 query_id 时应回退主会话 ID', () => {
+    const data = {
+      query_id: 'session-top',
+      results: [
+        { rows: [[1]], columns: ['id'], total: 1, took: 10 },
+        { rows: [[2]], columns: ['n'], total: 1, took: 20 },
+      ],
+    };
+
+    const result = handleQueryData(data, 'db', 'SELECT 1; SELECT 2', 'frontend-qid');
+
+    expect(result.queryId).toBe('frontend-qid');
+    expect(result.allResults[0].queryId).toBe('frontend-qid');
+    expect(result.allResults[1].queryId).toBe('frontend-qid');
+  });
+
+  it('仅有顶层 query_id 且无前端会话时应用顶层 ID', () => {
+    const data = {
+      query_id: 'top-only',
+      results: [{ rows: [[1]], columns: ['id'], total: 1 }],
+    };
+    const result = handleQueryData(data, 'db', '');
+    expect(result.queryId).toBe('top-only');
+    expect(result.allResults[0].queryId).toBe('top-only');
+  });
+
   it('应该处理空响应', () => {
     const data = {};
 
@@ -133,5 +159,41 @@ describe('handleQueryData', () => {
 
     expect(typeof result.queryResults[0][0]).toBe('string');
     expect(result.queryResults[0][1]).toBe('test');
+  });
+});
+
+describe('parsePageResponse', () => {
+  it('扁平结构应直接取 rows', () => {
+    const parsed = parsePageResponse(
+      { rows: [[1], [2]], columns: ['id'], total: 2 },
+      0,
+    );
+    expect(parsed.rows).toEqual([[1], [2]]);
+    expect(parsed.columns).toEqual(['id']);
+    expect(parsed.total).toBe(2);
+  });
+
+  it('results 仅一项时应取 [0]（当前结果切片）', () => {
+    const parsed = parsePageResponse(
+      { results: [{ rows: [[9]], columns: ['x'], total: 100 }] },
+      2,
+    );
+    expect(parsed.rows).toEqual([[9]]);
+    expect(parsed.total).toBe(100);
+  });
+
+  it('results 多项时应按 result_index 取值', () => {
+    const parsed = parsePageResponse(
+      {
+        results: [
+          { rows: [[1]], columns: ['a'], total: 10 },
+          { rows: [[2]], columns: ['b'], total: 20 },
+        ],
+      },
+      1,
+    );
+    expect(parsed.rows).toEqual([[2]]);
+    expect(parsed.columns).toEqual(['b']);
+    expect(parsed.total).toBe(20);
   });
 });

@@ -163,9 +163,9 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"
-          DESCRIPTION="1、Elfk 日志搜索相对时间改为 gte/lt 左闭右开：已完结时段（昨天 / 上周 / 上月等）结束取次日 00:00:00，消除 23:59:59 漏最后一秒数据。
-          2、SQL Sync 监控：SSE history 快照归一化（数组 / 对象双形态）与增量点时间戳去重，修复重连后最近增量表格重复行。
-          3、SQL 查询全屏面板新增表头列复制按钮（权限同导出 sql:search:w），复制工具函数抽取至 copyFormat 统一复用。"
+          DESCRIPTION="1、SQL 查询会话统一：query_id 由前端执行时生成并贯穿全部结果集，Tab 级不再被单项覆盖，切换结果集后分页 / 导出不再失效。
+          2、分页解析统一（parsePageResponse）兼容扁平与嵌套结构；切换结果集自动重拉第 1 页（页大小 20）。
+          3、分页请求加世代号防竞态，翻页 / 切结果 / 切 Tab 的过期响应不再写错数据；主窗口与独立窗口行为对齐。"
 
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \

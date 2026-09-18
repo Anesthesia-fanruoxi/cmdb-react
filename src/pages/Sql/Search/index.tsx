@@ -27,7 +27,7 @@ import ShortcutSettings from './components/ShortcutSettings';
 import SqlHistoryPanel from './components/SqlHistoryPanel';
 import SaveSqlSharedDialog from './components/SaveSqlSharedDialog';
 import TableDetailContent from './components/TableDetailContent';
-import { handleQueryData } from './utils/handleQueryData';
+import { handleQueryData, parsePageResponse } from './utils/handleQueryData';
 import './styles/index.css';
 
 // 结果集类型
@@ -182,7 +182,17 @@ const SqlSearch = () => {
   const tabsRef = useRef(tabs);
   tabsRef.current = tabs;
   const persistedTabSnapshots = useRef<Map<string, string>>(new Map());
+  /** 按 Tab 隔离的分页请求世代号，避免切 Tab 时互相作废 / loading 卡住 */
+  const pageReqSeqByTabRef = useRef<Map<string, number>>(new Map());
+  /** 后端结果分页默认页大小（与 ResultPanel 一致） */
+  const RESULT_PAGE_SIZE = 20;
 
+  const bumpPageReq = (tabId: string) => {
+    const next = (pageReqSeqByTabRef.current.get(tabId) || 0) + 1;
+    pageReqSeqByTabRef.current.set(tabId, next);
+    return next;
+  };
+  const getPageReq = (tabId: string) => pageReqSeqByTabRef.current.get(tabId) || 0;
   // 本次会话已完成“清理旧缓存+重新拉取”的项目集合（启动后每个项目执行一次）
   const startupRefreshedProjects = useRef<Set<string>>(new Set());
 
@@ -811,6 +821,8 @@ const SqlSearch = () => {
 
     // 生成唯一的 query_id (前端生成,传给后端)
     const queryId = `qid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    // 仅作废本 Tab 进行中的分页，不影响其它标签页
+    bumpPageReq(executeTabId);
 
     updateTab(executeTabId, { 
       queryLoading: true, 
@@ -836,19 +848,19 @@ const SqlSearch = () => {
       const res = await executeQuery(queryParams);
       
       if (res.code === 200 && res.data) {
-        // 使用 handleQueryData 处理查询结果
-        const processed = handleQueryData(res.data, tabDbName, sql);
-        
+        // 使用 handleQueryData 处理查询结果；主会话 ID 始终用本次执行生成的 queryId
+        const processed = handleQueryData(res.data, tabDbName, sql, queryId);
+
         updateTab(executeTabId, {
           results: processed.queryResults,
           columns: processed.resultColumns,
           total: processed.total,
           took: processed.took,
-          queryId: processed.queryId,
+          queryId, // 不要被空的 result.query_id 覆盖
           allResults: processed.allResults,
           currentResultIndex: 0,
           currentPage: 1,
-          messages: []
+          messages: [],
         });
       } else {
         updateTab(executeTabId, {
@@ -865,9 +877,10 @@ const SqlSearch = () => {
     }
   };
 
-  // 取消查询
-  const handleCancelQuery = async () => {
-    const tab = tabsRef.current.find(t => t.id === activeTabId);
+  // 取消查询（须绑定具体 Tab，避免切走后取消错会话）
+  const handleCancelQuery = async (targetTabId?: string) => {
+    const tabId = targetTabId || activeTabId;
+    const tab = tabsRef.current.find(t => t.id === tabId);
     const queryId = tab?.queryId;
     const project = tab?.project;
     
@@ -892,7 +905,7 @@ const SqlSearch = () => {
       if (res.code === 200) {
         toast.success('查询已取消');
         // 只有后端确认成功后才重置状态
-        updateTab(activeTabId, {
+        updateTab(tabId, {
           queryLoading: false,
           messages: [{ type: 'warning', content: '查询已被取消' }]
         });
@@ -908,103 +921,123 @@ const SqlSearch = () => {
     }
   };
 
-  // 后端分页 API 调用
-  const handlePageChange = async (page: number, size: number) => {
-    const tab = currentTab;
-    if (!tab.queryId || !tab.project || !tab.dbName) {
-      // 没有 queryId 时无法进行后端分页
+  // 后端分页 API 调用（必须带 tabId；可指定 resultIndex）
+  const handlePageChange = async (
+    page: number,
+    size: number,
+    opts?: { tabId?: string; resultIndex?: number },
+  ) => {
+    const tabId = opts?.tabId ?? activeTabId;
+    const tab = tabsRef.current.find((t) => t.id === tabId);
+    if (!tab?.queryId || !tab.project || !tab.dbName) {
       console.warn('缺少 queryId，无法进行后端分页');
       return;
     }
 
-    updateTab(activeTabId, { queryLoading: true });
-    
+    const sessionQueryId = tab.queryId;
+    const resultIndex = opts?.resultIndex ?? tab.currentResultIndex;
+    const reqId = bumpPageReq(tabId);
+
+    updateTab(tabId, {
+      queryLoading: true,
+      currentPage: page,
+      pageSize: size,
+      ...(opts?.resultIndex != null ? { currentResultIndex: resultIndex } : {}),
+    });
+
     try {
       const res = await executePageQuery({
-        query_id: tab.queryId,
+        query_id: sessionQueryId,
         page,
         size,
-        result_index: tab.currentResultIndex
+        result_index: resultIndex,
       });
-      
+
+      // 过期请求：本 Tab 已有更新请求，或会话/结果索引已变
+      if (reqId !== getPageReq(tabId)) return;
+      const latest = tabsRef.current.find((t) => t.id === tabId);
+      if (!latest || latest.queryId !== sessionQueryId) return;
+      if (latest.currentResultIndex !== resultIndex) return;
+
       if (res.code === 200 && res.data) {
-        // 处理返回数据 - 兼容嵌套和非嵌套结构
-        let rows: unknown[][] = [];
-        let columns: string[] = tab.columns;
-        let newTotal = tab.total;
-        
-        const data = res.data as any;
-        if (data.results && data.results.length > 0) {
-          // 嵌套结构
-          const result = data.results[0];
-          rows = result.rows || [];
-          if (result.columns) columns = result.columns;
-          if (result.total !== undefined) newTotal = result.total;
-        } else if (data.rows) {
-          // 非嵌套结构
-          rows = data.rows;
-          if (data.columns) columns = data.columns;
-          if (data.total !== undefined) newTotal = data.total;
-        }
-        
-        // 更新当前结果集的数据
-        const newAllResults = [...tab.allResults];
-        if (newAllResults[tab.currentResultIndex]) {
-          newAllResults[tab.currentResultIndex] = {
-            ...newAllResults[tab.currentResultIndex],
+        const parsed = parsePageResponse(res.data, resultIndex);
+        const rows = parsed.rows;
+        const columns = parsed.columns || latest.columns;
+        const newTotal = parsed.total !== undefined ? parsed.total : latest.total;
+
+        const newAllResults = [...latest.allResults];
+        if (newAllResults[resultIndex]) {
+          newAllResults[resultIndex] = {
+            ...newAllResults[resultIndex],
             data: rows,
-            total: newTotal
+            total: newTotal,
+            columns,
           };
         }
-        
-        updateTab(activeTabId, {
+
+        updateTab(tabId, {
           results: rows,
           columns,
           total: newTotal,
           currentPage: page,
           pageSize: size,
-          allResults: newAllResults
+          allResults: newAllResults,
         });
       }
     } catch (error) {
+      if (reqId !== getPageReq(tabId)) return;
       console.error('分页查询失败:', error);
-      updateTab(activeTabId, {
-        messages: [{ type: 'error', content: '分页查询失败' }]
+      updateTab(tabId, {
+        messages: [{ type: 'error', content: '分页查询失败' }],
       });
     } finally {
-      updateTab(activeTabId, { queryLoading: false });
+      if (reqId === getPageReq(tabId)) {
+        updateTab(tabId, { queryLoading: false });
+      }
     }
   };
 
-  // 结果集切换
-  const handleResultChange = (index: number) => {
-    const tab = currentTab;
-    if (index < 0 || index >= tab.allResults.length) return;
-    
+  // 结果集切换：保持主 queryId，按 result_index 重拉第 1 页
+  const handleResultChange = (index: number, targetTabId?: string) => {
+    const tabId = targetTabId || activeTabId;
+    const tab = tabsRef.current.find((t) => t.id === tabId);
+    if (!tab || index < 0 || index >= tab.allResults.length) return;
+
     const selectedResult = tab.allResults[index];
-    updateTab(activeTabId, {
+    const pageSize = RESULT_PAGE_SIZE;
+
+    updateTab(tabId, {
       currentResultIndex: index,
-      results: selectedResult.data,
       columns: selectedResult.columns,
       total: selectedResult.total,
       took: selectedResult.took,
-      queryId: selectedResult.queryId,
-      currentPage: 1  // 切换结果集时重置页码
+      // 故意不改 queryId：一次执行共用主会话
+      currentPage: 1,
+      pageSize,
+      results: [], // 避免展示他页缓存当第 1 页
     });
+
+    if (tab.queryId) {
+      void handlePageChange(1, pageSize, { tabId, resultIndex: index });
+    } else {
+      // 无会话时退回缓存首屏（不应出现；兼容旧状态）
+      updateTab(tabId, { results: selectedResult.data });
+    }
   };
 
   // 后端导出（异步导出，创建任务并监听完成状态）
-  const handleExport = async () => {
-    const tab = currentTab;
+  const handleExport = async (targetTabId?: string) => {
+    const tabId = targetTabId || activeTabId;
+    const tab = tabsRef.current.find((t) => t.id === tabId) || currentTab;
     
     if (!tab.queryId) {
-      updateTab(activeTabId, {
+      updateTab(tabId, {
         messages: [{ type: 'warning', content: '无法导出：缺少查询ID' }]
       });
       return;
     }
 
-    updateTab(activeTabId, { exportLoading: true });
+    updateTab(tabId, { exportLoading: true });
     
     try {
       const res = await exportQueryResult({
@@ -1031,7 +1064,7 @@ const SqlSearch = () => {
       console.error('[导出] ❌ 请求异常:', error);
       toast.error('导出失败，请稍后重试');
     } finally {
-      updateTab(activeTabId, { exportLoading: false });
+      updateTab(tabId, { exportLoading: false });
     }
   };
 
@@ -1228,8 +1261,8 @@ const SqlSearch = () => {
                 tabId={tab.id}
                 sql={tab.sqlQuery}
                 onSqlChange={(sql: string) => updateTab(tab.id, { sqlQuery: sql })}
-                onExecute={handleExecute}
-                onCancelQuery={handleCancelQuery}
+                onExecute={(sql) => handleExecute(sql, false, tab.id)}
+                onCancelQuery={() => handleCancelQuery(tab.id)}
                 onNewTab={addTab}
                 onShowHistory={showHistory}
                 loading={tab.queryLoading}
@@ -1242,10 +1275,10 @@ const SqlSearch = () => {
                 queryId={tab.queryId}
                 allResults={tab.allResults}
                 currentResultIndex={tab.currentResultIndex}
-                onResultChange={handleResultChange}
+                onResultChange={(index) => handleResultChange(index, tab.id)}
                 currentPage={tab.currentPage}
-                onPageChange={handlePageChange}
-                onExport={handleExport}
+                onPageChange={(page, size) => handlePageChange(page, size, { tabId: tab.id })}
+                onExport={() => handleExport(tab.id)}
                 messages={tab.messages}
                 tableList={tab.tableList}
                 project={tab.project}

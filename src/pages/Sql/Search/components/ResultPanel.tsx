@@ -166,8 +166,10 @@ const ResultPanel = ({
   };
 
   useEffect(() => {
-    setLocalPage(1); setSelectedRows(new Set()); lastClickedRow.current = null;
-  }, [total]);
+    setLocalPage(1);
+    setSelectedRows(new Set());
+    lastClickedRow.current = null;
+  }, [total, currentResultIndex, queryId]);
 
   // 键盘横向滚动
   useEffect(() => {
