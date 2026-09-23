@@ -20,8 +20,12 @@ export function getWhereCompletions(context: SqlContext, prefix: string): Sugges
         ? tableInfo.name.split('.').pop()!
         : tableInfo.name
 
-      // 字段建议
-      const fields = getTableFields(shortName) || getTableFields(tableInfo.name)
+      // 字段建议：优先按表所属库解析
+      const fields =
+        getTableFields(shortName, tableInfo.dbName) ||
+        getTableFields(tableInfo.name, tableInfo.dbName) ||
+        getTableFields(shortName) ||
+        getTableFields(tableInfo.name)
       if (fields && fields.length > 0) {
         const scoreBonus = tableIdx === 0 ? 200 : Math.max(0, 100 - tableIdx * 20)
         fields.forEach(field => {

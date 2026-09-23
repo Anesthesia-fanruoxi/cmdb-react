@@ -163,9 +163,9 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"
-          DESCRIPTION="1、SQL 查询分页修正：翻页 / 导出改用当前结果集自己的 query_id（每个结果集各有一个），不再错用主会话 id。
-          2、切换结果集优先展示已缓存数据并恢复对应页码，仅无缓存时才重拉第 1 页，避免翻页结果被覆盖。
-          3、过期响应防护增强：结果集 query_id 变更后的旧响应直接丢弃；主窗口与独立窗口行为对齐。"
+          DESCRIPTION="1、修复 SQL 查询多标签补全串库：补全器改为挂在各编辑器实例，不再抢全局 langTools；库名提示跟随当前 Tab。
+          2、切 Tab 灌元数据增加世代号，避免异步晚到覆盖；恢复表注释悬浮提示。
+          3、修复长按删除漏字：防抖期间禁止用落后的 React value 回写 Ace 编辑器。"
 
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \

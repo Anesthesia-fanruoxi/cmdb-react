@@ -8,6 +8,7 @@ import SqlEditor, { type SqlEditorRef } from './SqlEditor';
 import ResultPanel from './ResultPanel';
 import { useUserPrefsStore } from '@/stores/userPrefsStore';
 import type { TableInfo } from '@/utils/sql';
+import { getTableComment } from '@/utils/sql';
 import { useColumnComments } from '../hooks/useColumnComments';
 
 /** 结果集类型 */
@@ -59,11 +60,15 @@ interface Props {
   messages: Message[];
   // SQL 智能提示
   tableList?: string[];
+  /** 当前 Tab 的数据库列表（补全库名用） */
+  dbList?: string[];
   project?: string;
   lastExecutedSql?: string;
 }
 
 const SqlWorkspace = ({
+  tabId,
+  isActive = true,
   sql,
   onSqlChange,
   onExecute,
@@ -86,6 +91,7 @@ const SqlWorkspace = ({
   onExport,
   messages,
   tableList = [],
+  dbList = [],
   project = '',
   lastExecutedSql = ''
 }: Props) => {
@@ -155,9 +161,15 @@ const SqlWorkspace = ({
   // SQL 编辑器引用
   const sqlEditorRef = useRef<SqlEditorRef>(null);
 
-  // 转换表列表为 TableInfo 格式
-  const tables: TableInfo[] = useMemo(() => 
-    tableList.map(name => ({ name, dbName })), [tableList, dbName]
+  // 转换表列表为 TableInfo（带库名 + 表注释，供补全悬浮提示）
+  const tables: TableInfo[] = useMemo(
+    () =>
+      tableList.map((name) => ({
+        name,
+        dbName,
+        comment: dbName ? getTableComment(dbName, name) || '' : '',
+      })),
+    [tableList, dbName],
   );
 
   // 获取列备注（仅根据实际执行的 SQL 中涉及的表，避免编辑器内其他语句干扰）
@@ -281,6 +293,9 @@ const SqlWorkspace = ({
           loading={loading}
           tables={tables}
           currentDb={dbName}
+          dbList={dbList}
+          tabId={tabId}
+          isActive={isActive}
         />
       </div>
 
@@ -348,6 +363,7 @@ function areSqlWorkspacePropsEqual(previous: Props, next: Props): boolean {
     && previous.currentPage === next.currentPage
     && previous.messages === next.messages
     && previous.tableList === next.tableList
+    && previous.dbList === next.dbList
     && previous.project === next.project
     && previous.lastExecutedSql === next.lastExecutedSql
   )

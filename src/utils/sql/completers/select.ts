@@ -48,8 +48,12 @@ export function getSelectCompletions(context: SqlContext, prefix: string, _table
         }
       }
 
-      // 字段建议：第一张表评分最高，后续表依次降低
-      const fields = getTableFields(shortName) || getTableFields(tableInfo.name)
+      // 字段建议：优先按表所属库解析，避免跨库同名表串字段
+      const fields =
+        getTableFields(shortName, tableInfo.dbName) ||
+        getTableFields(tableInfo.name, tableInfo.dbName) ||
+        getTableFields(shortName) ||
+        getTableFields(tableInfo.name)
       if (fields && fields.length > 0) {
         const scoreBonus = tableIdx === 0 ? 200 : Math.max(0, 100 - tableIdx * 20)
         fields.forEach(field => {

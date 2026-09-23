@@ -14,12 +14,14 @@ import type { Suggestion, TableInfo, FieldInfo } from './types'
 interface CompleterOptions {
   getTables: () => TableInfo[]
   loadTableStructure?: (tableName: string) => Promise<FieldInfo[] | null>
+  /** 当前 Tab 可见的库名列表；不传则回退全局缓存（易串项目） */
+  getDatabases?: () => string[]
 }
 
-/** 创建 SQL 自动补全器 */
-export function createSqlCompleter(ace: any, { getTables, loadTableStructure: _loadTableStructure }: CompleterOptions) {
-  const langTools = ace.require('ace/ext/language_tools')
-  langTools.setCompleters([])
+/** 创建 SQL 自动补全器（仅返回 completer，由调用方挂到 editor.completers，避免多 Tab 抢全局 langTools） */
+export function createSqlCompleter(ace: any, { getTables, loadTableStructure: _loadTableStructure, getDatabases }: CompleterOptions) {
+  // ace 参数保留以兼容调用方；补全逻辑不依赖全局 langTools 注册
+  void ace
   initCache()
   
   const completer: any = {
@@ -125,9 +127,11 @@ export function createSqlCompleter(ace: any, { getTables, loadTableStructure: _l
           }
         })
         
-        // 3. 数据库名（FROM/JOIN：表 > 库 > 关键字）
-        const { getAllCachedDatabases } = await import('./cache')
-        const databases = getAllCachedDatabases()
+        // 3. 数据库名（优先当前 Tab 的库列表，避免串到其它项目）
+        const databases =
+          (typeof getDatabases === 'function' ? getDatabases() : null) ||
+          (await import('./cache')).getAllCachedDatabases() ||
+          []
         databases.forEach(dbName => {
           const matchResult = fuzzyMatch(prefix, dbName)
           if (matchResult.match) {
@@ -142,18 +146,24 @@ export function createSqlCompleter(ace: any, { getTables, loadTableStructure: _l
         })
         
         // 4. 表名（FROM/JOIN 最高优先）
+        const { getTableComment } = await import('./cache')
         tables.forEach(table => {
           const matchResult = fuzzyMatch(prefix, table.name)
           if (matchResult.match) {
             let baseScore = 8000
             if (isInWhereClause) baseScore = 6000
             else if (isInFromOrJoin) baseScore = 12000
+            const comment =
+              table.comment ||
+              (table.dbName ? getTableComment(table.dbName, table.name) : '') ||
+              ''
             allSuggestions.push({ 
               caption: table.name, 
               value: table.name, 
               meta: 'table', 
               score: baseScore + matchResult.score,
-              dbName: table.dbName // 附带库名
+              dbName: table.dbName, // 附带库名
+              comment, // 表注释（悬浮提示）
             })
           }
         })
@@ -242,14 +252,13 @@ export function createSqlCompleter(ace: any, { getTables, loadTableStructure: _l
   completer.renderer = customRenderer
   completer.$textCompleter = customRenderer
   
-  langTools.addCompleter(completer)
-  
+  // 不注册到全局 langTools：多 Tab 常驻时会互相覆盖；由 editor.completers 挂载
   return completer
 }
 
 // 导出工具函数
 export { fuzzyMatch } from './matcher'
-export { getTableFields, cacheTableFields, initCache } from './cache'
+export { getTableFields, cacheTableFields, initCache, getTableComment } from './cache'
 export { analyzeContext, extractTablesFromSql, parseTableAliases } from './parser'
 export { getCurrentStatement } from './tableExtractor'
 export type { Suggestion, TableInfo, FieldInfo, SqlContext } from './types'

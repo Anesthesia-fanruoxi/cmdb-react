@@ -30,8 +30,12 @@ interface Props {
   onBlur?: () => void
   tables?: TableInfo[]
   currentDb?: string
+  /** 当前 Tab 的库列表，供补全库名（按 Tab 隔离） */
+  dbList?: string[]
   loadTableStructure?: (tableName: string) => Promise<FieldInfo[] | null>
   tabId?: string  // 标签页唯一键，用于表名注册表
+  /** 是否为当前可见 Tab；激活时关闭残留补全弹层 */
+  isActive?: boolean
 }
 
 /** 暴露给父组件的方法 */
@@ -46,16 +50,20 @@ export interface SqlEditorRef {
 
 const SqlEditor = forwardRef<SqlEditorRef, Props>(({ 
   value, onChange, onExecute, onNewTab, onShowHistory, loading, onFocus, onBlur,
-  tables = [], loadTableStructure, tabId
+  tables = [], currentDb, dbList = [], loadTableStructure, tabId, isActive = true
 }, ref) => {
   const editorRef = useRef<HTMLDivElement>(null)
   const aceEditorRef = useRef<ace.Ace.Editor | null>(null)
   const completerRef = useRef<any>(null)
   const tablesRef = useRef<TableInfo[]>(tables)
+  const dbListRef = useRef<string[]>(dbList)
+  const currentDbRef = useRef<string | undefined>(currentDb)
   const loadTableStructureRef = useRef(loadTableStructure)
   const isInternalChange = useRef(false)
   // 内部 SQL 值 ref，输入时只更新这里，不触发 React 重渲染
   const sqlValueRef = useRef(value)
+  /** 最近一次推给 React 的内容；用于区分「防抖回声」与「外部赋值」，避免长按删除被旧 value 写回 */
+  const lastPushedToReactRef = useRef(value)
   // 防抖定时器
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // 稳定的 onChange ref
@@ -135,17 +143,30 @@ const SqlEditor = forwardRef<SqlEditorRef, Props>(({
     getEditor: () => aceEditorRef.current
   }))
 
-  // 更新 tables ref 并预加载字段
+  // 更新 tables / 库 引用并预加载字段
   useEffect(() => {
     tablesRef.current = tables
+    dbListRef.current = dbList
+    currentDbRef.current = currentDb
     
     // 元数据已在项目切换时全部缓存,无需预加载
-  }, [tables])
+  }, [tables, dbList, currentDb])
 
   // 更新 loadTableStructure ref
   useEffect(() => {
     loadTableStructureRef.current = loadTableStructure
   }, [loadTableStructure])
+
+  // 切到本 Tab 时关闭残留补全弹层，并确保 completer 挂在本编辑器上
+  useEffect(() => {
+    const editor = aceEditorRef.current
+    if (!editor || !isActive) return
+    if (completerRef.current) {
+      ;(editor as any).completers = [completerRef.current]
+    }
+    const popup = (editor as any).completer
+    if (popup?.popup?.isOpen) popup.detach()
+  }, [isActive])
 
   // 初始化编辑器
   useEffect(() => {
@@ -192,9 +213,16 @@ const SqlEditor = forwardRef<SqlEditorRef, Props>(({
       liveAutocompletionThreshold: 1
     })
 
-    // 初始化 SQL 补全器
+    // 初始化 SQL 补全器：挂到本编辑器，勿注册全局 langTools（多 Tab 会串库）
     completerRef.current = createSqlCompleter(ace, {
       getTables: () => tablesRef.current,
+      getDatabases: () => {
+        if (dbListRef.current.length > 0) return dbListRef.current
+        const fromTables = tablesRef.current
+          .map((t) => t.dbName)
+          .filter((d): d is string => !!d)
+        return Array.from(new Set(fromTables))
+      },
       loadTableStructure: (tableName: string) => {
         if (loadTableStructureRef.current) {
           return loadTableStructureRef.current(tableName)
@@ -202,9 +230,14 @@ const SqlEditor = forwardRef<SqlEditorRef, Props>(({
         return Promise.resolve(null)
       }
     })
+    ;(editor as any).completers = [completerRef.current]
 
     // 监听内容变化 — 只更新内部 ref + 防抖，不触发 React 重渲染
     let isInitializing = true
+    const pushToReact = (next: string) => {
+      lastPushedToReactRef.current = next
+      onChangeRef.current(next)
+    }
     editor.on('change', (delta: any) => {
       isInternalChange.current = true
       const newValue = editor.getValue()
@@ -216,7 +249,7 @@ const SqlEditor = forwardRef<SqlEditorRef, Props>(({
       // 防抖 500ms 同步到 React 状态（用于自动保存）
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
       saveTimerRef.current = setTimeout(() => {
-        onChangeRef.current(sqlValueRef.current)
+        pushToReact(sqlValueRef.current)
       }, 500)
 
       // 回车键关闭补全弹窗
@@ -225,13 +258,16 @@ const SqlEditor = forwardRef<SqlEditorRef, Props>(({
         if (completer?.popup?.isOpen) completer.detach()
       }
 
-      isInternalChange.current = false
+      // 延后清除，避免同 tick 内 value effect 误判为外部写入
+      queueMicrotask(() => {
+        isInternalChange.current = false
+      })
     })
 
     // 失焦时立即同步到 React 状态
     editor.on('blur', () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
-      onChangeRef.current(sqlValueRef.current)
+      pushToReact(sqlValueRef.current)
       onBlur?.()
     })
 
@@ -244,6 +280,8 @@ const SqlEditor = forwardRef<SqlEditorRef, Props>(({
     if (value) {
       editor.setValue(value, 1)
     }
+    sqlValueRef.current = value || ''
+    lastPushedToReactRef.current = value || ''
     // 初始化完成，后续 change 事件才触发表名提取
     isInitializing = false
 
@@ -313,14 +351,30 @@ const SqlEditor = forwardRef<SqlEditorRef, Props>(({
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 同步外部 value 变化（仅处理外部赋值，如历史记录插入，跳过用户输入触发的回环）
+  // 同步外部 value（历史插入等）。输入防抖期间 React value 会落后，禁止用旧值覆盖正在编辑的内容。
   useEffect(() => {
     const editor = aceEditorRef.current
-    if (editor && !isInternalChange.current && editor.getValue() !== value) {
-      const cursorPos = editor.getCursorPosition()
-      editor.setValue(value, 1)
-      editor.moveCursorToPosition(cursorPos)
+    if (!editor || isInternalChange.current) return
+
+    if (editor.getValue() === value) {
+      sqlValueRef.current = value
+      lastPushedToReactRef.current = value
+      return
     }
+
+    // 防抖回声：父组件刚带上我们推送的内容重渲染，但用户（长按删除等）已经继续改过 → 绝不回写
+    if (value === lastPushedToReactRef.current) return
+
+    // 其余情况视为外部赋值（历史记录、插入片段、切 Tab 恢复等）
+    isInternalChange.current = true
+    const cursorPos = editor.getCursorPosition()
+    editor.setValue(value, 1)
+    editor.moveCursorToPosition(cursorPos)
+    sqlValueRef.current = value
+    lastPushedToReactRef.current = value
+    queueMicrotask(() => {
+      isInternalChange.current = false
+    })
   }, [value])
 
   // 当快捷键配置变化时，更新编辑器命令绑定

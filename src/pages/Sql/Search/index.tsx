@@ -197,6 +197,8 @@ const SqlSearch = () => {
   const getPageReq = (tabId: string) => pageReqSeqByTabRef.current.get(tabId) || 0;
   // 本次会话已完成“清理旧缓存+重新拉取”的项目集合（启动后每个项目执行一次）
   const startupRefreshedProjects = useRef<Set<string>>(new Set());
+  /** 切 Tab 灌元数据的世代号，防止异步晚到覆盖当前 Tab */
+  const metadataRestoreSeqRef = useRef(0);
 
   const currentTab = tabs.find(t => t.id === activeTabId) || tabs[0];
 
@@ -213,6 +215,7 @@ const SqlSearch = () => {
     const project = tab.project;
     const dbName = tab.dbName;
     const tabId = tab.id;
+    const seq = ++metadataRestoreSeqRef.current;
 
     (async () => {
       try {
@@ -225,8 +228,13 @@ const SqlSearch = () => {
           clearMetadataStorage,
         } = await import('../../../utils/sql/cache');
 
+        const isStale = () =>
+          seq !== metadataRestoreSeqRef.current ||
+          tabsRef.current.find((t) => t.id === activeTabId)?.id !== tabId;
+
         /** 把当前项目/库的缓存同步到侧边树（dbList + tableList） */
         const syncTreeFromCache = () => {
+          if (isStale()) return;
           const updates: Partial<Tab> = {};
           const cachedDbList = getAllCachedDatabases();
           if (cachedDbList.length > 0) {
@@ -247,7 +255,9 @@ const SqlSearch = () => {
         if (!startupRefreshedProjects.current.has(project)) {
           startupRefreshedProjects.current.add(project);
           await clearMetadataStorage(project);
+          if (isStale()) return;
           await fetchAndCacheMetadata(project, tabId);
+          if (isStale()) return;
           syncTreeFromCache();
           return;
         }
@@ -255,8 +265,10 @@ const SqlSearch = () => {
         // 内存是全局单份缓存，切换项目 Tab 时必须按当前项目重新灌入，
         // 不能仅因「内存非空」就跳过（否则会串到上一个项目的库表）
         const restored = await restoreMetadataFromStorage(project);
+        if (isStale()) return;
         if (!restored) {
           await fetchAndCacheMetadata(project, tabId);
+          if (isStale()) return;
           syncTreeFromCache();
           return;
         }
@@ -267,6 +279,7 @@ const SqlSearch = () => {
         if (dbName) {
           const { getSqlMetadata } = await import('../../../services/storage/sqlMetadataStorage');
           const cacheData = await getSqlMetadata(project);
+          if (isStale()) return;
           const tables = getDbTables(dbName);
           if (cacheData?.fields && tables.length > 0) {
             tables.forEach((tableName: string) => {
@@ -1268,6 +1281,7 @@ const SqlSearch = () => {
             <div key={tab.id} style={{ display: tab.id === activeTabId ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
               <SqlWorkspace
                 tabId={tab.id}
+                isActive={tab.id === activeTabId}
                 sql={tab.sqlQuery}
                 onSqlChange={(sql: string) => updateTab(tab.id, { sqlQuery: sql })}
                 onExecute={(sql) => handleExecute(sql, false, tab.id)}
@@ -1290,6 +1304,7 @@ const SqlSearch = () => {
                 onExport={() => handleExport(tab.id)}
                 messages={tab.messages}
                 tableList={tab.tableList}
+                dbList={tab.dbList}
                 project={tab.project}
                 lastExecutedSql={tab.lastExecutedSql}
               />

@@ -98,14 +98,14 @@ export function createCustomRenderer() {
 export function getDocTooltip(item: Suggestion): void {
   if (!item.caption) return
   
-  // 提取表名
+  // 提取表名（字段注释里可能带 [table] 前缀）
   const tableMatch = item.comment?.match(/\[([^\]]+)\]/)
   const tableName = item.tableName || (tableMatch ? tableMatch[1] : '')
   const commentText = item.comment?.replace(/\[[^\]]+\]\s*/, '') || ''
   
   let html = '<div class="doc-content">'
   
-  // 字段名和类型
+  // 名称和类型
   html += '<div class="doc-header">'
   html += `<span class="doc-field-name">${item.caption}</span>`
   if (item.meta && item.meta !== 'keyword' && item.meta !== 'table') {
@@ -113,14 +113,21 @@ export function getDocTooltip(item: Suggestion): void {
   }
   html += '</div>'
   
-  // 表名
+  // 所属库（表建议）
+  if (item.meta === 'table' && item.dbName) {
+    html += `<div class="doc-table"><span class="doc-label">库:</span> <span class="doc-value">${item.dbName}</span></div>`
+  }
+
+  // 所属表（字段建议）
   if (tableName) {
     html += `<div class="doc-table"><span class="doc-label">表:</span> <span class="doc-value">${tableName}</span></div>`
   }
   
-  // 注释
+  // 注释（表注释 / 字段注释）
   if (commentText) {
     html += `<div class="doc-comment">${commentText}</div>`
+  } else if (item.meta === 'table') {
+    html += `<div class="doc-comment doc-comment-empty">暂无表注释</div>`
   }
   
   // 主键标识
