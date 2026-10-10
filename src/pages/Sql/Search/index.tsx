@@ -89,6 +89,7 @@ const createTab = (id: string, name = '查询 1'): Tab => ({
 // SQL tabs are persisted in one file per tab id.
 
 // Keep only lightweight editor state; query result data is intentionally excluded.
+// lastExecutedSql 属执行态（决定 AI 分析按钮显隐），不持久化，仅在本次会话执行 EXPLAIN 后有效
 const serializeTab = (tab: Tab) => ({
   name: tab.name,
   project: tab.project,
@@ -98,7 +99,6 @@ const serializeTab = (tab: Tab) => ({
   tableList: tab.tableList,
   currentPage: tab.currentPage,
   pageSize: tab.pageSize,
-  lastExecutedSql: tab.lastExecutedSql,
 });
 
 const SqlSearch = () => {
@@ -373,6 +373,8 @@ const SqlSearch = () => {
             id: tab.tabId,
             results: [], columns: [], total: 0, took: 0, queryId: '',
             allResults: [], currentResultIndex: 0, messages: [],
+            // 执行态不跨会话恢复（兼容旧数据文件中已持久化的值）
+            lastExecutedSql: '',
           }));
 
         if (restoredTabs.length > 0) {

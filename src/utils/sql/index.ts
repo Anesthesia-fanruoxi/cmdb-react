@@ -259,6 +259,6 @@ export function createSqlCompleter(ace: any, { getTables, loadTableStructure: _l
 // 导出工具函数
 export { fuzzyMatch } from './matcher'
 export { getTableFields, cacheTableFields, initCache, getTableComment } from './cache'
-export { analyzeContext, extractTablesFromSql, parseTableAliases } from './parser'
+export { analyzeContext, extractTablesFromSql, parseTableAliases, extractSourceTables } from './parser'
 export { getCurrentStatement } from './tableExtractor'
 export type { Suggestion, TableInfo, FieldInfo, SqlContext } from './types'

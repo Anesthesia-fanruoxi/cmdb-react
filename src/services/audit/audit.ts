@@ -49,3 +49,32 @@ export const getAuditSearchProjects = () => apiClient.get('/audit/search/project
 // 获取加解密审计日志 (GET)
 export const getKeyAuditLog = (params: Record<string, unknown>) => 
   apiClient.get('/audit/key/list', params);
+
+// 获取AI调用记录列表 (POST)
+export const getAuditAiList = (params: Record<string, unknown>) => 
+  apiClient.post('/audit/ai/list', params);
+
+// AI调用记录项（响应为 camelCase）
+export interface AiCallLogItem {
+  id: number;
+  userId: number;
+  userName: string;
+  project: string;
+  dbName: string;
+  querySql: string;
+  tables: string;
+  model: string;
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  duration: number;
+  status: string;
+  errorMessage: string;
+  clientIp: string;
+  country: string;
+  region: string;
+  city: string;
+  district: string;
+  platform: string;
+  createdAt: string;
+}

@@ -26,6 +26,12 @@ export interface BasicSetting {
   login_fail_count?: number;
   login_lock_time?: number;
   token_expire_time?: number;
+  // AI 厂商配置（SQL EXPLAIN AI 分析）
+  ai_enabled?: boolean;
+  ai_base_url?: string;
+  /** 获取时为掩码值（前4位+****+后4位）；提交含 **** 视为不修改 */
+  ai_api_key?: string;
+  ai_model?: string;
 }
 
 export interface SecuritySetting {
@@ -54,4 +60,20 @@ export function getSecuritySetting(): Promise<ApiResponse<SecuritySetting>> {
 /** 更新安全设置 */
 export function updateSecuritySetting(data: Partial<SecuritySetting>): Promise<ApiResponse<null>> {
   return apiClient.put<null>('/system/setting/security', data);
+}
+
+/** AI 模型项（厂商 OpenAI 兼容 /models 返回） */
+export interface AiModelItem {
+  id: string;
+  owned_by: string;
+}
+
+export interface AiModelsData {
+  total: number;
+  models: AiModelItem[];
+}
+
+/** 获取 AI 模型列表（厂商地址与密钥由前端传入，保存前也可获取，不读取数据库配置） */
+export function getAiModels(data: { base_url: string; api_key: string }): Promise<ApiResponse<AiModelsData>> {
+  return apiClient.post<AiModelsData>('/system/setting/ai/models', data);
 }

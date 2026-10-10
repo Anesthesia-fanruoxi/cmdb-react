@@ -339,6 +339,7 @@ const SqlWorkspace = ({
           queryId={queryId}
           columnComments={columnComments}
           lastExecutedSql={lastExecutedSql}
+          agent={project}
         />
       </div>
     </div>

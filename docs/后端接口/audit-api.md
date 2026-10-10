@@ -354,7 +354,79 @@
 
 ---
 
-## 5. 前端服务层映射
+## 5. AI 调用记录 `/audit/ai`
+
+SQL EXPLAIN AI 分析的调用明细与用量记录（表 `audit_ai_log`，不保存 AI 分析结果内容）。
+
+### 5.1 AI 调用记录列表
+
+- **方法**：POST
+- **路径**：`/api/audit/ai/list`
+- **权限**：`audit:ai:r`（菜单路径 `/audit/ai`）
+- **可见范围**：超级管理员（角色 level=0）可见全部；普通用户仅可见自己的记录
+- **请求体**（均可选；`page` 默认 1；`pageSize` 默认 20、最大 100）：
+
+```json
+{
+  "userName": "", "project": "", "dbName": "", "model": "",
+  "status": "", "startTime": "", "endTime": "",
+  "page": 1, "pageSize": 20
+}
+```
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| userName | string | 否 | 操作人过滤 |
+| project | string | 否 | 项目标识过滤 |
+| dbName | string | 否 | 数据库名过滤 |
+| model | string | 否 | AI 模型过滤 |
+| status | string | 否 | 调用状态：`success` / `failed` |
+| startTime | string | 否 | 开始时间，格式 `2026-10-10 00:00:00` |
+| endTime | string | 否 | 结束时间，格式 `2026-10-10 23:59:59` |
+| page | int | 否 | 页码，默认 1 |
+| pageSize | int | 否 | 每页条数，默认 20，最大 100 |
+
+- **响应 `data` 结构**（list 项为 camelCase 平铺结构）：
+
+```json
+{
+  "total": 1,
+  "list": [
+    {
+      "id": 1, "userId": 1, "userName": "admin", "project": "bxhd", "dbName": "bxhd_order",
+      "querySql": "EXPLAIN SELECT ...", "tables": "sys_credit_repayment_plan,sys_credit_repayment_detail",
+      "model": "deepseek-chat",
+      "promptTokens": 1520, "completionTokens": 890, "totalTokens": 2410,
+      "duration": 18320, "status": "success", "errorMessage": "",
+      "clientIp": "10.0.0.1", "country": "中国", "region": "广东", "city": "深圳", "district": "",
+      "platform": "web", "createdAt": "2026-10-10T10:00:00+08:00"
+    }
+  ],
+  "page": 1, "pageSize": 20, "totalPages": 1
+}
+```
+
+**字段说明**：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id / userId / userName | number / number / string | 记录 ID / 用户 ID / 用户名 |
+| project / dbName | string | 项目标识 / 数据库名 |
+| querySql | string | 分析的 EXPLAIN 语句 |
+| tables | string | 本次查询关联表（逗号分隔） |
+| model | string | AI 模型 |
+| promptTokens / completionTokens / totalTokens | number | 输入 / 输出 / 总 token 用量（厂商不支持 usage 统计时为 0） |
+| duration | number | 总耗时（毫秒） |
+| status / errorMessage | string | 调用状态（success/failed）与失败原因 |
+| clientIp | string | 客户端 IP |
+| country / region / city / district | string | 国家 / 省份 / 城市 / 区县 |
+| platform | string | 来源平台：`web`（浏览器）/ `desktop`（客户端） |
+| createdAt | string | 操作时间 |
+| page / pageSize / totalPages | number | 当前页码 / 每页条数 / 总页数 |
+
+---
+
+## 6. 前端服务层映射
 
 | 前端方法 | HTTP 方法 | 路径 | 说明 |
 |---------|-----------|------|------|
@@ -368,5 +440,6 @@
 | `getEsHourlyUserStats` | POST | `/audit/es/user/stats` | ES 小时用户统计 |
 | `getEsUserHourlyList` | POST | `/audit/es/user/list` | ES 用户小时列表 |
 | `getKeyAuditLog` | GET | `/audit/key/list` | 加解密审计日志 |
+| `getAuditAiList` | POST | `/audit/ai/list` | AI 调用记录列表 |
 
 服务层文件：`src/services/audit/audit.ts`

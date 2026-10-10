@@ -2,11 +2,11 @@
  * 系统设置页面
  */
 
-import { useState, useEffect, useMemo } from 'react';
-import { getBasicSetting, updateBasicSetting } from '../../../services/system/setting';
-import type { BasicSetting } from '../../../services/system/setting';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { getBasicSetting, updateBasicSetting, getAiModels } from '../../../services/system/setting';
+import type { BasicSetting, AiModelItem } from '../../../services/system/setting';
 import { toast } from '../../../components/AppNotification';
-import { Settings, Lock, Key, Shield, Upload, Eye, EyeOff } from 'lucide-react';
+import { Settings, Lock, Key, Shield, Eye, EyeOff, Bot, ChevronDown, Loader2 } from 'lucide-react';
 import './style.css';
 
 const SystemSetting = () => {
@@ -15,6 +15,13 @@ const SystemSetting = () => {
   const [settings, setSettings] = useState<BasicSetting | null>(null);
   const [initialSettings, setInitialSettings] = useState<string>('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showAiKey, setShowAiKey] = useState(false);
+  // 模型列表下拉（仅点击输入框时才发起请求）
+  const [modelOpen, setModelOpen] = useState(false);
+  const [modelLoading, setModelLoading] = useState(false);
+  const [modelList, setModelList] = useState<AiModelItem[]>([]);
+  const [modelError, setModelError] = useState('');
+  const modelSelectRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { fetchSettings(); }, []);
 
@@ -52,6 +59,71 @@ const SystemSetting = () => {
     if (settings) setSettings({ ...settings, [field]: value });
   };
 
+  // 点击输入框才触发获取模型列表（页面加载等其他时机不请求）
+  const handleModelClick = async () => {
+    setModelOpen(true);
+    if (!settings || modelLoading) return;
+
+    if (!settings.ai_base_url?.trim()) {
+      setModelList([]);
+      setModelError('请先填写 AI 服务地址');
+      return;
+    }
+
+    setModelLoading(true);
+    setModelError('');
+    try {
+      const res = await getAiModels({
+        base_url: settings.ai_base_url.trim(),
+        // 掩码或空值时后端自动使用系统设置中已保存的明文（与更新设置的掩码回传机制一致）
+        api_key: settings.ai_api_key || '',
+      });
+      if (res.code === 200 && res.data) {
+        setModelList(res.data.models || []);
+      } else {
+        setModelList([]);
+        setModelError(res.message || '获取模型列表失败');
+      }
+    } catch (error) {
+      setModelList([]);
+      setModelError(error instanceof Error ? error.message : '获取模型列表失败');
+    } finally {
+      setModelLoading(false);
+    }
+  };
+
+  const handleSelectModel = (modelId: string) => {
+    updateField('ai_model', modelId);
+    setModelOpen(false);
+  };
+
+  // 点击下拉外部区域时收起
+  useEffect(() => {
+    if (!modelOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (modelSelectRef.current && !modelSelectRef.current.contains(e.target as Node)) setModelOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [modelOpen]);
+
+  // 下拉内容：加载中 > 错误 > 空列表 > 模型列表
+  const renderModelDropdown = () => {
+    if (modelLoading) return <div className="model-dropdown-status"><Loader2 size={14} className="model-spin" />正在获取模型列表...</div>;
+    if (modelError) return <div className="model-dropdown-status error">{modelError}</div>;
+    if (modelList.length === 0) return <div className="model-dropdown-status">未获取到可用模型</div>;
+    return modelList.map(model => (
+      <div
+        key={model.id}
+        className={`model-option${settings?.ai_model === model.id ? ' selected' : ''}`}
+        onClick={() => handleSelectModel(model.id)}
+      >
+        <span>{model.id}</span>
+        {model.owned_by && <span className="model-option-owner">{model.owned_by}</span>}
+      </div>
+    ));
+  };
+
   if (loading) return <div className="setting-loading">加载中...</div>;
   if (!settings) return <div className="setting-error">加载设置失败</div>;
 
@@ -65,10 +137,6 @@ const SystemSetting = () => {
             <span className="header-tag">系统信息</span>
           </div>
           <div className="card-body">
-            <LogoUpload label="系统Logo" value={settings.system_logo} onChange={v => updateField('system_logo', v)} />
-            <LogoUpload label="登录页Logo" value={settings.login_logo} onChange={v => updateField('login_logo', v)} />
-            <LogoUpload label="浏览器图标" value={settings.favicon_logo} onChange={v => updateField('favicon_logo', v)} small />
-            
             <div className="form-item">
               <label>系统名称</label>
               <input type="text" value={settings.system_name || ''} onChange={e => updateField('system_name', e.target.value)} placeholder="请输入系统名称" />
@@ -86,6 +154,48 @@ const SystemSetting = () => {
               <label>平台地址</label>
               <input type="text" value={settings.system_url || ''} onChange={e => updateField('system_url', e.target.value)} placeholder="请输入平台地址，如：http://example.com" />
               <div className="form-tip">用于生成分享链接等功能</div>
+            </div>
+
+            <div className="section-block">
+              <div className="block-title"><Bot size={16} /> AI 分析配置</div>
+              <div className="protection-header">
+                <div>
+                  <div className="setting-label">启用 AI 分析</div>
+                  <div className="setting-desc">开启后，SQL 查询页可对 EXPLAIN 语句发起 AI 执行计划分析</div>
+                </div>
+                <label className="switch"><input type="checkbox" checked={settings.ai_enabled || false} onChange={e => updateField('ai_enabled', e.target.checked)} /><span className="slider"></span></label>
+              </div>
+              <div className="form-item">
+                <label>AI 服务地址</label>
+                <input type="text" value={settings.ai_base_url || ''} onChange={e => updateField('ai_base_url', e.target.value)} placeholder="如：https://api.deepseek.com/v1" />
+                <div className="form-tip">兼容 OpenAI 协议的服务地址，填到 /v1 级别即可，后端自动拼接 /chat/completions</div>
+              </div>
+              <div className="form-item">
+                <label>API Key</label>
+                <div className="password-input-wrapper">
+                  <input type={showAiKey ? 'text' : 'password'} value={settings.ai_api_key || ''} onChange={e => updateField('ai_api_key', e.target.value)} placeholder="请输入 AI 服务 API Key" />
+                  <button type="button" className="password-toggle" onClick={() => setShowAiKey(!showAiKey)}>
+                    {showAiKey ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+                <div className="form-tip">已配置时显示掩码（如 sk-a****bcde），保持掩码不变即可保留原 Key；输入新值则覆盖</div>
+              </div>
+              <div className="form-item">
+                <label>模型名称</label>
+                <div className="model-select" ref={modelSelectRef}>
+                  <input
+                    type="text"
+                    className="model-select-input"
+                    value={settings.ai_model || ''}
+                    readOnly
+                    placeholder="点击从 AI 服务商获取模型列表"
+                    onClick={handleModelClick}
+                  />
+                  <ChevronDown size={16} className="model-select-arrow" />
+                  {modelOpen && <div className="model-dropdown">{renderModelDropdown()}</div>}
+                </div>
+                <div className="form-tip">点击输入框从 AI 服务商获取可用模型列表，选择后填入</div>
+              </div>
             </div>
           </div>
         </div>
@@ -153,21 +263,5 @@ const SystemSetting = () => {
     </div>
   );
 };
-
-// Logo 上传组件
-const LogoUpload = ({ label, value, onChange, small }: { label: string; value?: string; onChange: (v: string) => void; small?: boolean }) => (
-  <div className="logo-upload-item">
-    <label>{label}</label>
-    <div className={`logo-upload-box ${small ? 'small' : ''}`}>
-      {value ? (
-        <img src={value} alt={label} onClick={() => onChange('')} />
-      ) : (
-        <div className="upload-placeholder"><Upload size={24} /><span>点击上传{label}</span></div>
-      )}
-    </div>
-    <input type="text" value={value || ''} onChange={e => onChange(e.target.value)} placeholder={`请输入${label}URL`} className="logo-url-input" />
-    <div className="form-tip">支持 PNG、JPG、SVG 格式</div>
-  </div>
-);
 
 export default SystemSetting;

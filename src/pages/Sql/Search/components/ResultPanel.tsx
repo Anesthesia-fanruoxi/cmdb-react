@@ -4,12 +4,14 @@
  */
 
 import { useState, useMemo, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
+import { Sparkles } from 'lucide-react';
 import { useAuthStore } from '../../../../stores/authStore';
 import { useUserPrefsStore } from '../../../../stores/userPrefsStore';
 import toast from '../../../../components/Toast';
 import type { ResultSet } from './SqlWorkspace';
 import FullscreenResultPanel from './FullscreenResultPanel';
 import CellDetailModal from './CellDetailModal';
+import ExplainAiPanel from './ExplainAiPanel';
 import { useCellHoverTip, CellHoverTip } from './CellHoverTip';
 import type { CommentMap } from '../hooks/useColumnComments';
 import { buildInsertStatements, extractTableNameFromSql, copyColumnData, formatValueForCopy } from '../utils/copyFormat';
@@ -34,6 +36,8 @@ interface Props {
   queryId?: string;
   columnComments?: CommentMap;
   lastExecutedSql?: string;
+  /** 项目标识（EXPLAIN AI 分析接口用） */
+  agent?: string;
 }
 
 const DEFAULT_COL_WIDTH = 150;
@@ -47,7 +51,8 @@ const ResultPanel = ({
   currentPage: externalPage, onPageChange,
   exportLoading = false, onExport, queryId,
   columnComments = new Map(),
-  lastExecutedSql = ''
+  lastExecutedSql = '',
+  agent = ''
 }: Props) => {
   const [localPage, setLocalPage] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -58,6 +63,10 @@ const ResultPanel = ({
   const clickTimerRef = useRef<number | null>(null);
   const tableWrapperRef = useRef<HTMLDivElement>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; rowIndex: number; cellValue: string } | null>(null);
+
+  // EXPLAIN AI 分析视图（仅执行 EXPLAIN 后可用）
+  const [aiViewOpen, setAiViewOpen] = useState(false);
+  const isExplainSql = /^\s*explain\b/i.test(lastExecutedSql);
 
   // 划选（拖拽选择）状态
   const dragSelectRef = useRef<{ anchor: number; active: boolean }>({ anchor: -1, active: false });
@@ -170,6 +179,11 @@ const ResultPanel = ({
     setSelectedRows(new Set());
     lastClickedRow.current = null;
   }, [total, currentResultIndex, queryId]);
+
+  // 新一次执行（queryId 变化）→ 退出 AI 分析视图
+  useEffect(() => {
+    setAiViewOpen(false);
+  }, [queryId]);
 
   // 键盘横向滚动
   useEffect(() => {
@@ -475,7 +489,7 @@ const ResultPanel = ({
         <div className="header-left">
           <span className="header-title" style={isErrorResult ? { color: '#ef4444' } : undefined}>{isExecuting ? '执行中' : isErrorResult ? '查询错误' : hasResults ? '查询结果' : '暂无结果'}</span>
           {(isExecuting || elapsedTime > 0) && <span className="elapsed-timer">{elapsedTime.toFixed(1)}s</span>}
-          {showResultSelector && (
+          {showResultSelector && !aiViewOpen && (
             <div className="result-selector">
               {allResults.map((rs, idx) => (
                 <button key={idx} className={`selector-tab ${idx === currentResultIndex ? 'active' : ''}`}
@@ -487,7 +501,14 @@ const ResultPanel = ({
           )}
         </div>
         <div className="header-right">
-          {hasResults && (
+          {isExplainSql && !aiViewOpen && (
+            <button className="btn btn-link btn-ai-analyze"
+              onClick={() => setAiViewOpen(true)}
+              title="基于 EXPLAIN 执行计划的 AI 优化分析">
+              <Sparkles size={14} /> AI分析
+            </button>
+          )}
+          {!aiViewOpen && hasResults && (
             <div className="row-highlight-picker" title="自定义选中行高亮颜色">
               <span className="highlight-color-dot" style={{ background: highlightColor }} onClick={() => colorInputRef.current?.click()} />
               <input ref={colorInputRef} type="color" value={highlightColor}
@@ -495,12 +516,12 @@ const ResultPanel = ({
                 className="highlight-color-input" />
             </div>
           )}
-          {hasResults && (
+          {!aiViewOpen && hasResults && (
             <button className="btn btn-link" onClick={() => setIsFullscreen(!isFullscreen)} title={isFullscreen ? '退出全屏' : '全屏显示'}>
               {isFullscreen ? '⤢' : '⛶'}
             </button>
           )}
-          {hasResults && queryId && canExport && (
+          {!aiViewOpen && hasResults && queryId && canExport && (
             <button className={`btn btn-link ${exportLoading ? 'loading' : ''}`}
               onClick={() => { if (onExport && queryId) onExport(); }} disabled={exportLoading}>
               {exportLoading ? '导出中...' : '导出'}
@@ -510,6 +531,14 @@ const ResultPanel = ({
       </div>
 
 
+      {aiViewOpen && isExplainSql ? (
+        <ExplainAiPanel
+          agent={agent}
+          dbName={dbName || ''}
+          sql={lastExecutedSql}
+          onClose={() => setAiViewOpen(false)}
+        />
+      ) : (
       <div className="result-table-wrapper" ref={tableWrapperRef} tabIndex={0} onScroll={handleTableScroll}>
         {loading ? (
           <div className="result-loading">查询中...</div>
@@ -598,7 +627,9 @@ const ResultPanel = ({
           </table>
         )}
       </div>
+      )}
 
+      {!aiViewOpen && (
       <div className="result-footer">
         <div className="result-stats">
           {total > 0 && (
@@ -624,6 +655,7 @@ const ResultPanel = ({
           </div>
         )}
       </div>
+      )}
     </div>
   );
 };

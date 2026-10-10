@@ -32,6 +32,9 @@
   overflow: hidden;
 }
 
+/* 字段提示文字 */
+.setting-container .form-tip { margin-top: 6px; font-size: 12px; color: var(--text-muted); }
+
 .setting-container .card-header {
   padding: 16px 20px;
   border-bottom: 1px solid var(--border-color);
@@ -72,49 +75,80 @@
 
 .setting-container .card-body { padding: 20px; }
 
-/* Logo 上传 */
-.setting-container .logo-upload-item { margin-bottom: 16px; }
-.setting-container .logo-upload-item > label { display: block; margin-bottom: 6px; font-size: 14px; color: var(--text-secondary); }
-
-.setting-container .logo-upload-box {
-  width: 180px;
-  height: 90px;
-  border: 2px dashed var(--border-color-dark);
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-bottom: 6px;
-  overflow: hidden;
+/* 数字输入框：隐藏上下调节箭头，仅支持手动输入 */
+.setting-container input[type="number"]::-webkit-outer-spin-button,
+.setting-container input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
-.setting-container .logo-upload-box.small { width: 70px; height: 70px; }
-.setting-container .logo-upload-box:hover { border-color: var(--primary-color); }
-.setting-container .logo-upload-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.setting-container input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
 
-.setting-container .upload-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
+/* 模型名称下拉选择（点击输入框加载） */
+.setting-container .model-select { position: relative; }
+
+.setting-container .model-select-input { padding-right: 36px; cursor: pointer; }
+
+.setting-container .model-select-arrow {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
   color: var(--text-muted);
-  font-size: 12px;
+  pointer-events: none;
 }
 
-.setting-container .logo-url-input {
-  width: 100%;
-  max-width: 350px;
-  padding: 8px 10px;
-  border: 1px solid var(--border-color-dark);
-  border-radius: 4px;
-  font-size: 13px;
+.setting-container .model-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 4px;
   background: var(--bg-color);
-  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  box-shadow: var(--shadow-md);
 }
 
-.setting-container .logo-url-input:focus { outline: none; border-color: var(--primary-color); }
+.setting-container .model-dropdown-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.setting-container .model-dropdown-status.error { color: var(--danger-color); }
+
+.setting-container .model-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  color: var(--text-color);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.setting-container .model-option:hover { background: var(--bg-secondary); }
+.setting-container .model-option.selected { background: rgba(24, 144, 255, 0.1); color: var(--primary-color); }
+.setting-container .model-option-owner { font-size: 12px; color: var(--text-muted); }
+
+.setting-container .model-spin { animation: setting-spin 1s linear infinite; }
+
+@keyframes setting-spin {
+  to { transform: rotate(360deg); }
+}
 
 /* 密码输入框 */
 .setting-container .password-input-wrapper { position: relative; display: flex; align-items: center; }
@@ -224,7 +258,19 @@
 
 .setting-container .config-row span { font-size: 13px; color: var(--text-secondary); }
 .setting-container .config-row span:first-child { min-width: 80px; }
-.setting-container .config-row input { width: 90px; }
+.setting-container .config-row input {
+  width: 90px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.setting-container .config-row input:focus { outline: none; border-color: var(--primary-color); }
 
 /* 开关 */
 .setting-container .switch { position: relative; display: inline-block; width: 40px; height: 20px; }

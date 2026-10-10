@@ -8,6 +8,7 @@
  *   updateTabTables(tabId, sql)       — 更新指定标签页的表名注册表并打印日志
  *   getTabTables(tabId)               — 获取指定标签页已提取的表名列表
  *   parseTableAliases(sql)            — 解析当前语句的别名映射
+ *   extractSourceTables(sql)          — 提取 SQL 真实源表名（含子查询，过滤别名/CTE/派生表）
  */
 
 import { SQL_KEYWORDS_LIST } from './keywords'
@@ -239,6 +240,91 @@ export function parseTableAliases(fullSql: string): Record<string, string> {
   })
 
   return aliases
+}
+
+/**
+ * 提取 SQL 中的真实源表名列表（去重，按文本出现顺序）
+ *
+ * 与 extractTablesFromSql 的差异：
+ * - 全局扫描（覆盖子查询 / JOIN / 逗号连缀多表 / CTE 内部），而非仅首个 FROM 子句
+ * - 输出真实表名（不含别名），过滤派生表、CTE 名称与 DUAL
+ * - 过滤 EXTRACT / TRIM / SUBSTRING 等函数 FROM 片段及字符串字面量干扰
+ *
+ * 用途：EXPLAIN AI 分析请求携带真实关联表，避免执行计划中的别名
+ * （如 p / d / p1）导致后端无法采集表元数据
+ */
+export function extractSourceTables(sql: string): string[] {
+  if (!sql.trim()) return []
+
+  // 去除尾部多余分号、字符串字面量与注释，避免其中的 FROM/JOIN 误报
+  const text = sql
+    .trim()
+    .replace(/;+\s*$/, '')
+    .replace(/'(?:[^'\\]|\\.|'')*'/g, "''")
+    .replace(/"(?:[^"\\]|\\.|"")*"/g, '""')
+    .replace(/--[^\n]*/g, ' ')
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+
+  // 收集 WITH 定义的 CTE 名称（含 , cte2 AS (...) 形式），结果中需过滤
+  const cteNames = new Set<string>()
+  const cteRe = /(?:\bWITH\b|,)\s*([a-zA-Z0-9_$]+)\s+AS\s*\(\s*(?:SELECT|WITH)\b/gi
+  let cm: RegExpExecArray | null
+  while ((cm = cteRe.exec(text)) !== null) cteNames.add(cm[1].toLowerCase())
+
+  const names: string[] = []
+  const seen = new Set<string>()
+
+  const pushName = (raw: string) => {
+    const quoted = raw.includes('`') || raw.includes('"')
+    const name = raw.replace(/[`"]/g, '')
+    const key = name.toLowerCase()
+    if (!name || seen.has(key) || cteNames.has(key) || key === 'dual') return
+    // 未加引号时排除关键字（加引号的可能是真实表名，如 `order`）
+    if (!quoted && isSqlKeyword(name)) return
+    seen.add(key)
+    names.push(name)
+  }
+
+  // 从 start 起连续消费表引用列表（FROM a [AS] x, b ...）
+  const consumeTableRefs = (start: number) => {
+    let i = start
+    for (;;) {
+      const ws = /^\s*/.exec(text.slice(i))
+      if (ws) i += ws[0].length
+      const ref = /^[`a-zA-Z0-9_$."]+/.exec(text.slice(i))
+      if (!ref) break // 派生表（(SELECT ...)）等非标识符开头
+      pushName(ref[0])
+      i += ref[0].length
+
+      // 跳过别名（AS alias 或非关键字的裸 alias）
+      const asAlias = /^\s+AS\s+[`a-zA-Z0-9_$]+/i.exec(text.slice(i))
+      if (asAlias) {
+        i += asAlias[0].length
+      } else {
+        const bare = /^\s+([a-zA-Z0-9_$]+)/.exec(text.slice(i))
+        if (bare && !isSqlKeyword(bare[1])) i += bare[0].length
+      }
+
+      // 仅当紧跟逗号时继续消费（同层级多表）
+      const comma = /^\s*,\s*/.exec(text.slice(i))
+      if (!comma) break
+      i += comma[0].length
+    }
+  }
+
+  // 全局扫描 FROM / JOIN / STRAIGHT_JOIN（覆盖子查询与 CTE 内部）
+  const kwRe = /\b(?:FROM|STRAIGHT_JOIN|JOIN)\b/gi
+  let km: RegExpExecArray | null
+  while ((km = kwRe.exec(text)) !== null) {
+    // 排除点号或引号内的同名标识符（如 t.join、`join`）
+    const prev = text[km.index - 1]
+    if (prev === '.' || prev === '`' || prev === '"') continue
+    // 排除 EXTRACT / TRIM / SUBSTRING 等函数内的 FROM
+    if (/(?:EXTRACT|TRIM|SUBSTRING|SUBSTR|POSITION)\s*\([^()]*$/i.test(text.slice(0, km.index))) continue
+    consumeTableRefs(km.index + km[0].length)
+  }
+
+  return names
 }
 
 /**

@@ -8,7 +8,7 @@ import { extractTablesFromSql, parseTableAliases, getCurrentStatement } from './
 import type { SqlContext } from './types'
 
 // 重新导出，保持对外接口不变
-export { extractTablesFromSql, parseTableAliases } from './tableExtractor'
+export { extractTablesFromSql, parseTableAliases, extractSourceTables } from './tableExtractor'
 
 /** 分析 SQL 语句的当前上下文 */
 export function analyzeContext(sql: string): SqlContext {
