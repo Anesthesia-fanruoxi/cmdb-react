@@ -163,11 +163,8 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION_NUM="${VERSION#v}"
-          DESCRIPTION="1、SQL 查询新增 EXPLAIN 执行计划 AI 分析：执行 EXPLAIN 后可发起 AI 优化分析，结果栏内嵌流式输出建议。
-          2、新增「AI调用记录」页面：可按操作人、项目、模型、状态与时间筛选查看 AI 调用审计记录。
-          3、系统设置优化：AI 配置并入基础设置；模型名称改为点击输入框获取厂商模型列表并下拉选择；移除 Logo 上传项；数字输入框去除上下调节箭头。
-          4、修复重开应用后编辑器残留 EXPLAIN 内容误显 AI 分析按钮的问题（仅实际执行后显示）。
-          5、修复系统设置「登录保护」输入框样式丢失的问题。"
+          DESCRIPTION="1、新增 SQL 查询 EXPLAIN 执行计划 AI 分析。
+          2、修复部分已知问题。"
 
           DESCRIPTION_JSON=$(echo "$DESCRIPTION" | jq -Rs .)
           curl -X POST https://api.hzbxhd.com/api/app/version/update \
